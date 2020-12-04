@@ -1,5 +1,5 @@
-# macbook
-macbook is a script to set up my MacBook with my most used developer tools.
+# supercharged
+supercharged is a script to set up any MacBook with my developer tools and applications.
 
 It can be run multiple times on the same machine safely.
 It installs, upgrades, or skips packages
