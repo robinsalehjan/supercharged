@@ -8,6 +8,5 @@ brew update && brew upgrade `brew outdated`
 echo "[brew cask]: UPDATING OUTDATED CASKS"
 brew upgrade --cask
 brew cleanup
-brew bundle --force cleanup
 
 gcloud components update
