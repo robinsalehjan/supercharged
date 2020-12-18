@@ -7,7 +7,6 @@ export PS1="\n\u@\h:\e[1;31m \w \[$(tput sgr0)\]"
 export PATH="/usr/local/bin/sbin:$PATH"
 export PATH="/usr/local/opt/openssl/bin:$PATH"
 export PATH="~/google-cloud-sdk/bin:$PATH"
-export PATH="~/Work/infrastructure/quickcommands:$PATH"
 
 export LDFLAGS="-L/usr/local/opt:$PATH"
 
