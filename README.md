@@ -23,7 +23,7 @@ To update all the installed dependencies run the `update.sh` script by typing in
 ./update.sh
 ```
 
-What it sets up
+What it downloads
 ---------------
 
 Terminal tools:
