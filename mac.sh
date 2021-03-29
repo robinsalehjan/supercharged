@@ -98,4 +98,3 @@ mas install 441258766 # Magnet
 mas install 409203825 # Numbers
 mas install 668208984 # Giphy
 
-gcloud components install kubectl
