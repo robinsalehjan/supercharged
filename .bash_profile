@@ -46,7 +46,7 @@ alias mkdir="mkdir -pv"
 alias ..="cd ../"
 alias f="open -a Finder ./"
 alias c="clear"
-alias cdp="cd ~/Personal"
+alias cdp="cd ~/Personal/Projects"
 alias cdw="cd ~/Work"
 
 gb() { git branch; }
