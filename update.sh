@@ -1,3 +1,5 @@
+#!/bin/sh
+
 cp ~/.gitconfig .
 cp ~/.gitignore_global .
 cp ~/.bash_profile .

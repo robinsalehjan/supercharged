@@ -1,3 +1,5 @@
+#!/bin/sh
+
 mv .bash_profile ~/
 mv .gitconfig ~/
 mv .gitignore_global ~/
