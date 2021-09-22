@@ -8,9 +8,10 @@ export PATH="/usr/local/bin/sbin:$PATH"
 export PATH="/usr/local/opt/openssl/bin:$PATH"
 export PATH="~/google-cloud-sdk/bin:$PATH"
 export PATH="/usr/local/opt/python@3.8/bin:$PATH"
-export LDFLAGS="-L/usr/local/opt:$PATH"
 
+export LDFLAGS="-L/usr/local/opt:$PATH"
 export SSH_KEY_PATH="~/.ssh/"
+
 export CLOUDSDK_PYTHON="/usr/local/bin/python2"
 
 eval $(keychain --eval ~/.ssh/id_rsa)
