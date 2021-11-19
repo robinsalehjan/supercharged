@@ -58,3 +58,4 @@ cd() { builtin cd "$@"; ll; }
 mcd () { mkdir -p "$1" && cd "$1"; }
 myps() { ps $@ -u $USER -o pid,%cpu,%mem,start,time,bsdtime,command ; }
 cleandd() { rm -rf ~/Library/Developer/Xcode/DerivedData/**; }
+code () { VSCODE_CWD="$PWD" open -n -b "com.microsoft.VSCode" --args $* ;}
