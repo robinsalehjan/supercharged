@@ -73,6 +73,7 @@ brew "mas"
 brew "psqlodbc"
 brew "openjdk"
 brew "kubectx"
+brew "proxyman"
 
 cask "google-cloud-sdk"
 cask "docker"
