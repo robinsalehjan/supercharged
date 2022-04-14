@@ -74,6 +74,8 @@ brew "psqlodbc"
 brew "openjdk"
 brew "kubectx"
 brew "proxyman"
+brew "watchman"
+brew "ant"
 
 cask "google-cloud-sdk"
 cask "docker"
