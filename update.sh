@@ -11,4 +11,6 @@ echo "[brew cask]: UPDATING OUTDATED CASKS"
 brew upgrade --cask
 brew cleanup
 
+softwareupdate --all --install
+
 gcloud components update
