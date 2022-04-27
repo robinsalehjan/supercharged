@@ -76,6 +76,7 @@ brew "kubectx"
 brew "proxyman"
 brew "watchman"
 brew "ant"
+brew "raycast"
 
 cask "google-cloud-sdk"
 cask "docker"
