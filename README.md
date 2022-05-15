@@ -1,7 +1,7 @@
 # supercharged
 supercharged is a set of bash scripts that I use to set up my MacBook for development. The script utilitses `brew` to install system dependencies and `mas` to install apps from the App Store.
 
-The script is idempotent and will upgrade existings dependency instead of overwriting the symlink.
+The script is idempotent and will upgrade existings dependencies instead of overwriting the symlink.
 
 Install
 -------
