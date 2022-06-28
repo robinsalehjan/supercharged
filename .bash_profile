@@ -15,8 +15,11 @@ export SSH_KEY_PATH="~/.ssh/"
 
 export CLOUDSDK_PYTHON="/usr/local/bin/python2"
 
-eval $(keychain --eval ~/.ssh/id_rsa)
 eval "$(rbenv init -)"
+eval "$(nodenv init -)"
+eval "$(pyenv init -)"
+
+eval $(keychain --eval ~/.ssh/id_rsa)
 
 if [[ -n $SSH_CONNECTION ]]; then
     export EDITOR='vim'
