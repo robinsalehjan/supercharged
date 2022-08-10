@@ -77,6 +77,7 @@ brew "proxyman"
 brew "watchman"
 brew "ant"
 brew "raycast"
+brew "awscli"
 
 cask "google-cloud-sdk"
 cask "docker"
