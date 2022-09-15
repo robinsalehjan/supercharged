@@ -72,10 +72,8 @@ brew "pyenv"
 brew "nodenv"
 brew "mas"
 brew "psqlodbc"
-brew "openjdk"
 brew "proxyman"
 brew "watchman"
-brew "ant"
 brew "raycast"
 brew "awscli"
 
@@ -97,12 +95,10 @@ fancy_echo "You have to sign in to your App Store account to complete the proces
 read -p "Enter your Apple ID: " apple_id
 mas signin apple_id
 
-mas install 409203825 # Numbers
-mas install 960276676 # Taurine
-mas install 1472777122 # Honey
 mas install 409201541 # Pages
-mas install 668208984 # GIPHY
+mas install 409203825 # Numbers
 mas install 409183694 # Keynote
-mas install 1482280932 # ViaTrumf
+mas install 960276676 # Taurine
 mas install 441258766 # Magnet
-mas install 1000397973 # Wallcat
+mas install 1482280932 # ViaTrumf
+mas install 668208984 # GIPHY
