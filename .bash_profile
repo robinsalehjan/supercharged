@@ -15,6 +15,7 @@ export SSH_KEY_PATH="~/.ssh/"
 
 export CLOUDSDK_PYTHON="/usr/local/bin/python2"
 
+eval "$(/opt/homebrew/bin/brew shellenv)"
 eval "$(rbenv init -)"
 eval "$(nodenv init -)"
 eval "$(pyenv init -)"
