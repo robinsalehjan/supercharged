@@ -84,16 +84,3 @@ EOF
 
 fancy_echo "Installing python@2 from github"
 brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/86a44a0a552c673a05f11018459c9f5faae3becc/Formula/python@2.rb
-
-fancy_echo "You have to sign in to your App Store account to complete the process"
-
-read -p "Enter your Apple ID: " apple_id
-mas signin apple_id
-
-mas install 409201541 # Pages
-mas install 409203825 # Numbers
-mas install 409183694 # Keynote
-mas install 960276676 # Taurine
-mas install 441258766 # Magnet
-mas install 1482280932 # ViaTrumf
-mas install 668208984 # GIPHY
