@@ -73,7 +73,6 @@ brew "nodenv"
 brew "mas"
 brew "psqlodbc"
 brew "watchman"
-brew "raycast"
 brew "awscli"
 
 cask "google-cloud-sdk"
