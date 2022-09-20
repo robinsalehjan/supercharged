@@ -79,6 +79,3 @@ cask "tidal"
 cask "fork"
 cask "visual-studio-code"
 EOF
-
-fancy_echo "Installing python@2 from github"
-brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/86a44a0a552c673a05f11018459c9f5faae3becc/Formula/python@2.rb
