@@ -78,7 +78,6 @@ cask "docker"
 cask "tidal"
 cask "fork"
 cask "visual-studio-code"
-cask "slack"
 EOF
 
 fancy_echo "Installing python@2 from github"
