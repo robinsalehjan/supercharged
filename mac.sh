@@ -86,6 +86,3 @@ sudo xcodebuild -license
 fancy_echo "Installing python 2.7.18 through pyenv"
 pyenv install 2.7.18
 pyenv global 2.7.18
-
-fancy_echo "exporting python 2.7.18 from pyenv into PATH"
-export PATH="$(pyenv root)/versions/2.7.18/bin:$PATH"
