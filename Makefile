@@ -6,13 +6,13 @@ help:
 	@echo "update - update existing dependencies and bash profile"
 
 setup:
-	@echo "Moving .bash_profile to home directory"
+	@echo "Copying contents of .bash_profile to home directory"
 	@cp .bash_profile ~/
 	
-	@echo "Moving .gitconfig to home directory"
+	@echo "Copying contents of .gitconfig to home directory"
 	@cp .gitconfig ~/
 	
-	@echo "Moving .gitignore_global to home directory"
+	@echo "Copying contents of .gitignore_global to home directory"
 	@cp .gitignore_global ~/
 	
 	@echo "Installing developer tools via 'xcode-select --install'"
@@ -22,13 +22,13 @@ setup:
 	./mac.sh
 
 update:
-	@echo "Copying ~/.bash_profile to current directory"
+	@echo "Copying contents of .gitconfig from home directory"
 	@cp ~/.gitconfig .
 	
-	@echo "Copying ~/.gitignore_global to current directory"
+	@echo "Copying contents of .gitignore_global from home directory
 	@cp ~/.gitignore_global .
 	
-	@echo "Copying ~/.bash_profile to current directory"
+	@echo "Copying contents of .bash_profile from home directory
 	@cp ~/.bash_profile .
 
 	@echo "Running update.sh script to update dependencies and bash profile"
