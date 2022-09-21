@@ -25,10 +25,10 @@ update:
 	@echo "Copying contents of .gitconfig from home directory"
 	@cp ~/.gitconfig .
 	
-	@echo "Copying contents of .gitignore_global from home directory
+	@echo "Copying contents of .gitignore_global from home directory"
 	@cp ~/.gitignore_global .
 	
-	@echo "Copying contents of .bash_profile from home directory
+	@echo "Copying contents of .bash_profile from home directory"
 	@cp ~/.bash_profile .
 
 	@echo "Running update.sh script to update dependencies and bash profile"
