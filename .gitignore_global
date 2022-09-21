@@ -1,10 +1,2 @@
-# General
 *.DS_Store
-
-# Environment
 *.env
-*.tool-versions
-
-# Python
-venv
-__pycache__/
