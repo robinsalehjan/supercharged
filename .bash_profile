@@ -11,7 +11,7 @@ export PATH="~/google-cloud-sdk/bin:$PATH"
 export LDFLAGS="-L/usr/local/opt:$PATH"
 export SSH_KEY_PATH="~/.ssh/"
 
-export CLOUDSDK_PYTHON="$(pyenv root)/versions/2.7.18/bin:$PATH"
+export CLOUDSDK_PYTHON=$(which python3)
 
 eval "$(/opt/homebrew/bin/brew shellenv)"
 eval "$(rbenv init -)"

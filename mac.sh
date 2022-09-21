@@ -85,4 +85,6 @@ sudo xcodebuild -license
 
 fancy_echo "Installing python 2.7.18 through pyenv"
 pyenv install 2.7.18
-pyenv global 2.7.18
+
+fancy_echo "Installing python 3.10.6 through pyenv"
+pyenv install 3.10.6
