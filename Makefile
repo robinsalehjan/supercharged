@@ -7,13 +7,13 @@ help:
 
 setup:
 	@echo "Moving .bash_profile to home directory"
-	@mv .bash_profile ~/
+	@cp .bash_profile ~/
 	
 	@echo "Moving .gitconfig to home directory"
-	@mv .gitconfig ~/
+	@cp .gitconfig ~/
 	
 	@echo "Moving .gitignore_global to home directory"
-	@mv .gitignore_global ~/
+	@cp .gitignore_global ~/
 	
 	@echo "Installing developer tools via 'xcode-select --install'"
 	@xcode-select --install

@@ -1,9 +1,5 @@
 #!/bin/sh
 
-cp . ~/.gitconfig 2>/dev/null
-cp . ~/.gitignore_global 2>/dev/null
-cp . ~/.bash_profile 2>/dev/null
-
 fancy_echo() {
   local fmt="$1"; shift
 
