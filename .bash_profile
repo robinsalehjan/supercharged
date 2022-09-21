@@ -48,8 +48,7 @@ alias mkdir="mkdir -pv"
 alias ..="cd ../"
 alias f="open -a Finder ./"
 alias c="clear"
-alias cdp="cd ~/Repositories/Personal"
-alias cdw="cd ~/Repositories/Work"
+alias cdp="cd ~/Repositories"
 
 gb() { git branch; }
 gcb() { git checkout "$1"; }
