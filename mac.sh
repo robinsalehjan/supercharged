@@ -36,10 +36,10 @@ gem_install_or_update() {
 
 if ! command -v brew >/dev/null; then
   fancy_echo "Installing Homebrew ..."
-    curl -fsS \
-      'https://raw.githubusercontent.com/Homebrew/install/master/install' | ruby
-
-    export PATH="/usr/local/bin:$PATH"
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  fancy_echo '# Set PATH, MANPATH, etc., for Homebrew.' >> /Users/robinsalehjan/.zprofile
+  fancy_echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> /Users/robinsalehjan/.zprofile
+  eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
 if brew list | grep -Fq brew-cask; then
