@@ -1,5 +1,5 @@
 # supercharged
-This is a set of scripts wrapped up in a Makefile that I use to boost my MacBook environment for development. It will install the application and dependencies below via `homebrew` along with `xcode`, `python 2.7.18` and `python 3.10.6`. 
+This is a set of scripts wrapped up in a Makefile that I use to boost my MacBook environment for development. It will install the application and dependencies below via `homebrew` along with `python 2.7.18` and `python 3.10.6`. The google cloud sdk depends on python 3 so by default the global version of python will be set to `3.10.6` via `pyenv`.
 
 This script will also configure your environment in the terminal with my `.bash_profile`.
 
@@ -25,8 +25,6 @@ fork
 visual-studio-code
 ```
 
-
-
 How to use
 -------
 
@@ -35,8 +33,7 @@ git clone git@github.com:robinsalehjan/supercharged.git
 cd supercharged && make setup
 ```
 
-To keep my system dependencies on the bleeding edge of technology I sometimes run:
-
+Update all dependencies
 ```
 make update
 ```
