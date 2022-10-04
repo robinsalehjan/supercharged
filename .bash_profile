@@ -13,7 +13,7 @@ export PATH="~/google-cloud-sdk/bin:$PATH"
 export CLOUDSDK_PYTHON=$(which python3)
 
 eval "$(/opt/homebrew/bin/brew shellenv)"
-eval $(keychain --eval ~/.ssh/id_rsa)
+eval $(keychain --eval ~/.ssh/id)
 eval "$(rbenv init -)"
 eval "$(nodenv init -)"
 eval "$(pyenv init -)"
