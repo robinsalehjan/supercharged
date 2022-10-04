@@ -74,9 +74,6 @@ cask "fork"
 cask "visual-studio-code"
 EOF
 
-fancy_echo "Agree to xcodebuild license"
-sudo xcodebuild -license
-
 fancy_echo "Installing python 2.7.18 through pyenv"
 pyenv install 2.7.18
 

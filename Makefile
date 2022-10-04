@@ -15,9 +15,6 @@ setup:
 	@echo "Copying contents of .gitignore_global to home directory"
 	@cp .gitignore_global ~/
 	
-	@echo "Installing developer tools via 'xcode-select --install'"
-	@xcode-select --install
-
 	@echo "Running mac.sh script to install dependencies and setup bash profile"
 	./mac.sh
 
