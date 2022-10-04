@@ -7,7 +7,7 @@ help:
 	@echo "update - update existing dependencies"
 
 setup: setup_profile
-	@echo "Running mac.sh script to install dependencies and setup bash profile"
+	@echo "Running mac.sh script to install dependencies"
 	./mac.sh
 
 setup_profile:
