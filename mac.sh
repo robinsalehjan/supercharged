@@ -74,6 +74,8 @@ cask "fork"
 cask "visual-studio-code"
 EOF
 
+xcode-select --install
+
 fancy_echo "Installing python 2.7.18 through pyenv"
 pyenv install 2.7.18
 
