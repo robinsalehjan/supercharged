@@ -5,10 +5,6 @@ export LSCOLORS=ExFxBxDxCxegedabagacad
 export PS1="\n\u@\h:\e[1;31m \w \[$(tput sgr0)\]"
 export LDFLAGS="-L/usr/local/opt:$PATH"
 export SSH_KEY_PATH="~/.ssh/"
-
-export PATH="/usr/local/bin/sbin:$PATH"
-export PATH="/usr/local/opt/openssl/bin:$PATH"
-export PATH="~/google-cloud-sdk/bin:$PATH"
-
 export CLOUDSDK_PYTHON=$(which python3)
+export PATH="/usr/local/bin/sbin:/usr/local/opt/openssl/bin:~/google-cloud-sdk/bin:$PATH"
 
