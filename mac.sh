@@ -65,6 +65,7 @@ brew "rbenv"
 brew "pyenv"
 brew "nodenv"
 brew "watchman"
+brew "groff"
 brew "awscli"
 
 cask "google-cloud-sdk"
