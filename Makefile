@@ -16,6 +16,9 @@ setup_profile:
 	
 	@echo "Copying contents of .gitignore_global to home directory"
 	@cp .gitignore_global ~/
+
+	@echo "Copying contents of .bashrc to home directory"
+	@cp .bashrc ~/
 	
 	@echo "Copying contents of .bash_profile to home directory"
 	@cp .bash_profile ~/
