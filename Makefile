@@ -3,7 +3,7 @@ SHELL := /bin/bash
 
 help:
 	@echo "setup - install dependencies and configure bash profile"
-	@echo "setup_profile - copy .gitconfig, .gitignore_global and .bash_profile to home directory"
+	@echo "setup_profile - copy .gitconfig, .gitignore_global, .bashrc and .bash_profile to home directory"
 	@echo "update - update existing dependencies"
 
 setup: setup_profile
