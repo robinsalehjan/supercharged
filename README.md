@@ -17,6 +17,7 @@ rbenv
 pyenv
 nodenv
 watchman
+groff
 awscli
 google-cloud-sdk
 docker
