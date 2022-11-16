@@ -16,9 +16,6 @@ bash-git-prompt
 rbenv
 pyenv
 nodenv
-watchman
-groff
-awscli
 google-cloud-sdk
 docker
 tidal

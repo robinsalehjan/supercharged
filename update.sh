@@ -1,9 +1,9 @@
 #!/bin/sh
 
-echo "[brew]: UPDATING OUTDATED PACKAGES"
+echo '[brew]: UPDATING OUTDATED PACKAGES'
 brew update && brew upgrade `brew outdated`
 
-echo "[brew cask]: UPDATING OUTDATED CASKS"
+echo '[brew cask]: UPDATING OUTDATED CASKS'
 brew upgrade --cask
 brew cleanup
 

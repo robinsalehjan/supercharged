@@ -35,17 +35,17 @@ gem_install_or_update() {
 }
 
 if ! command -v brew >/dev/null; then
-  fancy_echo "Installing Homebrew ..."
+  fancy_echo 'Installing Homebrew ...'
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
 if brew list | grep -Fq brew-cask; then
-  fancy_echo "Uninstalling old Homebrew-Cask ..."
+  fancy_echo 'Uninstalling old Homebrew-Cask ...'
   brew uninstall --force brew-cask
 fi
 
-fancy_echo "Updating Homebrew formulae ..."
+fancy_echo 'Updating Homebrew formulae ...'
 brew update --force # https://github.com/Homebrew/brew/issues/1151
 brew bundle --file=- <<EOF
 tap "thoughtbot/formulae"
@@ -64,9 +64,6 @@ brew "bash-git-prompt"
 brew "rbenv"
 brew "pyenv"
 brew "nodenv"
-brew "watchman"
-brew "groff"
-brew "awscli"
 
 cask "google-cloud-sdk"
 cask "docker"
@@ -75,11 +72,14 @@ cask "fork"
 cask "visual-studio-code"
 EOF
 
+fancy_echo 'Installing `xcode-select` via pyenv'
 xcode-select --install
 
-fancy_echo "Installing python 2.7.18 through pyenv"
+fancy_echo 'Installing python 2.7.18 through pyenv'
 pyenv install 2.7.18
 
-fancy_echo "Installing python 3.10.6 through pyenv"
+fancy_echo 'Installing python 3.10.6 through pyenv'
 pyenv install 3.10.6
+
+fancy_echo 'Set python 3.10.6 through pyenv'
 pyenv global 3.10.6
