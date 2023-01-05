@@ -1,15 +1,17 @@
-eval $(/opt/homebrew/bin/brew shellenv)
-eval $(keychain --eval ~/.ssh/id)
-eval $(rbenv init -)
-eval $(nodenv init -)
-eval $(pyenv init -)
+#!/bin/sh
+
+eval "$(/opt/homebrew/bin/brew shellenv)"
+eval "$(keychain --eval ~/.ssh/id)"
+eval "$(rbenv init -)"
+eval "$(nodenv init -)"
+eval "$(pyenv init -)"
 
 if [[ -n $SSH_CONNECTION ]]; then
     export EDITOR='vim'
 fi
 
 if [ -f $(brew --prefix)/etc/bash_completion ]; then
-  . $(brew --prefix)/etc/bash_completion
+  . "$(brew --prefix)/etc/bash_completion"
 fi
 
 [[ -s `brew --prefix`/etc/autojump.sh ]] && . `brew --prefix`/etc/autojump.sh
@@ -42,6 +44,6 @@ gpus() { git push origin "$1"; }
 gpul() { git pull origin "$1"; }
 cd() { builtin cd "$@"; ll; }
 mcd () { mkdir -p "$1" && cd "$1"; }
-myps() { ps $@ -u $USER -o pid,%cpu,%mem,start,time,bsdtime,command ; }
+myps() { ps "$@" -u "$USER" -o pid,%cpu,%mem,start,time,bsdtime,command; }
 cleandd() { rm -rf ~/Library/Developer/Xcode/DerivedData/**; }
-code () { VSCODE_CWD="$PWD" open -n -b 'com.microsoft.VSCode' --args $* ;}
+code () { VSCODE_CWD="$PWD" open -n -b 'com.microsoft.VSCode' --args "$*"; }
