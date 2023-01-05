@@ -31,7 +31,12 @@ git clone git@github.com:robinsalehjan/supercharged.git
 cd supercharged && make setup
 ```
 
-Update all dependencies
+To supercharge the MacBook
+```
+make setup
+```
+
+To update installed apps and tools
 ```
 make update
 ```
