@@ -23,20 +23,13 @@ fork
 visual-studio-code
 ```
 
-How to use
--------
-
+To supercharge the MacBook for the first time
 ```
 git clone git@github.com:robinsalehjan/supercharged.git
 cd supercharged && make setup
 ```
 
-To supercharge the MacBook
-```
-make setup
-```
-
-To update installed apps and tools
+To update all the installed apps and tools
 ```
 make update
 ```
