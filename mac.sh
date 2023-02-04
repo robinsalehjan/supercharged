@@ -64,13 +64,15 @@ brew "bash-git-prompt"
 brew "rbenv"
 brew "pyenv"
 brew "nodenv"
-brew "slack"
 
 cask "google-cloud-sdk"
 cask "docker"
 cask "tidal"
 cask "fork"
 cask "visual-studio-code"
+cask "intellij-idea-ce"
+cask "slack"
+cask "postman"
 EOF
 
 fancy_echo 'Installing `xcode-select` via pyenv'
