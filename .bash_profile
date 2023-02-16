@@ -2,6 +2,7 @@
 
 export LANG=en_US.UTF-8
 export BASH_SILENCE_DEPRECATION_WARNING=1
+export HOMEBREW_NO_ANALYTICS=1
 export CLICOLOR=1
 export LSCOLORS=ExFxBxDxCxegedabagacad
 export PS1='\n\u@\h:\e[1;31m \w \[$(tput sgr0)\]'
