@@ -64,6 +64,8 @@ brew "bash-git-prompt"
 brew "rbenv"
 brew "pyenv"
 brew "nodenv"
+brew "postgresql@15"
+
 
 cask "google-cloud-sdk"
 cask "docker"
