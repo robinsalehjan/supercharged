@@ -9,7 +9,6 @@ export PS1='\n\u@\h:\e[1;31m \w \[$(tput sgr0)\]'
 export LDFLAGS="-L/usr/local/opt:$PATH"
 export SSH_KEY_PATH='~/.ssh/'
 export CLOUDSDK_PYTHON="$(which python3)"
-export JAVA_HOME="~/.sdkman/candidates/java/current/bin/java"
 export PATH="/usr/local/bin/sbin:/usr/local/opt/openssl/bin:~/google-cloud-sdk/bin:$PATH"
 
 source ~/.bashrc
