@@ -85,3 +85,7 @@ pyenv install 2.7.18
 
 fancy_echo 'Installing python 3.10.6 through pyenv'
 pyenv install 3.10.6
+
+fancy_echo 'Installing sdkman'
+curl -s "https://get.sdkman.io" | bash
+source "$HOME/.sdkman/bin/sdkman-init.sh"
