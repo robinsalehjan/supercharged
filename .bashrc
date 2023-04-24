@@ -6,6 +6,8 @@ eval "$(rbenv init -)"
 eval "$(nodenv init -)"
 eval "$(pyenv init -)"
 
+source ~/.sdkman/bin/sdkman-init.sh
+
 if [[ -n $SSH_CONNECTION ]]; then
     export EDITOR='vim'
 fi
