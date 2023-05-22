@@ -29,9 +29,7 @@ if [ -f "$(brew --prefix)/opt/bash-git-prompt/share/gitprompt.sh" ]; then
   source "$(brew --prefix)/opt/bash-git-prompt/share/gitprompt.sh"
 fi
 
-alias ls='ls -lGp'
-alias ll='ls -FGlAhp'
-alias la='ls -a -Gp'
+alias ls='ls -FGlAhp'
 alias cp='cp -iv'
 alias mv='mv -iv'
 alias mkdir='mkdir -pv'
@@ -40,12 +38,46 @@ alias f='open -a Finder ./'
 alias c='clear'
 alias cdr='cd ~/Repositories'
 
-gb() { git branch; }
-gcb() { git checkout "$1"; }
-gpus() { git push origin "$1"; }
-gpul() { git pull origin "$1"; }
-cd() { builtin cd "$@"; ll; }
-mcd () { mkdir -p "$1" && cd "$1"; }
-myps() { ps "$@" -u "$USER" -o pid,%cpu,%mem,start,time,bsdtime,command; }
-cleandd() { rm -rf ~/Library/Developer/Xcode/DerivedData/**; }
-code () { VSCODE_CWD="$PWD" open -n -b 'com.microsoft.VSCode' --args "$*"; }
+gb() { 
+  git branch; 
+}
+
+gcb() { 
+  git checkout "$1"
+}
+
+gpus() { 
+  git push origin "$1"
+}
+
+gpul() { 
+  git pull origin "$1"
+}
+
+myps() { 
+  ps "$@" -u "$USER" -o pid,%cpu,%mem,start,time,bsdtime,command
+}
+
+code() { 
+  VSCODE_CWD="$PWD" open -n -b 'com.microsoft.VSCode' --args "$*"
+}
+
+clean-spm-caches() {
+  echo 'Clearing SPM caches'
+  rm -rf '~/Library/Caches/org.swift.swiftpm/*'
+}
+
+clean-xcode-builds() {
+  echo 'Removing derived data'
+  rm -rf ~/Library/Developer/Xcode/DerivedData
+  echo "Removing module cache"
+  rm -rf "$(getconf DARWIN_USER_CACHE_DIR)/org.llvm.clang/ModuleCache"
+}
+
+nuke-xcode() {
+  killall Xcode > /dev/null
+  clean-xcode-builds
+  echo 'Removing developer tool caches'
+  rm -rf ~/Library/Caches/com.apple.dt.Xcode
+  clean-spm-caches
+}
