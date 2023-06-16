@@ -62,22 +62,22 @@ code() {
   VSCODE_CWD="$PWD" open -n -b 'com.microsoft.VSCode' --args "$*"
 }
 
-clean-spm-caches() {
+clean_spm_caches() {
   echo 'Clearing SPM caches'
   rm -rf '~/Library/Caches/org.swift.swiftpm/*'
 }
 
-clean-xcode-builds() {
+clean_xcode_builds() {
   echo 'Removing derived data'
   rm -rf ~/Library/Developer/Xcode/DerivedData
   echo "Removing module cache"
   rm -rf "$(getconf DARWIN_USER_CACHE_DIR)/org.llvm.clang/ModuleCache"
 }
 
-nuke-xcode() {
+nuke_xcode() {
   killall Xcode > /dev/null
-  clean-xcode-builds
+  clean_xcode_builds
   echo 'Removing developer tool caches'
   rm -rf ~/Library/Caches/com.apple.dt.Xcode
-  clean-spm-caches
+  clean_spm_caches
 }
