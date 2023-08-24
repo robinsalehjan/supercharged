@@ -38,40 +38,58 @@ alias f='open -a Finder ./'
 alias c='clear'
 alias cdr='cd ~/Repositories'
 
-gb() { 
-  git branch; 
+gb() {
+  git branch;
 }
 
-gcb() { 
+gcb() {
   git checkout "$1"
 }
 
-gpus() { 
+gpus() {
   git push origin "$1"
 }
 
-gpul() { 
+gpul() {
   git pull origin "$1"
 }
 
-myps() { 
+myps() {
   ps "$@" -u "$USER" -o pid,%cpu,%mem,start,time,bsdtime,command
 }
 
-code() { 
+code() {
   VSCODE_CWD="$PWD" open -n -b 'com.microsoft.VSCode' --args "$*"
 }
 
 clean_spm_caches() {
-  echo 'Clearing SPM caches'
+  echo 'Deleting SPM caches'
   rm -rf '~/Library/Caches/org.swift.swiftpm/*'
+  echo 'Success!'
 }
 
 clean_xcode_builds() {
-  echo 'Removing derived data'
+  echo 'Deleting DerivedData folder'
   rm -rf ~/Library/Developer/Xcode/DerivedData
   echo "Removing module cache"
   rm -rf "$(getconf DARWIN_USER_CACHE_DIR)/org.llvm.clang/ModuleCache"
+  echo 'Success!'
+}
+
+clean_core_simulator() {
+  echo 'Killing CoreSimulator zombie processes'
+  pids=`ps axo pid,command | grep CoreSimulator | grep -v "grep CoreSimulator" | cut -c 1-5`
+
+  if [ "$1" = "go" ]; then
+    kill -9 $pids
+  elif [ "$1" = "echo" ]; then
+    echo $pids
+  else
+    pid_param=`echo $pids | tr -s ' ' ','`
+    ps -p $pid_param -o pid,command
+  fi
+
+  echo 'Success!'
 }
 
 nuke_xcode() {
@@ -80,4 +98,5 @@ nuke_xcode() {
   echo 'Removing developer tool caches'
   rm -rf ~/Library/Caches/com.apple.dt.Xcode
   clean_spm_caches
+  clean_core_simulator
 }
