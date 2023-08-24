@@ -65,7 +65,7 @@ brew "rbenv"
 brew "pyenv"
 brew "nodenv"
 brew "postgresql@15"
-
+brew "reveal"
 
 cask "google-cloud-sdk"
 cask "docker"
