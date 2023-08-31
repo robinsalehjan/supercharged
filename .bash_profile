@@ -12,3 +12,4 @@ export CLOUDSDK_PYTHON="$(which python3)"
 export PATH="/usr/local/bin/sbin:/usr/local/opt/openssl/bin:~/google-cloud-sdk/bin:$PATH"
 
 source ~/.bashrc
+test -f ~/.secrets && source ~/.secrets
