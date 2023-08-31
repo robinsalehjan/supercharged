@@ -67,6 +67,7 @@ brew "nodenv"
 brew "postgresql@15"
 brew "reveal"
 
+cask "copilot-for-xcode"
 cask "google-cloud-sdk"
 cask "docker"
 cask "tidal"
