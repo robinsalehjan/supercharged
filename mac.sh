@@ -66,6 +66,7 @@ brew "pyenv"
 brew "nodenv"
 brew "postgresql@15"
 brew "reveal"
+brew "xcodesorg/made/xcodes"
 
 cask "copilot-for-xcode"
 cask "google-cloud-sdk"
