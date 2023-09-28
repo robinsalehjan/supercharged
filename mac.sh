@@ -66,6 +66,8 @@ brew "pyenv"
 brew "nodenv"
 brew "reveal"
 brew "xcodesorg/made/xcodes"
+brew "kubectl"
+brew "kubectx"
 
 cask "copilot-for-xcode"
 cask "google-cloud-sdk"
