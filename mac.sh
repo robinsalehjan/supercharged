@@ -69,6 +69,7 @@ brew "xcodesorg/made/xcodes"
 brew "kubectl"
 brew "kubectx"
 
+cask "wireshark"
 cask "copilot-for-xcode"
 cask "google-cloud-sdk"
 cask "docker"
