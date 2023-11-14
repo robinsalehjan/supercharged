@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 echo 'UPDATING BREW PACKAGES'
 brew update && brew upgrade `brew outdated`

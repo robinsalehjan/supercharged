@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 export LANG=en_US.UTF-8
 export BASH_SILENCE_DEPRECATION_WARNING=1

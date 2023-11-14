@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 eval "$(/opt/homebrew/bin/brew shellenv)"
 eval "$(keychain --eval ~/.ssh/id)"
