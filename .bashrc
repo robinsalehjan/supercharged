@@ -1,10 +1,7 @@
 #!/bin/bash
 
 eval "$(/opt/homebrew/bin/brew shellenv)"
-eval "$(keychain --eval ~/.ssh/id)"
-eval "$(rbenv init -)"
-eval "$(nodenv init -)"
-eval "$(pyenv init -)"
+eval "$(keychain --eval $HOME/.ssh/id)"
 
 source ~/.sdkman/bin/sdkman-init.sh
 

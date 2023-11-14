@@ -52,25 +52,22 @@ tap "thoughtbot/formulae"
 tap "homebrew/services"
 tap "homebrew/cask"
 
+brew "coreutils"
 brew "git"
+brew "curl"
 brew "openssl"
 brew "libyaml"
-brew "coreutils"
 brew "keychain"
 brew "htop"
 brew "nmap"
 brew "bash-completion"
 brew "bash-git-prompt"
-brew "rbenv"
-brew "pyenv"
-brew "nodenv"
-brew "reveal"
+brew "asdf"
 brew "xcodesorg/made/xcodes"
 brew "kubectl"
 brew "kubectx"
 
 cask "wireshark"
-cask "copilot-for-xcode"
 cask "google-cloud-sdk"
 cask "docker"
 cask "tidal"
@@ -80,14 +77,17 @@ cask "slack"
 cask "postman"
 EOF
 
-fancy_echo 'Installing `xcode-select` via pyenv'
-xcode-select --install
+fancy_echo 'Add ruby plugin to asdf'
+asdf plugin add ruby
 
-fancy_echo 'Installing python 2.7.18 through pyenv'
-pyenv install 2.7.18
+fancy_echo 'Add nodejs plugin to asdf'
+asdf plugin add nodejs
 
-fancy_echo 'Installing python 3.10.6 through pyenv'
-pyenv install 3.10.6
+fancy_echo 'Add python plugin to asdf'
+asdf plugin add python
+
+fancy_echo 'Installing python, ruby and nodejs versions specified in .tool-versions'
+asdf install
 
 fancy_echo 'Installing sdkman'
 curl -s "https://get.sdkman.io" | bash
