@@ -36,7 +36,7 @@ alias mkdir='mkdir -pv'
 alias ..='cd ../'
 alias f='open -a Finder ./'
 alias c='clear'
-alias cdr='cd ~/Repositories'
+alias cdr='cd $HOME/Repositories'
 
 gb() {
   git branch;

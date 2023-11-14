@@ -11,17 +11,20 @@ setup: setup_profile
 	./mac.sh
 
 setup_profile:
-	@echo "Copying contents of .gitconfig to home directory"
-	@cp .gitconfig ~/
+	@echo "Copying contents of .gitconfig to $(HOME)"
+	@cp .gitconfig $(HOME)
 	
-	@echo "Copying contents of .gitignore_global to home directory"
-	@cp .gitignore_global ~/
+	@echo "Copying contents of .gitignore_global to $(HOME)"
+	@cp .gitignore_global $(HOME)
 
-	@echo "Copying contents of .bashrc to home directory"
-	@cp .bashrc ~/
+	@echo "Copying contents of .tool-versions to $(HOME)"
+	@cp .tool-versions $(HOME)
+
+	@echo "Copying contents of .bashrc to $(HOME)"
+	@cp .bashrc $(HOME)
 	
-	@echo "Copying contents of .bash_profile to home directory"
-	@cp .bash_profile ~/
+	@echo "Copying contents of .bash_profile to $(HOME)"
+	@cp .bash_profile $(HOME)
 
 update:
 	@echo "Running update.sh script to update dependencies and bash profile"
