@@ -4,26 +4,34 @@ This is a set of scripts wrapped up in a Makefile that I use to boost my MacBook
 This script will also configure your environment in the terminal with my `.bash_profile`.
 
 ```
-git
-openssl
-libyaml
 coreutils
+git
+curl
+openssl@3
+readline
+libyaml
+gmp
 keychain
 htop
 nmap
 bash-completion
 bash-git-prompt
-rbenv
-pyenv
-nodenv
+asdf
+xcodesorg/made/xcodes
+kubectl
+kubectx
+
+wireshark
 google-cloud-sdk
 docker
 tidal
 fork
 visual-studio-code
+slack
+postman
 ```
 
-To supercharge the MacBook for the first time
+To supercharge your MacBook for the first time
 ```
 git clone git@github.com:robinsalehjan/supercharged.git
 cd supercharged && make setup
