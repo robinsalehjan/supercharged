@@ -20,6 +20,9 @@ setup_profile:
 	@echo "Copying contents of .tool-versions to $(HOME)"
 	@cp .tool-versions $(HOME)
 
+	@echo "Copying contents of .envrc to $(HOME)"
+	@cp .envrc $(HOME)
+
 	@echo "Copying contents of .bashrc to $(HOME)"
 	@cp .bashrc $(HOME)
 	

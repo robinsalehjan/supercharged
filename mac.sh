@@ -6,15 +6,15 @@ fancy_echo() {
   printf "\n$fmt\n" "$@"
 }
 
+fancy_echo 'Setting up bash script'
 trap 'ret=$?; test $ret -ne 0 && printf "failed\n\n" >&2; exit $ret' EXIT
-
 set -e
+
+HOMEBREW_PREFIX="/usr/local"
 
 if [ ! -d "$HOME/.bin/" ]; then
   mkdir "$HOME/.bin"
 fi
-
-HOMEBREW_PREFIX="/usr/local"
 
 if [ -d "$HOMEBREW_PREFIX" ]; then
   if ! [ -r "$HOMEBREW_PREFIX" ]; then
@@ -79,17 +79,26 @@ cask "slack"
 cask "postman"
 EOF
 
-fancy_echo 'Add ruby plugin to asdf'
+fancy_echo 'asdf: adding ruby plugin'
 asdf plugin add ruby
 
-fancy_echo 'Add nodejs plugin to asdf'
+fancy_echo 'asdf: adding nodejs plugin'
 asdf plugin add nodejs
 
-fancy_echo 'Add python plugin to asdf'
+fancy_echo 'asdf: adding python plugin'
 asdf plugin add python
 
-fancy_echo 'Installing python, ruby and nodejs versions specified in .tool-versions'
+fancy_echo 'asdf: add direnv plugin'
+asdf plugin add direnv
+
+fancy_echo 'asdf: install all asdf tools specified in .tool-versions'
 asdf install
+
+fancy_echo 'asdf: setup direnv for bash'
+asdf direnv setup --shell bash --version latest
+
+fancy_echo 'asdf: allow direnv'
+asdf exec direnv allow
 
 fancy_echo 'Installing sdkman'
 curl -s "https://get.sdkman.io" | bash

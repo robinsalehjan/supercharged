@@ -4,6 +4,7 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 eval "$(keychain --eval $HOME/.ssh/id)"
 
 source ~/.sdkman/bin/sdkman-init.sh
+source "${XDG_CONFIG_HOME:-$HOME/.config}/asdf-direnv/bashrc"
 
 if [[ -n $SSH_CONNECTION ]]; then
     export EDITOR='vim'
