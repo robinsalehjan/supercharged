@@ -103,3 +103,9 @@ asdf exec direnv allow
 fancy_echo 'Installing sdkman'
 curl -s "https://get.sdkman.io" | bash
 source "$HOME/.sdkman/bin/sdkman-init.sh"
+
+fancy_echo 'direnv: create whitelist for certain directories'
+cp ../direnv.toml $HOME/.config/direnv/
+
+fancy_echo 'tmux: copying .tmux.conf file'
+cp ../.tmux.conf $HOME
