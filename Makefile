@@ -8,7 +8,7 @@ help:
 
 setup: setup_profile
 	@echo "Running mac.sh script to install dependencies"
-	./mac.sh
+	./scripts/mac.sh
 
 setup_profile:
 	@echo "Copying contents of .gitconfig to $(HOME)"
@@ -31,4 +31,4 @@ setup_profile:
 
 update:
 	@echo "Running update.sh script to update dependencies and bash profile"
-	./update.sh
+	./scripts/update.sh

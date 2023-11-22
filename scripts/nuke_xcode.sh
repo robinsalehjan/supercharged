@@ -38,3 +38,5 @@ nuke_xcode() {
   clean_spm_caches
   clean_core_simulator
 }
+
+nuke_xcode
