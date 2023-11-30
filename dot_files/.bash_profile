@@ -10,6 +10,9 @@ export PS1='\n\u@\h:\e[1;31m \w \[$(tput sgr0)\]'
 export SSH_KEY_PATH='$HOME/.ssh/'
 export CLOUDSDK_PYTHON="$(which python)"
 export PATH="/usr/local/bin/sbin:/opt/homebrew/bin:$PATH"
+# silence `direnv` when changing directories
+export DIRENV_LOG_FORMAT=
+
 
 source "/opt/homebrew/opt/asdf/libexec/asdf.sh"
 source "/opt/homebrew/opt/asdf/etc/bash_completion.d/asdf.bash"
