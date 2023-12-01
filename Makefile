@@ -32,6 +32,6 @@ setup_profile:
 	@echo "Copying contents of .bash_profile to $(HOME)"
 	@cp $(DOT_FILES_FOLDER_PATH)/.bash_profile $(HOME)
 
-update:
+update: setup_profile
 	@echo "Running update.sh script to update dependencies and bash profile"
 	$(SCRIPTS_FOLDER_PATH)/update.sh
