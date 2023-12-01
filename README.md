@@ -1,7 +1,5 @@
 # supercharged
-This is a set of scripts wrapped up in a Makefile that I use to boost my MacBook environment for development. It will install the application and dependencies below via `homebrew` along with `python 2.7.18` and `python 3.10.6`. The google cloud sdk depends on python 3 so by default the global version of python will be set to `3.10.6` via `pyenv`.
-
-This script will also configure your environment in the terminal with my `.bash_profile`.
+A set of scripts wrapped up in a Makefile that I use to boost my MacBook environment for development. It will install application and dependencies listed down below with `homebrew` along with customising your `bash_profile`.
 
 ```
 coreutils
