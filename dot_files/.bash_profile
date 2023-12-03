@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export SHELL=/usr/bin/bash
 export LANG=en_US.UTF-8
 export BASH_SILENCE_DEPRECATION_WARNING=1
 export HOMEBREW_NO_ANALYTICS=1
