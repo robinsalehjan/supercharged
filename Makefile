@@ -16,7 +16,7 @@ setup: setup_profile
 setup_profile:
 	@echo "Copying contents of .gitconfig to $(HOME)"
 	@cp $(DOT_FILES_FOLDER_PATH)/.gitconfig $(HOME)
-	
+
 	@echo "Copying contents of .gitignore_global to $(HOME)"
 	@cp $(DOT_FILES_FOLDER_PATH)/.gitignore_global $(HOME)
 
@@ -28,9 +28,12 @@ setup_profile:
 
 	@echo "Copying contents of .bashrc to $(HOME)"
 	@cp $(DOT_FILES_FOLDER_PATH)/.bashrc $(HOME)
-	
+
 	@echo "Copying contents of .bash_profile to $(HOME)"
 	@cp $(DOT_FILES_FOLDER_PATH)/.bash_profile $(HOME)
+
+	@echo "Copying contents of .bash_profile to $(HOME)"
+	@cp $(DOT_FILES_FOLDER_PATH)/.tmux.conf $(HOME)
 
 update: setup_profile
 	@echo "Running update.sh script to update dependencies and bash profile"
