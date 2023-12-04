@@ -3,6 +3,7 @@ direnv 2.32.3
 
 # ruby
 ruby 2.7.7
+ruby 3.2.2
 
 # node
 nodejs 21.1.0
