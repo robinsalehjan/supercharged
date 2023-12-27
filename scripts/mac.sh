@@ -68,6 +68,7 @@ brew "asdf"
 brew "xcodesorg/made/xcodes"
 brew "kubectl"
 brew "kubectx"
+brew "buildpacks/tap/pack"
 brew "tmux"
 
 cask "wireshark"
