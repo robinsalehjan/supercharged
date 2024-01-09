@@ -11,7 +11,3 @@ asdf plugin update --all
 
 echo 'UPDATING GCLOUD COMPONENTS'
 gcloud components update
-
-echo 'UPDATING SDKMAN'
-source $HOME/.sdkman/bin/sdkman-init.sh
-sdk update
