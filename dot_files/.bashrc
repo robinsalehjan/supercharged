@@ -1,6 +1,5 @@
 #!/bin/bash
 
-source ~/.sdkman/bin/sdkman-init.sh
 source "${XDG_CONFIG_HOME:-$HOME/.config}/asdf-direnv/bashrc"
 
 eval "$(/opt/homebrew/bin/brew shellenv)"

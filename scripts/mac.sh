@@ -88,6 +88,9 @@ asdf plugin add nodejs
 fancy_echo 'asdf: adding python plugin'
 asdf plugin add python
 
+fancy_echo 'asdf: adding java plugin'
+asdf plugin add java
+
 fancy_echo 'asdf: add direnv plugin'
 asdf plugin add direnv
 
@@ -99,7 +102,3 @@ asdf direnv setup --shell bash --version latest
 
 fancy_echo 'asdf: allow direnv'
 asdf exec direnv allow
-
-fancy_echo 'Installing sdkman'
-curl -s "https://get.sdkman.io" | bash
-source "$HOME/.sdkman/bin/sdkman-init.sh"
