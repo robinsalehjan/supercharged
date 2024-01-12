@@ -70,6 +70,7 @@ brew "kubectl"
 brew "kubectx"
 brew "buildpacks/tap/pack"
 brew "tmux"
+brew "spotify"
 
 cask "wireshark"
 cask "google-cloud-sdk"
