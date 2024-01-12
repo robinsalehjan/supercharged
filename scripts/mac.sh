@@ -69,6 +69,7 @@ brew "xcodesorg/made/xcodes"
 brew "kubectl"
 brew "kubectx"
 brew "tmux"
+brew "spotify"
 
 cask "wireshark"
 cask "google-cloud-sdk"
