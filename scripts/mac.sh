@@ -72,6 +72,7 @@ brew "buildpacks/tap/pack"
 brew "tmux"
 brew "spotify"
 
+cask "copilot-for-xcode"
 cask "wireshark"
 cask "google-cloud-sdk"
 cask "docker"
