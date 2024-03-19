@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 
 clean_spm_caches() {
   echo 'Deleting SPM caches'

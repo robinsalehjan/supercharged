@@ -1,5 +1,5 @@
 # supercharged
-A set of scripts wrapped up in a Makefile that I use to boost my MacBook environment for development. It will install application and dependencies listed down below with `homebrew` along with customising your `bash_profile`.
+A set of scripts wrapped up in a Makefile that I use to boost my MacBook environment for development. It will install application and dependencies listed down below with `homebrew` along with customizing your environment profile.
 
 ```
 coreutils
@@ -12,8 +12,6 @@ gmp
 keychain
 htop
 nmap
-bash-completion
-bash-git-prompt
 asdf
 xcodesorg/made/xcodes
 kubectl
