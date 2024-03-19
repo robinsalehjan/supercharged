@@ -10,6 +10,9 @@ fancy_echo 'Setting up bash script'
 trap 'ret=$?; test $ret -ne 0 && printf "failed\n\n" >&2; exit $ret' EXIT
 set -e
 
+fancy_echo 'Installing oh-my-zsh ...'
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
 HOMEBREW_PREFIX="/usr/local"
 
 if [ ! -d "$HOME/.bin/" ]; then
@@ -62,8 +65,6 @@ brew "gmp"
 brew "keychain"
 brew "htop"
 brew "nmap"
-brew "bash-completion"
-brew "bash-git-prompt"
 brew "asdf"
 brew "xcodesorg/made/xcodes"
 brew "kubectl"
@@ -79,6 +80,11 @@ cask "visual-studio-code"
 cask "slack"
 cask "postman"
 EOF
+
+fancy_echo 'Installing zsh themes and plugins'
+git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+git clone https://github.com/zsh-users/zsh-syntax-highlighting ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+git clone --depth=1 https://github.com/romkatv/powerlevel10k ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
 
 fancy_echo 'asdf: adding ruby plugin'
 asdf plugin add ruby
@@ -98,8 +104,8 @@ asdf plugin add direnv
 fancy_echo 'asdf: install all asdf tools specified in .tool-versions'
 asdf install
 
-fancy_echo 'asdf: setup direnv for bash'
-asdf direnv setup --shell bash --version latest
+fancy_echo 'asdf: setup direnv for zsh'
+asdf direnv setup --shell zsh --version latest
 
 fancy_echo 'asdf: allow direnv'
 asdf exec direnv allow
