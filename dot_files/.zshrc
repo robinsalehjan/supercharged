@@ -94,6 +94,9 @@ else
    export EDITOR='mvim'
 fi
 
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
 alias ls='ls -FGlAhp'
 alias cp='cp -iv'
 alias mv='mv -iv'
@@ -126,6 +129,3 @@ function myps() {
 function code() {
   VSCODE_CWD="$PWD" open -n -b 'com.microsoft.VSCode' --args "$*"
 }
-
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
