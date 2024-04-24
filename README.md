@@ -1,6 +1,7 @@
 # supercharged
 A set of scripts wrapped up in a Makefile that I use to boost my MacBook environment for development. It will install application and dependencies listed down below with `homebrew` along with customizing your environment profile.
 
+Packages installed with `brew`
 ```
 coreutils
 git
@@ -13,27 +14,43 @@ keychain
 htop
 nmap
 asdf
-xcodesorg/made/xcodes
+xcodes
 kubectl
 kubectx
+pack
+tmux
+spotify
+```
 
+Casks installed with `brew`
+```
+copilot-for-xcode
 wireshark
 google-cloud-sdk
 docker
-tidal
 fork
 visual-studio-code
 slack
 postman
 ```
 
-To supercharge your MacBook for the first time
+Plugins installed with `asdf`
+```
+ruby
+nodejs
+deno
+python
+java
+direnv
+```
+
+## Supercharging your MacBook
 ```
 git clone git@github.com:robinsalehjan/supercharged.git
 cd supercharged && make setup
 ```
 
-To update all the installed apps and tools
+## To update all the installed apps and tools
 ```
 make update
 ```
