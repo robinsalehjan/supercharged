@@ -71,6 +71,7 @@ brew "kubectl"
 brew "kubectx"
 brew "tmux"
 brew "spotify"
+brew "swiftlint"
 
 cask "wireshark"
 cask "google-cloud-sdk"

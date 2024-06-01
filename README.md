@@ -20,6 +20,7 @@ kubectx
 pack
 tmux
 spotify
+swiftlint
 ```
 
 Casks installed with `brew`
