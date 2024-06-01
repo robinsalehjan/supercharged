@@ -25,7 +25,6 @@ swiftlint
 
 Casks installed with `brew`
 ```
-copilot-for-xcode
 wireshark
 google-cloud-sdk
 docker
@@ -39,7 +38,6 @@ Plugins installed with `asdf`
 ```
 ruby
 nodejs
-deno
 python
 java
 direnv
