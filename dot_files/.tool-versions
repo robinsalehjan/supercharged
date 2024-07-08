@@ -12,5 +12,5 @@ nodejs 21.1.0
 python 3.10.0
 
 # java
-java adoptopenjdk-11.0.21+9
-java adoptopenjdk-18.0.2+101
+java latest:adoptopenjdk-11
+java latest:adoptopenjdk-18
