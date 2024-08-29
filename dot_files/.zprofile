@@ -5,5 +5,4 @@ export ASDF_FORCE_PREPEND=yes
 export CLICOLOR=1
 export LSCOLORS=ExFxBxDxCxegedabagacad
 export PS1='\n\u@\h:\e[1;31m \w \[$(tput sgr0)\]'
-export DIRENV_LOG_FORMAT=
 export SSH_KEY_PATH='$HOME/.ssh/'

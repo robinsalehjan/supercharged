@@ -95,17 +95,5 @@ asdf plugin add nodejs
 fancy_echo 'asdf: adding python plugin'
 asdf plugin add python
 
-fancy_echo 'asdf: adding java plugin'
-asdf plugin add java
-
-fancy_echo 'asdf: add direnv plugin'
-asdf plugin add direnv
-
 fancy_echo 'asdf: install all asdf tools specified in .tool-versions'
 asdf install
-
-fancy_echo 'asdf: setup direnv for zsh'
-asdf direnv setup --shell zsh --version latest
-
-fancy_echo 'asdf: allow direnv'
-asdf exec direnv allow

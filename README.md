@@ -39,8 +39,6 @@ Plugins installed with `asdf`
 ruby
 nodejs
 python
-java
-direnv
 ```
 
 ## Supercharging your MacBook
