@@ -85,7 +85,6 @@ export CLOUDSDK_PYTHON="$(which python)"
 export LANG=en_US.UTF-8
 
 eval "$(/opt/homebrew/bin/brew shellenv)"
-eval "$(zsh)"
 eval "$(keychain --eval $HOME/.ssh/id)"
 
 if [[ -n $SSH_CONNECTION ]]; then
