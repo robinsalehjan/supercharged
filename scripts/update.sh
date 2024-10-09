@@ -9,5 +9,8 @@ brew upgrade --cask && brew cleanup
 echo 'UPDATING ASDF PLUGINS'
 asdf plugin update --all
 
+echo 'RUNNING ASDF RESHIM'
+sudo asdf reshim
+
 echo 'UPDATING GCLOUD COMPONENTS'
 gcloud components update

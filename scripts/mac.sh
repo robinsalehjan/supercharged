@@ -100,5 +100,8 @@ asdf plugin add python
 fancy_echo 'asdf: install all asdf tools specified in .tool-versions'
 asdf install
 
+fancy_echo 'asdf: reshimming'
+sudo asdf reshim
+
 fancy_echo 'gcloud: installing components
 gcloud components install kubectl
