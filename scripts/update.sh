@@ -9,7 +9,7 @@ brew upgrade --cask && brew cleanup
 echo 'UPDATING ASDF PLUGINS'
 asdf plugin update --all
 
-echo 'RUNNING ASDF RESHIM'
+echo 'RUNNING ASDF RESHIM WITH SUDO PRIVELEGES'
 sudo asdf reshim
 
 echo 'UPDATING GCLOUD COMPONENTS'

@@ -100,7 +100,7 @@ asdf plugin add python
 fancy_echo 'asdf: install all asdf tools specified in .tool-versions'
 asdf install
 
-fancy_echo 'asdf: reshimming'
+fancy_echo 'asdf: reshimming with sudo privileges'
 sudo asdf reshim
 
 fancy_echo 'gcloud: installing components
