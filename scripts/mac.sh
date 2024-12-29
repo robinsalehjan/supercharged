@@ -79,7 +79,6 @@ cask "docker"
 cask "visual-studio-code"
 cask "slack"
 cask "postman"
-cask "notion"
 EOF
 
 fancy_echo 'Installing zsh themes and plugins'
