@@ -17,15 +17,11 @@ brew upgrade --cask && brew cleanup &
 
 echo 'UPDATING ASDF PLUGINS'
 asdf plugin update --all &
-
-# Wait for the asdf plugin update to finish
-wait $!
+wait $! # Wait for the asdf plugin update (last launched process)to finish
 
 echo 'RUNNING ASDF RESHIM WITH SUDO PRIVILEGES'
 sudo asdf reshim
-
-# Wait for the asdf reshim to finish
-wait $!
+wait $! # Wait for the asdf reshim to finish
 
 echo 'UPDATING GCLOUD COMPONENTS'
 gcloud components update &
