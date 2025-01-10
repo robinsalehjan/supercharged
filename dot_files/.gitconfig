@@ -5,7 +5,7 @@
 [credential]
 	helper = osxkeychain
 [core]
-	editor = code --wait
+	editor = /usr/bin/vim
 	excludesfile = .gitignore_global
 [push]
 	default = tracking
@@ -34,18 +34,10 @@
 [help]
 	autocorrect = 1
 [merge]
-	tool = vscode
+	tool = opendiff
 [pull]
 	rebase = true
 [init]
 	defaultBranch = main
 [rerere]
 	enabled = true
-[merge]
-  tool = vscode
-[mergetool "vscode"]
-  cmd = code --wait --merge $REMOTE $LOCAL $BASE $MERGED
-[diff]
-  tool = vscode
-[difftool "vscode"]
-  cmd = code --wait --diff $LOCAL $REMOTE
