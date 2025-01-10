@@ -20,7 +20,7 @@ asdf plugin update --all &
 wait $! # Wait for the asdf plugin update (last launched process)to finish
 
 echo 'RUNNING ASDF RESHIM WITH SUDO PRIVILEGES'
-sudo asdf reshim
+sudo asdf reshim &
 wait $! # Wait for the asdf reshim to finish
 
 echo 'UPDATING GCLOUD COMPONENTS'
