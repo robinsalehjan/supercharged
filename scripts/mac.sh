@@ -72,6 +72,7 @@ brew "xcode-build-server"
 brew "xcbeautify"
 brew "swiftlint"
 brew "swiftformat"
+brew "tree"
 
 cask "wireshark"
 cask "google-cloud-sdk"
