@@ -1,5 +1,5 @@
 # supercharged
-A set of scripts wrapped up in a Makefile that I use to boost my MacBook environment for development. It will install application and dependencies listed down below with `homebrew` along with customizing your environment profile.
+A set of scripts wrapped neatly into a `Makefile` that I use to setup my MacBook for a developer-friendly environment.
 
 Packages installed with `brew`
 ```
@@ -14,24 +14,30 @@ keychain
 htop
 nmap
 asdf
-xcodes
-kubectl
-kubectx
-pack
+xcodesorg/made/xcodes
 tmux
 spotify
+aria2
+k9s
+xcode-build-server
+xcbeautify
 swiftlint
+swiftformat
+tree
 ```
 
-Casks installed with `brew`
+Applications installed with `brew cask`
 ```
-wireshark
-google-cloud-sdk
-docker
-fork
-visual-studio-code
-slack
-postman
+Wireshark
+Google Cloud SDK
+Docker
+Visual Studio Code
+Slack
+Postman
+Cursor
+Raycast
+Notion
+Obsidian
 ```
 
 Plugins installed with `asdf`
