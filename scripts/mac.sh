@@ -73,6 +73,8 @@ brew "xcbeautify"
 brew "swiftlint"
 brew "swiftformat"
 brew "tree"
+brew "firebase-cli"
+brew "firebase-admin"
 
 cask "wireshark"
 cask "google-cloud-sdk"
