@@ -16,7 +16,7 @@ echo 'UPDATING BREW CASKS'
 brew upgrade --cask && brew cleanup &
 
 echo 'UPDATING ASDF PLUGINS'
-asdf plugin update --all &
+asdf plugin update --all & # This command will fail for the `nodejs` plugin => https://github.com/asdf-vm/asdf/issues/1896
 wait $! # Wait for the asdf plugin update (last launched process)to finish
 
 echo 'RUNNING ASDF RESHIM WITH SUDO PRIVILEGES'
