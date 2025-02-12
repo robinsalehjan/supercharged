@@ -5,7 +5,8 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-export PATH="/usr/local/bin/sbin:/opt/homebrew/bin:$PATH"
+export ASDF_DATA_DIR="$HOME/.asdf"
+export PATH="/usr/local/bin/sbin:/opt/homebrew/bin:$ASDF_DATA_DIR/shims:$PATH"
 export ZSH="$HOME/.oh-my-zsh"
 
 # Set name of the theme to load --- if set to "random", it will
@@ -77,7 +78,6 @@ DISABLE_UNTRACKED_FILES_DIRTY="true"
 plugins=(git asdf zsh-autosuggestions zsh-syntax-highlighting)
 
 source $ZSH/oh-my-zsh.sh
-source "/opt/homebrew/opt/asdf/libexec/asdf.sh"
 source "$(brew --prefix)/share/google-cloud-sdk/path.zsh.inc"
 test -f ~/.secrets && source ~/.secrets
 
