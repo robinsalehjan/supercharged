@@ -11,13 +11,15 @@ setup_logging() {
 
 echo 'UPDATING BREW PACKAGES'
 brew update && brew upgrade `brew outdated` &
+wait $!
 
 echo 'UPDATING BREW CASKS'
 brew upgrade --cask && brew cleanup &
+wait $!
 
 echo 'UPDATING ASDF PLUGINS'
 asdf plugin update --all & # This command will fail for the `nodejs` plugin => https://github.com/asdf-vm/asdf/issues/1896
-wait $! # Wait for the asdf plugin update (last launched process)to finish
+wait $!
 
 echo 'RUNNING ASDF RESHIM WITH SUDO PRIVILEGES'
 sudo asdf reshim &
@@ -25,3 +27,4 @@ wait $! # Wait for the asdf reshim to finish
 
 echo 'UPDATING GCLOUD COMPONENTS'
 gcloud components update &
+wait $!
