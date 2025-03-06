@@ -108,3 +108,11 @@ asdf plugin add ruby
 
 fancy_echo 'asdf: adding nodejs plugin'
 asdf plugin add nodejs
+
+node_version=$(awk '/nodejs/{print $2}' ../dot_files/.tool-versions)
+fancy_echo "asdf: installing node version $node_version"
+asdf install nodejs $node_version
+asdf global nodejs $node_version
+
+fancy_echo 'Installing Claude Code'
+npm install -g @anthropic-ai/claude-code
