@@ -37,7 +37,6 @@ Postman
 Cursor
 Raycast
 Notion
-Obsidian
 ```
 
 Plugins installed with `asdf`
