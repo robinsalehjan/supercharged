@@ -103,6 +103,10 @@ install_zsh_plugin \
     "https://github.com/romkatv/powerlevel10k" \
     "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
 
+
+fancy_echo 'asdf: adding python plugin'
+asdf plugin add python
+
 fancy_echo 'asdf: adding ruby plugin'
 asdf plugin add ruby
 
