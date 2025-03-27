@@ -113,7 +113,18 @@ asdf plugin add ruby
 fancy_echo 'asdf: adding nodejs plugin'
 asdf plugin add nodejs
 
+python_version=$(awk '/python/{print $2}' ../dot_files/.tool-versions)
+ruby_version=$(awk '/ruby/{print $2}' ../dot_files/.tool-versions)
 node_version=$(awk '/nodejs/{print $2}' ../dot_files/.tool-versions)
+
+fancy_echo "asdf: installing python version $python_version"
+asdf install python $python_version
+asdf set -u $python_version
+
+fancy_echo "asdf: installing ruby version $ruby_version"
+asdf install ruby $ruby_version
+asdf set -u $ruby_version
+
 fancy_echo "asdf: installing node version $node_version"
 asdf install nodejs $node_version
-asdf global nodejs $node_version
+asdf set -u $node_version
