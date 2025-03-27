@@ -74,7 +74,6 @@ brew "swiftlint"
 brew "swiftformat"
 brew "tree"
 brew "firebase-cli"
-brew "firebase-admin"
 brew "ripgrep"
 
 cask "wireshark"
