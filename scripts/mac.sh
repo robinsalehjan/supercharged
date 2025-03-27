@@ -86,6 +86,7 @@ cask "postman"
 cask "cursor"
 cask "raycast"
 cask "notion"
+cask "claude"
 
 EOF
 
@@ -112,6 +113,3 @@ node_version=$(awk '/nodejs/{print $2}' ../dot_files/.tool-versions)
 fancy_echo "asdf: installing node version $node_version"
 asdf install nodejs $node_version
 asdf global nodejs $node_version
-
-fancy_echo 'Installing Claude Code'
-npm install -g @anthropic-ai/claude-code
