@@ -79,6 +79,7 @@ plugins=(git asdf zsh-autosuggestions zsh-syntax-highlighting)
 
 source $ZSH/oh-my-zsh.sh
 source "$(brew --prefix)/share/google-cloud-sdk/path.zsh.inc"
+source $(brew --prefix asdf)/libexec/asdf.sh
 test -f ~/.secrets && source ~/.secrets
 
 export CLOUDSDK_PYTHON="$(which python)"
