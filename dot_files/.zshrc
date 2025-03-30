@@ -5,8 +5,7 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-export ASDF_DATA_DIR="$HOME/.asdf"
-export PATH="/usr/local/bin/sbin:/opt/homebrew/bin:$ASDF_DATA_DIR/shims:$PATH"
+export PATH="/usr/local/bin/sbin:/opt/homebrew/bin:/.asdf/shims:$PATH"
 export ZSH="$HOME/.oh-my-zsh"
 
 # Set name of the theme to load --- if set to "random", it will
