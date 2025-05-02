@@ -85,7 +85,6 @@ cask "postman"
 cask "cursor"
 cask "raycast"
 cask "notion"
-cask "claude"
 
 EOF
 
