@@ -82,7 +82,6 @@ cask "docker"
 cask "visual-studio-code"
 cask "slack"
 cask "postman"
-cask "cursor"
 cask "raycast"
 cask "notion"
 
