@@ -1,11 +1,9 @@
-# Development dependencies
+# Development
 nodejs 22.9.0
 python 3.13.0
-
-# System dependencies
 ruby 2.7.7
-bundler 2.2.32
 
-# Tools
+# Tooling
+bundler 2.2.32
 gcloud 522.0.0
 firebase 14.3.1
