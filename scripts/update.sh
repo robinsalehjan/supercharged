@@ -24,7 +24,3 @@ wait $!
 echo 'RUNNING ASDF RESHIM WITH SUDO PRIVILEGES'
 sudo asdf reshim &
 wait $! # Wait for the asdf reshim to finish
-
-echo 'UPDATING GCLOUD COMPONENTS'
-gcloud components update &
-wait $!

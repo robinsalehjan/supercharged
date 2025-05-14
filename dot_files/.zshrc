@@ -111,7 +111,6 @@ DISABLE_UNTRACKED_FILES_DIRTY="true"
 plugins=(git asdf zsh-autosuggestions zsh-syntax-highlighting)
 
 source $ZSH/oh-my-zsh.sh
-source "$(brew --prefix)/share/google-cloud-sdk/path.zsh.inc"
 test -f ~/.secrets && source ~/.secrets
 
 export CLOUDSDK_PYTHON="$(which python)"

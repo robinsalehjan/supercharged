@@ -76,7 +76,6 @@ brew "tree"
 brew "ripgrep"
 
 cask "wireshark"
-cask "google-cloud-sdk"
 cask "docker"
 cask "visual-studio-code"
 cask "slack"
@@ -109,12 +108,16 @@ asdf plugin add ruby
 fancy_echo 'asdf: adding nodejs plugin'
 asdf plugin add nodejs
 
+fancy_echo 'asdf: adding google cloud plugin'
+asdf plugin add gcloud
+
 fancy_echo 'asdf: adding firebase plugin'
 asdf plugin add firebase
 
 python_version=$(awk '/python/{print $2}' ../dot_files/.tool-versions)
 ruby_version=$(awk '/ruby/{print $2}' ../dot_files/.tool-versions)
 node_version=$(awk '/nodejs/{print $2}' ../dot_files/.tool-versions)
+gcloud_version=$(awk '/gcloud/{print $2}' ../dot_files/.tool-versions)
 firebase_version=$(awk '/firebase/{print $2}' ../dot_files/.tool-versions)
 
 fancy_echo "asdf: installing python version $python_version"
@@ -129,4 +132,5 @@ fancy_echo "asdf: installing node version $node_version"
 asdf install nodejs $node_version
 asdf set -u $node_version
 
+fancy_echo "asdf: installing gcloud version $gcloud_version"
 fancy_echo "asdf: installing firebase cli version $firebase_version"
