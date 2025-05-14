@@ -71,7 +71,6 @@ brew "k9s"
 brew "xcode-build-server"
 brew "xcbeautify"
 brew "swiftlint"
-brew "swiftformat"
 brew "tree"
 brew "ripgrep"
 
