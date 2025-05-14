@@ -108,7 +108,7 @@ DISABLE_UNTRACKED_FILES_DIRTY="true"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git asdf zsh-autosuggestions zsh-syntax-highlighting)
+plugins=(git asdf zsh-autosuggestions zsh-syntax-highlighting gcloud docker)
 
 source $ZSH/oh-my-zsh.sh
 test -f ~/.secrets && source ~/.secrets
