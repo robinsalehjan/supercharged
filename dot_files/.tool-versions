@@ -5,3 +5,6 @@ python 3.13.0
 # System dependencies
 ruby 2.7.7
 bundler 2.2.32
+
+# Tools
+firebase 14.3.1

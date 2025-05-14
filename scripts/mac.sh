@@ -73,7 +73,6 @@ brew "xcbeautify"
 brew "swiftlint"
 brew "swiftformat"
 brew "tree"
-brew "firebase-cli"
 brew "ripgrep"
 
 cask "wireshark"
@@ -110,9 +109,13 @@ asdf plugin add ruby
 fancy_echo 'asdf: adding nodejs plugin'
 asdf plugin add nodejs
 
+fancy_echo 'asdf: adding firebase plugin'
+asdf plugin add firebase
+
 python_version=$(awk '/python/{print $2}' ../dot_files/.tool-versions)
 ruby_version=$(awk '/ruby/{print $2}' ../dot_files/.tool-versions)
 node_version=$(awk '/nodejs/{print $2}' ../dot_files/.tool-versions)
+firebase_version=$(awk '/firebase/{print $2}' ../dot_files/.tool-versions)
 
 fancy_echo "asdf: installing python version $python_version"
 asdf install python $python_version
@@ -125,3 +128,5 @@ asdf set -u $ruby_version
 fancy_echo "asdf: installing node version $node_version"
 asdf install nodejs $node_version
 asdf set -u $node_version
+
+fancy_echo "asdf: installing firebase cli version $firebase_version"
