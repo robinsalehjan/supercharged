@@ -118,8 +118,6 @@ plugins=(git asdf zsh-autosuggestions zsh-syntax-highlighting gcloud docker)
 source $ZSH/oh-my-zsh.sh
 test -f ~/.secrets && source ~/.secrets
 
-export CLOUDSDK_PYTHON="$(which python)"
-
 # SSH key management
 eval "$(keychain --eval $HOME/.ssh/id)"
 
