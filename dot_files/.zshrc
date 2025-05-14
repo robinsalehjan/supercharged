@@ -8,6 +8,9 @@ fi
 # Set ZSH path first
 export ZSH="$HOME/.oh-my-zsh"
 
+# Initialize Homebrew
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
 # Terminal improvements
 export CLICOLOR=1
 export LSCOLORS=ExFxBxDxCxegedabagacad
@@ -22,8 +25,10 @@ setopt INC_APPEND_HISTORY       # Write to the history file immediately, not whe
 setopt SHARE_HISTORY           # Share history between all sessions.
 setopt HIST_IGNORE_ALL_DUPS    # Delete old recorded entry if new entry is a duplicate.
 
-# Source ASDF early to ensure shims take precedence
-source $(brew --prefix asdf)/libexec/asdf.sh
+# Source ASDF after Homebrew is initialized
+if [ -f "$(brew --prefix asdf)/libexec/asdf.sh" ]; then
+    source "$(brew --prefix asdf)/libexec/asdf.sh"
+fi
 
 # Set PATH after ASDF is loaded
 path=(
@@ -114,9 +119,8 @@ source $ZSH/oh-my-zsh.sh
 test -f ~/.secrets && source ~/.secrets
 
 export CLOUDSDK_PYTHON="$(which python)"
-export LANG=en_US.UTF-8
 
-eval "$(/opt/homebrew/bin/brew shellenv)"
+# SSH key management
 eval "$(keychain --eval $HOME/.ssh/id)"
 
 if [[ -n $SSH_CONNECTION ]]; then
