@@ -2,7 +2,7 @@
 A set of scripts wrapped neatly into a `Makefile` that I use to setup my MacBook for a developer-friendly environment.
 
 Packages installed with `brew`
-```
+```bash
 coreutils
 git
 curl
@@ -10,40 +10,47 @@ openssl@3
 readline
 libyaml
 gmp
-keychain
-htop
-nmap
+ripgrep
 asdf
 xcodesorg/made/xcodes
-tmux
-spotify
-aria2
-k9s
 xcode-build-server
 xcbeautify
 swiftlint
-swiftformat
 tree
+keychain
+htop
+nmap
+tmux
+k9s
+aria2
+spotify
 ```
 
 Applications installed with `brew cask`
-```
-Wireshark
-Google Cloud SDK
-Docker
-Visual Studio Code
-Slack
-Postman
-Cursor
-Raycast
-Notion
+```bash
+wireshark
+docker
+visual-studio-code
+slack
+postman
+raycast
+notion
 ```
 
-Plugins installed with `asdf`
+Plugins installed with `asdf` (with default versions)
+```bash
+nodejs   22.9.0
+python   3.13.0
+ruby     2.7.7
+gcloud   522.0.0
+firebase 14.3.1
 ```
-ruby
-nodejs
-python
+
+Additional enhancements to `ZSH`:
+```bash
+zsh-autosuggestions
+zsh-syntax-highlighting
+powerlevel10k
 ```
 
 ## Supercharging your MacBook
