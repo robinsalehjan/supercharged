@@ -119,6 +119,9 @@ source $ZSH/oh-my-zsh.sh
 test -f ~/.secrets && source ~/.secrets
 
 # SSH key management
+# Ensure .keychain directory has proper permissions if it exists
+[ -d "$HOME/.keychain" ] && chmod -R go-rwx "$HOME/.keychain"
+
 eval "$(keychain --eval $HOME/.ssh/id)"
 
 if [[ -n $SSH_CONNECTION ]]; then
