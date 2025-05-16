@@ -119,10 +119,20 @@ source $ZSH/oh-my-zsh.sh
 test -f ~/.secrets && source ~/.secrets
 
 # SSH key management
+# Start ssh-agent if not already running
+if [ -z "$SSH_AUTH_SOCK" ]; then
+    eval "$(ssh-agent -s)"
+fi
+
+# Ensure proper permissions on SSH directory and key
+chmod 700 "$HOME/.ssh" 2>/dev/null
+chmod 600 "$HOME/.ssh/id"* 2>/dev/null
+
 # Ensure .keychain directory has proper permissions if it exists
 [ -d "$HOME/.keychain" ] && chmod -R go-rwx "$HOME/.keychain"
 
-eval "$(keychain --eval $HOME/.ssh/id)"
+# Load SSH key using keychain
+eval "$(keychain --eval --quiet $HOME/.ssh/id)"
 
 if [[ -n $SSH_CONNECTION ]]; then
    export EDITOR='vim'
