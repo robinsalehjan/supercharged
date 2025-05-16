@@ -132,4 +132,9 @@ asdf install nodejs $node_version
 asdf set -u $node_version
 
 fancy_echo "asdf: installing gcloud version $gcloud_version"
+asdf install gcloud $gcloud_version
+asdf set -u $gcloud_version
+
 fancy_echo "asdf: installing firebase cli version $firebase_version"
+asdf install firebase $firebase_version
+asdf set -u $firebase_version
