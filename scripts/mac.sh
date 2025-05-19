@@ -19,9 +19,16 @@ trap 'ret=$?; test $ret -ne 0 && printf "failed\n\n" >&2; exit $ret' EXIT
 # Initialize logging
 setup_logging
 
+# Parse versions from .tool-versions
+python_version=$(awk '/python/{print $2}' ../dot_files/.tool-versions)
+ruby_version=$(awk '/ruby/{print $2}' ../dot_files/.tool-versions)
+node_version=$(awk '/nodejs/{print $2}' ../dot_files/.tool-versions)
+gcloud_version=$(awk '/gcloud/{print $2}' ../dot_files/.tool-versions)
+firebase_version=$(awk '/firebase/{print $2}' ../dot_files/.tool-versions)
+
 # Version checks
-check_version "git" "2.0.0"
-check_version "python3" "3.7.0"
+check_version "git" "2.49.0"
+check_version "python" "$python_version"
 
 # Backup existing configurations
 backup_dotfiles
@@ -112,12 +119,6 @@ asdf plugin add gcloud
 
 fancy_echo 'asdf: adding firebase plugin'
 asdf plugin add firebase
-
-python_version=$(awk '/python/{print $2}' ../dot_files/.tool-versions)
-ruby_version=$(awk '/ruby/{print $2}' ../dot_files/.tool-versions)
-node_version=$(awk '/nodejs/{print $2}' ../dot_files/.tool-versions)
-gcloud_version=$(awk '/gcloud/{print $2}' ../dot_files/.tool-versions)
-firebase_version=$(awk '/firebase/{print $2}' ../dot_files/.tool-versions)
 
 fancy_echo "asdf: installing python version $python_version"
 asdf install python $python_version
