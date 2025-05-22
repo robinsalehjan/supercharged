@@ -88,6 +88,7 @@ cask "slack"
 cask "postman"
 cask "raycast"
 cask "notion"
+cask "github-copilot-for-xcode"
 
 EOF
 
