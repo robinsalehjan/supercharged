@@ -85,7 +85,7 @@ brew "ripgrep"
 
 cask "spotify"
 cask "wireshark"
-cask "docker"
+cask "docker-desktop"
 cask "visual-studio-code"
 cask "slack"
 cask "postman"
