@@ -96,11 +96,11 @@ EOF
 fancy_echo 'Installing zsh themes and plugins'
 install_zsh_plugin \
     "https://github.com/zsh-users/zsh-autosuggestions" \
-    "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
+    "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
 
 install_zsh_plugin \
     "https://github.com/zsh-users/zsh-syntax-highlighting" \
-    "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
+    "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
 
 install_zsh_plugin \
     "https://github.com/romkatv/powerlevel10k" \
