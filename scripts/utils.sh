@@ -110,7 +110,7 @@ validate_tool() {
                 version=$(ruby --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
                 ;;
             *)
-                version=$($tool --version 2>&1 | head -n1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "unknown")
+                version=$($tool --version 2>&1 | head -n1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "not installed")
                 ;;
         esac
 
@@ -149,8 +149,7 @@ validate_installation() {
     validate_tool "ruby" "$ruby_version" || ((failed++))
 
     # Validate optional tools
-    validate_tool "tmux" "" || echo "ℹ️  tmux not found (optional)"
-    validate_tool "htop" "" || echo "ℹ️  htop not found (optional)"
+    validate_tool "htop" "" || echo "" > /dev/null
 
     if [ $failed -eq 0 ]; then
         echo "🎉 All validations passed!"
