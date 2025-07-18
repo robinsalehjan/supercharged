@@ -60,7 +60,6 @@ brew update --force # https://github.com/Homebrew/brew/issues/1151
 brew bundle --file=- <<EOF
 tap "thoughtbot/formulae"
 tap "homebrew/services"
-tap "homebrew/cask"
 
 brew "coreutils"
 brew "git"
