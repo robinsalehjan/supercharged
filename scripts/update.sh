@@ -2,24 +2,17 @@
 
 source "$(dirname "$0")/utils.sh"
 
-setup_logging() {
-    local log_file="$HOME/.supercharged_install.log"
-    exec 1> >(tee -a "$log_file")
-    exec 2> >(tee -a "$log_file" >&2)
-    echo "Installation started at $(date)"
-}
+# Initialize logging
+setup_logging
 
-echo 'UPDATING BREW PACKAGES'
-brew update && brew upgrade `brew outdated` &
-wait $!
+fancy_echo 'UPDATING BREW PACKAGES'
+brew update && brew upgrade
 
-echo 'UPDATING BREW CASKS'
-brew upgrade --cask && brew cleanup &
-wait $!
+fancy_echo 'UPDATING BREW CASKS'
+brew upgrade --cask && brew cleanup
 
-echo 'UPDATING ASDF PLUGINS'
-asdf plugin update --all & # This command will fail for the `nodejs` plugin => https://github.com/asdf-vm/asdf/issues/1896
-wait $!
+fancy_echo 'UPDATING ASDF PLUGINS'
+asdf plugin update --all
 
 fancy_echo 'UPDATING ASDF TOOL VERSIONS'
 # Parse and update versions from .tool-versions if they exist
