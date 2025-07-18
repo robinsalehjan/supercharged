@@ -20,11 +20,14 @@ trap 'ret=$?; test $ret -ne 0 && printf "failed\n\n" >&2; exit $ret' EXIT
 setup_logging
 
 # Parse versions from .tool-versions
-python_version=$(awk '/python/{print $2}' ../dot_files/.tool-versions)
-ruby_version=$(awk '/ruby/{print $2}' ../dot_files/.tool-versions)
-node_version=$(awk '/nodejs/{print $2}' ../dot_files/.tool-versions)
-gcloud_version=$(awk '/gcloud/{print $2}' ../dot_files/.tool-versions)
-firebase_version=$(awk '/firebase/{print $2}' ../dot_files/.tool-versions)
+SCRIPT_DIR="$(dirname "$0")"
+TOOL_VERSIONS_FILE="$SCRIPT_DIR/../dot_files/.tool-versions"
+
+python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
+ruby_version=$(awk '/ruby/{print $2}' "$TOOL_VERSIONS_FILE")
+node_version=$(awk '/nodejs/{print $2}' "$TOOL_VERSIONS_FILE")
+gcloud_version=$(awk '/gcloud/{print $2}' "$TOOL_VERSIONS_FILE")
+firebase_version=$(awk '/firebase/{print $2}' "$TOOL_VERSIONS_FILE")
 
 # Version checks
 check_version "git" "2.49.0"
@@ -106,37 +109,21 @@ install_zsh_plugin \
     "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
 
 
-fancy_echo 'asdf: adding python plugin'
-asdf plugin add python
+fancy_echo 'Installing asdf plugins and versions...'
 
-fancy_echo 'asdf: adding ruby plugin'
-asdf plugin add ruby
+# Install plugins
+install_asdf_plugin python
+install_asdf_plugin ruby
+install_asdf_plugin nodejs
+install_asdf_plugin gcloud
+install_asdf_plugin firebase
 
-fancy_echo 'asdf: adding nodejs plugin'
-asdf plugin add nodejs
+# Install versions
+install_asdf_version python "$python_version"
+install_asdf_version ruby "$ruby_version"
+install_asdf_version nodejs "$node_version"
+install_asdf_version gcloud "$gcloud_version"
+install_asdf_version firebase "$firebase_version"
 
-fancy_echo 'asdf: adding google cloud plugin'
-asdf plugin add gcloud
-
-fancy_echo 'asdf: adding firebase plugin'
-asdf plugin add firebase
-
-fancy_echo "asdf: installing python version $python_version"
-asdf install python $python_version
-asdf set -u $python_version
-
-fancy_echo "asdf: installing ruby version $ruby_version"
-asdf install ruby $ruby_version
-asdf set -u $ruby_version
-
-fancy_echo "asdf: installing node version $node_version"
-asdf install nodejs $node_version
-asdf set -u $node_version
-
-fancy_echo "asdf: installing gcloud version $gcloud_version"
-asdf install gcloud $gcloud_version
-asdf set -u $gcloud_version
-
-fancy_echo "asdf: installing firebase cli version $firebase_version"
-asdf install firebase $firebase_version
-asdf set -u $firebase_version
+# Reshim to ensure all binaries are available
+asdf reshim
