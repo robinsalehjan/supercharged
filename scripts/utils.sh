@@ -89,7 +89,7 @@ install_asdf_version() {
         fancy_echo "asdf: $plugin $version already installed"
     fi
 
-    asdf global "$plugin" "$version"
+    asdf set --home "$plugin" "$version"
 }
 
 # Validation functions

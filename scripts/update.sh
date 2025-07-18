@@ -27,7 +27,7 @@ if [ -f "$TOOL_VERSIONS_FILE" ]; then
             if asdf plugin list | grep -q "^${plugin}$"; then
                 fancy_echo "Updating $plugin to version $version"
                 asdf install "$plugin" "$version"
-                asdf global "$plugin" "$version"
+                asdf set --home "$plugin" "$version"
             fi
         fi
     done < "$TOOL_VERSIONS_FILE"
