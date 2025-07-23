@@ -88,7 +88,6 @@ cask "visual-studio-code"
 cask "slack"
 cask "postman"
 cask "raycast"
-cask "github-copilot-for-xcode"
 
 EOF
 
