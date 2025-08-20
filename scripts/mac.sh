@@ -80,6 +80,7 @@ brew "xcbeautify"
 brew "swiftlint"
 brew "tree"
 brew "ripgrep"
+brew "ios-deploy"
 
 cask "spotify"
 cask "wireshark-app"
