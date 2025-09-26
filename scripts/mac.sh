@@ -123,3 +123,7 @@ install_asdf_version firebase "$firebase_version"
 
 # Reshim to ensure all binaries are available
 asdf reshim
+
+# Install Github Copilot CLI
+fancy_echo 'Installing GitHub Copilot CLI...'
+npm install -g @github/copilot
