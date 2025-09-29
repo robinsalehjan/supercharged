@@ -16,9 +16,14 @@ validate_system() {
     fi
 
     # Check available disk space (in GB)
-    local available_space=$(df -h / | awk 'NR==2 {print $4}' | sed 's/Gi\|G//')
-    if [ "${available_space%.*}" -lt 10 ]; then
-        log_with_level "ERROR" "At least 10GB free space required (found: ${available_space}GB)"
+    local available_space_raw=$(df -h / | awk 'NR==2 {print $4}')
+    local available_space=$(echo "$available_space_raw" | sed 's/[^0-9.]//g')
+
+    # Convert to integer for comparison (remove decimal part if present)
+    local available_space_int=${available_space%.*}
+
+    if [ -z "$available_space_int" ] || [ "$available_space_int" -lt 10 ]; then
+        log_with_level "ERROR" "At least 10GB free space required (found: ${available_space_raw})"
         exit 1
     fi
 
