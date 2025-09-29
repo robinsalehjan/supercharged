@@ -38,7 +38,9 @@ deduplicate_path() {
     local seen=""
 
     for dir in "${path_array[@]}"; do
-        if [[ ! "$seen" =~ (^|:)"$dir"(:|$) ]] && [ -d "$dir" ]; then
+        # Only check if the directory is not empty and not already seen
+        # Don't filter based on directory existence to avoid removing essential system paths
+        if [[ -n "$dir" ]] && [[ ! "$seen" =~ (^|:)"$dir"(:|$) ]]; then
             if [ -z "$new_path" ]; then
                 new_path="$dir"
             else
@@ -58,13 +60,14 @@ path=(
     /opt/homebrew/sbin
     /usr/local/bin          # Intel Homebrew (for compatibility)
     /usr/local/sbin
-    /usr/bin
-    /usr/sbin
-    /bin
-    /sbin
-    $path
+    /usr/bin                # Essential system binaries
+    /usr/sbin               # Essential system admin binaries
+    /bin                    # Core system binaries
+    /sbin                   # Core system admin binaries
+    $path                   # Preserve existing path entries
 )
 
+# Export the deduplicated PATH
 export PATH=$(deduplicate_path)
 
 # Set name of the theme to load --- if set to "random", it will
