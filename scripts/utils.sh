@@ -136,23 +136,39 @@ set -euo pipefail
 
 # Interactive git configuration setup
 setup_git_config() {
-    local script_dir="$(cd "$(dirname "$0")" && pwd)"
-    local git_source="$script_dir/../dot_files/.gitconfig"
+    # Use a more explicit path approach
+    # Since this script is always in the scripts directory, we can use that fact
+    local current_script_path
+    if [[ -n "${ZSH_VERSION:-}" ]]; then
+        # zsh
+        current_script_path="${(%):-%x}"
+    elif [[ -n "${BASH_VERSION:-}" ]]; then
+        # bash
+        current_script_path="${BASH_SOURCE[0]}"
+    else
+        # fallback
+        current_script_path="$0"
+    fi
+
+    local utils_script_dir="$(cd "$(dirname "$current_script_path")" && pwd)"
+    # Go up one level to get the supercharged directory, then into dot_files
+    local git_source="$(cd "$utils_script_dir/.." && pwd)/dot_files/.gitconfig"
     local git_config="$HOME/.gitconfig"
+
+    # Check if git config already exists and is identical to source first
+    if [ -f "$git_config" ] && [ -f "$git_source" ] && cmp -s "$git_source" "$git_config"; then
+        log_with_level "INFO" "Git configuration already exists and is up to date"
+        return 0
+    fi
 
     log_with_level "INFO" "Looking for git config at: $git_source"
 
     if [ ! -f "$git_source" ]; then
         log_with_level "ERROR" "Git config not found at $git_source"
         log_with_level "INFO" "Current working directory: $(pwd)"
-        log_with_level "INFO" "Script directory: $script_dir"
+        log_with_level "INFO" "Utils script directory: $utils_script_dir"
+        log_with_level "INFO" "Current script path: $current_script_path"
         return 1
-    fi
-
-    # Check if git config already exists and is identical to source
-    if [ -f "$git_config" ] && cmp -s "$git_source" "$git_config"; then
-        log_with_level "INFO" "Git configuration already exists and is up to date"
-        return 0
     fi
 
     echo ""

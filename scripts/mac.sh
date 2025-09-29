@@ -136,6 +136,7 @@ brew "tmux"'
 if [[ "${INSTALL_IOS_TOOLS:-Y}" =~ ^[Yy] ]]; then
     log_with_level "INFO" "Including iOS development tools"
     BREWFILE_CONTENT="$BREWFILE_CONTENT
+tap \"xcodesorg/made\"
 brew \"xcodesorg/made/xcodes\"
 brew \"xcode-build-server\"
 brew \"xcbeautify\"
