@@ -136,17 +136,22 @@ set -euo pipefail
 
 # Interactive git configuration setup
 setup_git_config() {
-    local git_template="$(dirname "$0")/../dot_files/.gitconfig.template"
+    local script_dir="$(cd "$(dirname "$0")" && pwd)"
+    local git_source="$script_dir/../dot_files/.gitconfig"
     local git_config="$HOME/.gitconfig"
 
-    if [ ! -f "$git_template" ]; then
-        log_with_level "ERROR" "Git config template not found at $git_template"
+    log_with_level "INFO" "Looking for git config at: $git_source"
+
+    if [ ! -f "$git_source" ]; then
+        log_with_level "ERROR" "Git config not found at $git_source"
+        log_with_level "INFO" "Current working directory: $(pwd)"
+        log_with_level "INFO" "Script directory: $script_dir"
         return 1
     fi
 
-    # Check if git config already exists and has real values
-    if [ -f "$git_config" ] && ! grep -q "YOUR_NAME_HERE\|YOUR_EMAIL_HERE" "$git_config"; then
-        log_with_level "INFO" "Git configuration already exists with valid values"
+    # Check if git config already exists and is identical to source
+    if [ -f "$git_config" ] && cmp -s "$git_source" "$git_config"; then
+        log_with_level "INFO" "Git configuration already exists and is up to date"
         return 0
     fi
 
@@ -154,22 +159,10 @@ setup_git_config() {
     echo "🔧 Setting up Git configuration..."
     echo ""
 
-    # Get user input
-    read -p "Enter your full name for Git commits: " git_name
-    read -p "Enter your email for Git commits: " git_email
+    # Copy the git config file
+    cp "$git_source" "$git_config"
 
-    # Validate inputs
-    if [ -z "$git_name" ] || [ -z "$git_email" ]; then
-        log_with_level "ERROR" "Name and email are required for Git configuration"
-        return 1
-    fi
-
-    # Create personalized git config
-    sed -e "s/YOUR_NAME_HERE/$git_name/g" \
-        -e "s/YOUR_EMAIL_HERE/$git_email/g" \
-        "$git_template" > "$git_config"
-
-    log_with_level "SUCCESS" "Git configuration created successfully"
+    log_with_level "SUCCESS" "Git configuration copied successfully"
     return 0
 }
 
@@ -179,17 +172,26 @@ setup_user_preferences() {
     echo "🎯 Configure your development environment preferences:"
     echo ""
 
+    # Temporarily disable strict mode for interactive input
+    set +u
+
     # Ask about iOS development
-    read -p "Install iOS development tools (xcodes, ios-deploy, swift tools)? [Y/n]: " install_ios
+    printf "Install iOS development tools (xcodes, ios-deploy, swift tools)? [Y/n]: "
+    read install_ios
     install_ios=${install_ios:-Y}
 
     # Ask about data science tools
-    read -p "Install data science tools (jupyter, pandas, numpy)? [y/N]: " install_datascience
+    printf "Install data science tools (jupyter, pandas, numpy)? [y/N]: "
+    read install_datascience
     install_datascience=${install_datascience:-N}
 
     # Ask about additional development tools
-    read -p "Install additional development tools (docker, kubernetes tools)? [Y/n]: " install_devtools
+    printf "Install additional development tools (docker, kubernetes tools)? [Y/n]: "
+    read install_devtools
     install_devtools=${install_devtools:-Y}
+
+    # Re-enable strict mode
+    set -u
 
     # Store preferences
     local prefs_file="$HOME/.supercharged_preferences"
