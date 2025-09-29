@@ -30,6 +30,26 @@ if [ -f "$(brew --prefix asdf)/libexec/asdf.sh" ]; then
     source "$(brew --prefix asdf)/libexec/asdf.sh"
 fi
 
+# Function to deduplicate PATH
+deduplicate_path() {
+    local IFS=':'
+    local path_array=($PATH)
+    local new_path=""
+    local seen=""
+
+    for dir in "${path_array[@]}"; do
+        if [[ ! "$seen" =~ (^|:)"$dir"(:|$) ]] && [ -d "$dir" ]; then
+            if [ -z "$new_path" ]; then
+                new_path="$dir"
+            else
+                new_path="$new_path:$dir"
+            fi
+            seen="$seen:$dir"
+        fi
+    done
+    echo "$new_path"
+}
+
 # Set PATH after ASDF is loaded
 path=(
     $HOME/.asdf/shims       # ASDF shims first
@@ -45,7 +65,7 @@ path=(
     $path
 )
 
-export PATH
+export PATH=$(deduplicate_path)
 
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
@@ -124,15 +144,30 @@ if [ -z "$SSH_AUTH_SOCK" ]; then
     eval "$(ssh-agent -s)"
 fi
 
-# Ensure proper permissions on SSH directory and key
-chmod 700 "$HOME/.ssh" 2>/dev/null
-chmod 600 "$HOME/.ssh/id"* 2>/dev/null
+# Ensure proper permissions on SSH directory if it exists
+if [ -d "$HOME/.ssh" ]; then
+    chmod 700 "$HOME/.ssh"
+
+    # Set proper permissions for specific SSH key types
+    for key in id_rsa id_ed25519 id_ecdsa; do
+        [ -f "$HOME/.ssh/$key" ] && chmod 600 "$HOME/.ssh/$key"
+        [ -f "$HOME/.ssh/$key.pub" ] && chmod 644 "$HOME/.ssh/$key.pub"
+    done
+fi
 
 # Ensure .keychain directory has proper permissions if it exists
 [ -d "$HOME/.keychain" ] && chmod -R go-rwx "$HOME/.keychain"
 
-# Load SSH key using keychain
-eval "$(keychain --eval --quiet $HOME/.ssh/id)"
+# Load SSH key using keychain - prefer ed25519, then rsa, then ecdsa
+if command -v keychain >/dev/null 2>&1; then
+    if [ -f "$HOME/.ssh/id_ed25519" ]; then
+        eval "$(keychain --eval --quiet $HOME/.ssh/id_ed25519)"
+    elif [ -f "$HOME/.ssh/id_rsa" ]; then
+        eval "$(keychain --eval --quiet $HOME/.ssh/id_rsa)"
+    elif [ -f "$HOME/.ssh/id_ecdsa" ]; then
+        eval "$(keychain --eval --quiet $HOME/.ssh/id_ecdsa)"
+    fi
+fi
 
 if [[ -n $SSH_CONNECTION ]]; then
    export EDITOR='vim'

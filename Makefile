@@ -6,10 +6,11 @@ DOT_FILES_FOLDER_PATH := $(PWD)/dot_files
 
 help:
 	@echo "setup - install dependencies, configure environment profiles, and validate"
-	@echo "setup_profile - copy .gitconfig, .gitignore_global, .tool-versions, .zshrc and .zprofile to $(HOME)"
+	@echo "setup_profile - copy .gitconfig.template, .gitignore_global, .tool-versions, .zshrc and .zprofile to $(HOME)"
 	@echo "update - update existing dependencies"
 	@echo "validate - check if all tools are properly installed"
 	@echo "clean_xcode - clean Xcode caches and derived data"
+	@echo "restore - restore from the most recent backup"
 
 setup: setup_profile
 	@echo "Running mac.sh script to install dependencies"
@@ -18,8 +19,8 @@ setup: setup_profile
 	@$(MAKE) validate
 
 setup_profile:
-	@echo "Copying .gitconfig to $(HOME)"
-	@cp $(DOT_FILES_FOLDER_PATH)/.gitconfig $(HOME)
+	@echo "Copying .gitconfig.template to $(HOME) (will be configured during setup)"
+	@cp $(DOT_FILES_FOLDER_PATH)/.gitconfig.template $(HOME)/.gitconfig.template
 
 	@echo "Copying .gitignore_global to $(HOME)"
 	@cp $(DOT_FILES_FOLDER_PATH)/.gitignore_global $(HOME)
@@ -51,4 +52,8 @@ clean_xcode:
 	@echo "Cleaning Xcode caches and derived data..."
 	$(SCRIPTS_FOLDER_PATH)/nuke_xcode.sh
 
-.PHONY: help setup setup_profile update validate clean_xcode
+restore:
+	@echo "Restoring from the most recent backup..."
+	@cd $(SCRIPTS_FOLDER_PATH) && source utils.sh && restore_from_backup
+
+.PHONY: help setup setup_profile update validate clean_xcode restore

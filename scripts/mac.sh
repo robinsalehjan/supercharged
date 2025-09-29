@@ -2,13 +2,55 @@
 
 source "$(dirname "$0")/utils.sh"
 
+# System requirements validation
+validate_system() {
+    log_with_level "INFO" "Validating system requirements..."
+
+    # Check macOS version
+    local macos_version=$(sw_vers -productVersion | cut -d. -f1-2)
+    local required_version="12.0"
+
+    if [ "$(printf '%s\n' "$required_version" "$macos_version" | sort -V | head -n1)" != "$required_version" ]; then
+        log_with_level "ERROR" "macOS $required_version or later required (found: $macos_version)"
+        exit 1
+    fi
+
+    # Check available disk space (in GB)
+    local available_space=$(df -h / | awk 'NR==2 {print $4}' | sed 's/Gi\|G//')
+    if [ "${available_space%.*}" -lt 10 ]; then
+        log_with_level "ERROR" "At least 10GB free space required (found: ${available_space}GB)"
+        exit 1
+    fi
+
+    # Check for Xcode Command Line Tools
+    if ! xcode-select -p >/dev/null 2>&1; then
+        log_with_level "INFO" "Installing Xcode Command Line Tools..."
+        xcode-select --install
+        log_with_level "INFO" "Please complete Xcode Command Line Tools installation and run this script again"
+        exit 0
+    fi
+
+    # Check internet connectivity
+    if ! ping -c 1 -W 5000 google.com >/dev/null 2>&1; then
+        log_with_level "ERROR" "Internet connectivity required for installation"
+        exit 1
+    fi
+
+    log_with_level "SUCCESS" "System validation passed"
+}
+
 # Setup error handling and cleanup
 cleanup() {
     local exit_code=$?
     if [ $exit_code -ne 0 ]; then
-        echo "Installation failed. Cleaning up..."
-        brew cleanup
-        rm -rf "$HOME/.bin"
+        log_with_level "ERROR" "Installation failed with exit code $exit_code"
+        if [ -f "$HOME/.supercharged_last_backup" ]; then
+            local backup_dir=$(cat "$HOME/.supercharged_last_backup")
+            echo ""
+            echo "💡 You can restore your previous configuration with:"
+            echo "   source $(dirname "$0")/utils.sh && restore_from_backup '$backup_dir'"
+        fi
+        brew cleanup 2>/dev/null || true
     fi
     exit $exit_code
 }
@@ -18,6 +60,16 @@ trap 'ret=$?; test $ret -ne 0 && printf "failed\n\n" >&2; exit $ret' EXIT
 
 # Initialize logging
 setup_logging
+
+# Validate system before starting
+validate_system
+
+# Create restoration point
+create_restoration_point
+
+# Setup user preferences and git config
+setup_user_preferences
+setup_git_config
 
 # Parse versions from .tool-versions
 SCRIPT_DIR="$(dirname "$0")"
@@ -32,9 +84,6 @@ firebase_version=$(awk '/firebase/{print $2}' "$TOOL_VERSIONS_FILE")
 # Version checks
 check_version "git" "2.49.0"
 check_version "python" "$python_version"
-
-# Backup existing configurations
-backup_dotfiles
 
 # Homebrew installation with architecture detection
 install_homebrew() {
@@ -57,8 +106,9 @@ install_homebrew
 
 fancy_echo 'Updating Homebrew formulae ...'
 brew update --force # https://github.com/Homebrew/brew/issues/1151
-brew bundle --file=- <<EOF
-tap "thoughtbot/formulae"
+
+# Build brewfile based on user preferences
+BREWFILE_CONTENT='tap "thoughtbot/formulae"
 tap "homebrew/services"
 
 brew "coreutils"
@@ -72,25 +122,41 @@ brew "keychain"
 brew "htop"
 brew "nmap"
 brew "asdf"
-brew "xcodesorg/made/xcodes"
 brew "aria2"
-brew "k9s"
-brew "xcode-build-server"
-brew "xcbeautify"
-brew "swiftlint"
-brew "swift-format"
 brew "tree"
 brew "ripgrep"
-brew "ios-deploy"
+brew "tmux"'
 
-cask "spotify"
-cask "wireshark-app"
-cask "docker-desktop"
-cask "visual-studio-code"
-cask "slack"
-cask "postman"
-cask "raycast"
-EOF
+# Add iOS development tools if requested
+if [[ "${INSTALL_IOS_TOOLS:-Y}" =~ ^[Yy] ]]; then
+    log_with_level "INFO" "Including iOS development tools"
+    BREWFILE_CONTENT="$BREWFILE_CONTENT
+brew \"xcodesorg/made/xcodes\"
+brew \"xcode-build-server\"
+brew \"xcbeautify\"
+brew \"swiftlint\"
+brew \"swift-format\"
+brew \"ios-deploy\""
+fi
+
+# Add development tools if requested
+if [[ "${INSTALL_DEV_TOOLS:-Y}" =~ ^[Yy] ]]; then
+    log_with_level "INFO" "Including additional development tools"
+    BREWFILE_CONTENT="$BREWFILE_CONTENT
+brew \"k9s\"
+cask \"docker-desktop\""
+fi
+
+# Add standard applications
+BREWFILE_CONTENT="$BREWFILE_CONTENT
+cask \"spotify\"
+cask \"wireshark\"
+cask \"visual-studio-code\"
+cask \"slack\"
+cask \"postman\"
+cask \"raycast\""
+
+echo "$BREWFILE_CONTENT" | brew bundle --file=-
 
 fancy_echo 'Installing zsh themes and plugins'
 install_zsh_plugin \
@@ -106,7 +172,7 @@ install_zsh_plugin \
     "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
 
 
-fancy_echo 'Installing asdf plugins and versions...'
+log_with_level "INFO" "Installing asdf plugins and versions..."
 
 # Install plugins
 install_asdf_plugin python
@@ -125,6 +191,15 @@ install_asdf_version firebase "$firebase_version"
 # Reshim to ensure all binaries are available
 asdf reshim
 
+# Install additional tools based on preferences
+if [[ "${INSTALL_DATA_SCIENCE:-N}" =~ ^[Yy] ]]; then
+    log_with_level "INFO" "Installing data science tools..."
+    # Future: Install jupyter, pandas, numpy, etc.
+    pip3 install jupyter pandas numpy matplotlib scikit-learn
+fi
+
 # Install Github Copilot CLI
-fancy_echo 'Installing GitHub Copilot CLI...'
+log_with_level "INFO" "Installing GitHub Copilot CLI..."
 npm install -g @github/copilot
+
+log_with_level "SUCCESS" "Installation completed successfully!"
