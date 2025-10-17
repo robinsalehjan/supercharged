@@ -282,11 +282,14 @@ validate_tool() {
                 version=$(ruby --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
                 ;;
             *)
-                version=$($tool --version 2>&1 | head -n1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "not installed")
+                version=$($tool --version 2>&1 | head -n1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "")
                 ;;
         esac
 
-        if [ "$version" = "$expected_version" ] || [ "$expected_version" = "" ]; then
+        if [ -z "$version" ]; then
+            echo "⚠️  $tool: version not detected"
+            return 1
+        elif [ "$version" = "$expected_version" ] || [ "$expected_version" = "" ]; then
             echo "✅ $tool: $version"
             return 0
         else
