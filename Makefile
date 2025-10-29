@@ -9,7 +9,6 @@ help:
 	@echo "setup_profile - copy .gitconfig, .gitignore_global, .tool-versions, .zshrc and .zprofile to $(HOME)"
 	@echo "update - update existing dependencies"
 	@echo "validate - check if all tools are properly installed"
-	@echo "clean_xcode - clean Xcode caches and derived data"
 	@echo "restore - restore from the most recent backup"
 
 setup: setup_profile
@@ -48,12 +47,8 @@ validate:
 	@echo "Validating installation..."
 	@cd $(SCRIPTS_FOLDER_PATH) && ./utils.sh validate && echo "✅ All tools validated successfully" || echo "❌ Validation failed"
 
-clean_xcode:
-	@echo "Cleaning Xcode caches and derived data..."
-	$(SCRIPTS_FOLDER_PATH)/nuke_xcode.sh
-
 restore:
 	@echo "Restoring from the most recent backup..."
 	@cd $(SCRIPTS_FOLDER_PATH) && source utils.sh && restore_from_backup
 
-.PHONY: help setup setup_profile update validate clean_xcode restore
+.PHONY: help setup setup_profile update validate restore
