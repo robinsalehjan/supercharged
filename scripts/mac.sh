@@ -85,6 +85,8 @@ ruby_version=$(awk '/ruby/{print $2}' "$TOOL_VERSIONS_FILE")
 node_version=$(awk '/nodejs/{print $2}' "$TOOL_VERSIONS_FILE")
 gcloud_version=$(awk '/gcloud/{print $2}' "$TOOL_VERSIONS_FILE")
 firebase_version=$(awk '/firebase/{print $2}' "$TOOL_VERSIONS_FILE")
+java_version=$(awk '/java/{print $2}' "$TOOL_VERSIONS_FILE")
+kotlin_version=$(awk '/kotlin/{print $2}' "$TOOL_VERSIONS_FILE")
 
 # Version checks
 check_version "git" "2.49.0"
@@ -188,6 +190,8 @@ install_asdf_plugin ruby
 install_asdf_plugin nodejs
 install_asdf_plugin gcloud
 install_asdf_plugin firebase
+install_asdf_plugin java
+install_asdf_plugin kotlin
 
 # Install versions
 install_asdf_version python "$python_version"
@@ -195,6 +199,8 @@ install_asdf_version ruby "$ruby_version"
 install_asdf_version nodejs "$node_version"
 install_asdf_version gcloud "$gcloud_version"
 install_asdf_version firebase "$firebase_version"
+install_asdf_version java "$java_version"
+install_asdf_version kotlin "$kotlin_version"
 
 # Reshim to ensure all binaries are available
 asdf reshim
