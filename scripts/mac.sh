@@ -150,7 +150,9 @@ if [[ "${INSTALL_DEV_TOOLS:-Y}" =~ ^[Yy] ]]; then
     log_with_level "INFO" "Including additional development tools"
     BREWFILE_CONTENT="$BREWFILE_CONTENT
 brew \"k9s\"
-cask \"docker-desktop\""
+brew \"docker\"
+brew \"docker-compose\"
+brew \"colima\""
 fi
 
 # Add standard applications

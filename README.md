@@ -48,8 +48,10 @@ ios-deploy          # Deploy iOS apps from command line
 ### Development Tools
 ```bash
 # Container and Kubernetes tools
-k9s             # Kubernetes CLI manager
-docker-desktop  # Docker desktop application
+k9s                # Kubernetes CLI manager
+docker             # Docker CLI
+docker-compose     # Multi-container orchestration
+colima             # Lightweight container runtime for macOS
 ```
 
 ### Applications
