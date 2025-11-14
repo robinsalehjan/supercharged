@@ -287,3 +287,6 @@ if command -v colima >/dev/null 2>&1; then
         colima start >/dev/null 2>&1 &!
     fi
 fi
+
+# VSCode shell integration
+[[ "$TERM_PROGRAM" == "vscode" ]] && . "$(/Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin/code --locate-shell-integration-path zsh)"
