@@ -282,8 +282,8 @@ function weather() {
 
 # Auto-start Colima if installed and not running
 if command -v colima >/dev/null 2>&1; then
-    if ! colima status >/dev/null 2>&1; then
-        echo "Starting Colima..."
-        colima start >/dev/null 2>&1 &
+    colima_status=$(colima status 2>&1)
+    if [[ "$colima_status" != *"colima is running"* ]]; then
+        colima start >/dev/null 2>&1 &!
     fi
 fi
