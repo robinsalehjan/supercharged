@@ -164,7 +164,8 @@ cask \"wireshark\"
 cask \"visual-studio-code\"
 cask \"slack\"
 cask \"postman\"
-cask \"raycast\""
+cask \"raycast\"
+cask \"google-chrome\""
 
 echo "$BREWFILE_CONTENT" | brew bundle --file=-
 
