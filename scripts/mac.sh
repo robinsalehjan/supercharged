@@ -167,6 +167,13 @@ cask \"postman\"
 cask \"raycast\"
 cask \"google-chrome\""
 
+# Fix wireshark linking issues if it's already installed
+if brew list wireshark &>/dev/null; then
+    log_with_level "INFO" "Fixing wireshark symlinks..."
+    brew unlink wireshark 2>/dev/null || true
+    brew link --overwrite wireshark 2>/dev/null || true
+fi
+
 echo "$BREWFILE_CONTENT" | brew bundle --file=-
 
 fancy_echo 'Installing zsh themes and plugins'
