@@ -159,8 +159,8 @@ fi
 
 # Add standard applications
 BREWFILE_CONTENT="$BREWFILE_CONTENT
+brew \"wireshark\"
 cask \"spotify\"
-cask \"wireshark\"
 cask \"visual-studio-code\"
 cask \"slack\"
 cask \"postman\"
