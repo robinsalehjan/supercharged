@@ -132,7 +132,8 @@ brew "asdf"
 brew "aria2"
 brew "tree"
 brew "ripgrep"
-brew "tmux"'
+brew "tmux"
+brew "uv"'
 
 # Add iOS development tools if requested
 if [[ "${INSTALL_IOS_TOOLS:-Y}" =~ ^[Yy] ]]; then

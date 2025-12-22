@@ -24,6 +24,7 @@ A comprehensive set of scripts wrapped in a `Makefile` for setting up a develope
 # Package managers and build tools
 coreutils, git, curl, openssl@3, readline, libyaml, gmp
 asdf (version manager), keychain, htop, nmap, tree, ripgrep, tmux, aria2
+uv (fast Python package installer and resolver)
 
 # Development languages (via asdf)
 nodejs   22.9.0  # LTS version, minimum 20.0.0 for modern features
