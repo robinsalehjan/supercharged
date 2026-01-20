@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Check if the committer is the GitHub Copilot agent
+COMMITTER_EMAIL=$(git log -1 --format='%ce')
+COMMITTER_NAME=$(git log -1 --format='%cn')
+
+# Skip commitlint for GitHub Copilot agent commits
+if [[ "$COMMITTER_EMAIL" == *"copilot"* ]] || [[ "$COMMITTER_NAME" == *"copilot"* ]] || [[ "$COMMITTER_EMAIL" == *"github-actions"* ]] || [[ "$COMMITTER_EMAIL" == *"github-coding-agent"* ]] || [[ "$COMMITTER_NAME" == *"github-coding-agent"* ]]; then
+  echo "Skipping commitlint validation for Copilot/GitHub Actions commit"
+  exit 0
+fi
+
+npm run commitlint ${1}

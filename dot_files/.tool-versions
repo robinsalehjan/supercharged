@@ -1,0 +1,36 @@
+# Supercharged Development Tool Versions
+# Format: <plugin> <version>
+# Pin to stable versions with minimum requirements for compatibility
+
+# Development Languages
+# Node.js - LTS version, minimum 20.0.0 for modern features
+nodejs 22.9.0
+
+# Python - Latest stable, minimum 3.10.0 for type hints and match statements
+python 3.13.0
+
+# Ruby - Stable version, minimum 2.7.0 for pattern matching
+ruby 2.7.7
+
+# Package Managers
+# Bundler - Ruby package manager, minimum 2.2.0 for lockfile improvements
+bundler 2.2.32
+
+# Cloud and DevOps Tools
+# Google Cloud SDK - Latest stable, minimum 400.0.0 for gke-gcloud-auth-plugin
+gcloud 522.0.0
+
+# Firebase CLI - Latest stable, minimum 12.0.0 for modern deployment features
+firebase 14.3.1
+
+# JVM Languages
+# Java - For Android development and JVM projects, minimum 21 LTS
+java openjdk-23.0.2
+
+# Kotlin - For Android and multiplatform development, minimum 1.9.0
+kotlin 2.2.21
+
+# Additional tools can be added here
+# Example:
+# terraform 1.5.7
+# kubectl 1.28.0

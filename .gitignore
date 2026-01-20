@@ -1,0 +1,18 @@
+# Prevent accidentally committing home directory expansions
+~
+~/*
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logs
+*.log
+
+# Backup files
+*.backup
+*.bak
+
+# Node.js dependencies
+node_modules/
