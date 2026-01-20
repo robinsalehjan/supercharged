@@ -51,15 +51,5 @@ module.exports = {
     (commit) => commit.includes('Signed-off-by:'),
     // Ignore release commits
     (commit) => /^(\[Release\]|Release)\s*v?\d+/.test(commit),
-    // Ignore revert commits (GitHub UI creates these)
-    (commit) => /^Revert\s/.test(commit),
-    // Ignore Dependabot commits
-    (commit) => /^Bump\s.+\sfrom\s.+\sto\s/.test(commit),
-    // Ignore GitHub web editor commits
-    (commit) => /^(Create|Update|Delete|Rename)\s/.test(commit),
-    // Ignore signed-off commits
-    (commit) => commit.includes('Signed-off-by:'),
-    // Ignore release commits
-    (commit) => /^(\[Release\]|Release)\s*v?\d+/.test(commit),
   ],
 };
