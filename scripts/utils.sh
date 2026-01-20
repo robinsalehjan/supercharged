@@ -202,17 +202,17 @@ setup_user_preferences() {
 
     # Ask about iOS development
     printf "Install iOS development tools (xcodes, ios-deploy, swift tools)? [Y/n]: "
-    read install_ios
+    read -r install_ios
     install_ios=${install_ios:-Y}
 
     # Ask about data science tools
     printf "Install data science tools (jupyter, pandas, numpy)? [y/N]: "
-    read install_datascience
+    read -r install_datascience
     install_datascience=${install_datascience:-N}
 
     # Ask about additional development tools
     printf "Install additional development tools (docker, kubernetes tools)? [Y/n]: "
-    read install_devtools
+    read -r install_devtools
     install_devtools=${install_devtools:-Y}
 
     # Re-enable strict mode
@@ -332,8 +332,8 @@ validate_installation() {
     validate_tool "node" "$node_version" || ((failed++))
     validate_tool "ruby" "$ruby_version" || ((failed++))
 
-    # Validate optional tools
-    validate_tool "htop" "" || echo "" > /dev/null
+    # Validate optional tools (failures are non-fatal)
+    validate_tool "htop" "" || true
 
     if [ $failed -eq 0 ]; then
         echo "🎉 All validations passed!"

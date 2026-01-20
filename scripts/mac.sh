@@ -61,7 +61,6 @@ cleanup() {
 }
 
 trap cleanup EXIT
-trap 'ret=$?; test $ret -ne 0 && printf "failed\n\n" >&2; exit $ret' EXIT
 
 # Initialize logging
 setup_logging

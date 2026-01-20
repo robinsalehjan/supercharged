@@ -226,19 +226,19 @@ function mkcd() {
 }
 
 function extract() {
-    if [ -f $1 ] ; then
-        case $1 in
-            *.tar.bz2)   tar xjf $1     ;;
-            *.tar.gz)    tar xzf $1     ;;
-            *.bz2)       bunzip2 $1     ;;
-            *.rar)       unrar e $1     ;;
-            *.gz)        gunzip $1      ;;
-            *.tar)       tar xf $1      ;;
-            *.tbz2)      tar xjf $1     ;;
-            *.tgz)       tar xzf $1     ;;
-            *.zip)       unzip $1       ;;
-            *.Z)         uncompress $1  ;;
-            *.7z)        7z x $1        ;;
+    if [ -f "$1" ]; then
+        case "$1" in
+            *.tar.bz2)   tar xjf "$1"     ;;
+            *.tar.gz)    tar xzf "$1"     ;;
+            *.bz2)       bunzip2 "$1"     ;;
+            *.rar)       unrar e "$1"     ;;
+            *.gz)        gunzip "$1"      ;;
+            *.tar)       tar xf "$1"      ;;
+            *.tbz2)      tar xjf "$1"     ;;
+            *.tgz)       tar xzf "$1"     ;;
+            *.zip)       unzip "$1"       ;;
+            *.Z)         uncompress "$1"  ;;
+            *.7z)        7z x "$1"        ;;
             *)          echo "'$1' cannot be extracted via extract()" ;;
         esac
     else
@@ -275,13 +275,10 @@ function exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-# Weather in terminal
-function weather() {
-    curl -s "wttr.in/${1:-}"
-}
-
 # Auto-start Colima if installed and not running
-if command -v colima >/dev/null 2>&1; then
+# Set to 0 to disable auto-start
+SUPERCHARGED_COLIMA_AUTOSTART=1
+if [[ "$SUPERCHARGED_COLIMA_AUTOSTART" == "1" ]] && command -v colima >/dev/null 2>&1; then
     colima_status=$(colima status 2>&1)
     if [[ "$colima_status" != *"colima is running"* ]]; then
         colima start >/dev/null 2>&1 &!
