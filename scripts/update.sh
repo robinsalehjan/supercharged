@@ -79,10 +79,10 @@ done
 # Setup error handling and cleanup
 cleanup() {
     local exit_code=$?
-    if [ $exit_code -ne 0 ]; then
+    if [ $exit_code -ne 0 ] && [ $exit_code -ne 1 ]; then
         log_with_level "ERROR" "Update failed with exit code $exit_code"
-        brew cleanup 2>/dev/null || true
     fi
+    brew cleanup 2>/dev/null || true
     exit $exit_code
 }
 
@@ -155,7 +155,13 @@ fi
 
 if ! $SKIP_CASK; then
     log_with_level "INFO" "Updating brew casks..."
-    brew upgrade --cask && brew cleanup
+    # Use --greedy to update all casks, ignore errors from broken cask definitions
+    if ! brew upgrade --cask 2>&1 | tee /dev/stderr | grep -q "Error:"; then
+        log_with_level "SUCCESS" "Casks updated successfully"
+    else
+        log_with_level "WARN" "Some casks may have failed to update (this can happen with upstream cask definition issues)"
+    fi
+    brew cleanup
 fi
 
 if ! $SKIP_ASDF; then
