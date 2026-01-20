@@ -1,2 +1,54 @@
-*.DS_Store
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Environment and secrets
 *.env
+*.env.local
+*.env.*.local
+.envrc
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-workspace
+*.sublime-project
+
+# Build outputs
+build/
+dist/
+out/
+*.o
+*.pyc
+__pycache__/
+*.class
+
+# Dependencies
+node_modules/
+venv/
+.venv/
+vendor/
+Pods/
+
+# Logs and databases
+*.log
+*.sqlite
+*.db
+
+# Archives
+*.zip
+*.tar.gz
+*.rar
+
+# Credentials and keys
+*.pem
+*.key
+*.p12
+*.cer
