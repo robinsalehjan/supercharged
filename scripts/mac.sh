@@ -190,6 +190,20 @@ install_zsh_plugin \
     "https://github.com/romkatv/powerlevel10k" \
     "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
 
+fancy_echo 'Installing tmux plugin manager (TPM)'
+if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
+    git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+    log_with_level "SUCCESS" "TPM installed"
+else
+    log_with_level "INFO" "TPM already installed"
+fi
+
+# Copy tmux configuration
+TMUX_SOURCE="$SCRIPT_DIR/../dot_files/.tmux.conf"
+if [ -f "$TMUX_SOURCE" ]; then
+    cp "$TMUX_SOURCE" "$HOME/.tmux.conf"
+    log_with_level "SUCCESS" "Tmux configuration copied"
+fi
 
 log_with_level "INFO" "Installing asdf plugins and versions..."
 
