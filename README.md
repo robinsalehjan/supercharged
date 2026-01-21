@@ -24,16 +24,17 @@ A comprehensive set of scripts for setting up a developer-friendly macOS environ
 # Package managers and build tools
 coreutils, git, curl, openssl@3, readline, libyaml, gmp
 asdf (version manager), keychain, htop, nmap, tree, ripgrep, tmux, aria2
-uv (fast Python package installer and resolver)
+uv (fast Python package installer and resolver), gh (GitHub CLI)
 
 # Development languages (via asdf)
-nodejs   22.9.0  # LTS version, minimum 20.0.0 for modern features
-python   3.13.0  # Latest stable, minimum 3.10.0 for type hints
-ruby     2.7.7   # Stable version, minimum 2.7.0 for pattern matching
-gcloud   522.0.0 # Google Cloud SDK for cloud deployments
-firebase 14.3.1  # Firebase CLI for Firebase projects
+nodejs   22.9.0       # LTS version, minimum 20.0.0 for modern features
+python   3.13.0       # Latest stable, minimum 3.10.0 for type hints
+ruby     2.7.7        # Stable version, minimum 2.7.0 for pattern matching
+bundler  2.2.32       # Ruby package manager, minimum 2.2.0
+gcloud   522.0.0      # Google Cloud SDK for cloud deployments
+firebase 14.3.1       # Firebase CLI for Firebase projects
 java     openjdk-23.0.2  # Java for JVM and Android development
-kotlin   2.2.21  # Kotlin for Android and multiplatform development
+kotlin   2.2.21       # Kotlin for Android and multiplatform development
 ```
 
 ### iOS Development Tools (Optional - Interactive Setup)
@@ -63,6 +64,7 @@ visual-studio-code  # Code editor with shell integration
 slack              # Team communication
 postman            # API development and testing
 raycast            # macOS productivity launcher
+google-chrome      # Web browser
 
 # Utilities
 wireshark  # Network protocol analyzer
@@ -81,7 +83,7 @@ zsh-autosuggestions         # Command suggestions based on history
 zsh-syntax-highlighting     # Syntax highlighting for commands
 powerlevel10k              # Modern and customizable prompt theme
 
-# Configured plugins (in .zshrc)
+# Configured plugins (in .zshrc)docker, tmux
 git, asdf, zsh-autosuggestions, zsh-syntax-highlighting, gcloud, docker
 
 # Shell features configured in .zshrc
@@ -103,6 +105,7 @@ git, asdf, zsh-autosuggestions, zsh-syntax-highlighting, gcloud, docker
 .zshrc              # ZSH configuration with plugins and aliases
 .zprofile           # ZSH profile (environment variables)
 .tmux.conf          # tmux configuration
+.secrets            # Template for secret environment variables
 .p10k.zsh           # Powerlevel10k theme configuration
 ```
 
@@ -136,8 +139,7 @@ The setup process will:
 3. **Create** a timestamped restoration point for safe rollbacks
 4. **Ask** for your preferences:
    - iOS development tools? (xcodes, ios-deploy, swift tools) [Y/n]
-   - Data science tools? (jupyter, pandas, numpy) [y/N]
-   - Additional dev tools? (docker, k9s, colima) [Y/n]
+   - Data science tools? (jupyter, pandas, numpy) [y/Nlima) [Y/n]
    - Claude Code? (AI code assistant) [Y/n]
 5. **Install** Homebrew (if not present)
 6. **Install** selected tools and applications via Homebrew
@@ -238,12 +240,17 @@ During setup, you'll be asked about:
 - **Data Science Tools** [y/N]: Jupyter, pandas, numpy, matplotlib, scikit-learn
 - **Additional Dev Tools** [Y/n]: Docker, Kubernetes tools (k9s), Colima
 
-Your preferences are saved to `~/.supercharged_preferences` and used for reference.
+Your preferences are saved to `~/.supercharged_preferences` and used during setup. These preferences include:
+- `INSTALL_IOS_TOOLS`: Whether to install iOS development tools
+- `INSTALL_DATA_SCIENCE`: Whether to install data science packages
+- `INSTALL_DEV_TOOLS`: Whether to install Docker and Kubernetes tools
+- `SETUP_DATE`: When the configuration was last set
 
 ### Manual Customization
 Edit these files before running setup:
 
 **`dot_files/.tool-versions`** - Add or modify development tool versions:
+bundler 2.2.32
 ```bash
 nodejs 22.9.0
 python 3.13.0
@@ -253,19 +260,25 @@ firebase 14.3.1
 java openjdk-23.0.2
 kotlin 2.2.21
 # Add more tools as needed
-```
-
-**`dot_files/.zshrc`** - Customize shell aliases and functions:
-```bash
-# Already includes aliases for:
-# Navigation: ll, la, .., ..., ...., cd shortcuts
-# Git: gst, gd, gco, gcm, gp, glog
+```, cdr (cd to ~/Repositories)
+# Git: gst, gd, gco, gcm, gcd, gcp, gl, gp, glog
 # Docker: d, dc
 # Kubernetes: k, kx
+# Development: py (python3), pip (pip3)
+# macOS: showfiles, hidefiles, cleanup, f (open Finder), c (clear)
+# PATH: path (display PATH entries on separate lines)
+
+# Includes utility functions:
+# mkcd, extract, docker-clean, myps, gb, gcb, gpus, gpul
+# code (VS Code integration), exists (check command existence)
 # Development: py (python3), pip (pip3)
 # macOS: showfiles, hidefiles, cleanup
 
 # Includes utility functions:
+# Core packages always installed: coreutils, git, curl, asdf, keychain, etc.
+# iOS tools conditional: xcodes, swift-format, swiftlint, ios-deploy, etc.
+# Dev tools conditional: docker, docker-compose, k9s, colima
+# Apps always installed: VS Code, Slack, Postman, Raycast, Chrome, Wireshark, Spotify
 # mkcd, extract, docker-clean, weather, and more
 ```
 
@@ -318,7 +331,7 @@ ssh-add -l
 
 # The setup configures keychain for automatic SSH key loading
 # Supported key types: ed25519 (preferred), rsa, ecdsa
-# Keys are automatically loaded in .zshrc
+# Keys are automaticallfor home directory
 ```
 
 **"ASDF version not found"**
