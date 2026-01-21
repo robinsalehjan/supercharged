@@ -11,7 +11,8 @@ log_with_level() {
     local level=$1
     local message=$2
     local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    local log_file="$HOME/.supercharged_install.log"
+    local script_dir="$(cd "$(dirname "${(%):-%x}")" && pwd)"
+    local log_file="$(cd "$script_dir/.." && pwd)/.supercharged_install.log"
 
     case $level in
         "ERROR")
@@ -34,7 +35,8 @@ log_with_level() {
 
 # Logging setup
 setup_logging() {
-    local log_file="$HOME/.supercharged_install.log"
+    local script_dir="$(cd "$(dirname "${(%):-%x}")" && pwd)"
+    local log_file="$(cd "$script_dir/.." && pwd)/.supercharged_install.log"
     exec 1> >(tee -a "$log_file")
     exec 2> >(tee -a "$log_file" >&2)
     log_with_level "INFO" "Installation started"

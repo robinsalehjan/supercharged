@@ -215,7 +215,7 @@ ls -1t ~/.supercharged_backups/
 ### Logging
 All installation activities are logged to:
 ```bash
-~/.supercharged_install.log
+<supercharged-directory>/.supercharged_install.log
 ```
 
 Each log entry includes:
@@ -225,8 +225,9 @@ Each log entry includes:
 
 View logs:
 ```bash
-tail -f ~/.supercharged_install.log  # Follow logs in real-time
-grep ERROR ~/.supercharged_install.log  # Filter for errors
+cd /path/to/supercharged
+tail -f .supercharged_install.log  # Follow logs in real-time
+grep ERROR .supercharged_install.log  # Filter for errors
 ```
 
 ## 🎯 Customization
@@ -281,7 +282,8 @@ kotlin 2.2.21
 **"Installation failed" message**
 ```bash
 # Check the detailed log
-tail -f ~/.supercharged_install.log
+cd /path/to/supercharged
+tail -f .supercharged_install.log
 
 # Restore from backup if needed
 npm run restore
@@ -349,7 +351,8 @@ source ~/.zshrc
 ### Debug Mode
 Enable verbose logging by checking:
 ```bash
-cat ~/.supercharged_install.log
+cd /path/to/supercharged
+cat .supercharged_install.log
 ```
 
 ### Reset Everything
