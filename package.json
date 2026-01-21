@@ -12,7 +12,7 @@
     "commitlint": "commitlint --edit",
     "help": "./scripts/help.sh",
     "setup": "npm run setup:profile && ./scripts/mac.sh && npm run validate",
-    "setup:profile": "cp dot_files/.gitconfig $HOME && cp dot_files/.gitignore_global $HOME && cp dot_files/.tool-versions $HOME && cp dot_files/.zshrc $HOME && cp dot_files/.zprofile $HOME && cp dot_files/.tmux.conf $HOME && cp dot_files/.p10k.zsh $HOME && echo '✅ Dotfiles copied to $HOME'",
+    "setup:profile": "./scripts/setup-profile.sh",
     "update": "npm run setup:profile && ./scripts/update.sh",
     "update:dry-run": "./scripts/update.sh --dry-run",
     "update:brew": "npm run setup:profile && ./scripts/update.sh --skip-asdf --skip-zsh --skip-npm --skip-pip",
