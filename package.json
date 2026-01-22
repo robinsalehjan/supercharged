@@ -19,7 +19,7 @@
     "update:asdf": "npm run setup:profile && ./scripts/update.sh --skip-brew --skip-cask --skip-zsh --skip-npm --skip-pip",
     "update:zsh": "./scripts/update.sh --skip-brew --skip-cask --skip-asdf --skip-npm --skip-pip",
     "update:npm": "./scripts/update.sh --skip-brew --skip-cask --skip-asdf --skip-zsh --skip-pip",
-    "validate": "cd scripts && ./utils.sh validate && echo '✅ All tools validated successfully' || echo '❌ Validation failed'",
+    "validate": "cd scripts && ./utils.sh validate",
     "restore": "cd scripts && source utils.sh && restore_from_backup"
   }
 }
