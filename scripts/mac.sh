@@ -190,7 +190,15 @@ install_zsh_plugin \
     "https://github.com/romkatv/powerlevel10k" \
     "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
 
-fancy_echo 'Installing tmux plugin manager (TPM)'
+# Setup tmux: TPM, configuration, and plugins
+fancy_echo 'Setting up tmux with TPM and plugins'
+
+TMUX_SOURCE="$SCRIPT_DIR/../dot_files/.tmux.conf"
+if [ -f "$TMUX_SOURCE" ]; then
+    cp "$TMUX_SOURCE" "$HOME/.tmux.conf"
+    log_with_level "SUCCESS" "Tmux configuration copied"
+fi
+
 if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
     git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
     log_with_level "SUCCESS" "TPM installed"
@@ -198,11 +206,11 @@ else
     log_with_level "INFO" "TPM already installed"
 fi
 
-# Copy tmux configuration
-TMUX_SOURCE="$SCRIPT_DIR/../dot_files/.tmux.conf"
-if [ -f "$TMUX_SOURCE" ]; then
-    cp "$TMUX_SOURCE" "$HOME/.tmux.conf"
-    log_with_level "SUCCESS" "Tmux configuration copied"
+if [ -f "$HOME/.tmux/plugins/tpm/bin/install_plugins" ]; then
+    "$HOME/.tmux/plugins/tpm/bin/install_plugins"
+    log_with_level "SUCCESS" "Tmux plugins installed"
+else
+    log_with_level "WARN" "TPM install script not found, plugins will install on first tmux launch (prefix + I)"
 fi
 
 log_with_level "INFO" "Installing asdf plugins and versions..."
