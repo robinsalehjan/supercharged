@@ -125,14 +125,12 @@ brew "readline"
 brew "libyaml"
 brew "gmp"
 brew "keychain"
-brew "htop"
 brew "nmap"
 brew "asdf"
 brew "aria2"
 brew "tree"
 brew "ripgrep"
 brew "tmux"
-brew "uv"
 brew "gh"'
 
 # Add iOS development tools if requested
