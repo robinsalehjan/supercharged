@@ -368,9 +368,6 @@ validate_installation() {
     validate_tool "node" "$node_version" || ((failed++))
     validate_tool "ruby" "$ruby_version" || ((failed++))
 
-    # Validate optional tools (failures are non-fatal)
-    validate_tool "htop" "" || true
-
     if [ $failed -eq 0 ]; then
         echo "🎉 All validations passed!"
         return 0

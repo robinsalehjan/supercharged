@@ -23,7 +23,7 @@ A comprehensive set of scripts for setting up a developer-friendly macOS environ
 ```bash
 # Package managers and build tools
 coreutils, git, curl, openssl@3, readline, libyaml, gmp
-asdf (version manager), keychain, htop, nmap, tree, ripgrep, tmux, aria2
+asdf (version manager), keychain, nmap, tree, ripgrep, tmux, aria2
 uv (fast Python package installer and resolver), gh (GitHub CLI)
 
 # Development languages (via asdf)
