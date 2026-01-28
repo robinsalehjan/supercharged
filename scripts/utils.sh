@@ -1,5 +1,14 @@
 #!/bin/zsh
 
+# Compute paths once at script load time
+UTILS_SCRIPT_DIR="$(cd "$(dirname "$0")" 2>/dev/null && pwd)" || UTILS_SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]:-$0}")"
+# Handle the case where utils.sh is sourced
+if [[ "$UTILS_SCRIPT_DIR" == "." ]] || [[ -z "$UTILS_SCRIPT_DIR" ]]; then
+    UTILS_SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" 2>/dev/null && pwd)" || UTILS_SCRIPT_DIR="$PWD"
+fi
+UTILS_PROJECT_ROOT="$(cd "$UTILS_SCRIPT_DIR/.." 2>/dev/null && pwd)" || UTILS_PROJECT_ROOT="$UTILS_SCRIPT_DIR"
+UTILS_LOG_FILE="$UTILS_PROJECT_ROOT/.supercharged_install.log"
+
 # Colored output for better user experience
 fancy_echo() {
     local fmt="$1"; shift
@@ -11,34 +20,30 @@ log_with_level() {
     local level=$1
     local message=$2
     local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    local script_dir="$(cd "$(dirname "${(%):-%x}")" && pwd)"
-    local log_file="$(cd "$script_dir/.." && pwd)/.supercharged_install.log"
 
     case $level in
         "ERROR")
-            echo "[$timestamp] [❌ ERROR] $message" | tee -a "$log_file" >&2
+            echo "[$timestamp] [❌ ERROR] $message" | tee -a "$UTILS_LOG_FILE" >&2
             ;;
         "WARN")
-            echo "[$timestamp] [⚠️  WARN] $message" | tee -a "$log_file"
+            echo "[$timestamp] [⚠️  WARN] $message" | tee -a "$UTILS_LOG_FILE"
             ;;
         "INFO")
-            echo "[$timestamp] [ℹ️  INFO] $message" | tee -a "$log_file"
+            echo "[$timestamp] [ℹ️  INFO] $message" | tee -a "$UTILS_LOG_FILE"
             ;;
         "SUCCESS")
-            echo "[$timestamp] [✅ SUCCESS] $message" | tee -a "$log_file"
+            echo "[$timestamp] [✅ SUCCESS] $message" | tee -a "$UTILS_LOG_FILE"
             ;;
         *)
-            echo "[$timestamp] [DEBUG] $message" | tee -a "$log_file"
+            echo "[$timestamp] [DEBUG] $message" | tee -a "$UTILS_LOG_FILE"
             ;;
     esac
 }
 
 # Logging setup
 setup_logging() {
-    local script_dir="$(cd "$(dirname "${(%):-%x}")" && pwd)"
-    local log_file="$(cd "$script_dir/.." && pwd)/.supercharged_install.log"
-    exec 1> >(tee -a "$log_file")
-    exec 2> >(tee -a "$log_file" >&2)
+    exec 1> >(tee -a "$UTILS_LOG_FILE")
+    exec 2> >(tee -a "$UTILS_LOG_FILE" >&2)
     log_with_level "INFO" "Installation started"
 }
 
@@ -181,23 +186,8 @@ set -euo pipefail
 
 # Interactive git configuration setup
 setup_git_config() {
-    # Use a more explicit path approach
-    # Since this script is always in the scripts directory, we can use that fact
-    local current_script_path
-    if [[ -n "${ZSH_VERSION:-}" ]]; then
-        # zsh
-        current_script_path="${(%):-%x}"
-    elif [[ -n "${BASH_VERSION:-}" ]]; then
-        # bash
-        current_script_path="${BASH_SOURCE[0]}"
-    else
-        # fallback
-        current_script_path="$0"
-    fi
-
-    local utils_script_dir="$(cd "$(dirname "$current_script_path")" && pwd)"
-    # Go up one level to get the supercharged directory, then into dot_files
-    local git_source="$(cd "$utils_script_dir/.." && pwd)/dot_files/.gitconfig"
+    # Use pre-computed paths from top of file
+    local git_source="$UTILS_PROJECT_ROOT/dot_files/.gitconfig"
     local git_config="$HOME/.gitconfig"
 
     # Check if git config already exists and is identical to source first
