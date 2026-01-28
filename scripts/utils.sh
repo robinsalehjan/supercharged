@@ -59,6 +59,23 @@ create_restoration_point() {
         fi
     done
 
+    # Backup Claude Code configuration if available (strip home directory for portability)
+    if [ -d "$HOME/.claude" ]; then
+        mkdir -p "$backup_dir/claude_config"
+        if [ -f "$HOME/.claude/settings.json" ]; then
+            cp "$HOME/.claude/settings.json" "$backup_dir/claude_config/"
+            log_with_level "INFO" "Backed up Claude Code settings.json"
+        fi
+        if [ -f "$HOME/.claude/plugins/installed_plugins.json" ]; then
+            sed "s|$HOME|\$HOME|g" "$HOME/.claude/plugins/installed_plugins.json" > "$backup_dir/claude_config/installed_plugins.json"
+            log_with_level "INFO" "Backed up Claude Code installed_plugins.json (paths made portable)"
+        fi
+        if [ -f "$HOME/.claude/plugins/known_marketplaces.json" ]; then
+            sed "s|$HOME|\$HOME|g" "$HOME/.claude/plugins/known_marketplaces.json" > "$backup_dir/claude_config/known_marketplaces.json"
+            log_with_level "INFO" "Backed up Claude Code known_marketplaces.json (paths made portable)"
+        fi
+    fi
+
     # Store brew list if available
     if command -v brew >/dev/null 2>&1; then
         brew list > "$backup_dir/brew_packages.txt" 2>/dev/null || true
@@ -105,6 +122,23 @@ restore_from_backup() {
             log_with_level "INFO" "Restored $file"
         fi
     done
+
+    # Restore Claude Code configuration if available in backup (expand $HOME placeholder)
+    if [ -d "$backup_dir/claude_config" ]; then
+        mkdir -p "$HOME/.claude/plugins"
+        if [ -f "$backup_dir/claude_config/settings.json" ]; then
+            cp "$backup_dir/claude_config/settings.json" "$HOME/.claude/"
+            log_with_level "INFO" "Restored Claude Code settings.json"
+        fi
+        if [ -f "$backup_dir/claude_config/installed_plugins.json" ]; then
+            sed "s|\\\$HOME|$HOME|g" "$backup_dir/claude_config/installed_plugins.json" > "$HOME/.claude/plugins/installed_plugins.json"
+            log_with_level "INFO" "Restored Claude Code installed_plugins.json"
+        fi
+        if [ -f "$backup_dir/claude_config/known_marketplaces.json" ]; then
+            sed "s|\\\$HOME|$HOME|g" "$backup_dir/claude_config/known_marketplaces.json" > "$HOME/.claude/plugins/known_marketplaces.json"
+            log_with_level "INFO" "Restored Claude Code known_marketplaces.json"
+        fi
+    fi
 
     log_with_level "SUCCESS" "Restoration completed"
     return 0

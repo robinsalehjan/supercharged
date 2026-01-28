@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(source utils.sh)",
+      "Bash(create_restoration_point)"
+    ]
+  }
+}

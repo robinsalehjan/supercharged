@@ -1,0 +1,19 @@
+{
+  "claude-plugins-official": {
+    "source": {
+      "source": "github",
+      "repo": "anthropics/claude-plugins-official"
+    },
+    "installLocation": "$HOME/.claude/plugins/marketplaces/claude-plugins-official",
+    "lastUpdated": "2026-01-28T11:49:16.602Z"
+  },
+  "vend-plugins": {
+    "source": {
+      "source": "git",
+      "url": "git@github.schibsted.io:m10s-green/claude-plugin-marketplace.git"
+    },
+    "installLocation": "$HOME/.claude/plugins/marketplaces/vend-plugins",
+    "lastUpdated": "2026-01-23T12:28:50.785Z",
+    "autoUpdate": true
+  }
+}

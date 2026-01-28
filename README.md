@@ -107,6 +107,11 @@ git, asdf, zsh-autosuggestions, zsh-syntax-highlighting, gcloud, docker
 .tmux.conf          # tmux configuration
 .secrets            # Template for secret environment variables
 .p10k.zsh           # Powerlevel10k theme configuration
+
+# Claude Code configuration (backed up to claude_config/)
+settings.json              # Claude Code plugin settings
+installed_plugins.json     # List of installed plugins with versions
+known_marketplaces.json    # Plugin marketplace configurations
 ```
 
 ### Data Science Tools (Optional - Interactive Setup)
@@ -117,6 +122,28 @@ pandas          # Data manipulation and analysis
 numpy           # Numerical computing
 matplotlib      # Data visualization
 scikit-learn    # Machine learning library
+```
+
+### Claude Code Configuration Backup
+```bash
+# Configuration files (backed up to claude_config/)
+settings.json              # Plugin enable/disable settings
+installed_plugins.json     # List of installed plugins with versions (portable $HOME paths)
+known_marketplaces.json    # Plugin marketplace configurations (portable $HOME paths)
+
+# Excluded (session/sensitive data):
+# - session-env/, todos/, debug/        # Session-specific data
+# - history.jsonl, shell-snapshots/     # Command history
+# - projects/, file-history/, plans/    # Project-specific data
+# - cache/, downloads/                  # Cache and temporary files
+# - statsig/, stats-cache.json          # Analytics data
+# - ide/                                # IDE lock files
+
+# Backup your Claude Code configuration (included in npm run update)
+npm run backup:claude
+
+# Restore Claude Code configuration (included in npm run setup:profile)
+npm run setup:profile
 ```
 
 ## ⚡️ Quick Start
@@ -135,19 +162,21 @@ cd supercharged && npm install && npm run setup
 
 The setup process will:
 1. **Copy** dotfiles (.gitconfig, .zshrc, .tool-versions, etc.) to your home directory
-2. **Validate** your system meets requirements (macOS 12.0+, 10GB+ free space, internet)
-3. **Create** a timestamped restoration point for safe rollbacks
-4. **Ask** for your preferences:
+2. **Restore** Claude Code configuration (settings, plugins) if available
+3. **Validate** your system meets requirements (macOS 12.0+, 10GB+ free space, internet)
+4. **Create** a timestamped restoration point for safe rollbacks (includes Claude Code config)
+5. **Ask** for your preferences:
    - iOS development tools? (xcodes, ios-deploy, swift tools) [Y/n]
-   - Data science tools? (jupyter, pandas, numpy) [y/Nlima) [Y/n]
+   - Data science tools? (jupyter, pandas, numpy) [y/N]
+   - Development tools? (docker, kubernetes, colima) [Y/n]
    - Claude Code? (AI code assistant) [Y/n]
-5. **Install** Homebrew (if not present)
-6. **Install** selected tools and applications via Homebrew
-7. **Install** ZSH plugins (autosuggestions, syntax-highlighting, powerlevel10k)
-8. **Configure** ASDF plugins (python, ruby, nodejs, gcloud, firebase, java, kotlin)
-9. **Install** ASDF tool versions from .tool-versions
-10. **Install** optional data science tools if selected
-11. **Run** validation to ensure all tools are working correctly
+6. **Install** Homebrew (if not present)
+7. **Install** selected tools and applications via Homebrew
+8. **Install** ZSH plugins (autosuggestions, syntax-highlighting, powerlevel10k)
+9. **Configure** ASDF plugins (python, ruby, nodejs, gcloud, firebase, java, kotlin)
+10. **Install** ASDF tool versions from .tool-versions
+11. **Install** optional data science tools if selected
+12. **Run** validation to ensure all tools are working correctly
 
 ### Update Existing Installation
 ```bash
@@ -155,7 +184,8 @@ npm run update
 ```
 
 This will:
-- Copy latest dotfiles to $HOME
+- Backup Claude Code configuration (with portable paths)
+- Copy latest dotfiles and Claude config to $HOME
 - Update Homebrew packages and casks
 - Update ASDF plugins
 - Install/update tool versions from `.tool-versions`
@@ -167,7 +197,8 @@ This will:
 | Command | Description |
 |---------|-------------|
 | `npm run setup` | Complete fresh installation with interactive configuration |
-| `npm run setup:profile` | Copy configuration files (.gitconfig, .zshrc, etc.) to $HOME |
+| `npm run setup:profile` | Copy dotfiles and Claude Code configuration to $HOME |
+| `npm run backup:claude` | Backup Claude Code configuration to claude_config/ (with portable paths) |
 | `npm run update` | Update all installed packages and tools |
 | `npm run update:dry-run` | Preview updates without making changes |
 | `npm run update:brew` | Update only Homebrew (formulae + casks) |
@@ -191,6 +222,10 @@ Every installation creates a timestamped backup of your existing configurations 
     ├── .p10k.zsh
     ├── .tool-versions
     ├── .tmux.conf
+    ├── claude_config/           # Claude Code configuration backup
+    │   ├── settings.json
+    │   ├── installed_plugins.json
+    │   └── known_marketplaces.json
     ├── brew_packages.txt    # List of installed Homebrew packages
     ├── brew_casks.txt       # List of installed Homebrew casks
     ├── asdf_plugins.txt     # List of ASDF plugins
