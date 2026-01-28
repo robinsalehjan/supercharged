@@ -222,7 +222,7 @@ fi
 if ! $SKIP_PIP && command -v pip3 >/dev/null 2>&1; then
     if pip3 show jupyter >/dev/null 2>&1; then
         log_with_level "INFO" "Updating pip data science packages..."
-        pip3 install --upgrade jupyter pandas numpy matplotlib scikit-learn 2>/dev/null || log_with_level "WARN" "Failed to update pip packages"
+        pip3 install --quiet --upgrade jupyter pandas numpy matplotlib scikit-learn 2>/dev/null || log_with_level "WARN" "Failed to update pip packages"
     fi
 fi
 

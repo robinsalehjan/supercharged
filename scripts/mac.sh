@@ -243,7 +243,7 @@ fi
 if [[ "${INSTALL_DATA_SCIENCE:-N}" =~ ^[Yy] ]]; then
     log_with_level "INFO" "Installing data science tools..."
     # Future: Install jupyter, pandas, numpy, etc.
-    pip3 install jupyter pandas numpy matplotlib scikit-learn
+    pip3 install --quiet jupyter pandas numpy matplotlib scikit-learn
 fi
 
 log_with_level "SUCCESS" "Installation completed successfully!"
