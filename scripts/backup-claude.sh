@@ -10,9 +10,8 @@ set -e
 
 source "$(dirname "$0")/utils.sh"
 
-# Get the directory where this script is located
-SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+# Get the directory where this script is located (use pre-computed from utils.sh)
+PROJECT_ROOT="$UTILS_PROJECT_ROOT"
 CLAUDE_CONFIG_DIR="$PROJECT_ROOT/claude_config"
 CLAUDE_HOME="$HOME/.claude"
 

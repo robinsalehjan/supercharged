@@ -201,8 +201,7 @@ setup_git_config() {
     if [ ! -f "$git_source" ]; then
         log_with_level "ERROR" "Git config not found at $git_source"
         log_with_level "INFO" "Current working directory: $(pwd)"
-        log_with_level "INFO" "Utils script directory: $utils_script_dir"
-        log_with_level "INFO" "Current script path: $current_script_path"
+        log_with_level "INFO" "Project root: $UTILS_PROJECT_ROOT"
         return 1
     fi
 

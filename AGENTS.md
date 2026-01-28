@@ -47,12 +47,20 @@ npm run update:brew      # Only Homebrew packages
 npm run update:asdf      # Only ASDF plugins/versions
 npm run update:zsh       # Only ZSH plugins
 
-# Manual validation of shell scripts
-shellcheck scripts/*.sh
+# Manual validation of shell scripts (note: limited zsh support)
+shellcheck --shell=bash scripts/*.sh 2>&1 | grep -v SC1071 || true
 
 # Test restoration workflow
 source scripts/utils.sh && restore_from_backup ~/.supercharged_backups/<timestamp>
 ```
+
+**Shellcheck Warnings to Ignore** (safe for zsh scripts):
+- `SC1071` - ShellCheck doesn't support zsh (expected, we use `--shell=bash`)
+- `SC2296` - Parameter expansions can't start with `(` (zsh-specific `${(%):-%x}` syntax)
+- `SC1091` - Not following sourced file (shellcheck limitation)
+- `SC2155` - Declare and assign separately (style preference, not a bug)
+- `SC2001` - Use `${var//search/replace}` instead of sed (style preference)
+- `SC2012` - Use find instead of ls (style preference, our use is safe)
 
 ## Code Style and Conventions
 
@@ -122,7 +130,7 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 ## Testing Instructions
 
 **Pre-commit Validation**:
-1. Run `shellcheck scripts/*.sh` to check syntax
+1. Run `shellcheck --shell=bash scripts/*.sh` to check syntax (note: scripts use zsh, so some warnings about zsh-specific features can be ignored)
 2. Test script functions in isolation when possible
 3. Verify logging output format matches existing patterns
 4. Check that backup/restore creates expected files
