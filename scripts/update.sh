@@ -151,6 +151,13 @@ fi
 if ! $SKIP_BREW; then
     log_with_level "INFO" "Updating brew packages..."
     brew upgrade
+
+    # Fix wireshark linking issues if it's installed
+    if brew list wireshark &>/dev/null; then
+        log_with_level "INFO" "Fixing wireshark symlinks..."
+        brew unlink wireshark 2>/dev/null || true
+        brew link --overwrite wireshark 2>/dev/null || true
+    fi
 fi
 
 if ! $SKIP_CASK; then
