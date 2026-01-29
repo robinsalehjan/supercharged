@@ -150,6 +150,13 @@ fi
 # Perform updates
 if ! $SKIP_BREW; then
     log_with_level "INFO" "Updating brew packages..."
+
+    # Remove deprecated wireshark-app cask if present (has broken definition)
+    if brew list --cask wireshark-app &>/dev/null 2>&1; then
+        log_with_level "INFO" "Removing deprecated wireshark-app cask..."
+        brew uninstall --cask wireshark-app 2>/dev/null || true
+    fi
+
     brew upgrade
 
     # Fix wireshark linking issues if it's installed

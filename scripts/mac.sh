@@ -181,6 +181,12 @@ if brew list wireshark &>/dev/null; then
     brew link --overwrite wireshark 2>/dev/null || true
 fi
 
+# Remove deprecated wireshark-app cask if present (has broken definition)
+if brew list --cask wireshark-app &>/dev/null 2>&1; then
+    log_with_level "INFO" "Removing deprecated wireshark-app cask..."
+    brew uninstall --cask wireshark-app 2>/dev/null || true
+fi
+
 echo "$BREWFILE_CONTENT" | brew bundle --file=-
 
 fancy_echo 'Installing zsh themes and plugins'
