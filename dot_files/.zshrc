@@ -8,7 +8,7 @@ fi
 # Set ZSH path first
 export ZSH="$HOME/.oh-my-zsh"
 
-# Initialize Homebrew
+# Initialize Homebrew (Apple Silicon)
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # Terminal improvements
@@ -67,8 +67,11 @@ path=(
     $path                   # Preserve existing path entries
 )
 
-# Export the deduplicated PATH
-export PATH=$(deduplicate_path)
+# Export the deduplicated PATH (only once per session for performance)
+if [ -z "$_SUPERCHARGED_PATH_DEDUPED" ]; then
+    export PATH=$(deduplicate_path)
+    export _SUPERCHARGED_PATH_DEDUPED=1
+fi
 
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
@@ -139,7 +142,15 @@ DISABLE_UNTRACKED_FILES_DIRTY="true"
 plugins=(git asdf zsh-autosuggestions zsh-syntax-highlighting docker tmux)
 
 source $ZSH/oh-my-zsh.sh
-test -f ~/.secrets && source ~/.secrets
+
+# Source secrets file with validation warning if unconfigured
+if [ -f ~/.secrets ]; then
+    # Check if secrets file is still the template (only commented exports)
+    if ! grep -q '^export.*="[^"]\'\''\?[^"]' ~/.secrets 2>/dev/null; then
+        echo "⚠️  Warning: ~/.secrets appears to be unconfigured (template only)"
+    fi
+    source ~/.secrets
+fi
 
 # SSH key management
 # Start ssh-agent if not already running
@@ -276,9 +287,9 @@ function exists() {
 }
 
 # Auto-start Colima if installed and not running
-# Set to 0 to disable auto-start
-SUPERCHARGED_COLIMA_AUTOSTART=1
-if [[ "$SUPERCHARGED_COLIMA_AUTOSTART" == "1" ]] && command -v colima >/dev/null 2>&1; then
+# Set to 1 to enable auto-start (opt-in for performance)
+# Example: export SUPERCHARGED_COLIMA_AUTOSTART=1 in ~/.secrets
+if [[ "${SUPERCHARGED_COLIMA_AUTOSTART:-0}" == "1" ]] && command -v colima >/dev/null 2>&1; then
     colima_status=$(colima status 2>&1)
     if [[ "$colima_status" != *"colima is running"* ]]; then
         colima start >/dev/null 2>&1 &!

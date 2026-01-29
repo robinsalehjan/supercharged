@@ -149,16 +149,38 @@ restore_from_backup() {
     return 0
 }
 
-# Version checking
+# Version checking with safety improvements
 check_version() {
     local cmd=$1
     local min_version=$2
     local version
-    version=$($cmd --version | head -n1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0")
-    if [ "$(printf '%s\n' "$min_version" "$version" | sort -V | head -n1)" != "$min_version" ]; then
-        echo "Error: $cmd version $min_version or higher is required"
-        exit 1
+
+    # Check if command exists first
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        log_with_level "WARN" "$cmd not found, skipping version check"
+        return 1
     fi
+
+    # Handle different version output formats
+    case "$cmd" in
+        "python"|"python3")
+            version=$("$cmd" --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0")
+            ;;
+        "java")
+            version=$("$cmd" -version 2>&1 | head -n1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0")
+            ;;
+        *)
+            version=$("$cmd" --version 2>&1 | head -n1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0")
+            ;;
+    esac
+
+    if [ "$(printf '%s\n' "$min_version" "$version" | sort -V | head -n1)" != "$min_version" ]; then
+        log_with_level "WARN" "$cmd version $min_version or higher recommended (found: $version)"
+        return 1
+    fi
+
+    log_with_level "INFO" "$cmd version $version meets minimum requirement $min_version"
+    return 0
 }
 
 # Backup functionality (legacy - use create_restoration_point for enhanced features)
@@ -280,15 +302,24 @@ install_asdf_plugin() {
     fi
 }
 
-# Function to safely install asdf versions
+# Function to safely install asdf versions (idempotent)
 install_asdf_version() {
     local plugin=$1
     local version=$2
 
-    if ! asdf list "$plugin" | grep -q "$version"; then
+    # Check if already at the correct version (global setting)
+    local current_version
+    current_version=$(asdf current "$plugin" 2>/dev/null | awk '{print $2}' || echo "")
+
+    if [ "$current_version" = "$version" ]; then
+        log_with_level "INFO" "asdf: $plugin already at version $version, skipping"
+        return 0
+    fi
+
+    if ! asdf list "$plugin" 2>/dev/null | grep -q "$version"; then
         fancy_echo "asdf: installing $plugin version $version"
         asdf install "$plugin" "$version" || {
-            echo "Warning: Failed to install $plugin $version"
+            log_with_level "ERROR" "Failed to install $plugin $version"
             return 1
         }
     else
@@ -296,6 +327,7 @@ install_asdf_version() {
     fi
 
     asdf set --home "$plugin" "$version"
+    log_with_level "SUCCESS" "asdf: $plugin set to version $version"
 }
 
 # Validation functions

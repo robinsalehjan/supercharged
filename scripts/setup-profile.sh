@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 
 # ============================================================================
 # Profile Setup Script
@@ -8,8 +8,8 @@
 
 set -e
 
-# Get the directory where this script is located
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Get the directory where this script is located (zsh syntax)
+SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 DOT_FILES_DIR="$PROJECT_ROOT/dot_files"
 

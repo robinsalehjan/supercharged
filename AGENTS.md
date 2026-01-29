@@ -62,6 +62,13 @@ source scripts/utils.sh && restore_from_backup ~/.supercharged_backups/<timestam
 - `SC2001` - Use `${var//search/replace}` instead of sed (style preference)
 - `SC2012` - Use find instead of ls (style preference, our use is safe)
 
+**Zsh-Specific Syntax Used** (not compatible with bash):
+- `${(%):-%x}` - Get the current script path (zsh prompt expansion)
+- `${(%):-%n}` - Get the current username (used in p10k instant prompt)
+- `&!` - Disown background process immediately (used for Colima auto-start)
+- `path=(...)` - Zsh array for PATH manipulation
+- `setopt` - Zsh-specific shell options (EXTENDED_HISTORY, etc.)
+
 ## Code Style and Conventions
 
 ### Shell Script Guidelines

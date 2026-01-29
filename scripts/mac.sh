@@ -41,6 +41,13 @@ validate_system() {
         exit 1
     fi
 
+    # Check for Oh My Zsh
+    if [ ! -d "$HOME/.oh-my-zsh" ]; then
+        log_with_level "ERROR" "Oh My Zsh is required but not installed."
+        log_with_level "INFO" "Install it with: sh -c \"\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\""
+        exit 1
+    fi
+
     log_with_level "SUCCESS" "System validation passed"
 }
 
