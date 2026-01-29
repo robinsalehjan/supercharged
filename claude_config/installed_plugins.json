@@ -1,95 +1,32 @@
 {
-  "version": 2,
-  "plugins": {
-    "jira@vend-plugins": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/vend-plugins/jira/1.0.0",
-        "version": "1.0.0",
-        "installedAt": "2026-01-23T12:29:11.266Z",
-        "lastUpdated": "2026-01-23T12:29:11.266Z",
-        "gitCommitSha": "5210b305a756e824f9e277b3e515d192d8afd2e2"
-      }
-    ],
-    "unleash@vend-plugins": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/vend-plugins/unleash/1.0.0",
-        "version": "1.0.0",
-        "installedAt": "2026-01-23T12:29:33.479Z",
-        "lastUpdated": "2026-01-23T12:29:33.479Z",
-        "gitCommitSha": "5210b305a756e824f9e277b3e515d192d8afd2e2"
-      }
-    ],
-    "meta@vend-plugins": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/vend-plugins/meta/1.1.4",
-        "version": "1.1.4",
-        "installedAt": "2026-01-23T12:44:36.068Z",
-        "lastUpdated": "2026-01-28T11:28:11.055Z",
-        "gitCommitSha": "5210b305a756e824f9e277b3e515d192d8afd2e2"
-      }
-    ],
-    "observability@vend-plugins": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/vend-plugins/observability/1.0.0",
-        "version": "1.0.0",
-        "installedAt": "2026-01-23T12:46:15.770Z",
-        "lastUpdated": "2026-01-23T12:46:15.770Z",
-        "gitCommitSha": "5210b305a756e824f9e277b3e515d192d8afd2e2"
-      }
-    ],
-    "safety-hooks@vend-plugins": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/vend-plugins/safety-hooks/1.3.0",
-        "version": "1.3.0",
-        "installedAt": "2026-01-23T12:46:34.663Z",
-        "lastUpdated": "2026-01-28T11:28:11.056Z",
-        "gitCommitSha": "5210b305a756e824f9e277b3e515d192d8afd2e2"
-      }
-    ],
-    "developer-documentation@vend-plugins": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/vend-plugins/developer-documentation/1.0.0",
-        "version": "1.0.0",
-        "installedAt": "2026-01-23T12:46:49.827Z",
-        "lastUpdated": "2026-01-23T12:46:49.827Z",
-        "gitCommitSha": "5210b305a756e824f9e277b3e515d192d8afd2e2"
-      }
-    ],
-    "hookify@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/hookify/e30768372b41",
-        "version": "e30768372b41",
-        "installedAt": "2026-01-26T14:03:41.731Z",
-        "lastUpdated": "2026-01-26T14:03:41.731Z",
-        "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
-      }
-    ],
-    "superpowers@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/superpowers/4.1.1",
-        "version": "4.1.1",
-        "installedAt": "2026-01-28T08:28:06.034Z",
-        "lastUpdated": "2026-01-28T08:28:06.034Z",
-        "gitCommitSha": "469a6d81ebb8b827e284d4afb090c6c622d97747"
-      }
-    ],
-    "ralph-loop@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/ralph-loop/e30768372b41",
-        "version": "e30768372b41",
-        "installedAt": "2026-01-28T10:29:50.788Z",
-        "lastUpdated": "2026-01-28T10:29:50.788Z",
-        "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
-      }
-    ]
-  }
+  "hookify@claude-plugins-official": [
+    {
+      "scope": "user",
+      "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/hookify/64e3e0b88be8",
+      "version": "64e3e0b88be8",
+      "installedAt": "2026-01-26T14:03:41.731Z",
+      "lastUpdated": "2026-01-29T23:12:26.474Z",
+      "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
+    }
+  ],
+  "superpowers@claude-plugins-official": [
+    {
+      "scope": "user",
+      "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/superpowers/4.1.1",
+      "version": "4.1.1",
+      "installedAt": "2026-01-28T08:28:06.034Z",
+      "lastUpdated": "2026-01-28T08:28:06.034Z",
+      "gitCommitSha": "469a6d81ebb8b827e284d4afb090c6c622d97747"
+    }
+  ],
+  "ralph-loop@claude-plugins-official": [
+    {
+      "scope": "user",
+      "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/ralph-loop/64e3e0b88be8",
+      "version": "64e3e0b88be8",
+      "installedAt": "2026-01-28T10:29:50.788Z",
+      "lastUpdated": "2026-01-29T23:12:26.479Z",
+      "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
+    }
+  ]
 }
