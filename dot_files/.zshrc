@@ -146,7 +146,8 @@ source $ZSH/oh-my-zsh.sh
 # Source secrets file with validation warning if unconfigured
 if [ -f ~/.secrets ]; then
     # Check if secrets file has at least one uncommented export with a value
-    if ! grep -qE '^export [A-Z_]+="[^"]+' ~/.secrets 2>/dev/null; then
+    # Matches: export VAR="value" or export VAR='value'
+    if ! grep -qE "^export [A-Za-z_][A-Za-z0-9_]*=[\"'][^\"']+[\"']" ~/.secrets 2>/dev/null; then
         echo "⚠️  Warning: ~/.secrets appears to be unconfigured (template only)"
     fi
     source ~/.secrets
