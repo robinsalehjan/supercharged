@@ -83,8 +83,8 @@ zsh-autosuggestions         # Command suggestions based on history
 zsh-syntax-highlighting     # Syntax highlighting for commands
 powerlevel10k              # Modern and customizable prompt theme
 
-# Configured plugins (in .zshrc)docker, tmux
-git, asdf, zsh-autosuggestions, zsh-syntax-highlighting, gcloud, docker
+# Configured plugins (in .zshrc)
+git, asdf, zsh-autosuggestions, zsh-syntax-highlighting, gcloud, docker, tmux
 
 # Shell features configured in .zshrc
 - Smart PATH deduplication function
@@ -285,42 +285,50 @@ Your preferences are saved to `~/.supercharged_preferences` and used during setu
 Edit these files before running setup:
 
 **`dot_files/.tool-versions`** - Add or modify development tool versions:
-bundler 2.2.32
 ```bash
 nodejs 22.9.0
 python 3.13.0
 ruby 2.7.7
+bundler 2.2.32
 gcloud 522.0.0
 firebase 14.3.1
 java openjdk-23.0.2
 kotlin 2.2.21
 # Add more tools as needed
-```, cdr (cd to ~/Repositories)
-# Git: gst, gd, gco, gcm, gcd, gcp, gl, gp, glog
-# Docker: d, dc
-# Kubernetes: k, kx
-# Development: py (python3), pip (pip3)
-# macOS: showfiles, hidefiles, cleanup, f (open Finder), c (clear)
-# PATH: path (display PATH entries on separate lines)
+```
 
-# Includes utility functions:
-# mkcd, extract, docker-clean, myps, gb, gcb, gpus, gpul
-# code (VS Code integration), exists (check command existence)
-# Development: py (python3), pip (pip3)
-# macOS: showfiles, hidefiles, cleanup
+**`dot_files/.zshrc`** - Customize shell configuration:
+```bash
+# Navigation aliases: ls, ll, la, cp, mv, mkdir, .., ..., ...., f, c, cdr, path
+# Git aliases: gst, gd, gco, gcm, gcd, gcp, gl, gp, glog
+# Docker aliases: d, dc
+# Kubernetes aliases: k, kx
+# Development aliases: py (python3), pip (pip3)
+# macOS aliases: showfiles, hidefiles, cleanup
 
-# Includes utility functions:
-# Core packages always installed: coreutils, git, curl, asdf, keychain, etc.
-# iOS tools conditional: xcodes, swift-format, swiftlint, ios-deploy, etc.
-# Dev tools conditional: docker, docker-compose, k9s, colima
-# Apps always installed: VS Code, Slack, Postman, Raycast, Chrome, Wireshark, Spotify
-# mkcd, extract, docker-clean, weather, and more
+# Utility functions included:
+# mkcd      - Create directory and cd into it
+# extract   - Extract various archive formats
+# docker-clean - Clean up Docker containers and images
+# gb, gcb, gpus, gpul - Git branch utilities
 ```
 
 **`scripts/mac.sh`** - Modify package installation lists:
 ```bash
 # Edit BREWFILE_CONTENT to add/remove Homebrew packages
 # Conditional sections based on INSTALL_IOS_TOOLS, INSTALL_DEV_TOOLS flags
+
+# Core packages always installed:
+# coreutils, git, curl, asdf, keychain, tmux, ripgrep, etc.
+
+# iOS tools (conditional):
+# xcodes, swift-format, swiftlint, ios-deploy, etc.
+
+# Dev tools (conditional):
+# docker, docker-compose, k9s, colima
+
+# Apps always installed:
+# VS Code, Slack, Postman, Raycast, Chrome, Wireshark, Spotify
 ```
 
 ## 🔍 Troubleshooting
@@ -366,7 +374,7 @@ ssh-add -l
 
 # The setup configures keychain for automatic SSH key loading
 # Supported key types: ed25519 (preferred), rsa, ecdsa
-# Keys are automaticallfor home directory
+# Keys are automatically loaded via keychain in .zshrc
 ```
 
 **"ASDF version not found"**
