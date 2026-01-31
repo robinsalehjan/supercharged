@@ -48,7 +48,7 @@ fi
 # Backup plugin configuration files (strip home directory for portability and remove work-related marketplaces)
 if [ -f "$CLAUDE_HOME/plugins/installed_plugins.json" ]; then
     # Build jq filter to remove all plugins from sanitized marketplaces
-    jq_filter='.plugins'
+    jq_filter='.'
     for marketplace in "${SANITIZE_MARKETPLACES[@]}"; do
         jq_filter="$jq_filter | to_entries | map(select(.key | endswith(\"@$marketplace\") | not)) | from_entries"
     done
