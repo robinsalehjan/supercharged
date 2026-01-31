@@ -36,7 +36,7 @@ validate_system() {
     fi
 
     # Check internet connectivity
-    if ! ping -c 1 -W 5000 google.com >/dev/null 2>&1; then
+    if ! ping -c 1 -W 5 google.com >/dev/null 2>&1; then
         log_with_level "ERROR" "Internet connectivity required for installation"
         exit 1
     fi
@@ -139,7 +139,8 @@ brew "tree"
 brew "ripgrep"
 brew "tmux"
 brew "gh"
-brew "shellcheck"'
+brew "shellcheck"
+brew "jq"'
 
 # Add iOS development tools if requested
 if [[ "${INSTALL_IOS_TOOLS:-Y}" =~ ^[Yy] ]]; then

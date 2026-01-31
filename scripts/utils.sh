@@ -203,9 +203,6 @@ install_zsh_plugin() {
     fi
 }
 
-# Enhanced error handling
-set -euo pipefail
-
 # Interactive git configuration setup
 setup_git_config() {
     # Use pre-computed paths from top of file
@@ -262,6 +259,11 @@ setup_user_preferences() {
     read -r install_devtools
     install_devtools=${install_devtools:-Y}
 
+    # Ask about Claude Code
+    printf "Install Claude Code (AI coding assistant)? [Y/n]: "
+    read -r install_claude
+    install_claude=${install_claude:-Y}
+
     # Re-enable strict mode
     set -u
 
@@ -272,6 +274,7 @@ setup_user_preferences() {
 INSTALL_IOS_TOOLS=${install_ios}
 INSTALL_DATA_SCIENCE=${install_datascience}
 INSTALL_DEV_TOOLS=${install_devtools}
+INSTALL_CLAUDE_CODE=${install_claude}
 SETUP_DATE=$(date)
 EOF
 
@@ -281,6 +284,7 @@ EOF
     export INSTALL_IOS_TOOLS="$install_ios"
     export INSTALL_DATA_SCIENCE="$install_datascience"
     export INSTALL_DEV_TOOLS="$install_devtools"
+    export INSTALL_CLAUDE_CODE="$install_claude"
 }
 
 # Function to check if a command exists

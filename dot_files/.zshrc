@@ -139,7 +139,7 @@ DISABLE_UNTRACKED_FILES_DIRTY="true"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git asdf zsh-autosuggestions zsh-syntax-highlighting docker tmux)
+plugins=(git asdf zsh-autosuggestions zsh-syntax-highlighting gcloud docker tmux)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -186,8 +186,10 @@ fi
 
 if [[ -n $SSH_CONNECTION ]]; then
    export EDITOR='vim'
+elif command -v code >/dev/null 2>&1; then
+   export EDITOR='code --wait'
 else
-   export EDITOR='mvim'
+   export EDITOR='vim'
 fi
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.

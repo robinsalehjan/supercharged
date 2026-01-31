@@ -98,7 +98,7 @@ fi
 log_with_level "INFO" "Starting update process..."
 
 # Check internet connectivity before attempting updates
-if ! ping -c 1 -W 5000 google.com >/dev/null 2>&1; then
+if ! ping -c 1 -W 5 google.com >/dev/null 2>&1; then
     log_with_level "ERROR" "Internet connectivity required for updates"
     exit 1
 fi
