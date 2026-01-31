@@ -5,6 +5,14 @@
       "repo": "anthropics/claude-plugins-official"
     },
     "installLocation": "$HOME/.claude/plugins/marketplaces/claude-plugins-official",
-    "lastUpdated": "2026-01-29T23:12:26.454Z"
+    "lastUpdated": "2026-01-31T15:02:10.791Z"
+  },
+  "superpowers-marketplace": {
+    "source": {
+      "source": "github",
+      "repo": "obra/superpowers-marketplace"
+    },
+    "installLocation": "$HOME/.claude/plugins/marketplaces/superpowers-marketplace",
+    "lastUpdated": "2026-01-31T15:02:13.603Z"
   }
 }

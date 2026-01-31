@@ -2,6 +2,8 @@
   "enabledPlugins": {
     "hookify@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
-    "ralph-loop@claude-plugins-official": true
+    "ralph-loop@claude-plugins-official": true,
+    "elements-of-style@superpowers-marketplace": true,
+    "superpowers-developing-for-claude-code@superpowers-marketplace": true
   }
 }
