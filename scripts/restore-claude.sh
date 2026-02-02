@@ -133,6 +133,7 @@ restore_config_file() {
 }
 
 # Function to merge plugin configs, preserving local plugins from protected marketplaces
+# The file structure is: {"version": N, "plugins": {...}}
 merge_plugin_config() {
     local src="$1"
     local dest="$2"
@@ -163,18 +164,25 @@ merge_plugin_config() {
         return
     fi
 
-    # Extract local plugins from preserved marketplaces
+    # Extract local plugins from preserved marketplaces (from .plugins object)
     local local_content=$(cat "$dest")
     local preserved_plugins="{}"
 
     for marketplace in "${PRESERVE_MARKETPLACES[@]}"; do
-        # Extract plugins ending with @marketplace
-        local marketplace_plugins=$(echo "$local_content" | jq "to_entries | map(select(.key | endswith(\"@$marketplace\"))) | from_entries")
+        # Extract plugins ending with @marketplace from the .plugins object
+        local marketplace_plugins=$(echo "$local_content" | jq ".plugins | to_entries | map(select(.key | endswith(\"@$marketplace\"))) | from_entries")
         preserved_plugins=$(echo "$preserved_plugins" | jq ". + $marketplace_plugins")
     done
 
-    # Merge: repo content + preserved local plugins (local takes precedence for conflicts)
-    local merged=$(echo "$repo_content" | jq ". + $preserved_plugins")
+    # Get repo plugins and merge with preserved local plugins
+    local repo_plugins=$(echo "$repo_content" | jq '.plugins')
+    local merged_plugins=$(echo "$repo_plugins" | jq ". + $preserved_plugins")
+
+    # Get version from repo (or local if repo doesn't have it)
+    local version=$(echo "$repo_content" | jq '.version // 2')
+
+    # Build final merged object
+    local merged=$(jq -n --argjson version "$version" --argjson plugins "$merged_plugins" '{version: $version, plugins: $plugins}')
     echo "$merged" > "$dest"
 
     local preserved_count=$(echo "$preserved_plugins" | jq 'keys | length')

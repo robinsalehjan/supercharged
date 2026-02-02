@@ -48,12 +48,15 @@ fi
 # Backup plugin configuration files (strip home directory for portability and remove work-related marketplaces)
 if [ -f "$CLAUDE_HOME/plugins/installed_plugins.json" ]; then
     # Build jq filter to remove all plugins from sanitized marketplaces
-    jq_filter='.'
+    # The file structure is: {"version": N, "plugins": {...}}
+    jq_filter='.plugins | to_entries'
     for marketplace in "${SANITIZE_MARKETPLACES[@]}"; do
-        jq_filter="$jq_filter | to_entries | map(select(.key | endswith(\"@$marketplace\") | not)) | from_entries"
+        jq_filter="$jq_filter | map(select(.key | endswith(\"@$marketplace\") | not))"
     done
+    jq_filter="$jq_filter | from_entries"
 
-    jq "$jq_filter" "$CLAUDE_HOME/plugins/installed_plugins.json" | \
+    # Preserve version and update plugins
+    jq "{version: .version, plugins: ($jq_filter)}" "$CLAUDE_HOME/plugins/installed_plugins.json" | \
         sed "s|$HOME|\$HOME|g" > "$CLAUDE_CONFIG_DIR/installed_plugins.json"
     log_with_level "SUCCESS" "Backed up installed_plugins.json (sanitized ${#SANITIZE_MARKETPLACES[@]} marketplace(s), paths made portable)"
 else
