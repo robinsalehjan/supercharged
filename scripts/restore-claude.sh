@@ -19,6 +19,9 @@ PROJECT_ROOT="$UTILS_PROJECT_ROOT"
 CLAUDE_CONFIG_DIR="$PROJECT_ROOT/claude_config"
 CLAUDE_HOME="$HOME/.claude"
 
+# List of marketplaces to preserve locally (not overwritten during restore)
+# These are work-related and should remain untouched
+PRESERVE_MARKETPLACES=("vend-plugins")
 FORCE_RESTORE=false
 
 # Parse arguments
@@ -129,6 +132,111 @@ restore_config_file() {
     fi
 }
 
+# Function to merge plugin configs, preserving local plugins from protected marketplaces
+merge_plugin_config() {
+    local src="$1"
+    local dest="$2"
+    local name="$3"
+
+    if [ ! -f "$src" ]; then
+        return
+    fi
+
+    # Create destination directory if needed
+    mkdir -p "$(dirname "$dest")"
+
+    # Expand $HOME placeholder in source
+    local repo_content=$(sed "s|\\\$HOME|$HOME|g" "$src")
+
+    # If destination doesn't exist, just copy
+    if [ ! -f "$dest" ]; then
+        echo "$repo_content" > "$dest"
+        log_with_level "SUCCESS" "Restored $name"
+        return
+    fi
+
+    # Check if jq is available for merging
+    if ! command -v jq &> /dev/null; then
+        log_with_level "WARN" "jq not available, overwriting $name (local plugins may be lost)"
+        echo "$repo_content" > "$dest"
+        log_with_level "SUCCESS" "Restored $name"
+        return
+    fi
+
+    # Extract local plugins from preserved marketplaces
+    local local_content=$(cat "$dest")
+    local preserved_plugins="{}"
+
+    for marketplace in "${PRESERVE_MARKETPLACES[@]}"; do
+        # Extract plugins ending with @marketplace
+        local marketplace_plugins=$(echo "$local_content" | jq "to_entries | map(select(.key | endswith(\"@$marketplace\"))) | from_entries")
+        preserved_plugins=$(echo "$preserved_plugins" | jq ". + $marketplace_plugins")
+    done
+
+    # Merge: repo content + preserved local plugins (local takes precedence for conflicts)
+    local merged=$(echo "$repo_content" | jq ". + $preserved_plugins")
+    echo "$merged" > "$dest"
+
+    local preserved_count=$(echo "$preserved_plugins" | jq 'keys | length')
+    if [ "$preserved_count" -gt 0 ]; then
+        log_with_level "SUCCESS" "Restored $name (preserved $preserved_count local plugin(s))"
+    else
+        log_with_level "SUCCESS" "Restored $name"
+    fi
+}
+
+# Function to merge marketplace configs, preserving local marketplaces
+merge_marketplace_config() {
+    local src="$1"
+    local dest="$2"
+    local name="$3"
+
+    if [ ! -f "$src" ]; then
+        return
+    fi
+
+    # Create destination directory if needed
+    mkdir -p "$(dirname "$dest")"
+
+    # Expand $HOME placeholder in source
+    local repo_content=$(sed "s|\\\$HOME|$HOME|g" "$src")
+
+    # If destination doesn't exist, just copy
+    if [ ! -f "$dest" ]; then
+        echo "$repo_content" > "$dest"
+        log_with_level "SUCCESS" "Restored $name"
+        return
+    fi
+
+    # Check if jq is available for merging
+    if ! command -v jq &> /dev/null; then
+        log_with_level "WARN" "jq not available, overwriting $name (local marketplaces may be lost)"
+        echo "$repo_content" > "$dest"
+        log_with_level "SUCCESS" "Restored $name"
+        return
+    fi
+
+    # Extract preserved marketplaces from local config
+    local local_content=$(cat "$dest")
+    local preserved_marketplaces="{}"
+
+    for marketplace in "${PRESERVE_MARKETPLACES[@]}"; do
+        local marketplace_entry=$(echo "$local_content" | jq "if has(\"$marketplace\") then {\"$marketplace\": .[\"$marketplace\"]} else {} end")
+        preserved_marketplaces=$(echo "$preserved_marketplaces" | jq ". + $marketplace_entry")
+    done
+
+    # Merge: repo content + preserved local marketplaces (local takes precedence)
+    local merged=$(echo "$repo_content" | jq ". + $preserved_marketplaces")
+    echo "$merged" > "$dest"
+
+    local preserved_count=$(echo "$preserved_marketplaces" | jq 'keys | length')
+    if [ "$preserved_count" -gt 0 ]; then
+        log_with_level "SUCCESS" "Restored $name (preserved $preserved_count local marketplace(s))"
+    else
+        log_with_level "SUCCESS" "Restored $name"
+    fi
+}
+
 # Main restore logic
 if [ "$FORCE_RESTORE" = true ]; then
     log_with_level "INFO" "Force restoring Claude Code configuration..."
@@ -143,20 +251,20 @@ fi
 mkdir -p "$CLAUDE_HOME"
 mkdir -p "$CLAUDE_HOME/plugins"
 
-# Restore settings.json
+# Restore settings.json (simple overwrite, no sensitive data)
 restore_config_file \
     "$CLAUDE_CONFIG_DIR/settings.json" \
     "$CLAUDE_HOME/settings.json" \
     "settings.json"
 
-# Restore installed_plugins.json
-restore_config_file \
+# Restore installed_plugins.json (merge to preserve local work plugins)
+merge_plugin_config \
     "$CLAUDE_CONFIG_DIR/installed_plugins.json" \
     "$CLAUDE_HOME/plugins/installed_plugins.json" \
     "installed_plugins.json"
 
-# Restore known_marketplaces.json
-restore_config_file \
+# Restore known_marketplaces.json (merge to preserve local work marketplaces)
+merge_marketplace_config \
     "$CLAUDE_CONFIG_DIR/known_marketplaces.json" \
     "$CLAUDE_HOME/plugins/known_marketplaces.json" \
     "known_marketplaces.json"
