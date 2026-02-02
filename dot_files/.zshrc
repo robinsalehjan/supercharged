@@ -30,6 +30,16 @@ if [ -f "$(brew --prefix asdf)/libexec/asdf.sh" ]; then
     source "$(brew --prefix asdf)/libexec/asdf.sh"
 fi
 
+# Set JAVA_HOME if Java is installed via ASDF
+if command -v asdf >/dev/null 2>&1 && asdf where java >/dev/null 2>&1; then
+    export JAVA_HOME=$(asdf where java)
+fi
+
+# Set KOTLIN_HOME if Kotlin is installed via ASDF
+if command -v asdf >/dev/null 2>&1 && asdf where kotlin >/dev/null 2>&1; then
+    export KOTLIN_HOME=$(asdf where kotlin)
+fi
+
 # Function to deduplicate PATH
 deduplicate_path() {
     local IFS=':'
