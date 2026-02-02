@@ -1,52 +1,55 @@
 {
-  "hookify@claude-plugins-official": [
-    {
-      "scope": "user",
-      "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/hookify/27d2b86d72da",
-      "version": "27d2b86d72da",
-      "installedAt": "2026-01-31T15:01:48.984Z",
-      "lastUpdated": "2026-01-31T15:01:48.984Z",
-      "gitCommitSha": "27d2b86d72da27c64585150857cee8472ad47abb"
-    }
-  ],
-  "ralph-loop@claude-plugins-official": [
-    {
-      "scope": "user",
-      "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/ralph-loop/27d2b86d72da",
-      "version": "27d2b86d72da",
-      "installedAt": "2026-01-31T15:01:48.984Z",
-      "lastUpdated": "2026-01-31T15:01:48.984Z",
-      "gitCommitSha": "27d2b86d72da27c64585150857cee8472ad47abb"
-    }
-  ],
-  "superpowers@claude-plugins-official": [
-    {
-      "scope": "user",
-      "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/superpowers/4.1.1",
-      "version": "4.1.1",
-      "installedAt": "2026-01-31T15:01:50.642Z",
-      "lastUpdated": "2026-01-31T15:01:50.642Z",
-      "gitCommitSha": "06b92f36820f38175b2ed6ff3f8df45157d54731"
-    }
-  ],
-  "elements-of-style@superpowers-marketplace": [
-    {
-      "scope": "user",
-      "installPath": "$HOME/.claude/plugins/cache/superpowers-marketplace/elements-of-style/1.0.0",
-      "version": "1.0.0",
-      "installedAt": "2026-01-31T15:02:30.841Z",
-      "lastUpdated": "2026-01-31T15:02:30.841Z",
-      "gitCommitSha": "6099c505c2a8eb066f3777f83a97d9d828f7954c"
-    }
-  ],
-  "superpowers-developing-for-claude-code@superpowers-marketplace": [
-    {
-      "scope": "user",
-      "installPath": "$HOME/.claude/plugins/cache/superpowers-marketplace/superpowers-developing-for-claude-code/0.3.1",
-      "version": "0.3.1",
-      "installedAt": "2026-01-31T15:02:37.870Z",
-      "lastUpdated": "2026-01-31T15:02:37.870Z",
-      "gitCommitSha": "74afe935da49efe782907e837a27ce618498099a"
-    }
-  ]
+  "version": 2,
+  "plugins": {
+    "hookify@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/hookify/27d2b86d72da",
+        "version": "27d2b86d72da",
+        "installedAt": "2026-02-02T10:58:13.151Z",
+        "lastUpdated": "2026-02-02T10:58:13.151Z",
+        "gitCommitSha": "27d2b86d72da27c64585150857cee8472ad47abb"
+      }
+    ],
+    "ralph-loop@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/ralph-loop/27d2b86d72da",
+        "version": "27d2b86d72da",
+        "installedAt": "2026-02-02T10:58:13.151Z",
+        "lastUpdated": "2026-02-02T10:58:13.151Z",
+        "gitCommitSha": "27d2b86d72da27c64585150857cee8472ad47abb"
+      }
+    ],
+    "superpowers@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/superpowers/4.1.1",
+        "version": "4.1.1",
+        "installedAt": "2026-02-02T10:58:15.789Z",
+        "lastUpdated": "2026-02-02T10:58:15.789Z",
+        "gitCommitSha": "06b92f36820f38175b2ed6ff3f8df45157d54731"
+      }
+    ],
+    "elements-of-style@superpowers-marketplace": [
+      {
+        "scope": "user",
+        "installPath": "$HOME/.claude/plugins/cache/superpowers-marketplace/elements-of-style/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-02-02T10:58:16.726Z",
+        "lastUpdated": "2026-02-02T10:58:16.726Z",
+        "gitCommitSha": "6099c505c2a8eb066f3777f83a97d9d828f7954c"
+      }
+    ],
+    "superpowers-developing-for-claude-code@superpowers-marketplace": [
+      {
+        "scope": "user",
+        "installPath": "$HOME/.claude/plugins/cache/superpowers-marketplace/superpowers-developing-for-claude-code/0.3.1",
+        "version": "0.3.1",
+        "installedAt": "2026-02-02T10:58:17.711Z",
+        "lastUpdated": "2026-02-02T10:58:17.711Z",
+        "gitCommitSha": "74afe935da49efe782907e837a27ce618498099a"
+      }
+    ]
+  }
 }
