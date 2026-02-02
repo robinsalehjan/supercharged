@@ -170,13 +170,21 @@ merge_plugin_config() {
 
     for marketplace in "${PRESERVE_MARKETPLACES[@]}"; do
         # Extract plugins ending with @marketplace from the .plugins object
-        local marketplace_plugins=$(echo "$local_content" | jq ".plugins | to_entries | map(select(.key | endswith(\"@$marketplace\"))) | from_entries")
-        preserved_plugins=$(echo "$preserved_plugins" | jq ". + $marketplace_plugins")
+        local marketplace_plugins=$(echo "$local_content" | jq ".plugins // {} | to_entries | map(select(.key | endswith(\"@$marketplace\"))) | from_entries" 2>/dev/null)
+        if [ -n "$marketplace_plugins" ] && [ "$marketplace_plugins" != "{}" ]; then
+            preserved_plugins=$(echo "$preserved_plugins" | jq ". + $marketplace_plugins" 2>/dev/null || echo "$preserved_plugins")
+            log_with_level "INFO" "Found plugins from $marketplace to preserve"
+        fi
     done
 
     # Get repo plugins and merge with preserved local plugins
-    local repo_plugins=$(echo "$repo_content" | jq '.plugins')
-    local merged_plugins=$(echo "$repo_plugins" | jq ". + $preserved_plugins")
+    local repo_plugins=$(echo "$repo_content" | jq '.plugins // {}' 2>/dev/null || echo "{}")
+    local merged_plugins=$(echo "$repo_plugins" | jq ". + $preserved_plugins" 2>/dev/null)
+
+    if [ -z "$merged_plugins" ] || [ "$merged_plugins" = "null" ]; then
+        log_with_level "WARN" "Failed to merge plugins, using repo content only"
+        merged_plugins="$repo_plugins"
+    fi
 
     # Get version from repo (or local if repo doesn't have it)
     local version=$(echo "$repo_content" | jq '.version // 2')
@@ -229,16 +237,25 @@ merge_marketplace_config() {
     local preserved_marketplaces="{}"
 
     for marketplace in "${PRESERVE_MARKETPLACES[@]}"; do
-        local marketplace_entry=$(echo "$local_content" | jq "if has(\"$marketplace\") then {\"$marketplace\": .[\"$marketplace\"]} else {} end")
-        preserved_marketplaces=$(echo "$preserved_marketplaces" | jq ". + $marketplace_entry")
+        local marketplace_entry=$(echo "$local_content" | jq "if has(\"$marketplace\") then {\"$marketplace\": .[\"$marketplace\"]} else {} end" 2>/dev/null)
+        if [ -n "$marketplace_entry" ] && [ "$marketplace_entry" != "{}" ]; then
+            preserved_marketplaces=$(echo "$preserved_marketplaces" | jq ". + $marketplace_entry" 2>/dev/null || echo "$preserved_marketplaces")
+            log_with_level "INFO" "Found marketplace $marketplace to preserve"
+        fi
     done
 
     # Merge: repo content + preserved local marketplaces (local takes precedence)
-    local merged=$(echo "$repo_content" | jq ". + $preserved_marketplaces")
+    local merged=$(echo "$repo_content" | jq ". + $preserved_marketplaces" 2>/dev/null)
+
+    if [ -z "$merged" ] || [ "$merged" = "null" ]; then
+        log_with_level "WARN" "Failed to merge marketplaces, using repo content only"
+        merged="$repo_content"
+    fi
+
     echo "$merged" > "$dest"
 
-    local preserved_count=$(echo "$preserved_marketplaces" | jq 'keys | length')
-    if [ "$preserved_count" -gt 0 ]; then
+    local preserved_count=$(echo "$preserved_marketplaces" | jq 'keys | length' 2>/dev/null || echo "0")
+    if [ "$preserved_count" -gt 0 ] 2>/dev/null; then
         log_with_level "SUCCESS" "Restored $name (preserved $preserved_count local marketplace(s))"
     else
         log_with_level "SUCCESS" "Restored $name"
