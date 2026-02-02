@@ -46,33 +46,10 @@ done
 
 echo "✅ Dotfiles copied to \$HOME"
 
-# Restore Claude Code configuration if available
-CLAUDE_CONFIG_DIR="$PROJECT_ROOT/claude_config"
-CLAUDE_HOME="$HOME/.claude"
-
-if [ -d "$CLAUDE_CONFIG_DIR" ]; then
+# Restore Claude Code configuration using dedicated script
+if [ -x "$SCRIPT_DIR/restore-claude.sh" ]; then
     echo ""
-    echo "🤖 Restoring Claude Code configuration..."
-
-    mkdir -p "$CLAUDE_HOME/plugins"
-
-    if [ -f "$CLAUDE_CONFIG_DIR/settings.json" ]; then
-        cp "$CLAUDE_CONFIG_DIR/settings.json" "$CLAUDE_HOME/settings.json"
-        echo "  ✓ Restored settings.json"
-    fi
-
-    # Restore plugin config files (expand $HOME placeholder to actual home directory)
-    if [ -f "$CLAUDE_CONFIG_DIR/installed_plugins.json" ]; then
-        sed "s|\\\$HOME|$HOME|g" "$CLAUDE_CONFIG_DIR/installed_plugins.json" > "$CLAUDE_HOME/plugins/installed_plugins.json"
-        echo "  ✓ Restored installed_plugins.json"
-    fi
-
-    if [ -f "$CLAUDE_CONFIG_DIR/known_marketplaces.json" ]; then
-        sed "s|\\\$HOME|$HOME|g" "$CLAUDE_CONFIG_DIR/known_marketplaces.json" > "$CLAUDE_HOME/plugins/known_marketplaces.json"
-        echo "  ✓ Restored known_marketplaces.json"
-    fi
-
-    echo "✅ Claude Code configuration restored"
+    "$SCRIPT_DIR/restore-claude.sh" --force
 fi
 
 # Display backup location for user reference

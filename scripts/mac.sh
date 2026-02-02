@@ -253,6 +253,12 @@ asdf reshim
 if [[ "${INSTALL_CLAUDE_CODE:-Y}" =~ ^[Yy] ]]; then
     log_with_level "INFO" "Installing Claude Code..."
     curl -fsSL https://claude.ai/install.sh | bash
+
+    # Restore Claude configuration from repository if available
+    if [ -x "$SCRIPT_DIR/restore-claude.sh" ]; then
+        log_with_level "INFO" "Restoring Claude configuration from repository..."
+        "$SCRIPT_DIR/restore-claude.sh" --force || log_with_level "WARN" "Claude config restore skipped or failed"
+    fi
 fi
 # Install additional tools based on preferences
 if [[ "${INSTALL_DATA_SCIENCE:-N}" =~ ^[Yy] ]]; then
