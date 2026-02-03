@@ -5,7 +5,7 @@
       "repo": "anthropics/claude-plugins-official"
     },
     "installLocation": "$HOME/.claude/plugins/marketplaces/claude-plugins-official",
-    "lastUpdated": "2026-02-02T10:58:18.543Z"
+    "lastUpdated": "2026-02-03T11:41:19.957Z"
   },
   "superpowers-marketplace": {
     "source": {
@@ -14,5 +14,13 @@
     },
     "installLocation": "$HOME/.claude/plugins/marketplaces/superpowers-marketplace",
     "lastUpdated": "2026-01-31T15:02:13.603Z"
+  },
+  "superlego": {
+    "source": {
+      "source": "github",
+      "repo": "robinsalehjan/superlego"
+    },
+    "installLocation": "$HOME/.claude/plugins/marketplaces/superlego",
+    "lastUpdated": "2026-02-03T10:56:00.462Z"
   }
 }

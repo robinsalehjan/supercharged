@@ -50,6 +50,16 @@
         "lastUpdated": "2026-02-02T10:58:17.711Z",
         "gitCommitSha": "74afe935da49efe782907e837a27ce618498099a"
       }
+    ],
+    "skills@superlego": [
+      {
+        "scope": "user",
+        "installPath": "$HOME/.claude/plugins/cache/superlego/skills/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-02-03T10:56:14.658Z",
+        "lastUpdated": "2026-02-03T10:56:14.658Z",
+        "gitCommitSha": "2d8fb0694beb375993b9329cc21c08e017a6a191"
+      }
     ]
   }
 }
