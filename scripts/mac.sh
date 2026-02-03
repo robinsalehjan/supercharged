@@ -140,7 +140,10 @@ brew "ripgrep"
 brew "tmux"
 brew "gh"
 brew "shellcheck"
-brew "jq"'
+brew "jq"
+brew "duckdb"
+brew "sqlite"
+brew "beads"'
 
 # Add iOS development tools if requested
 if [[ "${INSTALL_IOS_TOOLS:-Y}" =~ ^[Yy] ]]; then

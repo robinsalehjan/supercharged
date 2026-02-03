@@ -24,7 +24,8 @@ A comprehensive set of scripts for setting up a developer-friendly macOS environ
 # Package managers and build tools
 coreutils, git, curl, openssl@3, readline, libyaml, gmp
 asdf (version manager), keychain, nmap, tree, ripgrep, tmux, aria2
-uv (fast Python package installer and resolver), gh (GitHub CLI)
+uv (fast Python package installer and resolver), gh (GitHub CLI), duckdb (in-process SQL OLAP database)
+sqlite (lightweight SQL database), beads (distributed git-backed issue tracker for AI agents)
 
 # Development languages (via asdf)
 nodejs   22.9.0       # LTS version, minimum 20.0.0 for modern features
