@@ -7,13 +7,22 @@ Instructions for AI coding agents working on the Supercharged macOS environment 
 Supercharged is a macOS environment setup automation tool that:
 - Installs and configures development tools via Homebrew and ASDF
 - Manages dotfiles (.zshrc, .gitconfig, .tool-versions, etc.)
+- Manages Claude Code configuration (settings, plugins, marketplaces)
 - Provides interactive installation with optional tool categories
 - Creates automatic backups before making changes
 - Validates system requirements and tool installations
 
 **Architecture**:
 - `scripts/` - Shell scripts for installation, updates, and utilities
+  - `mac.sh` - Main installation script with system validation and tool setup
+  - `update.sh` - Update script with selective component updates
+  - `utils.sh` - Reusable functions (logging, backup/restore, validation)
+  - `setup-profile.sh` - Copy dotfiles and Claude config to `$HOME`
+  - `backup-claude.sh` - Backup Claude Code configuration to repository
+  - `restore-claude.sh` - Restore Claude Code configuration from repository
+  - `help.sh` - Display available npm commands
 - `dot_files/` - Configuration files copied to `$HOME`
+- `claude_config/` - Claude Code configuration files (settings, plugins, marketplaces)
 - `package.json` - npm scripts for running setup/update workflows
 - Backup system in `~/.supercharged_backups/`
 
@@ -23,17 +32,23 @@ Supercharged is a macOS environment setup automation tool that:
 # Fresh installation (interactive)
 npm install && npm run setup
 
-# Update existing installation
+# Update existing installation (includes Claude backup)
 npm run update
 
-# Copy only dotfiles to $HOME
+# Copy only dotfiles and Claude config to $HOME
 npm run setup:profile
+
+# Backup Claude Code configuration to repository
+npm run backup:claude
 
 # Validate all tools are installed correctly
 npm run validate
 
 # Restore from most recent backup
 npm run restore
+
+# Display available commands
+npm run help
 ```
 
 ## Build and Test
@@ -46,12 +61,18 @@ npm run update:dry-run
 npm run update:brew      # Only Homebrew packages
 npm run update:asdf      # Only ASDF plugins/versions
 npm run update:zsh       # Only ZSH plugins
+npm run update:npm       # Only npm global packages
 
 # Manual validation of shell scripts (note: limited zsh support)
 shellcheck --shell=bash scripts/*.sh 2>&1 | grep -v SC1071 || true
 
 # Test restoration workflow
 source scripts/utils.sh && restore_from_backup ~/.supercharged_backups/<timestamp>
+
+# Test Claude Code backup/restore
+./scripts/backup-claude.sh        # Backup to repository
+./scripts/restore-claude.sh       # Restore if repo is newer
+./scripts/restore-claude.sh --force  # Force restore
 ```
 
 **Shellcheck Warnings to Ignore** (safe for zsh scripts):
@@ -114,6 +135,19 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 - Use environment variables for paths, not hardcoded values
 - Include inline documentation for complex aliases/functions
 
+### Claude Code Configuration
+
+**Backup/Restore Scripts** (`scripts/backup-claude.sh`, `scripts/restore-claude.sh`):
+- Portable paths: `$HOME` placeholder used for cross-machine compatibility
+- Sanitization: Work-related marketplaces (e.g., `vend-plugins`) excluded from backup
+- Merge logic: Restore preserves local work plugins while applying repo settings
+- Timestamp comparison: Only restores when repo config is newer (unless `--force`)
+
+**Configuration files** stored in `claude_config/`:
+- `settings.json` - Plugin enable/disable settings
+- `installed_plugins.json` - Plugin versions with portable paths
+- `known_marketplaces.json` - Marketplace configurations
+
 ### Code Organization
 
 **In `scripts/mac.sh`**:
@@ -150,12 +184,19 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 5. Run `npm run validate` to check installations
 6. If issues occur, restore: `npm run restore`
 
+**Claude Code Testing**:
+1. Backup current config: `npm run backup:claude`
+2. Verify `claude_config/` files are updated
+3. Test restore: `./scripts/restore-claude.sh --force`
+4. Verify `~/.claude/` files are restored correctly
+
 **Validation Checks** (from `utils.sh`):
 - Homebrew installed and in PATH
 - ASDF installed and plugins present
 - Tool versions match `.tool-versions`
 - ZSH plugins cloned to correct directories
 - Dotfiles present in `$HOME`
+- Claude Code configuration restored (if available)
 
 ## Security Considerations
 
@@ -170,6 +211,7 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 - Validate file permissions after copying dotfiles
 - Ensure `.secrets` file is in `.gitignore`
 - Use keychain for SSH key management (configured in `.zshrc`)
+- Sanitize work-related content from Claude Code backups
 
 **SSH Key Configuration**:
 - Supports ed25519, rsa, ecdsa keys
@@ -240,6 +282,9 @@ Modify `log_with_level()` in `scripts/utils.sh`, but preserve timestamp and leve
 
 **Add backup file**:
 Include in `create_restoration_point()` backup loop in `scripts/utils.sh`.
+
+**Update Claude Code sanitization rules**:
+Modify `SANITIZE_MARKETPLACES` array in `scripts/backup-claude.sh` and `PRESERVE_MARKETPLACES` in `scripts/restore-claude.sh`.
 
 ## PR and Commit Guidelines
 
