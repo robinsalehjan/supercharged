@@ -5,7 +5,7 @@
       "repo": "anthropics/claude-plugins-official"
     },
     "installLocation": "$HOME/.claude/plugins/marketplaces/claude-plugins-official",
-    "lastUpdated": "2026-02-05T18:45:09.520Z"
+    "lastUpdated": "2026-02-06T18:51:56.523Z"
   },
   "superlego": {
     "source": {
@@ -13,7 +13,7 @@
       "repo": "robinsalehjan/superlego"
     },
     "installLocation": "$HOME/.claude/plugins/marketplaces/superlego",
-    "lastUpdated": "2026-02-05T18:23:18.977Z",
+    "lastUpdated": "2026-02-06T18:35:25.323Z",
     "autoUpdate": true
   }
 }
