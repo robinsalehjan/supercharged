@@ -44,6 +44,10 @@
     "defaultMode": "default"
   },
   "model": "sonnet",
+  "statusLine": {
+    "type": "command",
+    "command": "input=$(cat); cwd=$(echo \"$input\" | jq -r '.workspace.current_dir'); user=$(whoami); dir=$(basename \"$cwd\"); branch=$(git -C \"$cwd\" branch --show-current 2>/dev/null || echo ''); git_info=''; [ -n \"$branch\" ] && git_info=\" (git:$branch)\"; remaining=$(echo \"$input\" | jq -r '.context_window.remaining_percentage // empty'); ctx_info=''; [ -n \"$remaining\" ] && ctx_info=\" [ctx:${remaining}%]\"; printf \"\\033[36m%s\\033[0m:\\033[34m%s\\033[0m%s%s\" \"$user\" \"$dir\" \"$git_info\" \"$ctx_info\""
+  },
   "enabledPlugins": {
     "hookify@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
@@ -57,9 +61,5 @@
     "github@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
     "plugin-dev@claude-plugins-official": true
-  },
-  "statusLine": {
-    "type": "command",
-    "command": "input=$(cat); cwd=$(echo \"$input\" | jq -r '.workspace.current_dir'); user=$(whoami); dir=$(basename \"$cwd\"); branch=$(git -C \"$cwd\" branch --show-current 2>/dev/null || echo ''); git_info=''; [ -n \"$branch\" ] && git_info=\" (git:$branch)\"; remaining=$(echo \"$input\" | jq -r '.context_window.remaining_percentage // empty'); ctx_info=''; [ -n \"$remaining\" ] && ctx_info=\" [ctx:${remaining}%]\"; printf \"\\033[36m%s\\033[0m:\\033[34m%s\\033[0m%s%s\" \"$user\" \"$dir\" \"$git_info\" \"$ctx_info\""
   }
 }
