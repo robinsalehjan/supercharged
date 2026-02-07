@@ -291,7 +291,7 @@ function myps() {
 
 # VSCode
 function code() {
-    VSCODE_CWD="$PWD" open -n -b 'com.microsoft.VSCode' --args "$*"
+    VSCODE_CWD="$PWD" open -b 'com.microsoft.VSCode' --args "$*"
 }
 
 # Check if command exists
