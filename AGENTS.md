@@ -1,120 +1,36 @@
 # AGENTS.md
 
-Instructions for AI coding agents working on the Supercharged macOS environment setup tool.
-
-## Project Overview
-
-Supercharged is a macOS environment setup automation tool that:
-- Installs and configures development tools via Homebrew and ASDF
-- Manages dotfiles (.zshrc, .gitconfig, .tool-versions, etc.)
-- Manages Claude Code configuration (settings, plugins, marketplaces)
-- Provides interactive installation with optional tool categories
-- Creates automatic backups before making changes
-- Validates system requirements and tool installations
-
-**Architecture**:
-- `scripts/` - Shell scripts for installation, updates, and utilities
-  - `mac.sh` - Main installation script with system validation and tool setup
-  - `update.sh` - Update script with selective component updates
-  - `utils.sh` - Reusable functions (logging, backup/restore, validation)
-  - `setup-profile.sh` - Copy dotfiles and Claude config to `$HOME`
-  - `backup-claude.sh` - Backup Claude Code configuration to repository
-  - `restore-claude.sh` - Restore Claude Code configuration from repository
-  - `help.sh` - Display available npm commands
-- `dot_files/` - Configuration files copied to `$HOME`
-- `claude_config/` - Claude Code configuration files (settings, plugins, marketplaces)
-- `package.json` - npm scripts for running setup/update workflows
-- Backup system in `~/.supercharged_backups/`
-
-## Setup Commands
-
-```bash
-# Fresh installation (interactive)
-npm install && npm run setup
-
-# Update existing installation (includes Claude backup)
-npm run update
-
-# Copy only dotfiles and Claude config to $HOME
-npm run setup:profile
-
-# Backup Claude Code configuration to repository
-npm run backup:claude
-
-# Validate all tools are installed correctly
-npm run validate
-
-# Restore from most recent backup
-npm run restore
-
-# Display available commands
-npm run help
-```
+Detailed reference for AI agents. For project overview, structure, commands, and conventions see [CLAUDE.md](./CLAUDE.md).
 
 ## Build and Test
 
 ```bash
-# Dry-run to preview changes without installing
+# Dry-run to preview changes
 npm run update:dry-run
 
 # Update specific components
-npm run update:brew      # Only Homebrew packages
-npm run update:asdf      # Only ASDF plugins/versions
-npm run update:zsh       # Only ZSH plugins
-npm run update:npm       # Only npm global packages
+npm run update:brew      # Homebrew only
+npm run update:asdf      # ASDF only
+npm run update:zsh       # ZSH plugins only
+npm run update:npm       # npm globals only
 
-# Manual validation of shell scripts (note: limited zsh support)
+# Lint shell scripts
 shellcheck --shell=bash scripts/*.sh 2>&1 | grep -v SC1071 || true
 
-# Test restoration workflow
-source scripts/utils.sh && restore_from_backup ~/.supercharged_backups/<timestamp>
-
 # Test Claude Code backup/restore
-./scripts/backup-claude.sh        # Backup to repository
-./scripts/restore-claude.sh       # Restore if repo is newer
-./scripts/restore-claude.sh --force  # Force restore
+./scripts/backup-claude.sh
+./scripts/restore-claude.sh --force
 ```
 
-**Shellcheck Warnings to Ignore** (safe for zsh scripts):
-- `SC1071` - ShellCheck doesn't support zsh (expected, we use `--shell=bash`)
-- `SC2296` - Parameter expansions can't start with `(` (zsh-specific `${(%):-%x}` syntax)
-- `SC1091` - Not following sourced file (shellcheck limitation)
-- `SC2155` - Declare and assign separately (style preference, not a bug)
-- `SC2001` - Use `${var//search/replace}` instead of sed (style preference)
-- `SC2012` - Use find instead of ls (style preference, our use is safe)
+**Safe ShellCheck warnings** (zsh scripts run through `--shell=bash`):
+SC1071 (zsh unsupported), SC2296 (zsh `${(%):-%x}`), SC1091 (sourced file), SC2155 (declare+assign), SC2001 (sed vs expansion), SC2012 (ls vs find).
 
-**Zsh-Specific Syntax Used** (not compatible with bash):
-- `${(%):-%x}` - Get the current script path (zsh prompt expansion)
-- `${(%):-%n}` - Get the current username (used in p10k instant prompt)
-- `&!` - Disown background process immediately (used for Colima auto-start)
-- `path=(...)` - Zsh array for PATH manipulation
-- `setopt` - Zsh-specific shell options (EXTENDED_HISTORY, etc.)
+**Zsh-specific syntax** used in scripts:
+`${(%):-%x}`, `${(%):-%n}`, `&!` (disown), `path=(...)`, `setopt`.
 
-## Code Style and Conventions
+## Code Patterns
 
-### Shell Script Guidelines
-
-**Logging**: Always use `log_with_level` from `utils.sh`:
-```bash
-log_with_level "INFO" "Starting installation..."
-log_with_level "ERROR" "Installation failed: $error_msg"
-log_with_level "SUCCESS" "Tool installed successfully"
-log_with_level "WARN" "Tool already exists, skipping"
-```
-
-**Error Handling**: Include cleanup traps:
-```bash
-cleanup() {
-    local exit_code=$?
-    if [ $exit_code -ne 0 ]; then
-        log_with_level "ERROR" "Operation failed"
-        # Cleanup logic
-    fi
-}
-trap cleanup EXIT
-```
-
-**User Prompts**: Follow existing patterns for interactive questions:
+**User prompts** — follow existing interactive pattern:
 ```bash
 read -rp "Install iOS Tools? [Y/n]: " response
 response=${response:-Y}
@@ -123,231 +39,80 @@ if [[ "$response" =~ ^[Yy] ]]; then
 fi
 ```
 
-**Version Parsing**: Read from `.tool-versions`:
+**Version parsing** from `.tool-versions`:
 ```bash
 python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 ```
 
-### Dotfile Conventions
+**Claude Code backup/restore** (`scripts/backup-claude.sh`, `scripts/restore-claude.sh`):
+- Portable paths: `$HOME` placeholder for cross-machine compatibility
+- Sanitization: work-related marketplaces (e.g., `vend-plugins`) excluded
+- Merge logic: restore preserves local work plugins while applying repo settings
+- Timestamp comparison: only restores when repo config is newer (unless `--force`)
 
-- Comment all configuration sections clearly
-- Preserve existing user customizations when possible
-- Use environment variables for paths, not hardcoded values
-- Include inline documentation for complex aliases/functions
+**Script organization**:
+- `mac.sh`: validate system → Homebrew → Brewfile (conditional on user prefs) → ZSH plugins → ASDF → optional tools
+- `utils.sh`: pure functions, no side effects on import
+- `.tool-versions`: one tool per line (`<plugin> <version>`), grouped by category
 
-### Claude Code Configuration
+## Testing
 
-**Backup/Restore Scripts** (`scripts/backup-claude.sh`, `scripts/restore-claude.sh`):
-- Portable paths: `$HOME` placeholder used for cross-machine compatibility
-- Sanitization: Work-related marketplaces (e.g., `vend-plugins`) excluded from backup
-- Merge logic: Restore preserves local work plugins while applying repo settings
-- Timestamp comparison: Only restores when repo config is newer (unless `--force`)
+**Pre-commit**:
+1. `shellcheck --shell=bash scripts/*.sh`
+2. Test script functions in isolation
+3. Verify logging matches existing patterns
 
-**Configuration files** stored in `claude_config/`:
-- `settings.json` - Plugin enable/disable settings
-- `installed_plugins.json` - Plugin versions with portable paths
-- `known_marketplaces.json` - Marketplace configurations
+**Manual workflow**:
+1. `npm run setup:profile` to copy dotfiles
+2. `source ~/.zshrc` — verify no errors
+3. `npm run validate` — check installations
+4. If issues: `npm run restore`
 
-### Code Organization
-
-**In `scripts/mac.sh`**:
-- System validation first
-- Homebrew installation
-- Dynamic Brewfile generation based on user preferences
-- ZSH plugin installation
-- ASDF plugin/version installation
-- Optional tool installations (data science, Claude Code)
-
-**In `scripts/utils.sh`**:
-- Reusable functions (logging, backup/restore, validation)
-- No side effects on import
-- Each function documented with purpose
-
-**In `dot_files/.tool-versions`**:
-- One tool per line: `<plugin> <version>`
-- Include comments with minimum version requirements
-- Group by category (languages, cloud tools, etc.)
-
-## Testing Instructions
-
-**Pre-commit Validation**:
-1. Run `shellcheck --shell=bash scripts/*.sh` to check syntax (note: scripts use zsh, so some warnings about zsh-specific features can be ignored)
-2. Test script functions in isolation when possible
-3. Verify logging output format matches existing patterns
-4. Check that backup/restore creates expected files
-
-**Manual Testing Workflow**:
-1. Create a backup: `npm run restore` should show last backup location
-2. Make changes to scripts or dotfiles
-3. Run `npm run setup:profile` to copy dotfiles
-4. Source `.zshrc` and verify no errors: `source ~/.zshrc`
-5. Run `npm run validate` to check installations
-6. If issues occur, restore: `npm run restore`
-
-**Claude Code Testing**:
-1. Backup current config: `npm run backup:claude`
-2. Verify `claude_config/` files are updated
-3. Test restore: `./scripts/restore-claude.sh --force`
-4. Verify `~/.claude/` files are restored correctly
-
-**Validation Checks** (from `utils.sh`):
-- Homebrew installed and in PATH
-- ASDF installed and plugins present
-- Tool versions match `.tool-versions`
-- ZSH plugins cloned to correct directories
-- Dotfiles present in `$HOME`
-- Claude Code configuration restored (if available)
-
-## Security Considerations
-
-**Never**:
-- Commit secrets or API keys to repository
-- Store credentials in dotfiles (use `.secrets` template)
-- Skip permission validation for SSH configs
-- Remove backup creation logic
-
-**Always**:
-- Review commands that modify system settings
-- Validate file permissions after copying dotfiles
-- Ensure `.secrets` file is in `.gitignore`
-- Use keychain for SSH key management (configured in `.zshrc`)
-- Sanitize work-related content from Claude Code backups
-
-**SSH Key Configuration**:
-- Supports ed25519, rsa, ecdsa keys
-- Automatically loads into keychain via `.zshrc`
-- Sets correct permissions (600) on private keys
+**Validation checks** (from `utils.sh`):
+Homebrew in PATH, ASDF plugins present, tool versions match `.tool-versions`, ZSH plugins cloned, dotfiles in `$HOME`, Claude Code config restored.
 
 ## Adding New Tools
 
-### Homebrew Package
-1. Edit `scripts/mac.sh` in the `BREWFILE_CONTENT` section
-2. Add to appropriate conditional (iOS tools, dev tools) or core section:
-   ```bash
-   brew "package-name"        # Formula
-   cask "app-name"           # Application
-   ```
-3. Update README.md "What Gets Installed" section
-4. Test with `brew bundle --file=-` using your modified content
+**Homebrew package**: Edit `BREWFILE_CONTENT` in `scripts/mac.sh`, add `brew "name"` or `cask "name"` to the appropriate conditional section. Update README.md.
 
-### ASDF Tool
-1. Add version to `dot_files/.tool-versions`:
-   ```
-   toolname 1.2.3  # Comment with minimum version
-   ```
-2. Add plugin installation in `scripts/mac.sh`:
-   ```bash
-   install_asdf_plugin toolname
-   install_asdf_version toolname "$tool_version"
-   ```
-3. Update README.md with tool description
-4. Run `npm run validate` after installation
+**ASDF tool**: Add `toolname version` to `dot_files/.tool-versions`. Add `install_asdf_plugin` and `install_asdf_version` calls in `scripts/mac.sh`. Update README.md.
 
-### Optional Tool Category
-Follow the `INSTALL_IOS_TOOLS` or `INSTALL_DEV_TOOLS` pattern:
-1. Add prompt in `scripts/utils.sh:setup_user_preferences()`
-2. Save preference to `~/.supercharged_preferences`
-3. Use conditional in `scripts/mac.sh`:
-   ```bash
-   if [[ "${INSTALL_YOUR_CATEGORY:-N}" =~ ^[Yy] ]]; then
-       # Add tools here
-   fi
-   ```
-4. Document in README.md interactive setup section
+**Optional category**: Follow `INSTALL_IOS_TOOLS` pattern — add prompt in `utils.sh:setup_user_preferences()`, save to `~/.supercharged_preferences`, use conditional in `mac.sh`. Update README.md.
 
-## Updating Tool Versions
-
-1. Modify version in `dot_files/.tool-versions`
-2. Update minimum version comment if requirements change
-3. Check for breaking changes in tool's changelog
-4. Update README.md if behavior changes significantly
-5. Test installation: `asdf install <tool> <version>`
-6. Run `asdf reshim` to update shims
-7. Validate with `npm run validate`
+**Update tool version**: Edit `dot_files/.tool-versions`, check changelog for breaking changes, test with `asdf install <tool> <version>`, run `asdf reshim`, validate with `npm run validate`.
 
 ## Common Tasks
 
-**Add a new ZSH alias**:
-Edit `dot_files/.zshrc` in the aliases section, following existing format.
+| Task | Where |
+|---|---|
+| Add ZSH alias | `dot_files/.zshrc` aliases section |
+| Add Homebrew tap | `BREWFILE_CONTENT` in `scripts/mac.sh`: `tap "owner/repo"` before packages |
+| Change log format | `log_with_level()` in `scripts/utils.sh` (preserve timestamp + level) |
+| Add backup file | `create_restoration_point()` in `scripts/utils.sh` |
+| Update Claude sanitization | `SANITIZE_MARKETPLACES` in `backup-claude.sh`, `PRESERVE_MARKETPLACES` in `restore-claude.sh` |
 
-**Modify Homebrew tap**:
-Add tap to `BREWFILE_CONTENT` before any packages from that tap:
-```bash
-tap "owner/repo"
-brew "owner/repo/package"
-```
+## Commits and PRs
 
-**Change log output format**:
-Modify `log_with_level()` in `scripts/utils.sh`, but preserve timestamp and level format.
+**Conventional commits**: `feat(scripts):`, `fix(zsh):`, `docs(readme):`, `chore(deps):`.
 
-**Add backup file**:
-Include in `create_restoration_point()` backup loop in `scripts/utils.sh`.
-
-**Update Claude Code sanitization rules**:
-Modify `SANITIZE_MARKETPLACES` array in `scripts/backup-claude.sh` and `PRESERVE_MARKETPLACES` in `scripts/restore-claude.sh`.
-
-## PR and Commit Guidelines
-
-**Commit Format**: Use conventional commits
-```
-feat(scripts): add PostgreSQL installation
-fix(zsh): correct PATH deduplication logic
-docs(readme): update tool version requirements
-chore(deps): update asdf plugin versions
-```
-
-**Before Committing**:
-1. Run `shellcheck scripts/*.sh`
-2. Test locally with `npm run setup:profile`
+**Before committing**:
+1. Run shellcheck
+2. Test with `npm run setup:profile`
 3. Verify no secrets in changed files
-4. Update relevant documentation
-5. Ensure backup logic still works
+4. Update documentation if user-facing
 
-**PR Checklist**:
+**PR checklist**:
 - [ ] README.md updated if user-facing changes
-- [ ] AGENTS.md updated if workflow changes
 - [ ] Logging follows existing patterns
-- [ ] Tested on clean macOS environment (if possible)
 - [ ] No hardcoded paths or credentials
-- [ ] Backup/restore functionality unchanged
+- [ ] Backup/restore functionality preserved
 
-## Debugging and Logs
+## Debugging
 
-**Log Location**: `<supercharged-directory>/.supercharged_install.log`
+**Log file**: `.supercharged_install.log` in the repo directory.
 
-**View Logs**:
-```bash
-tail -f .supercharged_install.log           # Follow in real-time
-grep ERROR .supercharged_install.log        # Find errors
-grep -A 5 "Installation started" *.log      # Context after start
-```
-
-**Common Issues**:
-- "Command not found": Check PATH in `.zshrc`, verify ASDF shims
-- "Permission denied": Verify file permissions, check for sudo requirements
-- "Plugin not found": Ensure ASDF plugin installed before version
-- "Backup failed": Check disk space in `~/.supercharged_backups/`
-
-## Additional Context
-
-**System Requirements** (validated in `scripts/mac.sh:validate_system()`):
-- macOS 12.0 (Monterey) or later
-- 10GB free disk space minimum
-- Xcode Command Line Tools
-- Active internet connection
-
-**Prerequisites**:
-- Oh My Zsh must be installed before running setup
-- Git configured with SSH keys for cloning repos
-
-**User Preferences File** (`~/.supercharged_preferences`):
-```bash
-INSTALL_IOS_TOOLS=Y
-INSTALL_DATA_SCIENCE=N
-INSTALL_DEV_TOOLS=Y
-INSTALL_CLAUDE_CODE=Y
-```
-
-**Related Documentation**:
-- See [README.md](./README.md) for user-facing documentation
-- See [CLAUDE.md](./CLAUDE.md) for Claude Code-specific usage patterns
+**Common issues**:
+- "Command not found" → check PATH in `.zshrc`, verify ASDF shims
+- "Permission denied" → verify file permissions, check sudo requirements
+- "Plugin not found" → ensure ASDF plugin installed before version
+- "Backup failed" → check disk space in `~/.supercharged_backups/`
