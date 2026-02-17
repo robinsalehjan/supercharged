@@ -143,7 +143,8 @@ brew "shellcheck"
 brew "jq"
 brew "duckdb"
 brew "sqlite"
-brew "beads"'
+brew "beads"
+brew "btop"'
 
 # Add iOS development tools if requested
 if [[ "${INSTALL_IOS_TOOLS:-Y}" =~ ^[Yy] ]]; then

@@ -26,6 +26,7 @@ coreutils, git, curl, openssl@3, readline, libyaml, gmp
 asdf (version manager), keychain, nmap, tree, ripgrep, tmux, aria2
 uv (fast Python package installer and resolver), gh (GitHub CLI), duckdb (in-process SQL OLAP database)
 sqlite (lightweight SQL database), beads (distributed git-backed issue tracker for AI agents)
+btop (resource monitor with CPU, memory, disk, network, and process stats)
 
 # Development languages (via asdf)
 nodejs   22.9.0       # LTS version, minimum 20.0.0 for modern features
