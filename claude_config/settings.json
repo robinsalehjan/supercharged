@@ -1,13 +1,6 @@
 {
-  "model": "opus[1m]",
-  "effortLevel": "high",
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
-  },
-  "teammateMode": "auto",
-  "statusLine": {
-    "type": "command",
-    "command": "input=$(cat); cwd=$(echo \"$input\" | jq -r '.workspace.current_dir'); user=$(whoami); dir=$(basename \"$cwd\"); branch=$(git -C \"$cwd\" branch --show-current 2>/dev/null || echo ''); git_info=''; [ -n \"$branch\" ] && git_info=\" (git:$branch)\"; remaining=$(echo \"$input\" | jq -r '.context_window.remaining_percentage // empty'); ctx_info=''; [ -n \"$remaining\" ] && ctx_info=\" [ctx:${remaining}%]\"; printf \"\\033[36m%s\\033[0m:\\033[34m%s\\033[0m%s%s\" \"$user\" \"$dir\" \"$git_info\" \"$ctx_info\""
   },
   "permissions": {
     "deny": [
@@ -17,10 +10,13 @@
     ],
     "defaultMode": "acceptEdits"
   },
+  "statusLine": {
+    "type": "command",
+    "command": "input=$(cat); cwd=$(echo \"$input\" | jq -r '.workspace.current_dir'); user=$(whoami); dir=$(basename \"$cwd\"); branch=$(git -C \"$cwd\" branch --show-current 2>/dev/null || echo ''); git_info=''; [ -n \"$branch\" ] && git_info=\" (git:$branch)\"; remaining=$(echo \"$input\" | jq -r '.context_window.remaining_percentage // empty'); ctx_info=''; [ -n \"$remaining\" ] && ctx_info=\" [ctx:${remaining}%]\"; printf \"\\033[36m%s\\033[0m:\\033[34m%s\\033[0m%s%s\" \"$user\" \"$dir\" \"$git_info\" \"$ctx_info\""
+  },
   "enabledPlugins": {
     "hookify@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
-    "ralph-loop@claude-plugins-official": true,
     "swift-lsp@claude-plugins-official": true,
     "skills@superlego": true,
     "safety-hooks@superlego": true,
@@ -29,6 +25,12 @@
     "claude-md-management@claude-plugins-official": true,
     "github@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
-    "plugin-dev@claude-plugins-official": true
+    "plugin-dev@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "ralph-loop@claude-plugins-official": true,
+    "pr-review-toolkit@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true,
+    "semgrep@claude-plugins-official": true
   }
 }
