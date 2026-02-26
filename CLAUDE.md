@@ -29,6 +29,7 @@ npm run update:npm      # Update only npm global packages
 npm run validate        # Verify all tools installed correctly
 npm run restore         # Restore from latest backup
 npm run backup:claude   # Backup Claude Code config to repo
+npm run lint            # ShellCheck all scripts (ignore zsh warnings)
 ```
 
 ## Code Conventions

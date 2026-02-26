@@ -20,6 +20,8 @@
     "update:zsh": "./scripts/update.sh --skip-brew --skip-cask --skip-asdf --skip-npm --skip-pip",
     "update:npm": "./scripts/update.sh --skip-brew --skip-cask --skip-asdf --skip-zsh --skip-pip",
     "validate": "cd scripts && ./utils.sh validate",
-    "restore": "cd scripts && source utils.sh && restore_from_backup"
+    "restore": "cd scripts && source utils.sh && restore_from_backup",
+    "backup:claude": "./scripts/backup-claude.sh",
+    "lint": "shellcheck --shell=bash scripts/*.sh 2>&1 | grep -v SC1071 || true"
   }
 }
