@@ -36,10 +36,7 @@ validate_system() {
     fi
 
     # Check internet connectivity
-    if ! ping -c 1 -W 5 google.com >/dev/null 2>&1; then
-        log_with_level "ERROR" "Internet connectivity required for installation"
-        exit 1
-    fi
+    require_internet || exit 1
 
     # Check for Oh My Zsh
     if [ ! -d "$HOME/.oh-my-zsh" ]; then
@@ -53,18 +50,7 @@ validate_system() {
 
 # Setup error handling and cleanup
 cleanup() {
-    local exit_code=$?
-    if [ $exit_code -ne 0 ]; then
-        log_with_level "ERROR" "Installation failed with exit code $exit_code"
-        if [ -f "$HOME/.supercharged_last_backup" ]; then
-            local backup_dir=$(cat "$HOME/.supercharged_last_backup")
-            echo ""
-            echo "💡 You can restore your previous configuration with:"
-            echo "   source $(dirname "$0")/utils.sh && restore_from_backup '$backup_dir'"
-        fi
-        brew cleanup 2>/dev/null || true
-    fi
-    exit $exit_code
+    standard_cleanup "Installation"
 }
 
 trap cleanup EXIT
@@ -82,17 +68,15 @@ create_restoration_point
 setup_user_preferences
 setup_git_config
 
-# Parse versions from .tool-versions
-SCRIPT_DIR="$(dirname "$0")"
-TOOL_VERSIONS_FILE="$SCRIPT_DIR/../dot_files/.tool-versions"
-
-python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
-ruby_version=$(awk '/ruby/{print $2}' "$TOOL_VERSIONS_FILE")
-node_version=$(awk '/nodejs/{print $2}' "$TOOL_VERSIONS_FILE")
-gcloud_version=$(awk '/gcloud/{print $2}' "$TOOL_VERSIONS_FILE")
-firebase_version=$(awk '/firebase/{print $2}' "$TOOL_VERSIONS_FILE")
-java_version=$(awk '/java/{print $2}' "$TOOL_VERSIONS_FILE")
-kotlin_version=$(awk '/kotlin/{print $2}' "$TOOL_VERSIONS_FILE")
+# Parse versions from .tool-versions using utility function
+parse_tool_versions
+python_version="${TOOL_VERSIONS[python]}"
+ruby_version="${TOOL_VERSIONS[ruby]}"
+node_version="${TOOL_VERSIONS[nodejs]}"
+gcloud_version="${TOOL_VERSIONS[gcloud]}"
+firebase_version="${TOOL_VERSIONS[firebase]}"
+java_version="${TOOL_VERSIONS[java]}"
+kotlin_version="${TOOL_VERSIONS[kotlin]}"
 
 # Version checks
 check_version "git" "2.49.0"
@@ -179,18 +163,8 @@ cask \"postman\"
 cask \"raycast\"
 cask \"google-chrome\""
 
-# Fix wireshark linking issues if it's already installed
-if brew list wireshark &>/dev/null; then
-    log_with_level "INFO" "Fixing wireshark symlinks..."
-    brew unlink wireshark 2>/dev/null || true
-    brew link --overwrite wireshark 2>/dev/null || true
-fi
-
-# Remove deprecated wireshark-app cask if present (has broken definition)
-if brew list --cask wireshark-app &>/dev/null 2>&1; then
-    log_with_level "INFO" "Removing deprecated wireshark-app cask..."
-    brew uninstall --cask wireshark-app 2>/dev/null || true
-fi
+# Fix wireshark symlinks and remove deprecated cask
+fix_wireshark_symlinks
 
 echo "$BREWFILE_CONTENT" | brew bundle --file=-
 
