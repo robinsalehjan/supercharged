@@ -37,10 +37,19 @@ log_with_level "INFO" "Backing up Claude Code configuration..."
 # Create claude_config directory if it doesn't exist
 mkdir -p "$CLAUDE_CONFIG_DIR"
 
-# Backup settings.json
+# Backup settings.json (sanitize enabledPlugins from work-related marketplaces)
 if [ -f "$CLAUDE_HOME/settings.json" ]; then
-    cp "$CLAUDE_HOME/settings.json" "$CLAUDE_CONFIG_DIR/settings.json"
-    log_with_level "SUCCESS" "Backed up settings.json"
+    # Build jq filter to remove enabledPlugins entries from sanitized marketplaces
+    jq_filter='.enabledPlugins | to_entries'
+    for marketplace in "${SANITIZE_MARKETPLACES[@]}"; do
+        jq_filter="$jq_filter | map(select(.key | endswith(\"@$marketplace\") | not))"
+    done
+    jq_filter="$jq_filter | from_entries"
+
+    # Preserve all fields except enabledPlugins, then apply sanitized enabledPlugins
+    jq ". + {enabledPlugins: ($jq_filter)}" "$CLAUDE_HOME/settings.json" | \
+        sed "s|$HOME|\$HOME|g" > "$CLAUDE_CONFIG_DIR/settings.json"
+    log_with_level "SUCCESS" "Backed up settings.json (sanitized ${#SANITIZE_MARKETPLACES[@]} marketplace(s) from enabledPlugins, paths made portable)"
 else
     log_with_level "WARN" "settings.json not found"
 fi
