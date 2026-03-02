@@ -7,7 +7,7 @@
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/hookify/55b58ec6e564",
         "version": "55b58ec6e564",
         "installedAt": "2026-02-01T00:33:03.464Z",
-        "lastUpdated": "2026-02-26T12:47:14.154Z",
+        "lastUpdated": "2026-02-25T23:01:42.246Z",
         "gitCommitSha": "27d2b86d72da27c64585150857cee8472ad47abb"
       }
     ],
@@ -17,7 +17,7 @@
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/superpowers/4.3.1",
         "version": "4.3.1",
         "installedAt": "2026-02-01T00:33:05.232Z",
-        "lastUpdated": "2026-02-23T10:19:52.688Z",
+        "lastUpdated": "2026-02-21T22:47:36.001Z",
         "gitCommitSha": "06b92f36820f38175b2ed6ff3f8df45157d54731"
       }
     ],
@@ -67,7 +67,7 @@
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/firebase/55b58ec6e564",
         "version": "55b58ec6e564",
         "installedAt": "2026-02-04T23:06:20.033Z",
-        "lastUpdated": "2026-02-26T12:47:14.111Z",
+        "lastUpdated": "2026-02-25T23:01:42.234Z",
         "gitCommitSha": "27d2b86d72da27c64585150857cee8472ad47abb"
       }
     ],
@@ -87,7 +87,7 @@
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/github/55b58ec6e564",
         "version": "55b58ec6e564",
         "installedAt": "2026-02-04T23:06:41.038Z",
-        "lastUpdated": "2026-02-26T12:47:14.109Z",
+        "lastUpdated": "2026-02-25T23:01:42.235Z",
         "gitCommitSha": "27d2b86d72da27c64585150857cee8472ad47abb"
       }
     ],
@@ -107,48 +107,8 @@
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/plugin-dev/55b58ec6e564",
         "version": "55b58ec6e564",
         "installedAt": "2026-02-04T23:07:22.264Z",
-        "lastUpdated": "2026-02-26T12:47:14.193Z",
+        "lastUpdated": "2026-02-25T23:01:42.265Z",
         "gitCommitSha": "27d2b86d72da27c64585150857cee8472ad47abb"
-      }
-    ],
-    "pr-review-toolkit@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/pr-review-toolkit/55b58ec6e564",
-        "version": "55b58ec6e564",
-        "installedAt": "2026-02-24T08:48:41.356Z",
-        "lastUpdated": "2026-02-26T12:47:14.133Z",
-        "gitCommitSha": "99e11d95926936deb21c3fa29a098511573100d1"
-      }
-    ],
-    "semgrep@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/semgrep/6f3962351041",
-        "version": "6f3962351041",
-        "installedAt": "2026-03-02T15:25:17.576Z",
-        "lastUpdated": "2026-03-02T15:25:17.576Z",
-        "gitCommitSha": "6f39623510411a255def92c98f89b595e0b086f4"
-      }
-    ],
-    "code-review@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/code-review/55b58ec6e564",
-        "version": "55b58ec6e564",
-        "installedAt": "2026-03-02T15:27:57.739Z",
-        "lastUpdated": "2026-03-02T15:27:57.739Z",
-        "gitCommitSha": "55b58ec6e5649104f926ba7558b567dc8d33c5ff"
-      }
-    ],
-    "pyright-lsp@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/pyright-lsp/1.0.0",
-        "version": "1.0.0",
-        "installedAt": "2026-03-02T15:28:08.670Z",
-        "lastUpdated": "2026-03-02T15:28:08.670Z",
-        "gitCommitSha": "55b58ec6e5649104f926ba7558b567dc8d33c5ff"
       }
     ],
     "typescript-lsp@claude-plugins-official": [
@@ -156,8 +116,58 @@
         "scope": "user",
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/typescript-lsp/1.0.0",
         "version": "1.0.0",
-        "installedAt": "2026-03-02T15:28:15.958Z",
-        "lastUpdated": "2026-03-02T15:28:15.958Z",
+        "installedAt": "2026-02-14T22:41:58.622Z",
+        "lastUpdated": "2026-02-14T22:41:58.622Z",
+        "gitCommitSha": "2cd88e7947b7382e045666abee790c7f55f669f3"
+      }
+    ],
+    "pr-review-toolkit@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/pr-review-toolkit/55b58ec6e564",
+        "version": "55b58ec6e564",
+        "installedAt": "2026-02-22T15:12:47.878Z",
+        "lastUpdated": "2026-02-25T23:01:42.241Z",
+        "gitCommitSha": "aa296ec81e8ccb49c9784f167c2c0aa625a86cec"
+      }
+    ],
+    "code-review@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/code-review/55b58ec6e564",
+        "version": "55b58ec6e564",
+        "installedAt": "2026-02-22T15:13:02.087Z",
+        "lastUpdated": "2026-02-25T23:01:42.237Z",
+        "gitCommitSha": "aa296ec81e8ccb49c9784f167c2c0aa625a86cec"
+      }
+    ],
+    "pyright-lsp@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/pyright-lsp/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-02-22T15:13:19.103Z",
+        "lastUpdated": "2026-02-22T15:13:19.103Z",
+        "gitCommitSha": "aa296ec81e8ccb49c9784f167c2c0aa625a86cec"
+      }
+    ],
+    "semgrep@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/semgrep/6f3962351041",
+        "version": "6f3962351041",
+        "installedAt": "2026-02-22T15:13:38.767Z",
+        "lastUpdated": "2026-02-27T11:22:09.654Z",
+        "gitCommitSha": "9fa3dd7166a15a4fa04aea00116176a03867328d"
+      }
+    ],
+    "frontend-design@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/frontend-design/55b58ec6e564",
+        "version": "55b58ec6e564",
+        "installedAt": "2026-02-27T11:41:01.948Z",
+        "lastUpdated": "2026-02-27T11:41:01.948Z",
         "gitCommitSha": "55b58ec6e5649104f926ba7558b567dc8d33c5ff"
       }
     ]
