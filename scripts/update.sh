@@ -78,12 +78,7 @@ done
 
 # Setup error handling and cleanup
 cleanup() {
-    local exit_code=$?
-    if [ $exit_code -ne 0 ] && [ $exit_code -ne 1 ]; then
-        log_with_level "ERROR" "Update failed with exit code $exit_code"
-    fi
-    brew cleanup 2>/dev/null || true
-    exit $exit_code
+    standard_cleanup "Update"
 }
 
 trap cleanup EXIT
@@ -98,10 +93,7 @@ fi
 log_with_level "INFO" "Starting update process..."
 
 # Check internet connectivity before attempting updates
-if ! ping -c 1 -W 5 google.com >/dev/null 2>&1; then
-    log_with_level "ERROR" "Internet connectivity required for updates"
-    exit 1
-fi
+require_internet || exit 1
 
 # Show outdated packages report
 log_with_level "INFO" "Checking for outdated packages..."
@@ -151,20 +143,10 @@ fi
 if ! $SKIP_BREW; then
     log_with_level "INFO" "Updating brew packages..."
 
-    # Remove deprecated wireshark-app cask if present (has broken definition)
-    if brew list --cask wireshark-app &>/dev/null 2>&1; then
-        log_with_level "INFO" "Removing deprecated wireshark-app cask..."
-        brew uninstall --cask wireshark-app 2>/dev/null || true
-    fi
+    # Fix wireshark symlinks and remove deprecated cask
+    fix_wireshark_symlinks
 
     brew upgrade
-
-    # Fix wireshark linking issues if it's installed
-    if brew list wireshark &>/dev/null; then
-        log_with_level "INFO" "Fixing wireshark symlinks..."
-        brew unlink wireshark 2>/dev/null || true
-        brew link --overwrite wireshark 2>/dev/null || true
-    fi
 fi
 
 if ! $SKIP_CASK; then
@@ -184,8 +166,7 @@ if ! $SKIP_ASDF; then
 
     log_with_level "INFO" "Updating asdf tool versions..."
     # Parse and update versions from .tool-versions if they exist
-    SCRIPT_DIR="$(dirname "$0")"
-    TOOL_VERSIONS_FILE="$SCRIPT_DIR/../dot_files/.tool-versions"
+    TOOL_VERSIONS_FILE="$UTILS_PROJECT_ROOT/dot_files/.tool-versions"
 
     if [ -f "$TOOL_VERSIONS_FILE" ]; then
         while read -r line; do
