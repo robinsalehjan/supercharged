@@ -127,7 +127,7 @@ restore_config_file() {
         mkdir -p "$(dirname "$dest")"
 
         # Replace $HOME placeholder with actual home directory
-        sed "s|\\\$HOME|$HOME|g" "$src" > "$dest"
+        expand_portable_path < "$src" > "$dest"
         log_with_level "SUCCESS" "Restored $name"
     fi
 }
@@ -147,7 +147,7 @@ merge_plugin_config() {
     mkdir -p "$(dirname "$dest")"
 
     # Expand $HOME placeholder in source
-    local repo_content=$(sed "s|\\\$HOME|$HOME|g" "$src")
+    local repo_content=$(expand_portable_path < "$src")
 
     # If destination doesn't exist, just copy
     if [ ! -f "$dest" ]; then
@@ -215,7 +215,7 @@ merge_marketplace_config() {
     mkdir -p "$(dirname "$dest")"
 
     # Expand $HOME placeholder in source
-    local repo_content=$(sed "s|\\\$HOME|$HOME|g" "$src")
+    local repo_content=$(expand_portable_path < "$src")
 
     # If destination doesn't exist, just copy
     if [ ! -f "$dest" ]; then

@@ -48,7 +48,7 @@ if [ -f "$CLAUDE_HOME/settings.json" ]; then
 
     # Preserve all fields except enabledPlugins, then apply sanitized enabledPlugins
     jq ". + {enabledPlugins: ($jq_filter)}" "$CLAUDE_HOME/settings.json" | \
-        sed "s|$HOME|\$HOME|g" > "$CLAUDE_CONFIG_DIR/settings.json"
+        make_path_portable > "$CLAUDE_CONFIG_DIR/settings.json"
     log_with_level "SUCCESS" "Backed up settings.json (sanitized ${#SANITIZE_MARKETPLACES[@]} marketplace(s) from enabledPlugins, paths made portable)"
 else
     log_with_level "WARN" "settings.json not found"
@@ -66,7 +66,7 @@ if [ -f "$CLAUDE_HOME/plugins/installed_plugins.json" ]; then
 
     # Preserve version and update plugins
     jq "{version: .version, plugins: ($jq_filter)}" "$CLAUDE_HOME/plugins/installed_plugins.json" | \
-        sed "s|$HOME|\$HOME|g" > "$CLAUDE_CONFIG_DIR/installed_plugins.json"
+        make_path_portable > "$CLAUDE_CONFIG_DIR/installed_plugins.json"
     log_with_level "SUCCESS" "Backed up installed_plugins.json (sanitized ${#SANITIZE_MARKETPLACES[@]} marketplace(s), paths made portable)"
 else
     log_with_level "WARN" "installed_plugins.json not found"
@@ -80,7 +80,7 @@ if [ -f "$CLAUDE_HOME/plugins/known_marketplaces.json" ]; then
     done
 
     jq "$jq_filter" "$CLAUDE_HOME/plugins/known_marketplaces.json" | \
-        sed "s|$HOME|\$HOME|g" > "$CLAUDE_CONFIG_DIR/known_marketplaces.json"
+        make_path_portable > "$CLAUDE_CONFIG_DIR/known_marketplaces.json"
     log_with_level "SUCCESS" "Backed up known_marketplaces.json (sanitized ${#SANITIZE_MARKETPLACES[@]} marketplace(s), paths made portable)"
 else
     log_with_level "WARN" "known_marketplaces.json not found"
