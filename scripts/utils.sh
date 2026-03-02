@@ -72,11 +72,11 @@ create_restoration_point() {
             log_with_level "INFO" "Backed up Claude Code settings.json"
         fi
         if [ -f "$HOME/.claude/plugins/installed_plugins.json" ]; then
-            sed "s|$HOME|\$HOME|g" "$HOME/.claude/plugins/installed_plugins.json" > "$backup_dir/claude_config/installed_plugins.json"
+            make_path_portable < "$HOME/.claude/plugins/installed_plugins.json" > "$backup_dir/claude_config/installed_plugins.json"
             log_with_level "INFO" "Backed up Claude Code installed_plugins.json (paths made portable)"
         fi
         if [ -f "$HOME/.claude/plugins/known_marketplaces.json" ]; then
-            sed "s|$HOME|\$HOME|g" "$HOME/.claude/plugins/known_marketplaces.json" > "$backup_dir/claude_config/known_marketplaces.json"
+            make_path_portable < "$HOME/.claude/plugins/known_marketplaces.json" > "$backup_dir/claude_config/known_marketplaces.json"
             log_with_level "INFO" "Backed up Claude Code known_marketplaces.json (paths made portable)"
         fi
     fi
@@ -136,11 +136,11 @@ restore_from_backup() {
             log_with_level "INFO" "Restored Claude Code settings.json"
         fi
         if [ -f "$backup_dir/claude_config/installed_plugins.json" ]; then
-            sed "s|\\\$HOME|$HOME|g" "$backup_dir/claude_config/installed_plugins.json" > "$HOME/.claude/plugins/installed_plugins.json"
+            expand_portable_path < "$backup_dir/claude_config/installed_plugins.json" > "$HOME/.claude/plugins/installed_plugins.json"
             log_with_level "INFO" "Restored Claude Code installed_plugins.json"
         fi
         if [ -f "$backup_dir/claude_config/known_marketplaces.json" ]; then
-            sed "s|\\\$HOME|$HOME|g" "$backup_dir/claude_config/known_marketplaces.json" > "$HOME/.claude/plugins/known_marketplaces.json"
+            expand_portable_path < "$backup_dir/claude_config/known_marketplaces.json" > "$HOME/.claude/plugins/known_marketplaces.json"
             log_with_level "INFO" "Restored Claude Code known_marketplaces.json"
         fi
     fi
@@ -153,7 +153,6 @@ restore_from_backup() {
 check_version() {
     local cmd=$1
     local min_version=$2
-    local version
 
     # Check if command exists first
     if ! command -v "$cmd" >/dev/null 2>&1; then
@@ -161,18 +160,7 @@ check_version() {
         return 1
     fi
 
-    # Handle different version output formats
-    case "$cmd" in
-        "python"|"python3")
-            version=$("$cmd" --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0")
-            ;;
-        "java")
-            version=$("$cmd" -version 2>&1 | head -n1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0")
-            ;;
-        *)
-            version=$("$cmd" --version 2>&1 | head -n1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0")
-            ;;
-    esac
+    local version=$(extract_tool_version "$cmd")
 
     if [ "$(printf '%s\n' "$min_version" "$version" | sort -V | head -n1)" != "$min_version" ]; then
         log_with_level "WARN" "$cmd version $min_version or higher recommended (found: $version)"
@@ -183,10 +171,100 @@ check_version() {
     return 0
 }
 
-# Backup functionality (legacy - use create_restoration_point for enhanced features)
-backup_dotfiles() {
-    log_with_level "WARN" "backup_dotfiles is deprecated, using create_restoration_point instead"
-    create_restoration_point
+# Path portability helpers - make paths portable across machines
+make_path_portable() {
+    sed "s|$HOME|\$HOME|g"
+}
+
+expand_portable_path() {
+    sed "s|\\\$HOME|$HOME|g"
+}
+
+# Extract version from a tool command
+extract_tool_version() {
+    local cmd=$1
+    case "$cmd" in
+        "python"|"python3")
+            python3 --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
+            ;;
+        "node"|"nodejs")
+            node --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
+            ;;
+        "ruby")
+            ruby --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
+            ;;
+        "java")
+            java -version 2>&1 | head -n1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
+            ;;
+        *)
+            $cmd --version 2>&1 | head -n1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
+            ;;
+    esac
+}
+
+# Parse .tool-versions file into an associative array
+# Usage: parse_tool_versions; echo "${TOOL_VERSIONS[python]}"
+parse_tool_versions() {
+    local tool_versions_file="${1:-$UTILS_PROJECT_ROOT/dot_files/.tool-versions}"
+    typeset -gA TOOL_VERSIONS
+
+    while IFS=' ' read -r tool version || [[ -n "$tool" ]]; do
+        # Skip comments and empty lines
+        [[ "$tool" =~ ^# ]] || [[ -z "$tool" ]] && continue
+        TOOL_VERSIONS[$tool]="$version"
+    done < "$tool_versions_file"
+}
+
+# Get specific tool version from .tool-versions file
+get_tool_version_from_file() {
+    local tool=$1
+    local versions_file="${2:-$UTILS_PROJECT_ROOT/dot_files/.tool-versions}"
+    awk -v tool="$tool" '$1 == tool {print $2; exit}' "$versions_file"
+}
+
+# Check internet connectivity
+require_internet() {
+    if ! ping -c 1 -W 5 google.com >/dev/null 2>&1; then
+        log_with_level "ERROR" "Internet connectivity required"
+        return 1
+    fi
+    return 0
+}
+
+# Fix wireshark symlinks and remove deprecated cask
+fix_wireshark_symlinks() {
+    # Remove deprecated wireshark-app cask if present (has broken definition)
+    if brew list --cask wireshark-app &>/dev/null 2>&1; then
+        log_with_level "INFO" "Removing deprecated wireshark-app cask..."
+        brew uninstall --cask wireshark-app 2>/dev/null || true
+    fi
+
+    # Fix wireshark linking issues if it's installed
+    if brew list wireshark &>/dev/null; then
+        log_with_level "INFO" "Fixing wireshark symlinks..."
+        brew unlink wireshark 2>/dev/null || true
+        brew link --overwrite wireshark 2>/dev/null || true
+    fi
+}
+
+# Standard cleanup function with brew cleanup and optional backup restoration message
+standard_cleanup() {
+    local script_name="${1:-Script}"
+    local exit_code=$?
+
+    if [ $exit_code -ne 0 ] && [ $exit_code -ne 1 ]; then
+        log_with_level "ERROR" "$script_name failed with exit code $exit_code"
+
+        if [ -f "$HOME/.supercharged_last_backup" ]; then
+            local backup_dir=$(cat "$HOME/.supercharged_last_backup")
+            echo ""
+            echo "💡 You can restore your previous configuration with:"
+            echo "   npm run restore"
+        fi
+    fi
+
+    command -v brew >/dev/null 2>&1 && brew cleanup 2>/dev/null || true
+    exit $exit_code
 }
 
 # ZSH plugin installation
@@ -340,23 +418,9 @@ validate_tool() {
     local expected_version=$2
 
     if command_exists "$tool"; then
-        local version
-        case "$tool" in
-            "python"|"python3")
-                version=$(python3 --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
-                ;;
-            "node"|"nodejs")
-                version=$(node --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
-                ;;
-            "ruby")
-                version=$(ruby --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
-                ;;
-            *)
-                version=$($tool --version 2>&1 | head -n1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "")
-                ;;
-        esac
+        local version=$(extract_tool_version "$tool")
 
-        if [ -z "$version" ]; then
+        if [ -z "$version" ] || [ "$version" = "0.0.0" ]; then
             echo "⚠️  $tool: version not detected"
             return 1
         elif [ "$version" = "$expected_version" ] || [ "$expected_version" = "" ]; then
@@ -376,14 +440,11 @@ validate_installation() {
     echo "🔍 Validating installation..."
     local failed=0
 
-    # Read versions from .tool-versions if available
-    local python_version ruby_version node_version
-    local tool_versions_file="$(dirname "$0")/../dot_files/.tool-versions"
-    if [ -f "$tool_versions_file" ]; then
-        python_version=$(awk '/python/{print $2}' "$tool_versions_file")
-        ruby_version=$(awk '/ruby/{print $2}' "$tool_versions_file")
-        node_version=$(awk '/nodejs/{print $2}' "$tool_versions_file")
-    fi
+    # Read versions from .tool-versions using helper function
+    parse_tool_versions
+    local python_version="${TOOL_VERSIONS[python]}"
+    local ruby_version="${TOOL_VERSIONS[ruby]}"
+    local node_version="${TOOL_VERSIONS[nodejs]}"
 
     # Validate core tools
     validate_tool "brew" "" || ((failed++))
