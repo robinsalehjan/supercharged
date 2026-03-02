@@ -26,11 +26,11 @@
     "github@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
     "plugin-dev@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true,
-    "ralph-loop@claude-plugins-official": true,
     "pr-review-toolkit@claude-plugins-official": true,
+    "semgrep@claude-plugins-official": true,
     "code-review@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true,
-    "semgrep@claude-plugins-official": true
-  }
+    "typescript-lsp@claude-plugins-official": true
+  },
+  "teammateMode": "auto"
 }
