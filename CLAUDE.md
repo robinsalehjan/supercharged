@@ -18,18 +18,20 @@ macOS environment setup automation — installs dev tools (Homebrew, ASDF), mana
 ## Commands
 
 ```bash
-npm run setup           # Fresh install (interactive)
-npm run setup:profile   # Copy dotfiles + Claude config to $HOME
-npm run update          # Backup Claude config, copy dotfiles, update all packages
-npm run update:dry-run  # Preview updates without making changes
-npm run update:brew     # Update only Homebrew (formulae + casks)
-npm run update:asdf     # Update only ASDF plugins and versions
-npm run update:zsh      # Update only ZSH plugins
-npm run update:npm      # Update only npm global packages
-npm run validate        # Verify all tools installed correctly
-npm run restore         # Restore from latest backup
-npm run backup:claude   # Backup Claude Code config to repo
-npm run lint            # ShellCheck all scripts (ignore zsh warnings)
+npm run setup                 # Fresh install (interactive)
+npm run setup:profile         # Copy dotfiles + Claude config to $HOME
+npm run update                # Backup Claude config, copy dotfiles, update all packages
+npm run update:dry-run        # Preview updates without making changes
+npm run update:brew           # Update only Homebrew (formulae + casks)
+npm run update:asdf           # Update only ASDF plugins and versions
+npm run update:zsh            # Update only ZSH plugins
+npm run update:npm            # Update only npm global packages
+npm run validate              # Verify all tools installed correctly
+npm run restore               # Restore from latest backup
+npm run backup:claude         # Backup Claude Code config to repo
+npm run restore:claude        # Restore Claude Code config (only if repo is newer)
+npm run restore:claude:force  # Force restore Claude Code config
+npm run lint                  # ShellCheck all scripts (ignore zsh warnings)
 ```
 
 ## Code Conventions

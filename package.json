@@ -22,6 +22,8 @@
     "validate": "cd scripts && ./utils.sh validate",
     "restore": "cd scripts && source utils.sh && restore_from_backup",
     "backup:claude": "./scripts/backup-claude.sh",
+    "restore:claude": "./scripts/restore-claude.sh",
+    "restore:claude:force": "./scripts/restore-claude.sh --force",
     "lint": "shellcheck --shell=bash scripts/*.sh 2>&1 | grep -v SC1071 || true"
   }
 }
