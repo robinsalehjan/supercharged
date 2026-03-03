@@ -170,6 +170,36 @@
         "lastUpdated": "2026-02-27T11:41:01.948Z",
         "gitCommitSha": "55b58ec6e5649104f926ba7558b567dc8d33c5ff"
       }
+    ],
+    "commit-commands@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/commit-commands/55b58ec6e564",
+        "version": "55b58ec6e564",
+        "installedAt": "2026-03-03T13:49:16.435Z",
+        "lastUpdated": "2026-03-03T13:49:16.435Z",
+        "gitCommitSha": "55b58ec6e5649104f926ba7558b567dc8d33c5ff"
+      }
+    ],
+    "security-guidance@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/security-guidance/55b58ec6e564",
+        "version": "55b58ec6e564",
+        "installedAt": "2026-03-03T13:49:27.081Z",
+        "lastUpdated": "2026-03-03T13:49:27.081Z",
+        "gitCommitSha": "55b58ec6e5649104f926ba7558b567dc8d33c5ff"
+      }
+    ],
+    "greptile@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/greptile/55b58ec6e564",
+        "version": "55b58ec6e564",
+        "installedAt": "2026-03-03T13:49:43.321Z",
+        "lastUpdated": "2026-03-03T13:49:43.321Z",
+        "gitCommitSha": "55b58ec6e5649104f926ba7558b567dc8d33c5ff"
+      }
     ]
   }
 }
