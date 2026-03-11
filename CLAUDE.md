@@ -26,6 +26,7 @@ npm run update:brew           # Update only Homebrew (formulae + casks)
 npm run update:asdf           # Update only ASDF plugins and versions
 npm run update:zsh            # Update only ZSH plugins
 npm run update:npm            # Update only npm global packages
+npm run update:pip            # Update only pip data science packages
 npm run validate              # Verify all tools installed correctly
 npm run restore               # Restore from latest backup
 npm run backup:claude         # Backup Claude Code config to repo
