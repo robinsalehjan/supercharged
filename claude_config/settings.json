@@ -20,20 +20,17 @@
     "swift-lsp@claude-plugins-official": true,
     "skills@superlego": true,
     "safety-hooks@superlego": true,
-    "code-simplifier@claude-plugins-official": true,
     "firebase@claude-plugins-official": true,
     "claude-md-management@claude-plugins-official": true,
     "github@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
     "plugin-dev@claude-plugins-official": true,
     "pr-review-toolkit@claude-plugins-official": true,
-    "semgrep@claude-plugins-official": true,
-    "code-review@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true,
     "commit-commands@claude-plugins-official": true,
     "security-guidance@claude-plugins-official": true,
-    "greptile@claude-plugins-official": true,
-    "skill-creator@claude-plugins-official": true
+    "skill-creator@claude-plugins-official": true,
+    "semgrep@claude-plugins-official": true
   }
 }
