@@ -170,16 +170,6 @@
         "lastUpdated": "2026-03-11T12:14:30.803Z",
         "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
       }
-    ],
-    "semgrep@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/semgrep/0.5.1",
-        "version": "0.5.1",
-        "installedAt": "2026-03-11T19:00:19.412Z",
-        "lastUpdated": "2026-03-11T19:00:19.412Z",
-        "gitCommitSha": "6f39623510411a255def92c98f89b595e0b086f4"
-      }
     ]
   }
 }
