@@ -1,4 +1,5 @@
 #!/bin/zsh
+set -e
 
 source "$(dirname "$0")/utils.sh"
 
@@ -8,10 +9,9 @@ validate_system() {
 
     # Check macOS version
     local macos_version=$(sw_vers -productVersion | cut -d. -f1-2)
-    local required_version="12.0"
 
-    if [ "$(printf '%s\n' "$required_version" "$macos_version" | sort -V | head -n1)" != "$required_version" ]; then
-        log_with_level "ERROR" "macOS $required_version or later required (found: $macos_version)"
+    if ! version_gte "$macos_version" "$REQUIRED_MACOS_VERSION"; then
+        log_with_level "ERROR" "macOS $REQUIRED_MACOS_VERSION or later required (found: $macos_version)"
         exit 1
     fi
 
@@ -22,8 +22,8 @@ validate_system() {
     # Convert to integer for comparison (remove decimal part if present)
     local available_space_int=${available_space%.*}
 
-    if [ -z "$available_space_int" ] || [ "$available_space_int" -lt 10 ]; then
-        log_with_level "ERROR" "At least 10GB free space required (found: ${available_space_raw})"
+    if [ -z "$available_space_int" ] || [ "$available_space_int" -lt "$REQUIRED_DISK_SPACE_GB" ]; then
+        log_with_level "ERROR" "At least ${REQUIRED_DISK_SPACE_GB}GB free space required (found: ${available_space_raw})"
         exit 1
     fi
 
@@ -91,17 +91,20 @@ install_homebrew() {
     fi
 
     if ! command -v brew >/dev/null; then
-        fancy_echo "Installing Homebrew..."
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        log_with_level "INFO" "Installing Homebrew..."
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || {
+            log_with_level "ERROR" "Failed to install Homebrew"
+            exit 1
+        }
         eval "$($HOMEBREW_PREFIX/bin/brew shellenv)"
     else
-        fancy_echo "Homebrew already installed"
+        log_with_level "INFO" "Homebrew already installed"
     fi
 }
 
 install_homebrew
 
-fancy_echo 'Updating Homebrew formulae ...'
+log_with_level "INFO" "Updating Homebrew formulae..."
 brew update --force # https://github.com/Homebrew/brew/issues/1151
 
 # Build brewfile based on user preferences
@@ -168,7 +171,7 @@ fix_wireshark_symlinks
 
 echo "$BREWFILE_CONTENT" | brew bundle --file=-
 
-fancy_echo 'Installing zsh themes and plugins'
+log_with_level "INFO" "Installing zsh themes and plugins..."
 install_zsh_plugin \
     "https://github.com/zsh-users/zsh-autosuggestions" \
     "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
@@ -182,9 +185,9 @@ install_zsh_plugin \
     "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
 
 # Setup tmux: TPM, configuration, and plugins
-fancy_echo 'Setting up tmux with TPM and plugins'
+log_with_level "INFO" "Setting up tmux with TPM and plugins..."
 
-TMUX_SOURCE="$SCRIPT_DIR/../dot_files/.tmux.conf"
+TMUX_SOURCE="$UTILS_PROJECT_ROOT/dot_files/.tmux.conf"
 if [ -f "$TMUX_SOURCE" ]; then
     cp "$TMUX_SOURCE" "$HOME/.tmux.conf"
     log_with_level "SUCCESS" "Tmux configuration copied"
@@ -230,7 +233,11 @@ asdf reshim
 # Install Claude Code if requested
 if [[ "${INSTALL_CLAUDE_CODE:-Y}" =~ ^[Yy] ]]; then
     log_with_level "INFO" "Installing Claude Code..."
-    curl -fsSL https://claude.ai/install.sh | bash
+    install_script=$(curl -fsSL https://claude.ai/install.sh) || {
+        log_with_level "ERROR" "Failed to download Claude Code installer"
+        exit 1
+    }
+    echo "$install_script" | bash
 
     # Restore Claude configuration from repository if available
     if [ -x "$SCRIPT_DIR/restore-claude.sh" ]; then

@@ -1,4 +1,5 @@
 #!/bin/zsh
+set -e
 
 source "$(dirname "$0")/utils.sh"
 
@@ -151,8 +152,8 @@ fi
 
 if ! $SKIP_CASK; then
     log_with_level "INFO" "Updating brew casks..."
-    # Use --greedy to update all casks, ignore errors from broken cask definitions
-    if ! brew upgrade --cask 2>&1 | tee /dev/stderr | grep -q "Error:"; then
+    # Update casks; some may fail due to upstream cask definition issues
+    if brew upgrade --cask 2>&1; then
         log_with_level "SUCCESS" "Casks updated successfully"
     else
         log_with_level "WARN" "Some casks may have failed to update (this can happen with upstream cask definition issues)"

@@ -13,19 +13,8 @@ SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 DOT_FILES_DIR="$PROJECT_ROOT/dot_files"
 
-# Source utilities for backup functionality
+# Source utilities for backup functionality (provides MANAGED_DOTFILES)
 source "$SCRIPT_DIR/utils.sh"
-
-# Array of dotfiles to copy
-DOTFILES=(
-    ".gitconfig"
-    ".gitignore_global"
-    ".tool-versions"
-    ".zshrc"
-    ".zprofile"
-    ".tmux.conf"
-    ".p10k.zsh"
-)
 
 # Create backup before making changes
 echo "💾 Creating backup of existing configuration..."
@@ -34,11 +23,17 @@ create_restoration_point
 echo ""
 echo "📁 Copying dotfiles to $HOME..."
 
-# Copy each dotfile
-for file in "${DOTFILES[@]}"; do
+# Copy each dotfile (uses shared MANAGED_DOTFILES from utils.sh, excluding non-dotfiles)
+for file in "${MANAGED_DOTFILES[@]}"; do
     if [ -f "$DOT_FILES_DIR/$file" ]; then
-        cp "$DOT_FILES_DIR/$file" "$HOME/"
+        cp "$DOT_FILES_DIR/$file" "$HOME/" || {
+            log_with_level "ERROR" "Failed to copy $file to $HOME"
+            continue
+        }
         echo "  ✓ Copied $file"
+    elif [ "$file" = ".supercharged_preferences" ]; then
+        # Preferences file is generated at runtime, not part of dot_files
+        continue
     else
         echo "  ⚠️  Warning: $file not found in $DOT_FILES_DIR"
     fi
