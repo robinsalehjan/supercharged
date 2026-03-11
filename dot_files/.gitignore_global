@@ -52,3 +52,12 @@ Pods/
 *.key
 *.p12
 *.cer
+
+# Claude Code local config
+.claude/
+
+# Supercharged local state
+.supercharged_preferences
+.supercharged_backups/
+.supercharged_last_backup
+.supercharged_install.log
