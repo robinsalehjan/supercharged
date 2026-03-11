@@ -9,6 +9,14 @@ fi
 UTILS_PROJECT_ROOT="$(cd "$UTILS_SCRIPT_DIR/.." 2>/dev/null && pwd)" || UTILS_PROJECT_ROOT="$UTILS_SCRIPT_DIR"
 UTILS_LOG_FILE="$UTILS_PROJECT_ROOT/.supercharged_install.log"
 
+# Constants
+REQUIRED_MACOS_VERSION="12.0"
+REQUIRED_DISK_SPACE_GB=10
+BACKUP_RETENTION_COUNT=5
+
+# Shared list of dotfiles for backup/restore/copy operations
+MANAGED_DOTFILES=(.zshrc .zprofile .gitconfig .gitignore_global .p10k.zsh .tool-versions .tmux.conf .supercharged_preferences)
+
 # Colored output for better user experience
 fancy_echo() {
     local fmt="$1"; shift
@@ -57,7 +65,7 @@ create_restoration_point() {
     mkdir -p "$backup_dir"
 
     # Backup existing configurations
-    for file in .zshrc .zprofile .gitconfig .p10k.zsh .tool-versions .tmux.conf .supercharged_preferences; do
+    for file in "${MANAGED_DOTFILES[@]}"; do
         if [ -f "$HOME/$file" ]; then
             cp "$HOME/$file" "$backup_dir/"
             log_with_level "INFO" "Backed up $file"
@@ -95,11 +103,16 @@ create_restoration_point() {
 
     echo "$backup_dir" > "$HOME/.supercharged_last_backup"
 
-    # Clean up old backups, keeping only the last 5
-    local backup_count=$(ls -1d "$backup_base"/*/ 2>/dev/null | wc -l | tr -d ' ')
-    if [ "$backup_count" -gt 5 ]; then
-        log_with_level "INFO" "Cleaning up old backups (keeping last 5)..."
-        ls -1dt "$backup_base"/*/ | tail -n +6 | xargs rm -rf
+    # Clean up old backups, keeping only the last N
+    if [[ "$backup_base" == "$HOME/.supercharged_backups" ]]; then
+        local backup_count=$(find "$backup_base" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')
+        if [ "$backup_count" -gt "$BACKUP_RETENTION_COUNT" ]; then
+            log_with_level "INFO" "Cleaning up old backups (keeping last $BACKUP_RETENTION_COUNT)..."
+            find "$backup_base" -mindepth 1 -maxdepth 1 -type d -print0 | \
+                xargs -0 ls -1dt | tail -n +$((BACKUP_RETENTION_COUNT + 1)) | while IFS= read -r dir; do
+                    rm -rf "$dir"
+                done
+        fi
     fi
 
     log_with_level "SUCCESS" "Restoration point created successfully"
@@ -121,7 +134,7 @@ restore_from_backup() {
 
     log_with_level "INFO" "Restoring from backup: $backup_dir"
 
-    for file in .zshrc .zprofile .gitconfig .p10k.zsh .tool-versions .tmux.conf .supercharged_preferences; do
+    for file in "${MANAGED_DOTFILES[@]}"; do
         if [ -f "$backup_dir/$file" ]; then
             cp "$backup_dir/$file" "$HOME/"
             log_with_level "INFO" "Restored $file"
@@ -149,6 +162,13 @@ restore_from_backup() {
     return 0
 }
 
+# Compare versions: returns 0 (true) if $1 >= $2
+version_gte() {
+    local version="$1"
+    local min_version="$2"
+    [ "$(printf '%s\n' "$min_version" "$version" | sort -V | head -n1)" = "$min_version" ]
+}
+
 # Version checking with safety improvements
 check_version() {
     local cmd=$1
@@ -162,7 +182,7 @@ check_version() {
 
     local version=$(extract_tool_version "$cmd")
 
-    if [ "$(printf '%s\n' "$min_version" "$version" | sort -V | head -n1)" != "$min_version" ]; then
+    if ! version_gte "$version" "$min_version"; then
         log_with_level "WARN" "$cmd version $min_version or higher recommended (found: $version)"
         return 1
     fi
@@ -210,7 +230,7 @@ parse_tool_versions() {
 
     while IFS=' ' read -r tool version || [[ -n "$tool" ]]; do
         # Skip comments and empty lines
-        [[ "$tool" =~ ^# ]] || [[ -z "$tool" ]] && continue
+        { [[ "$tool" =~ ^# ]] || [[ -z "$tool" ]]; } && continue
         TOOL_VERSIONS[$tool]="$version"
     done < "$tool_versions_file"
 }
@@ -463,8 +483,10 @@ validate_installation() {
     fi
 }
 
-# Run validation if script is called directly or with validation argument
-if [[ "${1:-}" == "validate" ]] || [[ "$(basename "$0")" == "utils.sh" ]]; then
+# Run validation if script is called directly with validation argument
+# Note: In zsh, $0 changes to the sourced file name, so we also check
+# that no other script has sourced us by looking for the validate argument
+if [[ "${1:-}" == "validate" ]]; then
     # Enable strict error handling for validation
     set -euo pipefail
     validate_installation
