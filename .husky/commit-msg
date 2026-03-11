@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Check if the committer is the GitHub Copilot agent
 COMMITTER_EMAIL=$(git log -1 --format='%ce')

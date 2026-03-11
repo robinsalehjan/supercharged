@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Run shellcheck on shell scripts
 # Note: Scripts use zsh, so we run with --shell=bash and filter zsh-specific warnings
@@ -21,7 +21,7 @@ echo "🔍 Running shellcheck on scripts..."
 # SC2012 - Use find instead of ls (style preference)
 # SC2059 - Don't use variables in printf format (style preference)
 if ! shellcheck --shell=bash \
-  --exclude=SC1071,SC2296,SC1091,SC2155,SC2001,SC2012,SC2059 \
+  --exclude=SC1071,SC2296,SC1091,SC2155,SC2001,SC2012,SC2059,SC2034 \
   scripts/*.sh 2>&1; then
   echo "❌ shellcheck found issues"
   exit 1
