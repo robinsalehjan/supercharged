@@ -24,9 +24,10 @@ A comprehensive set of scripts for setting up a developer-friendly macOS environ
 # Package managers and build tools
 coreutils, git, curl, openssl@3, readline, libyaml, gmp
 asdf (version manager), keychain, nmap, tree, ripgrep, tmux, aria2
-uv (fast Python package installer and resolver), gh (GitHub CLI), duckdb (in-process SQL OLAP database)
+gh (GitHub CLI), duckdb (in-process SQL OLAP database)
 sqlite (lightweight SQL database), beads (distributed git-backed issue tracker for AI agents)
 btop (resource monitor with CPU, memory, disk, network, and process stats)
+shellcheck (shell script linter), jq (JSON processor)
 
 # Development languages (via asdf)
 nodejs   22.9.0       # LTS version, minimum 20.0.0 for modern features
@@ -200,15 +201,19 @@ This will:
 |---------|-------------|
 | `npm run setup` | Complete fresh installation with interactive configuration |
 | `npm run setup:profile` | Copy dotfiles and Claude Code configuration to $HOME |
-| `npm run backup:claude` | Backup Claude Code configuration to claude_config/ (with portable paths) |
 | `npm run update` | Update all installed packages and tools |
 | `npm run update:dry-run` | Preview updates without making changes |
 | `npm run update:brew` | Update only Homebrew (formulae + casks) |
 | `npm run update:asdf` | Update only asdf plugins and versions |
 | `npm run update:zsh` | Update only zsh plugins |
 | `npm run update:npm` | Update only npm global packages |
+| `npm run update:pip` | Update only pip data science packages |
+| `npm run backup:claude` | Backup Claude Code configuration to claude_config/ (with portable paths) |
+| `npm run restore:claude` | Restore Claude Code config (only if repo is newer) |
+| `npm run restore:claude:force` | Force restore Claude Code config |
 | `npm run validate` | Verify all tools are properly installed with correct versions |
 | `npm run restore` | Restore from the most recent backup |
+| `npm run lint` | ShellCheck all scripts (ignore zsh warnings) |
 | `npm run help` | Show all available commands |
 
 ## 🛡 Safety Features

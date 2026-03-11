@@ -13,6 +13,7 @@ npm run update:brew      # Homebrew only
 npm run update:asdf      # ASDF only
 npm run update:zsh       # ZSH plugins only
 npm run update:npm       # npm globals only
+npm run update:pip       # pip data science packages only
 
 # Lint shell scripts
 shellcheck --shell=bash scripts/*.sh 2>&1 | grep -v SC1071 || true
