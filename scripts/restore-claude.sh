@@ -53,6 +53,7 @@ if [ ! -f "$CLAUDE_CONFIG_DIR/settings.json" ] && \
 fi
 
 # Function to get the newest modification time from a directory's JSON files
+# Note: stat -f %m is macOS (BSD) specific; Linux uses stat -c %Y
 get_newest_mtime() {
     local dir="$1"
     local newest=0
@@ -170,16 +171,24 @@ merge_plugin_config() {
 
     for marketplace in "${PRESERVE_MARKETPLACES[@]}"; do
         # Extract plugins ending with @marketplace from the .plugins object
-        local marketplace_plugins=$(echo "$local_content" | jq ".plugins // {} | to_entries | map(select(.key | endswith(\"@$marketplace\"))) | from_entries" 2>/dev/null)
+        # Uses --arg to avoid jq filter injection from marketplace names
+        local marketplace_plugins
+        marketplace_plugins=$(echo "$local_content" | jq --arg mp "@$marketplace" '.plugins // {} | to_entries | map(select(.key | endswith($mp))) | from_entries') || {
+            log_with_level "WARN" "Failed to extract plugins for marketplace $marketplace"
+            continue
+        }
         if [ -n "$marketplace_plugins" ] && [ "$marketplace_plugins" != "{}" ]; then
-            preserved_plugins=$(echo "$preserved_plugins" | jq ". + $marketplace_plugins" 2>/dev/null || echo "$preserved_plugins")
+            preserved_plugins=$(echo "$preserved_plugins" | jq --argjson mp "$marketplace_plugins" '. + $mp') || {
+                log_with_level "WARN" "Failed to merge preserved plugins for $marketplace"
+                continue
+            }
             log_with_level "INFO" "Found plugins from $marketplace to preserve"
         fi
     done
 
     # Get repo plugins and merge with preserved local plugins
-    local repo_plugins=$(echo "$repo_content" | jq '.plugins // {}' 2>/dev/null || echo "{}")
-    local merged_plugins=$(echo "$repo_plugins" | jq ". + $preserved_plugins" 2>/dev/null)
+    local repo_plugins=$(echo "$repo_content" | jq '.plugins // {}') || { log_with_level "WARN" "Failed to read repo plugins"; repo_plugins="{}"; }
+    local merged_plugins=$(echo "$repo_plugins" | jq --argjson preserved "$preserved_plugins" '. + $preserved')
 
     if [ -z "$merged_plugins" ] || [ "$merged_plugins" = "null" ]; then
         log_with_level "WARN" "Failed to merge plugins, using repo content only"
@@ -237,15 +246,23 @@ merge_marketplace_config() {
     local preserved_marketplaces="{}"
 
     for marketplace in "${PRESERVE_MARKETPLACES[@]}"; do
-        local marketplace_entry=$(echo "$local_content" | jq "if has(\"$marketplace\") then {\"$marketplace\": .[\"$marketplace\"]} else {} end" 2>/dev/null)
+        # Uses --arg to avoid jq filter injection from marketplace names
+        local marketplace_entry
+        marketplace_entry=$(echo "$local_content" | jq --arg mp "$marketplace" 'if has($mp) then {($mp): .[$mp]} else {} end') || {
+            log_with_level "WARN" "Failed to extract marketplace $marketplace"
+            continue
+        }
         if [ -n "$marketplace_entry" ] && [ "$marketplace_entry" != "{}" ]; then
-            preserved_marketplaces=$(echo "$preserved_marketplaces" | jq ". + $marketplace_entry" 2>/dev/null || echo "$preserved_marketplaces")
+            preserved_marketplaces=$(echo "$preserved_marketplaces" | jq --argjson entry "$marketplace_entry" '. + $entry') || {
+                log_with_level "WARN" "Failed to merge marketplace $marketplace"
+                continue
+            }
             log_with_level "INFO" "Found marketplace $marketplace to preserve"
         fi
     done
 
     # Merge: repo content + preserved local marketplaces (local takes precedence)
-    local merged=$(echo "$repo_content" | jq ". + $preserved_marketplaces" 2>/dev/null)
+    local merged=$(echo "$repo_content" | jq --argjson preserved "$preserved_marketplaces" '. + $preserved')
 
     if [ -z "$merged" ] || [ "$merged" = "null" ]; then
         log_with_level "WARN" "Failed to merge marketplaces, using repo content only"
@@ -255,7 +272,7 @@ merge_marketplace_config() {
     echo "$merged" > "$dest"
 
     local preserved_count=$(echo "$preserved_marketplaces" | jq 'keys | length' 2>/dev/null || echo "0")
-    if [ "$preserved_count" -gt 0 ] 2>/dev/null; then
+    if [ "$preserved_count" -gt 0 ]; then
         log_with_level "SUCCESS" "Restored $name (preserved $preserved_count local marketplace(s))"
     else
         log_with_level "SUCCESS" "Restored $name"
