@@ -2,6 +2,36 @@
 
 Detailed reference for AI agents. For project overview, structure, commands, and conventions see [CLAUDE.md](./CLAUDE.md).
 
+## npm Commands Reference
+
+```bash
+# Setup and Installation
+npm run setup                 # Fresh install (interactive)
+npm run setup:profile         # Copy dotfiles + Claude config to $HOME
+
+# Updates (all run backup:claude first, then copy dotfiles)
+npm run update                # Update all components (brew, asdf, zsh, npm, pip)
+npm run update:dry-run        # Preview updates without making changes
+npm run update:brew           # Update only Homebrew (formulae + casks)
+npm run update:asdf           # Update only ASDF plugins and versions
+npm run update:zsh            # Update only ZSH plugins
+npm run update:npm            # Update only npm global packages
+npm run update:pip            # Update only pip data science packages
+
+# Validation and Recovery
+npm run validate              # Verify all tools installed correctly
+npm run restore               # Restore from latest backup
+
+# Claude Code Configuration
+npm run backup:claude         # Backup Claude Code config to repo
+npm run restore:claude        # Restore Claude Code config (only if repo is newer)
+npm run restore:claude:force  # Force restore Claude Code config
+
+# Development
+npm run lint                  # ShellCheck all scripts (ignore zsh warnings)
+npm run help                  # Display all available commands
+```
+
 ## Build and Test
 
 ```bash
