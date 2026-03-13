@@ -123,22 +123,97 @@ Homebrew in PATH, ASDF plugins present, tool versions match `.tool-versions`, ZS
 | Change log format | `log_with_level()` in `scripts/utils.sh` (preserve timestamp + level) |
 | Add backup file | `create_restoration_point()` in `scripts/utils.sh` |
 | Update Claude sanitization | `SANITIZE_MARKETPLACES` in `backup-claude.sh`, `PRESERVE_MARKETPLACES` in `restore-claude.sh` |
+| Modify pre-commit checks | `.husky/pre-commit` - add/remove security validations |
+| Add/disable hookify rule | Create/edit `.claude/hookify.{name}.local.md` or set `enabled: false` |
+| Test security hooks | `git add . && git commit -m "test"` - hooks run automatically |
+| List hookify rules | `ls .claude/hookify.*.local.md` |
 
-## Commits and PRs
+## Security & Git Workflow
+
+**IMPORTANT**: This repository runs on personal AND work machines. Security is enforced automatically.
+
+### Automated Security (Git Hooks)
+
+**Pre-commit** (`.husky/pre-commit`) runs 6 checks:
+1. ✅ **Shellcheck** - REQUIRED (commit fails if not installed)
+2. ✅ **Secrets detection** - Blocks API keys, tokens, passwords
+3. ✅ **Hardcoded paths** - Blocks `/Users/username/` in dotfiles
+4. ✅ **.secrets safety** - Ensures template-only, no real credentials
+5. ✅ **Claude config** - Warns about work marketplace data
+6. ✅ **File size** - Blocks files >1MB
+
+**Commit-msg** (`.husky/commit-msg`) enforces conventional commits.
+
+**Setup** (one-time per machine):
+```bash
+# Ensure git hooks configured
+git config core.hooksPath .husky
+
+# Install shellcheck (REQUIRED)
+brew install shellcheck
+
+# Verify hooks executable
+chmod +x .husky/pre-commit .husky/commit-msg
+```
+
+### Hookify Rules (Claude Code)
+
+11 active rules in `.claude/hookify.*.local.md` (gitignored, local-only):
+
+**Blocking** (prevent operations):
+- `dangerous-rm` - Blocks `rm -rf /`, `rm -rf ~`, etc.
+- `no-bypass-hooks` - Blocks `git commit --no-verify`
+
+**Warnings** (guide behavior):
+- `hardcoded-paths` - Warn when editing dotfiles with machine-specific paths
+- `logging-pattern` - Remind to use `log_with_level` instead of echo
+- `secrets-template` - Warn when editing `.secrets`
+- `claude-config-edit` - Warn when modifying Claude backups
+- `sudo-in-scripts` - Warn against adding sudo
+- `conventional-commits` - Remind about commit format
+- `git-security-checks` - Show security check summary
+- `shellcheck-reminder` - Remind to run shellcheck
+- `documentation-sync` - Remind to update docs
+
+### Commits and PRs
 
 **Conventional commits**: `feat(scripts):`, `fix(zsh):`, `docs(readme):`, `chore(deps):`.
 
-**Before committing**:
-1. Run shellcheck
-2. Test with `npm run setup:profile`
-3. Verify no secrets in changed files
-4. Update documentation if user-facing
+**Normal workflow**:
+```bash
+# Make changes
+vim scripts/mac.sh
+
+# Stage and commit (hooks run automatically)
+git add scripts/mac.sh
+git commit -m "feat(scripts): add new feature"
+
+# Hooks will:
+# 🔒 Run all 6 security checks
+# ✅ Enforce conventional commit format
+# ✅ Allow commit only if all checks pass
+```
+
+**If hooks fail**:
+```bash
+# Example: Secret detected
+❌ Potential secrets detected in staged files!
+   api_key="sk-1234..." in file.txt
+
+# Fix the issue
+vim file.txt  # Change to: YOUR_API_KEY_HERE
+
+# Commit again
+git commit -m "feat: add feature"  # ✅ Passes
+```
 
 **PR checklist**:
+- [ ] Hooks passed (required - can't commit otherwise)
 - [ ] README.md updated if user-facing changes
-- [ ] Logging follows existing patterns
-- [ ] No hardcoded paths or credentials
-- [ ] Backup/restore functionality preserved
+- [ ] Logging follows `log_with_level` pattern
+- [ ] No hardcoded paths (use `$HOME`)
+- [ ] Shellcheck passed (`npm run lint`)
+- [ ] Documentation updated
 
 ## Debugging
 
@@ -149,3 +224,7 @@ Homebrew in PATH, ASDF plugins present, tool versions match `.tool-versions`, ZS
 - "Permission denied" → verify file permissions, check sudo requirements
 - "Plugin not found" → ensure ASDF plugin installed before version
 - "Backup failed" → check disk space in `~/.supercharged_backups/`
+- "Hooks not running" → verify `git config core.hooksPath` is `.husky`, make hooks executable
+- "Shellcheck not found" → install with `brew install shellcheck` (REQUIRED)
+- "Secret detected false positive" → review pattern, adjust `.husky/pre-commit` if legitimate
+- "Hookify rule not triggering" → check YAML frontmatter, verify pattern regex, ensure `enabled: true`

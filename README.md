@@ -4,6 +4,7 @@ A comprehensive set of scripts for setting up a developer-friendly macOS environ
 ## 🚀 Features
 
 - **Interactive Setup**: Customize your installation based on your development needs (iOS tools, data science, dev tools)
+- **Multi-Machine Security**: Git hooks enforce security for personal/work machines - blocks secrets, hardcoded paths, requires shellcheck
 - **Enhanced Security**: Secure SSH key management with keychain integration and proper permission handling
 - **Smart Recovery**: Automatic timestamped backups and restoration points for safe rollbacks
 - **Performance Optimized**: PATH deduplication and efficient installation processes
@@ -278,6 +279,60 @@ cd /path/to/supercharged
 tail -f .supercharged_install.log  # Follow logs in real-time
 grep ERROR .supercharged_install.log  # Filter for errors
 ```
+
+### Security Enforcement
+
+**This repository is designed for use on both personal and work machines** with comprehensive security enforcement.
+
+#### Automated Git Hooks
+
+**Pre-commit hook** (`.husky/pre-commit`) runs 6 security checks before every commit:
+1. ✅ **Shellcheck validation** - REQUIRED (commit fails if not installed)
+2. ✅ **Secrets detection** - Blocks API keys, tokens, passwords
+3. ✅ **Hardcoded paths** - Blocks `/Users/username/` in dotfiles (must use `$HOME`)
+4. ✅ **.secrets template safety** - Ensures no real credentials
+5. ✅ **Claude config sanitization** - Warns about work marketplace data
+6. ✅ **Large file detection** - Blocks files >1MB
+
+**Commit-msg hook** (`.husky/commit-msg`) enforces conventional commit format:
+```bash
+feat(scope): description
+fix(scope): description
+docs(scope): description
+chore(scope): description
+```
+
+#### Setup (One-time per Machine)
+
+```bash
+# Install shellcheck (REQUIRED for commits)
+brew install shellcheck
+
+# Verify git hooks configured
+git config core.hooksPath  # Should output: .husky
+
+# If not set:
+git config core.hooksPath .husky
+
+# Ensure hooks are executable
+chmod +x .husky/pre-commit .husky/commit-msg
+```
+
+#### Security Best Practices
+
+✅ **DO**:
+- Use `$HOME/path` instead of `/Users/yourname/path`
+- Keep `.secrets` as template only with placeholders like `YOUR_API_KEY_HERE`
+- Run `npm run lint` before committing
+- Follow conventional commit format
+
+❌ **DON'T**:
+- Hardcode machine-specific paths in dotfiles
+- Commit real credentials or API keys
+- Bypass security hooks with `--no-verify` (blocked by Claude Code hookify)
+- Skip shellcheck validation
+
+**For full security documentation**, see [SECURITY.md](./SECURITY.md).
 
 ## 🎯 Customization
 

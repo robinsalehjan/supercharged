@@ -39,8 +39,19 @@ See [AGENTS.md](./AGENTS.md) for detailed code patterns and examples.
 
 ## Security
 
+**This repository is used on personal AND work machines** — comprehensive security enforced:
+
+**Automated checks** (see [SECURITY.md](./SECURITY.md) for details):
+- ✅ **Pre-commit hook** - Blocks secrets, hardcoded paths, requires shellcheck (`.husky/pre-commit`)
+- ✅ **Commit-msg hook** - Enforces conventional commits (`.husky/commit-msg`)
+- ✅ **Hookify rules** - 11 Claude Code behavior rules (`.claude/hookify.*.local.md`)
+
+**Key rules**:
 - Never commit secrets (`.secrets` is template only, in `.gitignore`)
+- No hardcoded paths in dotfiles (use `$HOME`, not `/Users/username/`)
+- Shellcheck is REQUIRED (commit fails if not installed: `brew install shellcheck`)
 - Claude backups sanitized (work marketplaces excluded)
+- No bypassing hooks with `--no-verify` (blocked by hookify)
 
 ## Reference
 
