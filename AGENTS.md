@@ -9,11 +9,13 @@ Detailed reference for AI agents. For project overview, structure, commands, and
 npm run setup                 # Fresh install (interactive)
 npm run setup:profile         # Copy dotfiles + Claude config to $HOME
 
-# Updates (all run backup:claude first, then copy dotfiles)
+# Updates
+# npm run update runs: backup:claude → setup:profile → update.sh
+# update:brew and update:asdf also copy dotfiles first (via setup:profile)
 npm run update                # Update all components (brew, asdf, zsh, npm, pip)
-npm run update:dry-run        # Preview updates without making changes
-npm run update:brew           # Update only Homebrew (formulae + casks)
-npm run update:asdf           # Update only ASDF plugins and versions
+npm run update:dry-run        # Preview outdated brew/npm packages (read-only)
+npm run update:brew           # Copy dotfiles + update Homebrew (formulae + casks)
+npm run update:asdf           # Copy dotfiles + update ASDF plugins and versions
 npm run update:zsh            # Update only ZSH plugins
 npm run update:npm            # Update only npm global packages
 npm run update:pip            # Update only pip data science packages

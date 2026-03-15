@@ -95,7 +95,7 @@ git, asdf, zsh-autosuggestions, zsh-syntax-highlighting, gcloud, docker, tmux
 - Enhanced history settings (50k entries, shared across sessions)
 - Comprehensive aliases for navigation, git, docker, kubernetes
 - Utility functions (mkcd, extract, docker-clean, weather)
-- Auto-start Colima if installed
+- Colima auto-start (opt-in via `SUPERCHARGED_COLIMA_AUTOSTART=1` in `~/.secrets`)
 - VS Code shell integration
 ```
 
@@ -186,33 +186,38 @@ The setup process will:
 npm run update
 ```
 
-This will:
-- Backup Claude Code configuration (with portable paths)
-- Copy latest dotfiles and Claude config to $HOME
-- Update Homebrew packages and casks
-- Update ASDF plugins
-- Install/update tool versions from `.tool-versions`
-- Run `asdf reshim` to update shims
-- Clean up Homebrew cache
+This runs a three-step process:
+1. **Backup** Claude Code configuration to `claude_config/` (with portable paths)
+2. **Copy** latest dotfiles and Claude Code config to `$HOME` (via `setup:profile`)
+3. **Update** installed tools:
+   - Update Homebrew packages and casks
+   - Update ASDF plugins and install/update tool versions from `.tool-versions`
+   - Run `asdf reshim` to update shims
+   - Update ZSH plugins, npm global packages, and pip data science packages
+   - Clean up Homebrew cache
 
 ## 🔧 Available Commands
 
 | Command | Description |
 |---------|-------------|
+| **Setup** | |
 | `npm run setup` | Complete fresh installation with interactive configuration |
 | `npm run setup:profile` | Copy dotfiles and Claude Code configuration to $HOME |
+| **Updates** | |
 | `npm run update` | Update all installed packages and tools |
-| `npm run update:dry-run` | Preview updates without making changes |
-| `npm run update:brew` | Update only Homebrew (formulae + casks) |
-| `npm run update:asdf` | Update only asdf plugins and versions |
-| `npm run update:zsh` | Update only zsh plugins |
+| `npm run update:dry-run` | Preview outdated Homebrew and npm packages (read-only) |
+| `npm run update:brew` | Copy dotfiles, then update Homebrew (formulae + casks) |
+| `npm run update:asdf` | Copy dotfiles, then update ASDF plugins and versions |
+| `npm run update:zsh` | Update only ZSH plugins |
 | `npm run update:npm` | Update only npm global packages |
 | `npm run update:pip` | Update only pip data science packages |
+| **Claude Code** | |
 | `npm run backup:claude` | Backup Claude Code configuration to claude_config/ (with portable paths) |
 | `npm run restore:claude` | Restore Claude Code config (only if repo is newer) |
 | `npm run restore:claude:force` | Force restore Claude Code config |
+| **Utilities** | |
 | `npm run validate` | Verify all tools are properly installed with correct versions |
-| `npm run restore` | Restore from the most recent backup |
+| `npm run restore` | Restore from the most recent backup (`~/.supercharged_last_backup`) |
 | `npm run lint` | ShellCheck all scripts (ignore zsh warnings) |
 | `npm run help` | Show all available commands |
 
@@ -286,6 +291,7 @@ Your preferences are saved to `~/.supercharged_preferences` and used during setu
 - `INSTALL_IOS_TOOLS`: Whether to install iOS development tools
 - `INSTALL_DATA_SCIENCE`: Whether to install data science packages
 - `INSTALL_DEV_TOOLS`: Whether to install Docker and Kubernetes tools
+- `INSTALL_CLAUDE_CODE`: Whether to install Claude Code AI assistant
 - `SETUP_DATE`: When the configuration was last set
 
 ### Manual Customization
