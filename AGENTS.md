@@ -144,16 +144,15 @@ Homebrew in PATH, ASDF plugins present, tool versions match `.tool-versions`, ZS
 
 **Commit-msg** (`.husky/commit-msg`) enforces conventional commits.
 
-**Setup** (one-time per machine):
+**Setup** (automated via `npm run setup`):
 ```bash
-# Ensure git hooks configured
-git config core.hooksPath .husky
+# Setup automatically configures:
+# ✅ Installs shellcheck via Homebrew (REQUIRED)
+# ✅ Sets git hooks path to .husky
+# ✅ Makes hooks executable
 
-# Install shellcheck (REQUIRED)
-brew install shellcheck
-
-# Verify hooks executable
-chmod +x .husky/pre-commit .husky/commit-msg
+# No manual configuration needed!
+# Just run: npm run setup
 ```
 
 ### Hookify Rules (Claude Code)

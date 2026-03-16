@@ -2,26 +2,27 @@
 
 This is a quick reference card for the security setup. For full documentation, see [SECURITY.md](../SECURITY.md).
 
-## ✅ One-Time Setup (Per Machine)
+## ✅ Setup (Fully Automated)
 
 ```bash
-# 1. Install shellcheck (REQUIRED)
-brew install shellcheck
+# Clone and run setup
+git clone <repo-url>
+cd supercharged
+npm install
+npm run setup
 
-# 2. Verify git hooks path
-git config core.hooksPath
-# Expected output: .husky
+# Setup automatically:
+# ✅ Installs shellcheck via Homebrew (REQUIRED)
+# ✅ Configures git hooks path to .husky
+# ✅ Makes hooks executable
+# ✅ Ready to use - zero manual configuration!
 
-# 3. If not set, configure it
-git config core.hooksPath .husky
-
-# 4. Ensure hooks are executable
-chmod +x .husky/pre-commit .husky/commit-msg
-
-# 5. Test hooks work
+# Verify (optional)
 git commit --allow-empty -m "test: verify hooks"
 # Should see: 🔒 Running security checks...
 ```
+
+**No manual setup needed!** Everything is configured automatically during `npm run setup`.
 
 ## 🔒 Automated Security Layers
 

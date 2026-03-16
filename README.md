@@ -302,20 +302,30 @@ docs(scope): description
 chore(scope): description
 ```
 
-#### Setup (One-time per Machine)
+#### Automatic Setup
+
+**All security components are configured automatically during setup:**
 
 ```bash
-# Install shellcheck (REQUIRED for commits)
-brew install shellcheck
+npm run setup
+# Automatically:
+# ✅ Installs shellcheck via Homebrew
+# ✅ Configures git hooks path (.husky)
+# ✅ Makes hooks executable
+# ✅ Ready to use - no manual steps needed
+```
+
+**Verification** (optional):
+```bash
+# Verify shellcheck installed
+shellcheck --version
 
 # Verify git hooks configured
 git config core.hooksPath  # Should output: .husky
 
-# If not set:
-git config core.hooksPath .husky
-
-# Ensure hooks are executable
-chmod +x .husky/pre-commit .husky/commit-msg
+# Test hooks work
+git commit --allow-empty -m "test: verify hooks"
+# Should see: 🔒 Running security checks...
 ```
 
 #### Security Best Practices

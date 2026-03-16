@@ -136,16 +136,18 @@ git commit --no-verify -m "emergency: fix critical issue"
 git clone https://github.com/yourusername/supercharged.git
 cd supercharged
 
-# 2. Install dependencies
+# 2. Install dependencies and run setup
 npm install
+npm run setup
 
-# 3. Configure git hooks path (if not set)
-git config core.hooksPath .husky
+# Setup automatically:
+# ✅ Installs shellcheck via Homebrew
+# ✅ Configures git hooks path (.husky)
+# ✅ Makes hooks executable
+# ✅ Copies dotfiles to $HOME
+# ✅ Restores Claude Code config
 
-# 4. Verify hooks are executable
-chmod +x .husky/pre-commit .husky/commit-msg
-
-# 5. Test hooks work
+# 3. Test hooks work (optional verification)
 git commit --allow-empty -m "test: verify hooks"
 # Should see: 🔒 Running security checks...
 ```
@@ -153,21 +155,24 @@ git commit --allow-empty -m "test: verify hooks"
 ### Verifying Security Setup
 
 ```bash
-# Check git hooks path
+# Check shellcheck installed (automatically via setup)
+shellcheck --version
+
+# Check git hooks path (automatically configured via setup)
 git config core.hooksPath
 # Should output: .husky
 
-# Check hook permissions
+# Check hook permissions (automatically set via setup)
 ls -la .husky/
 # Should show executable bits (rwxr-xr-x)
 
-# Count hookify rules
-ls .claude/hookify.*.local.md | wc -l
-# Should output: 11
+# Count hookify rules (created by Claude Code)
+ls .claude/hookify.*.local.md 2>/dev/null | wc -l
+# Should output: 11 (if using Claude Code)
 
-# Test shellcheck is installed
-shellcheck --version
-# If not: brew install shellcheck
+# Test hooks work
+git commit --allow-empty -m "test: verify hooks"
+# Should see: 🔒 Running security checks...
 ```
 
 ## Troubleshooting
