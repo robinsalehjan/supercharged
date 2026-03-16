@@ -164,7 +164,8 @@ cask \"visual-studio-code\"
 cask \"slack\"
 cask \"postman\"
 cask \"raycast\"
-cask \"google-chrome\""
+cask \"google-chrome\"
+cask \"font-jetbrains-mono-nerd-font\""
 
 # Fix wireshark symlinks and remove deprecated cask
 fix_wireshark_symlinks
