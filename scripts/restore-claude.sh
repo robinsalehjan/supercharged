@@ -11,6 +11,7 @@
 #   ./restore-claude.sh --force  # Force restore regardless of timestamps
 
 set -e
+set -o pipefail
 
 source "$(dirname "$0")/utils.sh"
 
