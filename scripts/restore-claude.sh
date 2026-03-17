@@ -186,12 +186,17 @@ merge_plugin_config() {
     done
 
     # Get repo plugins and merge with preserved local plugins
-    local repo_plugins=$(echo "$repo_content" | jq '.plugins // {}') || { log_with_level "WARN" "Failed to read repo plugins"; repo_plugins="{}"; }
+    local repo_plugins
+    if ! repo_plugins=$(echo "$repo_content" | jq '.plugins // {}' 2>/dev/null); then
+        log_with_level "ERROR" "Failed to extract plugins from repository configuration"
+        return 1
+    fi
     local merged_plugins=$(echo "$repo_plugins" | jq --argjson preserved "$preserved_plugins" '. + $preserved')
 
-    if [ -z "$merged_plugins" ] || [ "$merged_plugins" = "null" ]; then
-        log_with_level "WARN" "Failed to merge plugins, using repo content only"
-        merged_plugins="$repo_plugins"
+    # Validate merge succeeded and produced valid JSON
+    if [ -z "$merged_plugins" ] || ! echo "$merged_plugins" | jq empty 2>/dev/null; then
+        log_with_level "ERROR" "Failed to merge plugins configuration"
+        return 1
     fi
 
     # Get version from repo (or local if repo doesn't have it)
@@ -261,9 +266,10 @@ merge_marketplace_config() {
     # Merge: repo content + preserved local marketplaces (local takes precedence)
     local merged=$(echo "$repo_content" | jq --argjson preserved "$preserved_marketplaces" '. + $preserved')
 
-    if [ -z "$merged" ] || [ "$merged" = "null" ]; then
-        log_with_level "WARN" "Failed to merge marketplaces, using repo content only"
-        merged="$repo_content"
+    # Validate merge succeeded and produced valid JSON
+    if [ -z "$merged" ] || ! echo "$merged" | jq empty 2>/dev/null; then
+        log_with_level "ERROR" "Failed to merge marketplaces configuration"
+        return 1
     fi
 
     echo "$merged" > "$dest"
