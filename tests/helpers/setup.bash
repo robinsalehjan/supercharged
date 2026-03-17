@@ -18,7 +18,7 @@ setup_test_env() {
   export HOME="$TEST_TEMP_DIR"
 
   # Set fixture directory path (relative to tests/)
-  FIXTURE_DIR="$(cd "$(dirname "${BATS_TEST_DIRNAME}")/../fixtures" && pwd)"
+  FIXTURE_DIR="$(cd "$BATS_TEST_DIRNAME/../fixtures" && pwd)"
 
   # Export for use in tests
   export TEST_TEMP_DIR
