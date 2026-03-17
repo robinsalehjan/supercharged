@@ -27,18 +27,32 @@ sanitize_plugins() {
   local input_file="$1"
   local output_file="$2"
 
+  # Enable pipefail to catch jq errors
+  set -o pipefail
+
   # Build jq filter to remove vend-plugins entries
   # Use ORIGINAL_HOME for path replacement since HOME is overridden in tests
   jq '{version: .version, plugins: (.plugins | to_entries | map(select(.key | endswith("@vend-plugins") | not)) | from_entries)}' \
     "$input_file" | sed "s|$ORIGINAL_HOME|\$HOME|g" > "$output_file"
+
+  local result=$?
+  set +o pipefail
+  return $result
 }
 
 sanitize_marketplaces() {
   local input_file="$1"
   local output_file="$2"
 
+  # Enable pipefail to catch jq errors
+  set -o pipefail
+
   # Remove vend-plugins marketplace
   jq 'del(.["vend-plugins"])' "$input_file" | sed "s|$ORIGINAL_HOME|\$HOME|g" > "$output_file"
+
+  local result=$?
+  set +o pipefail
+  return $result
 }
 
 @test "removes vend-plugins entries from installed_plugins.json" {
@@ -129,4 +143,62 @@ sanitize_marketplaces() {
 
   # Assert: Plugins is an object
   assert_json_field "$TEMP_REPO_CONFIG/installed_plugins.json" ".plugins | type" "object"
+}
+
+@test "handles malformed JSON gracefully" {
+  # Arrange: Load malformed fixture
+  load_fixture "claude-backup/plugins-malformed.json" "$TEMP_CLAUDE_PLUGINS/installed_plugins.json"
+
+  # Act & Assert: Sanitization should fail with malformed input
+  run sanitize_plugins "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" "$TEMP_REPO_CONFIG/installed_plugins.json"
+
+  # Should fail (non-zero exit code)
+  [ "$status" -ne 0 ]
+}
+
+@test "handles missing source file gracefully" {
+  # Arrange: No fixture loaded (file doesn't exist)
+
+  # Act: Attempt sanitization with missing file
+  run sanitize_plugins "$TEMP_CLAUDE_PLUGINS/nonexistent.json" "$TEMP_REPO_CONFIG/installed_plugins.json"
+
+  # Assert: Should fail
+  [ "$status" -ne 0 ]
+}
+
+@test "handles empty plugins object" {
+  # Arrange: Create empty plugins file
+  echo '{"version": 2, "plugins": {}}' > "$TEMP_CLAUDE_PLUGINS/installed_plugins.json"
+
+  # Act: Run sanitization
+  sanitize_plugins "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" "$TEMP_REPO_CONFIG/installed_plugins.json"
+
+  # Assert: Output is valid JSON with empty plugins
+  assert_json_field "$TEMP_REPO_CONFIG/installed_plugins.json" ".plugins | length" "0"
+  assert_json_field "$TEMP_REPO_CONFIG/installed_plugins.json" ".version" "2"
+}
+
+@test "handles all vend-plugins removed scenario" {
+  # Arrange: Create file with only vend plugins
+  cat > "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" <<'EOF'
+{
+  "version": 2,
+  "plugins": {
+    "vend-internal@vend-plugins": {
+      "version": "1.0.0",
+      "installPath": "/Users/test/.claude/plugins/cache/vend-plugins/vend-internal/1.0.0"
+    },
+    "vend-api@vend-plugins": {
+      "version": "2.0.0",
+      "installPath": "/Users/test/.claude/plugins/cache/vend-plugins/vend-api/2.0.0"
+    }
+  }
+}
+EOF
+
+  # Act: Run sanitization
+  sanitize_plugins "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" "$TEMP_REPO_CONFIG/installed_plugins.json"
+
+  # Assert: Result should have empty plugins object
+  assert_json_field "$TEMP_REPO_CONFIG/installed_plugins.json" ".plugins | length" "0"
 }
