@@ -19,3 +19,6 @@ node_modules/
 
 # Claude Code project-specific settings
 .claude/
+
+# Git worktrees for isolated development
+.worktrees/
