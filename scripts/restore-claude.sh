@@ -160,10 +160,8 @@ merge_plugin_config() {
 
     # Check if jq is available for merging
     if ! command -v jq &> /dev/null; then
-        log_with_level "WARN" "jq not available, overwriting $name (local plugins may be lost)"
-        echo "$repo_content" > "$dest"
-        log_with_level "SUCCESS" "Restored $name"
-        return
+        log_with_level "ERROR" "jq is required for restore operations"
+        return 1
     fi
 
     # Extract local plugins from preserved marketplaces (from .plugins object)
@@ -236,10 +234,8 @@ merge_marketplace_config() {
 
     # Check if jq is available for merging
     if ! command -v jq &> /dev/null; then
-        log_with_level "WARN" "jq not available, overwriting $name (local marketplaces may be lost)"
-        echo "$repo_content" > "$dest"
-        log_with_level "SUCCESS" "Restored $name"
-        return
+        log_with_level "ERROR" "jq is required for restore operations"
+        return 1
     fi
 
     # Extract preserved marketplaces from local config
