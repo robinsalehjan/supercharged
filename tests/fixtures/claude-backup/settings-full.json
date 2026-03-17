@@ -1,0 +1,10 @@
+{
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "hookify@claude-plugins-official": true,
+    "vend-internal@vend-plugins": true,
+    "vend-api@vend-plugins": true
+  },
+  "theme": "dark",
+  "model": "claude-sonnet-4-5"
+}
