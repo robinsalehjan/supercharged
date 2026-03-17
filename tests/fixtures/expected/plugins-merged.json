@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "plugins": {
+    "superpowers@claude-plugins-official": {
+      "version": "5.0.2",
+      "installPath": "/Users/robin.saleh-jan@m10s.io/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.2"
+    },
+    "hookify@claude-plugins-official": {
+      "version": "2.1.0",
+      "installPath": "/Users/robin.saleh-jan@m10s.io/.claude/plugins/cache/claude-plugins-official/hookify/2.1.0"
+    },
+    "vend-internal@vend-plugins": {
+      "version": "1.5.0",
+      "installPath": "/Users/robin.saleh-jan@m10s.io/.claude/plugins/cache/vend-plugins/vend-internal/1.5.0"
+    }
+  }
+}
