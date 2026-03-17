@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "plugins": {
+    "old-plugin@claude-plugins-official": {
+      "version": "1.0.0",
+      "installPath": "/Users/robin.saleh-jan@m10s.io/.claude/plugins/cache/claude-plugins-official/old-plugin/1.0.0"
+    },
+    "vend-internal@vend-plugins": {
+      "version": "1.5.0",
+      "installPath": "/Users/robin.saleh-jan@m10s.io/.claude/plugins/cache/vend-plugins/vend-internal/1.5.0"
+    }
+  }
+}
