@@ -24,6 +24,11 @@
     "backup:claude": "./scripts/backup-claude.sh",
     "restore:claude": "./scripts/restore-claude.sh",
     "restore:claude:force": "./scripts/restore-claude.sh --force",
-    "lint": "shellcheck --shell=bash scripts/*.sh 2>&1 | grep -v SC1071 || true"
+    "lint": "shellcheck --shell=bash scripts/*.sh 2>&1 | grep -v SC1071 || true",
+    "test": "bats tests/**/*.bats",
+    "test:watch": "watch 'npm test' tests scripts",
+    "test:claude": "bats tests/claude/*.bats",
+    "test:utils": "bats tests/utils/*.bats",
+    "pretest": "command -v bats >/dev/null || (echo '❌ bats not found. Install with: brew install bats-core' && exit 1)"
   }
 }
