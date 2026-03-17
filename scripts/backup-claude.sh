@@ -7,6 +7,7 @@
 # from ~/.claude to the repository's claude_config directory
 
 set -e
+set -o pipefail
 
 source "$(dirname "$0")/utils.sh"
 
