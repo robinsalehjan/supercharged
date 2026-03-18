@@ -31,6 +31,7 @@ npm run restore:claude:force  # Force restore Claude Code config
 
 # Development
 npm run lint                  # ShellCheck all scripts (ignore zsh warnings)
+npm test                      # Run BATS tests
 npm run help                  # Display all available commands
 ```
 
@@ -60,6 +61,41 @@ SC1071 (zsh unsupported), SC2296 (zsh `${(%):-%x}`), SC1091 (sourced file), SC21
 
 **Zsh-specific syntax** used in scripts:
 `${(%):-%x}`, `${(%):-%n}`, `&!` (disown), `path=(...)`, `setopt`.
+
+## Testing
+
+### BATS Testing Infrastructure
+
+This project uses [BATS (Bash Automated Testing System)](https://github.com/bats-core/bats-core) for testing shell scripts.
+
+**Running tests:**
+```bash
+npm test                          # Run all BATS tests
+npm run test:claude               # Run Claude backup/restore tests only
+npm run test:utils                # Run utils.sh tests only
+```
+
+**Test structure:**
+- `tests/claude/backup.bats` - Tests for Claude Code backup sanitization and path portability
+- `tests/claude/restore.bats` - Tests for Claude Code restore merging logic
+- `tests/helpers/setup.bash` - Test environment setup and teardown utilities
+- `tests/helpers/assertions.bash` - jq-based JSON assertion utilities
+- `tests/helpers/mocks.bash` - Command mocking utilities
+- `tests/fixtures/` - Test data (JSON configs with `$HOME` placeholders)
+
+**Key test patterns:**
+- Use `setup()` for test initialization (calls `setup_test_env`)
+- Use `teardown()` for cleanup (calls `teardown_test_env`)
+- Load helpers: `load '../helpers/setup'`, `load '../helpers/assertions'`, `load '../helpers/mocks'`
+- Test environment creates isolated temp directories with mocked `$HOME`
+- Fixtures use `$HOME` placeholders, not hardcoded paths
+- Helper functions for JSON assertions: `assert_json_equals`, `assert_json_field`, `assert_json_array_not_contains`
+
+**Pre-commit integration:**
+Tests run automatically via `.husky/pre-commit` hook after security checks (if `tests/` directory exists and `bats` is installed).
+
+**CI integration:**
+Tests run on PRs to master and twice weekly (Sunday/Thursday 9 AM UTC) via `.github/workflows/test.yml`.
 
 ## Code Patterns
 
