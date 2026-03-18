@@ -165,6 +165,7 @@ cask \"slack\"
 cask \"postman\"
 cask \"raycast\"
 cask \"google-chrome\"
+cask \"figma\"
 cask \"font-jetbrains-mono-nerd-font\""
 
 # Fix wireshark symlinks and remove deprecated cask
