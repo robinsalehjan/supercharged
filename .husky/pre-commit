@@ -124,14 +124,6 @@ done < <(git diff --cached --name-only)
 echo "✅ No large files detected"
 
 # =============================================================================
-# SUMMARY
-# =============================================================================
-echo ""
-echo "✅ All security checks passed!"
-echo "   Safe to commit to personal and work machines."
-echo ""
-
-# =============================================================================
 # 7. BATS TESTS (if available)
 # =============================================================================
 # Run BATS tests if test files exist
@@ -143,3 +135,11 @@ if [ -d "tests" ] && command -v bats >/dev/null 2>&1; then
     exit 1
   }
 fi
+
+# =============================================================================
+# SUMMARY
+# =============================================================================
+echo ""
+echo "✅ All pre-commit checks passed (security + tests)"
+echo "   Safe to commit to personal and work machines."
+echo ""
