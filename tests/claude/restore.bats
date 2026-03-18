@@ -19,8 +19,9 @@ teardown() {
   teardown_test_env
 }
 
-# Helper function to simulate restore merge
-# This mimics the logic from restore-claude.sh
+# Helper: Merge plugin configs for restore testing
+# Note: Production (restore-claude.sh) uses dynamic jq filters built from arrays
+# with error handling and logging. This test version uses simplified logic for validation.
 merge_plugin_configs() {
   local repo_file="$1"
   local local_file="$2"
@@ -89,9 +90,8 @@ merge_plugin_configs() {
   assert_plugin_exists "$TEMP_CLAUDE_PLUGINS/merged.json" "hookify@claude-plugins-official"
 
   # Assert: No vend plugins
-  local vend_count
-  vend_count=$(jq '.plugins | to_entries | map(select(.key | endswith("@vend-plugins"))) | length' "$TEMP_CLAUDE_PLUGINS/merged.json")
-  [ "$vend_count" -eq 0 ]
+  assert_json_field "$TEMP_CLAUDE_PLUGINS/merged.json" \
+    '.plugins | to_entries | map(select(.key | endswith("@vend-plugins"))) | length' "0"
 }
 
 @test "expands \$HOME placeholder to actual home directory" {
@@ -176,7 +176,6 @@ EOF
   assert_plugin_exists "$TEMP_CLAUDE_PLUGINS/merged.json" "hookify@claude-plugins-official"
 
   # Assert: No vend plugins added
-  local vend_count
-  vend_count=$(jq '.plugins | to_entries | map(select(.key | endswith("@vend-plugins"))) | length' "$TEMP_CLAUDE_PLUGINS/merged.json")
-  [ "$vend_count" -eq 0 ]
+  assert_json_field "$TEMP_CLAUDE_PLUGINS/merged.json" \
+    '.plugins | to_entries | map(select(.key | endswith("@vend-plugins"))) | length' "0"
 }

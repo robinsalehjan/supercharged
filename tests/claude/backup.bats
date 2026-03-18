@@ -21,38 +21,33 @@ teardown() {
   teardown_test_env
 }
 
-# Helper function to simulate backup sanitization
-# This mimics the logic from backup-claude.sh
-sanitize_plugins() {
-  local input_file="$1"
-  local output_file="$2"
+# Helper: Run a jq filter + path portability replacement
+# Usage: _sanitize_json ".jq_filter" "input.json" "output.json"
+_sanitize_json() {
+  local jq_filter="$1"
+  local input_file="$2"
+  local output_file="$3"
 
-  # Enable pipefail to catch jq errors
-  set -o pipefail
-
-  # Build jq filter to remove vend-plugins entries
   # Use ORIGINAL_HOME for path replacement since HOME is overridden in tests
-  jq '{version: .version, plugins: (.plugins | to_entries | map(select(.key | endswith("@vend-plugins") | not)) | from_entries)}' \
-    "$input_file" | sed "s|$ORIGINAL_HOME|\$HOME|g" > "$output_file"
-
+  # pipefail ensures jq failures propagate through the pipe
+  set -o pipefail
+  jq "$jq_filter" "$input_file" | sed "s|$ORIGINAL_HOME|\$HOME|g" > "$output_file"
   local result=$?
   set +o pipefail
   return $result
 }
 
+# Helper: Sanitize plugins for backup testing
+# Note: Production (backup-claude.sh) uses dynamic jq filters built from arrays.
+# This test version uses simplified hardcoded filters for validation.
+sanitize_plugins() {
+  _sanitize_json \
+    '{version: .version, plugins: (.plugins | to_entries | map(select(.key | endswith("@vend-plugins") | not)) | from_entries)}' \
+    "$1" "$2"
+}
+
 sanitize_marketplaces() {
-  local input_file="$1"
-  local output_file="$2"
-
-  # Enable pipefail to catch jq errors
-  set -o pipefail
-
-  # Remove vend-plugins marketplace
-  jq 'del(.["vend-plugins"])' "$input_file" | sed "s|$ORIGINAL_HOME|\$HOME|g" > "$output_file"
-
-  local result=$?
-  set +o pipefail
-  return $result
+  _sanitize_json 'del(.["vend-plugins"])' "$1" "$2"
 }
 
 @test "removes vend-plugins entries from installed_plugins.json" {
@@ -111,20 +106,12 @@ sanitize_marketplaces() {
     "$TEMP_CLAUDE/settings.json" | sed "s|$ORIGINAL_HOME|\$HOME|g" > "$TEMP_REPO_CONFIG/settings.json"
 
   # Assert: Vend plugins removed from enabledPlugins
-  local vend_in_enabled
-  vend_in_enabled=$(jq '.enabledPlugins | to_entries | map(select(.key | endswith("@vend-plugins"))) | length' "$TEMP_REPO_CONFIG/settings.json")
-  [ "$vend_in_enabled" -eq 0 ] || {
-    echo "Expected no vend-plugins in enabledPlugins, found $vend_in_enabled"
-    return 1
-  }
+  assert_json_field "$TEMP_REPO_CONFIG/settings.json" \
+    '.enabledPlugins | to_entries | map(select(.key | endswith("@vend-plugins"))) | length' "0"
 
   # Assert: Personal plugins preserved
-  local personal_count
-  personal_count=$(jq '.enabledPlugins | to_entries | map(select(.key | endswith("@claude-plugins-official"))) | length' "$TEMP_REPO_CONFIG/settings.json")
-  [ "$personal_count" -eq 2 ] || {
-    echo "Expected 2 personal plugins in enabledPlugins, found $personal_count"
-    return 1
-  }
+  assert_json_field "$TEMP_REPO_CONFIG/settings.json" \
+    '.enabledPlugins | to_entries | map(select(.key | endswith("@claude-plugins-official"))) | length' "2"
 
   # Assert: Other settings fields preserved
   assert_json_field "$TEMP_REPO_CONFIG/settings.json" '.theme' "dark"

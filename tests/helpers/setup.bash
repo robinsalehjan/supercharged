@@ -8,24 +8,16 @@ setup_test_env() {
   TEMP_CLAUDE_PLUGINS="$TEMP_CLAUDE/plugins"
   TEMP_REPO_CONFIG="$TEST_TEMP_DIR/claude_config"
 
-  mkdir -p "$TEMP_CLAUDE_PLUGINS"
-  mkdir -p "$TEMP_REPO_CONFIG"
+  mkdir -p "$TEMP_CLAUDE_PLUGINS" "$TEMP_REPO_CONFIG"
 
   # Backup original HOME before override
   export ORIGINAL_HOME="$HOME"
-
-  # Override HOME for path portability tests
   export HOME="$TEST_TEMP_DIR"
 
-  # Set fixture directory path (relative to tests/)
+  # Fixture directory path (relative to tests/)
   FIXTURE_DIR="$(cd "$BATS_TEST_DIRNAME/../fixtures" && pwd)"
 
-  # Export for use in tests
-  export TEST_TEMP_DIR
-  export TEMP_CLAUDE
-  export TEMP_CLAUDE_PLUGINS
-  export TEMP_REPO_CONFIG
-  export FIXTURE_DIR
+  export TEST_TEMP_DIR TEMP_CLAUDE TEMP_CLAUDE_PLUGINS TEMP_REPO_CONFIG FIXTURE_DIR
 }
 
 # Cleanup after each test

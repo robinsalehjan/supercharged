@@ -78,11 +78,14 @@ assert_json_equals() {
   fi
 }
 
-# Assert plugin key exists in JSON
-# Usage: assert_plugin_exists "plugins.json" "superpowers@claude-plugins-official"
-assert_plugin_exists() {
+# Internal helper: Assert a JSON key exists or not in a file
+# Usage: _assert_json_key "file.json" ".plugins" "key-name" "true|false" "Plugin|Marketplace"
+_assert_json_key() {
   local file="$1"
-  local plugin_key="$2"
+  local jq_scope="$2"
+  local key="$3"
+  local should_exist="$4"
+  local label="$5"
 
   if [ ! -f "$file" ]; then
     echo "File not found: $file" >&2
@@ -90,90 +93,45 @@ assert_plugin_exists() {
   fi
 
   local exists
-  if ! exists=$(jq -r ".plugins | has(\"$plugin_key\")" "$file" 2>&1); then
+  if ! exists=$(jq -r "$jq_scope | has(\"$key\")" "$file" 2>&1); then
     echo "jq query failed" >&2
     echo "$exists" >&2
     return 1
   fi
 
-  if [ "$exists" != "true" ]; then
-    echo "Plugin not found: $plugin_key" >&2
-    echo "Available plugins:" >&2
-    jq -r '.plugins | keys[]' "$file" >&2
+  if [ "$should_exist" = "true" ] && [ "$exists" != "true" ]; then
+    echo "$label not found: $key" >&2
+    echo "Available keys:" >&2
+    jq -r "$jq_scope | keys[]" "$file" >&2
     return 1
   fi
+
+  if [ "$should_exist" = "false" ] && [ "$exists" = "true" ]; then
+    echo "$label should not exist: $key" >&2
+    return 1
+  fi
+}
+
+# Assert plugin key exists in JSON
+# Usage: assert_plugin_exists "plugins.json" "superpowers@claude-plugins-official"
+assert_plugin_exists() {
+  _assert_json_key "$1" ".plugins" "$2" "true" "Plugin"
 }
 
 # Assert plugin key does NOT exist in JSON
 # Usage: assert_plugin_not_exists "plugins.json" "vend-internal@vend-plugins"
 assert_plugin_not_exists() {
-  local file="$1"
-  local plugin_key="$2"
-
-  if [ ! -f "$file" ]; then
-    echo "File not found: $file" >&2
-    return 1
-  fi
-
-  local exists
-  if ! exists=$(jq -r ".plugins | has(\"$plugin_key\")" "$file" 2>&1); then
-    echo "jq query failed" >&2
-    echo "$exists" >&2
-    return 1
-  fi
-
-  if [ "$exists" = "true" ]; then
-    echo "Plugin should not exist: $plugin_key" >&2
-    return 1
-  fi
+  _assert_json_key "$1" ".plugins" "$2" "false" "Plugin"
 }
 
 # Assert marketplace exists in JSON
 # Usage: assert_marketplace_exists "marketplaces.json" "claude-plugins-official"
 assert_marketplace_exists() {
-  local file="$1"
-  local marketplace_key="$2"
-
-  if [ ! -f "$file" ]; then
-    echo "File not found: $file" >&2
-    return 1
-  fi
-
-  local exists
-  if ! exists=$(jq -r "has(\"$marketplace_key\")" "$file" 2>&1); then
-    echo "jq query failed" >&2
-    echo "$exists" >&2
-    return 1
-  fi
-
-  if [ "$exists" != "true" ]; then
-    echo "Marketplace not found: $marketplace_key" >&2
-    echo "Available marketplaces:" >&2
-    jq -r 'keys[]' "$file" >&2
-    return 1
-  fi
+  _assert_json_key "$1" "." "$2" "true" "Marketplace"
 }
 
 # Assert marketplace does NOT exist in JSON
 # Usage: assert_marketplace_not_exists "marketplaces.json" "vend-plugins"
 assert_marketplace_not_exists() {
-  local file="$1"
-  local marketplace_key="$2"
-
-  if [ ! -f "$file" ]; then
-    echo "File not found: $file" >&2
-    return 1
-  fi
-
-  local exists
-  if ! exists=$(jq -r "has(\"$marketplace_key\")" "$file" 2>&1); then
-    echo "jq query failed" >&2
-    echo "$exists" >&2
-    return 1
-  fi
-
-  if [ "$exists" = "true" ]; then
-    echo "Marketplace should not exist: $marketplace_key" >&2
-    return 1
-  fi
+  _assert_json_key "$1" "." "$2" "false" "Marketplace"
 }
