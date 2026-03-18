@@ -71,13 +71,13 @@ This project uses [BATS (Bash Automated Testing System)](https://github.com/bats
 **Running tests:**
 ```bash
 npm test                          # Run all BATS tests
-npm run test:claude               # Run Claude backup/restore tests only
-npm run test:utils                # Run utils.sh tests only
+npm test -- --filter "pattern"    # Run specific tests
 ```
 
 **Test structure:**
-- `tests/claude/backup.bats` - Tests for Claude Code backup sanitization and path portability
-- `tests/claude/restore.bats` - Tests for Claude Code restore merging logic
+- `tests/claude/backup.bats` - Tests for Claude Code backup sanitization
+- `tests/claude/restore.bats` - Tests for Claude Code restore merging
+- `tests/utils/portability.bats` - Tests for portable path handling
 - `tests/helpers/setup.bash` - Test environment setup and teardown utilities
 - `tests/helpers/assertions.bash` - jq-based JSON assertion utilities
 - `tests/helpers/mocks.bash` - Command mocking utilities
@@ -96,6 +96,22 @@ Tests run automatically via `.husky/pre-commit` hook after security checks (if `
 
 **CI integration:**
 Tests run on PRs to master and twice weekly (Sunday/Thursday 9 AM UTC) via `.github/workflows/test.yml`.
+
+### Manual Testing Workflows
+
+**Pre-commit**:
+1. `shellcheck --shell=bash scripts/*.sh`
+2. Test script functions in isolation
+3. Verify logging matches existing patterns
+
+**Manual workflow**:
+1. `npm run setup:profile` to copy dotfiles
+2. `source ~/.zshrc` — verify no errors
+3. `npm run validate` — check installations
+4. If issues: `npm run restore`
+
+**Validation checks** (from `utils.sh`):
+Homebrew in PATH, ASDF plugins present, tool versions match `.tool-versions`, ZSH plugins cloned, dotfiles in `$HOME`, Claude Code config restored.
 
 ## Code Patterns
 
@@ -123,22 +139,6 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 - `mac.sh`: validate system → Homebrew → Brewfile (conditional on user prefs) → ZSH plugins → ASDF → optional tools
 - `utils.sh`: pure functions, no side effects on import
 - `.tool-versions`: one tool per line (`<plugin> <version>`), grouped by category
-
-## Testing
-
-**Pre-commit**:
-1. `shellcheck --shell=bash scripts/*.sh`
-2. Test script functions in isolation
-3. Verify logging matches existing patterns
-
-**Manual workflow**:
-1. `npm run setup:profile` to copy dotfiles
-2. `source ~/.zshrc` — verify no errors
-3. `npm run validate` — check installations
-4. If issues: `npm run restore`
-
-**Validation checks** (from `utils.sh`):
-Homebrew in PATH, ASDF plugins present, tool versions match `.tool-versions`, ZSH plugins cloned, dotfiles in `$HOME`, Claude Code config restored.
 
 ## Adding New Tools
 
