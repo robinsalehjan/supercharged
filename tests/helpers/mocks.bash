@@ -31,19 +31,3 @@ mock_stat_time() {
 unmock_stat() {
   unset -f stat
 }
-
-# Create a file that simulates malformed JSON
-# Usage: create_malformed_json "$output_file"
-create_malformed_json() {
-  local output_file="$1"
-  # Missing closing braces to create genuinely malformed JSON
-  cat > "$output_file" <<'EOF'
-{
-  "version": 2,
-  "plugins": {
-    "incomplete-plugin": {
-      "version": "1.0.0"
-    }
-  }
-EOF
-}

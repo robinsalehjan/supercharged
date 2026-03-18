@@ -1,0 +1,10 @@
+{
+  "claude-plugins-official": {
+    "url": "https://github.com/anthropics/claude-plugins-official",
+    "type": "git"
+  },
+  "vend-plugins": {
+    "url": "git@github.com:vend/vend-plugins.git",
+    "type": "git"
+  }
+}

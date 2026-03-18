@@ -20,38 +20,112 @@ teardown() {
 }
 
 # Helper: Merge plugin configs for restore testing
-# Note: Production (restore-claude.sh) uses dynamic jq filters built from arrays
-# with error handling and logging. This test version uses simplified logic for validation.
+# Note: Production (restore-claude.sh) uses dynamic jq filters built from the
+# PRESERVE_MARKETPLACES array and iterates over each marketplace with per-marketplace
+# error handling. This test hardcodes 'vend-plugins' for clarity. If new marketplaces
+# are added to PRESERVE_MARKETPLACES, corresponding test cases should be added here.
 merge_plugin_configs() {
   local repo_file="$1"
   local local_file="$2"
   local output_file="$3"
 
+  set -o pipefail
+
   # If no local file, just expand repo config
   if [ ! -f "$local_file" ]; then
     expand_portable_path < "$repo_file" > "$output_file"
+    set +o pipefail
     return 0
   fi
 
   # Extract vend-plugins from local config
   local local_vend
-  local_vend=$(jq '.plugins // {} | to_entries | map(select(.key | endswith("@vend-plugins"))) | from_entries' "$local_file")
+  if ! local_vend=$(jq '.plugins // {} | to_entries | map(select(.key | endswith("@vend-plugins"))) | from_entries' "$local_file" 2>&1); then
+    echo "Failed to extract vend-plugins from local config: $local_vend" >&2
+    set +o pipefail
+    return 1
+  fi
 
   # Get repo plugins and expand paths
   local repo_plugins
-  repo_plugins=$(expand_portable_path < "$repo_file" | jq '.plugins // {}')
+  if ! repo_plugins=$(expand_portable_path < "$repo_file" | jq '.plugins // {}' 2>&1); then
+    echo "Failed to extract repo plugins: $repo_plugins" >&2
+    set +o pipefail
+    return 1
+  fi
 
   # Merge: repo + local vend plugins (local takes precedence)
   local merged_plugins
-  merged_plugins=$(echo "$repo_plugins" | jq --argjson vend "$local_vend" '. + $vend')
+  if ! merged_plugins=$(echo "$repo_plugins" | jq --argjson vend "$local_vend" '. + $vend' 2>&1); then
+    echo "Failed to merge plugins: $merged_plugins" >&2
+    set +o pipefail
+    return 1
+  fi
 
   # Get version from repo
   local version
-  version=$(jq '.version // 2' "$repo_file")
+  if ! version=$(jq '.version // 2' "$repo_file" 2>&1); then
+    echo "Failed to extract version: $version" >&2
+    set +o pipefail
+    return 1
+  fi
 
   # Build final merged object
   jq -n --argjson version "$version" --argjson plugins "$merged_plugins" '{version: $version, plugins: $plugins}' > "$output_file"
+  local result=$?
+  set +o pipefail
+  return $result
 }
+
+# Helper: Merge marketplace configs for restore testing
+# Mirrors merge_marketplace_config() from restore-claude.sh with hardcoded 'vend-plugins'
+merge_marketplace_configs() {
+  local repo_file="$1"
+  local local_file="$2"
+  local output_file="$3"
+
+  set -o pipefail
+
+  # If no local file, just expand repo config
+  if [ ! -f "$local_file" ]; then
+    expand_portable_path < "$repo_file" > "$output_file"
+    set +o pipefail
+    return 0
+  fi
+
+  local repo_content
+  if ! repo_content=$(expand_portable_path < "$repo_file" 2>&1); then
+    echo "Failed to expand repo file: $repo_content" >&2
+    set +o pipefail
+    return 1
+  fi
+
+  local local_content
+  local_content=$(cat "$local_file")
+
+  # Extract vend-plugins marketplace from local config
+  local preserved
+  if ! preserved=$(echo "$local_content" | jq 'if has("vend-plugins") then {"vend-plugins": .["vend-plugins"]} else {} end' 2>&1); then
+    echo "Failed to extract marketplace: $preserved" >&2
+    set +o pipefail
+    return 1
+  fi
+
+  # Merge: repo + preserved local (local takes precedence)
+  local merged
+  if ! merged=$(echo "$repo_content" | jq --argjson preserved "$preserved" '. + $preserved' 2>&1); then
+    echo "Failed to merge marketplaces: $merged" >&2
+    set +o pipefail
+    return 1
+  fi
+
+  echo "$merged" > "$output_file"
+  set +o pipefail
+}
+
+# =============================================================================
+# Plugin merge tests
+# =============================================================================
 
 @test "merges repo config with preserved local vend-plugins" {
   # Arrange: Load fixtures
@@ -178,4 +252,87 @@ EOF
   # Assert: No vend plugins added
   assert_json_field "$TEMP_CLAUDE_PLUGINS/merged.json" \
     '.plugins | to_entries | map(select(.key | endswith("@vend-plugins"))) | length' "0"
+}
+
+# =============================================================================
+# Marketplace merge tests
+# =============================================================================
+
+@test "marketplace merge preserves local vend-plugins marketplace" {
+  # Arrange: repo has only official, local has both
+  load_fixture "claude-restore/marketplaces-repo.json" "$TEMP_REPO_CONFIG/known_marketplaces.json"
+  load_fixture "claude-restore/marketplaces-local.json" "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json"
+
+  # Act: Run marketplace merge
+  merge_marketplace_configs \
+    "$TEMP_REPO_CONFIG/known_marketplaces.json" \
+    "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json" \
+    "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json"
+
+  # Assert: Both marketplaces present
+  assert_marketplace_exists "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json" "claude-plugins-official"
+  assert_marketplace_exists "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json" "vend-plugins"
+}
+
+@test "marketplace merge creates new config when no local exists" {
+  # Arrange: only repo config
+  load_fixture "claude-restore/marketplaces-repo.json" "$TEMP_REPO_CONFIG/known_marketplaces.json"
+
+  # Act: Run marketplace merge with no local file
+  merge_marketplace_configs \
+    "$TEMP_REPO_CONFIG/known_marketplaces.json" \
+    "$TEMP_CLAUDE_PLUGINS/nonexistent.json" \
+    "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json"
+
+  # Assert: Only repo marketplace present, no vend-plugins
+  assert_marketplace_exists "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json" "claude-plugins-official"
+  assert_marketplace_not_exists "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json" "vend-plugins"
+}
+
+@test "marketplace merge handles empty local config" {
+  # Arrange: repo has official, local is empty object
+  load_fixture "claude-restore/marketplaces-repo.json" "$TEMP_REPO_CONFIG/known_marketplaces.json"
+  echo '{}' > "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json"
+
+  # Act: Run marketplace merge
+  merge_marketplace_configs \
+    "$TEMP_REPO_CONFIG/known_marketplaces.json" \
+    "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json" \
+    "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json"
+
+  # Assert: Only repo marketplace present
+  assert_marketplace_exists "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json" "claude-plugins-official"
+  assert_marketplace_not_exists "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json" "vend-plugins"
+}
+
+# =============================================================================
+# Error scenario tests
+# =============================================================================
+
+@test "plugin merge fails with malformed local JSON" {
+  # Arrange: repo is valid, local is malformed
+  load_fixture "claude-restore/repo-sanitized.json" "$TEMP_REPO_CONFIG/installed_plugins.json"
+  echo '{"version": 2, "plugins": {bad json' > "$TEMP_CLAUDE_PLUGINS/installed_plugins.json"
+
+  # Act & Assert: merge should fail
+  run merge_plugin_configs \
+    "$TEMP_REPO_CONFIG/installed_plugins.json" \
+    "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" \
+    "$TEMP_CLAUDE_PLUGINS/merged.json"
+
+  [ "$status" -ne 0 ]
+}
+
+@test "marketplace merge fails with malformed local JSON" {
+  # Arrange: repo is valid, local is malformed
+  load_fixture "claude-restore/marketplaces-repo.json" "$TEMP_REPO_CONFIG/known_marketplaces.json"
+  echo '{bad json' > "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json"
+
+  # Act & Assert: merge should fail
+  run merge_marketplace_configs \
+    "$TEMP_REPO_CONFIG/known_marketplaces.json" \
+    "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json" \
+    "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json"
+
+  [ "$status" -ne 0 ]
 }

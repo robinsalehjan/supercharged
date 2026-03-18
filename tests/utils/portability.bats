@@ -125,12 +125,12 @@ EOF
   local converted_paths
   converted_paths=$(jq -r '.paths[]' "$TEST_TEMP_DIR/output.json")
 
-  echo "$converted_paths" | while read -r path; do
+  while IFS= read -r path; do
     [[ "$path" == "\$HOME"* ]] || {
       echo "Expected all paths to start with \$HOME, got: $path"
       return 1
     }
-  done
+  done < <(echo "$converted_paths")
 }
 
 @test "preserves paths that don't contain HOME" {

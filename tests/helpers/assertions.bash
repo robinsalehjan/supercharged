@@ -28,33 +28,7 @@ assert_json_field() {
   fi
 }
 
-# Assert JSON array does not contain value
-# Usage: assert_json_array_not_contains "plugins.json" '.plugins | keys[]' 'vend-internal@vend-plugins'
-assert_json_array_not_contains() {
-  local file="$1"
-  local jq_query="$2"
-  local value="$3"
-
-  if [ ! -f "$file" ]; then
-    echo "File not found: $file" >&2
-    return 1
-  fi
-
-  local result
-  if ! result=$(jq -r "$jq_query | select(. == \"$value\")" "$file" 2>&1); then
-    echo "jq query failed: $jq_query" >&2
-    echo "$result" >&2
-    return 1
-  fi
-
-  if [ -n "$result" ]; then
-    echo "Array should not contain: $value" >&2
-    echo "Found: $result" >&2
-    return 1
-  fi
-}
-
-# Assert JSON files are equivalent (ignoring whitespace/order)
+# Assert JSON files are equivalent (normalizing whitespace and sorting object keys, but not array order)
 # Usage: assert_json_equals "actual.json" "expected.json"
 assert_json_equals() {
   local actual="$1"

@@ -38,8 +38,10 @@ _sanitize_json() {
 }
 
 # Helper: Sanitize plugins for backup testing
-# Note: Production (backup-claude.sh) uses dynamic jq filters built from arrays.
-# This test version uses simplified hardcoded filters for validation.
+# Note: Production (backup-claude.sh) uses dynamic jq filters built from the
+# SANITIZE_MARKETPLACES array. This test uses hardcoded 'vend-plugins' filters
+# for clarity. If new marketplaces are added to SANITIZE_MARKETPLACES,
+# corresponding test cases should be added here.
 sanitize_plugins() {
   _sanitize_json \
     '{version: .version, plugins: (.plugins | to_entries | map(select(.key | endswith("@vend-plugins") | not)) | from_entries)}' \
