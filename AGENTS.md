@@ -96,7 +96,7 @@ npm test -- --filter "pattern"    # Run specific tests
 Tests run automatically via `.husky/pre-commit` hook after security checks (if `tests/` directory exists and `bats` is installed).
 
 **CI integration:**
-Tests run on push/PR to main and twice weekly (Sunday/Thursday 9 AM UTC) via `.github/workflows/test.yml`.
+Tests run on push to main and pull requests via `.github/workflows/test.yml`.
 
 ### Manual Testing Workflows
 

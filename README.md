@@ -254,7 +254,7 @@ The test suite covers:
 
 Tests run automatically:
 - **Pre-commit hook** - Catches issues before commit
-- **GitHub Actions** - Runs on push/PR to main and twice weekly (Sunday/Thursday 9 AM UTC)
+- **GitHub Actions** - Runs on push to main and pull requests
 
 ### Writing Tests
 
