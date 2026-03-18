@@ -254,7 +254,7 @@ The test suite covers:
 
 Tests run automatically:
 - **Pre-commit hook** - Catches issues before commit
-- **GitHub Actions** - Runs on push/PR to main/master branches
+- **GitHub Actions** - Runs on push/PR to main and twice weekly (Sunday/Thursday 9 AM UTC)
 
 ### Writing Tests
 
@@ -272,16 +272,6 @@ See existing test files for examples. Key patterns:
 - Use jq-based assertions from `tests/helpers/assertions.bash`
 - Load fixtures from `tests/fixtures/` for test data
 - Source production scripts and test functions directly
-
-### Skipping Tests
-
-During rapid iteration, you can skip tests by including `--no-test` in your commit message:
-
-```bash
-git commit -m "wip: experimental change --no-test"
-```
-
-**Note:** This should only be used during development. CI will still run tests on push.
 
 ## 🛡 Safety Features
 

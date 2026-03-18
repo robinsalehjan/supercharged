@@ -131,7 +131,6 @@ if [ -d "tests" ] && command -v bats >/dev/null 2>&1; then
   echo "🧪 Running tests..."
   npm test || {
     echo "❌ Tests failed. Fix issues before committing."
-    echo "   Tip: Use '--no-test' in commit message to skip tests during rapid iteration"
     exit 1
   }
 fi

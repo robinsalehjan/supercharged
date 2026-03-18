@@ -89,13 +89,14 @@ npm test -- --filter "pattern"    # Run specific tests
 - Load helpers: `load '../helpers/setup'`, `load '../helpers/assertions'`, `load '../helpers/mocks'`
 - Test environment creates isolated temp directories with mocked `$HOME`
 - Fixtures use `$HOME` placeholders, not hardcoded paths
-- Helper functions for JSON assertions: `assert_json_equals`, `assert_json_field`, `assert_json_array_not_contains`
+- JSON assertions: `assert_json_field`, `assert_json_equals`
+- Domain assertions: `assert_plugin_exists`, `assert_plugin_not_exists`, `assert_marketplace_exists`, `assert_marketplace_not_exists`
 
 **Pre-commit integration:**
 Tests run automatically via `.husky/pre-commit` hook after security checks (if `tests/` directory exists and `bats` is installed).
 
 **CI integration:**
-Tests run on PRs to master and twice weekly (Sunday/Thursday 9 AM UTC) via `.github/workflows/test.yml`.
+Tests run on push/PR to main and twice weekly (Sunday/Thursday 9 AM UTC) via `.github/workflows/test.yml`.
 
 ### Manual Testing Workflows
 
