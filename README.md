@@ -1,4 +1,6 @@
 # supercharged
+[![Tests](https://github.com/robinsalehjan/supercharged/actions/workflows/test.yml/badge.svg)](https://github.com/robinsalehjan/supercharged/actions/workflows/test.yml)
+
 A comprehensive set of scripts for setting up a developer-friendly macOS environment with enhanced security, performance, and customization options.
 
 ## 🚀 Features
