@@ -11,6 +11,7 @@
 #   ./restore-claude.sh --force  # Force restore regardless of timestamps
 
 set -e
+set -o pipefail
 
 source "$(dirname "$0")/utils.sh"
 
@@ -159,10 +160,8 @@ merge_plugin_config() {
 
     # Check if jq is available for merging
     if ! command -v jq &> /dev/null; then
-        log_with_level "WARN" "jq not available, overwriting $name (local plugins may be lost)"
-        echo "$repo_content" > "$dest"
-        log_with_level "SUCCESS" "Restored $name"
-        return
+        log_with_level "ERROR" "jq is required for restore operations"
+        return 1
     fi
 
     # Extract local plugins from preserved marketplaces (from .plugins object)
@@ -187,22 +186,35 @@ merge_plugin_config() {
     done
 
     # Get repo plugins and merge with preserved local plugins
-    local repo_plugins=$(echo "$repo_content" | jq '.plugins // {}') || { log_with_level "WARN" "Failed to read repo plugins"; repo_plugins="{}"; }
-    local merged_plugins=$(echo "$repo_plugins" | jq --argjson preserved "$preserved_plugins" '. + $preserved')
+    local repo_plugins
+    if ! repo_plugins=$(echo "$repo_content" | jq '.plugins // {}' 2>/dev/null); then
+        log_with_level "ERROR" "Failed to extract plugins from repository configuration"
+        return 1
+    fi
+    local merged_plugins
+    if ! merged_plugins=$(echo "$repo_plugins" | jq --argjson preserved "$preserved_plugins" '. + $preserved' 2>/dev/null); then
+        log_with_level "ERROR" "Failed to merge plugins: preserved_plugins=$preserved_plugins"
+        return 1
+    fi
 
-    if [ -z "$merged_plugins" ] || [ "$merged_plugins" = "null" ]; then
-        log_with_level "WARN" "Failed to merge plugins, using repo content only"
-        merged_plugins="$repo_plugins"
+    # Validate merge succeeded and produced valid JSON
+    if [ -z "$merged_plugins" ] || ! echo "$merged_plugins" | jq empty 2>/dev/null; then
+        log_with_level "ERROR" "Failed to merge plugins configuration"
+        return 1
     fi
 
     # Get version from repo (or local if repo doesn't have it)
-    local version=$(echo "$repo_content" | jq '.version // 2')
+    local version
+    if ! version=$(echo "$repo_content" | jq '.version // 2' 2>/dev/null); then
+        log_with_level "ERROR" "Failed to read version from repository configuration"
+        return 1
+    fi
 
     # Build final merged object
     local merged=$(jq -n --argjson version "$version" --argjson plugins "$merged_plugins" '{version: $version, plugins: $plugins}')
     echo "$merged" > "$dest"
 
-    local preserved_count=$(echo "$preserved_plugins" | jq 'keys | length')
+    local preserved_count=$(echo "$preserved_plugins" | jq 'keys | length' 2>/dev/null || echo "0")
     if [ "$preserved_count" -gt 0 ]; then
         log_with_level "SUCCESS" "Restored $name (preserved $preserved_count local plugin(s))"
     else
@@ -235,10 +247,8 @@ merge_marketplace_config() {
 
     # Check if jq is available for merging
     if ! command -v jq &> /dev/null; then
-        log_with_level "WARN" "jq not available, overwriting $name (local marketplaces may be lost)"
-        echo "$repo_content" > "$dest"
-        log_with_level "SUCCESS" "Restored $name"
-        return
+        log_with_level "ERROR" "jq is required for restore operations"
+        return 1
     fi
 
     # Extract preserved marketplaces from local config
@@ -262,11 +272,16 @@ merge_marketplace_config() {
     done
 
     # Merge: repo content + preserved local marketplaces (local takes precedence)
-    local merged=$(echo "$repo_content" | jq --argjson preserved "$preserved_marketplaces" '. + $preserved')
+    local merged
+    if ! merged=$(echo "$repo_content" | jq --argjson preserved "$preserved_marketplaces" '. + $preserved' 2>/dev/null); then
+        log_with_level "ERROR" "Failed to merge marketplaces: preserved_marketplaces=$preserved_marketplaces"
+        return 1
+    fi
 
-    if [ -z "$merged" ] || [ "$merged" = "null" ]; then
-        log_with_level "WARN" "Failed to merge marketplaces, using repo content only"
-        merged="$repo_content"
+    # Validate merge succeeded and produced valid JSON
+    if [ -z "$merged" ] || ! echo "$merged" | jq empty 2>/dev/null; then
+        log_with_level "ERROR" "Failed to merge marketplaces configuration"
+        return 1
     fi
 
     echo "$merged" > "$dest"

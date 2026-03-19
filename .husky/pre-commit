@@ -109,7 +109,7 @@ echo "🔍 Checking for large files..."
 
 MAX_FILE_SIZE=1048576  # 1MB in bytes
 
-git diff --cached --name-only | while read -r file; do
+while IFS= read -r file; do
   if [ -f "$file" ]; then
     size=$(wc -c < "$file")
     if [ "$size" -gt "$MAX_FILE_SIZE" ]; then
@@ -119,14 +119,26 @@ git diff --cached --name-only | while read -r file; do
       exit 1
     fi
   fi
-done
+done < <(git diff --cached --name-only)
 
 echo "✅ No large files detected"
+
+# =============================================================================
+# 7. BATS TESTS (if available)
+# =============================================================================
+# Run BATS tests if test files exist
+if [ -d "tests" ] && command -v bats >/dev/null 2>&1; then
+  echo "🧪 Running tests..."
+  npm test || {
+    echo "❌ Tests failed. Fix issues before committing."
+    exit 1
+  }
+fi
 
 # =============================================================================
 # SUMMARY
 # =============================================================================
 echo ""
-echo "✅ All security checks passed!"
+echo "✅ All pre-commit checks passed (security + tests)"
 echo "   Safe to commit to personal and work machines."
 echo ""

@@ -7,6 +7,7 @@
 # from ~/.claude to the repository's claude_config directory
 
 set -e
+set -o pipefail
 
 source "$(dirname "$0")/utils.sh"
 
@@ -52,8 +53,14 @@ if [ -f "$CLAUDE_HOME/settings.json" ]; then
     jq_filter="$jq_filter | from_entries"
 
     # Preserve all fields except enabledPlugins, then apply sanitized enabledPlugins
-    jq "${jq_args[@]}" ". + {enabledPlugins: ($jq_filter)}" "$CLAUDE_HOME/settings.json" | \
-        make_path_portable > "$CLAUDE_CONFIG_DIR/settings.json"
+    # Write to temp file first to avoid corrupting output on pipeline failure
+    if ! jq "${jq_args[@]}" ". + {enabledPlugins: ($jq_filter)}" "$CLAUDE_HOME/settings.json" | \
+        make_path_portable > "$CLAUDE_CONFIG_DIR/settings.json.tmp"; then
+        rm -f "$CLAUDE_CONFIG_DIR/settings.json.tmp"
+        log_with_level "ERROR" "Failed to sanitize settings.json - backup aborted"
+        exit 1
+    fi
+    mv "$CLAUDE_CONFIG_DIR/settings.json.tmp" "$CLAUDE_CONFIG_DIR/settings.json"
     log_with_level "SUCCESS" "Backed up settings.json (sanitized ${#SANITIZE_MARKETPLACES[@]} marketplace(s) from enabledPlugins, paths made portable)"
 else
     log_with_level "WARN" "settings.json not found"
@@ -74,8 +81,14 @@ if [ -f "$CLAUDE_HOME/plugins/installed_plugins.json" ]; then
     jq_filter="$jq_filter | from_entries"
 
     # Preserve version and update plugins
-    jq "${jq_args[@]}" "{version: .version, plugins: ($jq_filter)}" "$CLAUDE_HOME/plugins/installed_plugins.json" | \
-        make_path_portable > "$CLAUDE_CONFIG_DIR/installed_plugins.json"
+    # Write to temp file first to avoid corrupting output on pipeline failure
+    if ! jq "${jq_args[@]}" "{version: .version, plugins: ($jq_filter)}" "$CLAUDE_HOME/plugins/installed_plugins.json" | \
+        make_path_portable > "$CLAUDE_CONFIG_DIR/installed_plugins.json.tmp"; then
+        rm -f "$CLAUDE_CONFIG_DIR/installed_plugins.json.tmp"
+        log_with_level "ERROR" "Failed to sanitize installed_plugins.json - backup aborted"
+        exit 1
+    fi
+    mv "$CLAUDE_CONFIG_DIR/installed_plugins.json.tmp" "$CLAUDE_CONFIG_DIR/installed_plugins.json"
     log_with_level "SUCCESS" "Backed up installed_plugins.json (sanitized ${#SANITIZE_MARKETPLACES[@]} marketplace(s), paths made portable)"
 else
     log_with_level "WARN" "installed_plugins.json not found"
@@ -93,8 +106,14 @@ if [ -f "$CLAUDE_HOME/plugins/known_marketplaces.json" ]; then
         i=$((i + 1))
     done
 
-    jq "${jq_args[@]}" "$jq_filter" "$CLAUDE_HOME/plugins/known_marketplaces.json" | \
-        make_path_portable > "$CLAUDE_CONFIG_DIR/known_marketplaces.json"
+    # Write to temp file first to avoid corrupting output on pipeline failure
+    if ! jq "${jq_args[@]}" "$jq_filter" "$CLAUDE_HOME/plugins/known_marketplaces.json" | \
+        make_path_portable > "$CLAUDE_CONFIG_DIR/known_marketplaces.json.tmp"; then
+        rm -f "$CLAUDE_CONFIG_DIR/known_marketplaces.json.tmp"
+        log_with_level "ERROR" "Failed to sanitize known_marketplaces.json - backup aborted"
+        exit 1
+    fi
+    mv "$CLAUDE_CONFIG_DIR/known_marketplaces.json.tmp" "$CLAUDE_CONFIG_DIR/known_marketplaces.json"
     log_with_level "SUCCESS" "Backed up known_marketplaces.json (sanitized ${#SANITIZE_MARKETPLACES[@]} marketplace(s), paths made portable)"
 else
     log_with_level "WARN" "known_marketplaces.json not found"
