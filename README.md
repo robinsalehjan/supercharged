@@ -339,13 +339,14 @@ grep ERROR .supercharged_install.log  # Filter for errors
 
 #### Automated Git Hooks
 
-**Pre-commit hook** (`.husky/pre-commit`) runs 6 security checks before every commit:
+**Pre-commit hook** (`.husky/pre-commit`) runs 7 checks before every commit:
 1. ✅ **Shellcheck validation** - REQUIRED (commit fails if not installed)
 2. ✅ **Secrets detection** - Blocks API keys, tokens, passwords
 3. ✅ **Hardcoded paths** - Blocks `/Users/username/` in dotfiles (must use `$HOME`)
 4. ✅ **.secrets template safety** - Ensures no real credentials
 5. ✅ **Claude config sanitization** - Warns about work marketplace data
 6. ✅ **Large file detection** - Blocks files >1MB
+7. ✅ **BATS tests** - Runs test suite if bats is installed
 
 **Commit-msg hook** (`.husky/commit-msg`) enforces conventional commit format:
 ```bash

@@ -16,6 +16,7 @@ This repository is designed to run safely on both personal and work machines wit
 | **.secrets Template** | Ensures .secrets file only contains placeholders | ❌ BLOCKS commit |
 | **Claude Config** | Warns about work-related marketplace data | ⚠️ Prompts user |
 | **Large Files** | Prevents files >1MB from being committed | ❌ BLOCKS commit |
+| **BATS Tests** | Runs test suite if bats is installed | ❌ BLOCKS commit |
 
 **Key Features:**
 - ✅ Shellcheck is **REQUIRED** (not optional) - commit fails if not installed
@@ -235,7 +236,7 @@ If the security checks flag legitimate code:
 Your supercharged repository is now protected with:
 
 - ✅ **11 hookify rules** (2 blocking, 9 warning)
-- ✅ **6 automated security checks** in pre-commit hook
+- ✅ **7 automated checks** in pre-commit hook (6 security + tests)
 - ✅ **Conventional commit enforcement**
 - ✅ **Multi-machine safety** (no hardcoded paths)
 - ✅ **Credential protection** (no secrets)

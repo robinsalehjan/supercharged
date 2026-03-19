@@ -171,13 +171,14 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 
 ### Automated Security (Git Hooks)
 
-**Pre-commit** (`.husky/pre-commit`) runs 6 checks:
+**Pre-commit** (`.husky/pre-commit`) runs 7 checks:
 1. ✅ **Shellcheck** - REQUIRED (commit fails if not installed)
 2. ✅ **Secrets detection** - Blocks API keys, tokens, passwords
 3. ✅ **Hardcoded paths** - Blocks `/Users/username/` in dotfiles
 4. ✅ **.secrets safety** - Ensures template-only, no real credentials
 5. ✅ **Claude config** - Warns about work marketplace data
 6. ✅ **File size** - Blocks files >1MB
+7. ✅ **BATS tests** - Runs test suite if bats is installed
 
 **Commit-msg** (`.husky/commit-msg`) enforces conventional commits.
 
