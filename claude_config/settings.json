@@ -18,7 +18,6 @@
     "hookify@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
     "swift-lsp@claude-plugins-official": true,
-    "safety-hooks@superlego": true,
     "firebase@claude-plugins-official": true,
     "claude-md-management@claude-plugins-official": true,
     "github@claude-plugins-official": true,
@@ -29,7 +28,6 @@
     "typescript-lsp@claude-plugins-official": true,
     "commit-commands@claude-plugins-official": true,
     "security-guidance@claude-plugins-official": true,
-    "skill-creator@claude-plugins-official": true,
-    "superlego@superlego": true
+    "skill-creator@claude-plugins-official": true
   }
 }

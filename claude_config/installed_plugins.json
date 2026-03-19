@@ -4,20 +4,20 @@
     "hookify@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/hookify/d5c15b861cd2",
-        "version": "d5c15b861cd2",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/hookify/d53f6ca4cdb0",
+        "version": "d53f6ca4cdb0",
         "installedAt": "2026-02-01T00:33:03.464Z",
-        "lastUpdated": "2026-03-14T14:15:22.259Z",
+        "lastUpdated": "2026-03-19T17:42:52.908Z",
         "gitCommitSha": "27d2b86d72da27c64585150857cee8472ad47abb"
       }
     ],
     "superpowers@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.2",
-        "version": "5.0.2",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.5",
+        "version": "5.0.5",
         "installedAt": "2026-02-01T00:33:05.232Z",
-        "lastUpdated": "2026-03-12T18:05:42.050Z",
+        "lastUpdated": "2026-03-17T23:07:48.722Z",
         "gitCommitSha": "06b92f36820f38175b2ed6ff3f8df45157d54731"
       }
     ],
@@ -31,23 +31,13 @@
         "gitCommitSha": "27d2b86d72da27c64585150857cee8472ad47abb"
       }
     ],
-    "safety-hooks@superlego": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/superlego/safety-hooks/2.0.0",
-        "version": "2.0.0",
-        "installedAt": "2026-02-04T18:18:16.241Z",
-        "lastUpdated": "2026-02-04T18:18:16.241Z",
-        "gitCommitSha": "b9626e3f182e6388892a91def305e2b39dd92be0"
-      }
-    ],
     "firebase@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/firebase/d5c15b861cd2",
-        "version": "d5c15b861cd2",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/firebase/d53f6ca4cdb0",
+        "version": "d53f6ca4cdb0",
         "installedAt": "2026-02-04T23:06:20.033Z",
-        "lastUpdated": "2026-03-14T14:15:22.196Z",
+        "lastUpdated": "2026-03-19T17:42:52.895Z",
         "gitCommitSha": "27d2b86d72da27c64585150857cee8472ad47abb"
       }
     ],
@@ -64,10 +54,10 @@
     "github@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/github/d5c15b861cd2",
-        "version": "d5c15b861cd2",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/github/d53f6ca4cdb0",
+        "version": "d53f6ca4cdb0",
         "installedAt": "2026-02-04T23:06:41.038Z",
-        "lastUpdated": "2026-03-14T14:15:22.193Z",
+        "lastUpdated": "2026-03-19T17:42:52.894Z",
         "gitCommitSha": "27d2b86d72da27c64585150857cee8472ad47abb"
       }
     ],
@@ -84,10 +74,10 @@
     "plugin-dev@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/plugin-dev/d5c15b861cd2",
-        "version": "d5c15b861cd2",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/plugin-dev/d53f6ca4cdb0",
+        "version": "d53f6ca4cdb0",
         "installedAt": "2026-02-04T23:07:22.264Z",
-        "lastUpdated": "2026-03-14T14:15:22.281Z",
+        "lastUpdated": "2026-03-19T17:42:52.923Z",
         "gitCommitSha": "27d2b86d72da27c64585150857cee8472ad47abb"
       }
     ],
@@ -104,10 +94,10 @@
     "pr-review-toolkit@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/pr-review-toolkit/d5c15b861cd2",
-        "version": "d5c15b861cd2",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/pr-review-toolkit/d53f6ca4cdb0",
+        "version": "d53f6ca4cdb0",
         "installedAt": "2026-02-22T15:12:47.878Z",
-        "lastUpdated": "2026-03-14T14:15:22.206Z",
+        "lastUpdated": "2026-03-19T17:42:52.900Z",
         "gitCommitSha": "aa296ec81e8ccb49c9784f167c2c0aa625a86cec"
       }
     ],
@@ -124,51 +114,41 @@
     "frontend-design@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/frontend-design/d5c15b861cd2",
-        "version": "d5c15b861cd2",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/frontend-design/d53f6ca4cdb0",
+        "version": "d53f6ca4cdb0",
         "installedAt": "2026-02-27T11:41:01.948Z",
-        "lastUpdated": "2026-03-14T14:15:22.202Z",
+        "lastUpdated": "2026-03-19T17:42:52.897Z",
         "gitCommitSha": "55b58ec6e5649104f926ba7558b567dc8d33c5ff"
       }
     ],
     "commit-commands@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/commit-commands/d5c15b861cd2",
-        "version": "d5c15b861cd2",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/commit-commands/d53f6ca4cdb0",
+        "version": "d53f6ca4cdb0",
         "installedAt": "2026-03-03T13:49:16.435Z",
-        "lastUpdated": "2026-03-14T14:15:22.203Z",
+        "lastUpdated": "2026-03-19T17:42:52.898Z",
         "gitCommitSha": "55b58ec6e5649104f926ba7558b567dc8d33c5ff"
       }
     ],
     "security-guidance@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/security-guidance/d5c15b861cd2",
-        "version": "d5c15b861cd2",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/security-guidance/d53f6ca4cdb0",
+        "version": "d53f6ca4cdb0",
         "installedAt": "2026-03-03T13:49:27.081Z",
-        "lastUpdated": "2026-03-14T14:15:22.197Z",
+        "lastUpdated": "2026-03-19T17:42:52.896Z",
         "gitCommitSha": "55b58ec6e5649104f926ba7558b567dc8d33c5ff"
       }
     ],
     "skill-creator@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/skill-creator/d5c15b861cd2",
-        "version": "d5c15b861cd2",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/skill-creator/d53f6ca4cdb0",
+        "version": "d53f6ca4cdb0",
         "installedAt": "2026-03-09T13:46:29.939Z",
-        "lastUpdated": "2026-03-14T14:15:22.258Z",
+        "lastUpdated": "2026-03-19T17:42:52.909Z",
         "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
-      }
-    ],
-    "superlego@superlego": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/superlego/superlego/2.0.0",
-        "version": "2.0.0",
-        "installedAt": "2026-03-15T23:06:28.848Z",
-        "lastUpdated": "2026-03-15T23:06:28.848Z",
-        "gitCommitSha": "78b334ade041ff35108c88813850982932032ea5"
       }
     ]
   }
