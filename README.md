@@ -227,6 +227,9 @@ This runs a three-step process:
 | `npm test` | Run all BATS tests |
 | `npm run test:claude` | Run Claude backup/restore tests only |
 | `npm run test:utils` | Run utility function tests only |
+| `npm run test:mac` | Run mac.sh smoke tests only |
+| `npm run test:update` | Run update.sh smoke tests only |
+| `npm run test:setup` | Run setup-profile.sh smoke tests only |
 
 ## 🧪 Testing
 
@@ -238,6 +241,9 @@ This project uses [BATS (Bash Automated Testing System)](https://github.com/bats
 npm test              # Run all tests
 npm run test:claude   # Run Claude backup/restore tests only
 npm run test:utils    # Run utility function tests only
+npm run test:mac      # Run mac.sh smoke tests only
+npm run test:update   # Run update.sh smoke tests only
+npm run test:setup    # Run setup-profile.sh smoke tests only
 ```
 
 ### Test Coverage
@@ -247,6 +253,9 @@ The test suite covers:
 - **Restore merge logic** - Ensures local work plugins are preserved during restore
 - **Path portability** - Validates `$HOME` placeholder replacement works correctly
 - **Error scenarios** - Tests missing dependencies, malformed JSON, missing files
+- **Installation smoke tests** - System validation, Brewfile generation, Homebrew install, tool version parsing
+- **Update smoke tests** - Argument parsing, help output, dry-run mode, unknown flag rejection
+- **Setup smoke tests** - Dotfile copying, restoration points, version comparison
 
 ### Test Requirements
 
@@ -264,6 +273,9 @@ Test files are organized hierarchically:
 ```
 tests/
 ├── claude/           # Claude Code backup/restore tests
+├── mac/              # mac.sh installation smoke tests
+├── setup/            # setup-profile.sh smoke tests
+├── update/           # update.sh smoke tests
 ├── utils/            # Utility function tests
 ├── helpers/          # Shared test utilities (setup, assertions, mocks)
 └── fixtures/         # Test data (JSON files)

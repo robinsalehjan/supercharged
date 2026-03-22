@@ -31,7 +31,12 @@ npm run restore:claude:force  # Force restore Claude Code config
 
 # Development
 npm run lint                  # ShellCheck all scripts (ignore zsh warnings)
-npm test                      # Run BATS tests
+npm test                      # Run all BATS tests
+npm run test:claude           # Run Claude backup/restore tests only
+npm run test:utils            # Run utility function tests only
+npm run test:mac              # Run mac.sh smoke tests only
+npm run test:update           # Run update.sh smoke tests only
+npm run test:setup            # Run setup-profile.sh smoke tests only
 npm run help                  # Display all available commands
 ```
 
@@ -71,6 +76,11 @@ This project uses [BATS (Bash Automated Testing System)](https://github.com/bats
 **Running tests:**
 ```bash
 npm test                          # Run all BATS tests
+npm run test:claude               # Claude backup/restore tests
+npm run test:utils                # Utility function tests
+npm run test:mac                  # mac.sh smoke tests
+npm run test:update               # update.sh smoke tests
+npm run test:setup                # setup-profile.sh smoke tests
 npm test -- --filter "pattern"    # Run specific tests
 ```
 
@@ -78,6 +88,9 @@ npm test -- --filter "pattern"    # Run specific tests
 - `tests/claude/backup.bats` - Tests for Claude Code backup sanitization
 - `tests/claude/restore.bats` - Tests for Claude Code restore merging
 - `tests/utils/portability.bats` - Tests for portable path handling
+- `tests/mac/install.bats` - Smoke tests for mac.sh (validate_system, build_brewfile, install_homebrew, parse_tool_versions)
+- `tests/setup/profile.bats` - Smoke tests for setup-profile.sh (dotfile copying, restoration points, version_gte)
+- `tests/update/update.bats` - Smoke tests for update.sh (argument parsing, help, dry-run, unknown flags)
 - `tests/helpers/setup.bash` - Test environment setup and teardown utilities
 - `tests/helpers/assertions.bash` - jq-based JSON assertion utilities
 - `tests/helpers/mocks.bash` - Command mocking utilities
@@ -91,6 +104,8 @@ npm test -- --filter "pattern"    # Run specific tests
 - Fixtures use `$HOME` placeholders, not hardcoded paths
 - JSON assertions: `assert_json_field`, `assert_json_equals`
 - Domain assertions: `assert_plugin_exists`, `assert_plugin_not_exists`, `assert_marketplace_exists`, `assert_marketplace_not_exists`
+- Zsh-only functions tested via `run zsh -c "source script; function_call"` subprocess pattern
+- PATH-based mocking with `MOCK_BIN_DIR` for zsh subprocesses (bash `export -f` doesn't propagate to zsh)
 
 **Pre-commit integration:**
 Tests run automatically via `.husky/pre-commit` hook after security checks (if `tests/` directory exists and `bats` is installed).
