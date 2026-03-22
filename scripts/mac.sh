@@ -264,7 +264,7 @@ main() {
 # In zsh: ZSH_EVAL_CONTEXT contains "file" when sourced
 # In bash: BASH_SOURCE[0] differs from $0 when sourced
 if [[ -n "${ZSH_EVAL_CONTEXT:-}" ]]; then
-    if [[ "${ZSH_EVAL_CONTEXT}" != *:file:* ]]; then
+    if [[ "${ZSH_EVAL_CONTEXT}" != *file* ]]; then
         main "$@"
     fi
 else
