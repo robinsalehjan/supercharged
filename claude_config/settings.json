@@ -28,6 +28,22 @@
     "typescript-lsp@claude-plugins-official": true,
     "commit-commands@claude-plugins-official": true,
     "security-guidance@claude-plugins-official": true,
-    "skill-creator@claude-plugins-official": true
+    "skill-creator@claude-plugins-official": true,
+    "ui-ux-pro-max@ui-ux-pro-max-skill": true,
+    "axiom@axiom-marketplace": true
+  },
+  "extraKnownMarketplaces": {
+    "axiom-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "CharlesWiltgen/Axiom"
+      }
+    },
+    "ui-ux-pro-max-skill": {
+      "source": {
+        "source": "github",
+        "repo": "nextlevelbuilder/ui-ux-pro-max-skill"
+      }
+    }
   }
 }

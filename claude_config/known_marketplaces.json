@@ -5,6 +5,22 @@
       "repo": "anthropics/claude-plugins-official"
     },
     "installLocation": "$HOME/.claude/plugins/marketplaces/claude-plugins-official",
-    "lastUpdated": "2026-03-19T17:42:52.870Z"
+    "lastUpdated": "2026-03-22T13:41:03.251Z"
+  },
+  "axiom-marketplace": {
+    "source": {
+      "source": "github",
+      "repo": "CharlesWiltgen/Axiom"
+    },
+    "installLocation": "$HOME/.claude/plugins/marketplaces/axiom-marketplace",
+    "lastUpdated": "2026-03-19T20:06:51.360Z"
+  },
+  "ui-ux-pro-max-skill": {
+    "source": {
+      "source": "github",
+      "repo": "nextlevelbuilder/ui-ux-pro-max-skill"
+    },
+    "installLocation": "$HOME/.claude/plugins/marketplaces/ui-ux-pro-max-skill",
+    "lastUpdated": "2026-03-19T20:07:12.224Z"
   }
 }

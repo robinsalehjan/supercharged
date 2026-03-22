@@ -4,10 +4,10 @@
     "hookify@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/hookify/d53f6ca4cdb0",
-        "version": "d53f6ca4cdb0",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/hookify/61c0597779bd",
+        "version": "61c0597779bd",
         "installedAt": "2026-02-01T00:33:03.464Z",
-        "lastUpdated": "2026-03-19T17:42:52.908Z",
+        "lastUpdated": "2026-03-21T13:24:40.066Z",
         "gitCommitSha": "27d2b86d72da27c64585150857cee8472ad47abb"
       }
     ],
@@ -34,10 +34,10 @@
     "firebase@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/firebase/d53f6ca4cdb0",
-        "version": "d53f6ca4cdb0",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/firebase/61c0597779bd",
+        "version": "61c0597779bd",
         "installedAt": "2026-02-04T23:06:20.033Z",
-        "lastUpdated": "2026-03-19T17:42:52.895Z",
+        "lastUpdated": "2026-03-21T13:24:40.051Z",
         "gitCommitSha": "27d2b86d72da27c64585150857cee8472ad47abb"
       }
     ],
@@ -54,10 +54,10 @@
     "github@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/github/d53f6ca4cdb0",
-        "version": "d53f6ca4cdb0",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/github/61c0597779bd",
+        "version": "61c0597779bd",
         "installedAt": "2026-02-04T23:06:41.038Z",
-        "lastUpdated": "2026-03-19T17:42:52.894Z",
+        "lastUpdated": "2026-03-21T13:24:40.052Z",
         "gitCommitSha": "27d2b86d72da27c64585150857cee8472ad47abb"
       }
     ],
@@ -74,10 +74,10 @@
     "plugin-dev@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/plugin-dev/d53f6ca4cdb0",
-        "version": "d53f6ca4cdb0",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/plugin-dev/61c0597779bd",
+        "version": "61c0597779bd",
         "installedAt": "2026-02-04T23:07:22.264Z",
-        "lastUpdated": "2026-03-19T17:42:52.923Z",
+        "lastUpdated": "2026-03-21T13:24:40.081Z",
         "gitCommitSha": "27d2b86d72da27c64585150857cee8472ad47abb"
       }
     ],
@@ -94,10 +94,10 @@
     "pr-review-toolkit@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/pr-review-toolkit/d53f6ca4cdb0",
-        "version": "d53f6ca4cdb0",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/pr-review-toolkit/61c0597779bd",
+        "version": "61c0597779bd",
         "installedAt": "2026-02-22T15:12:47.878Z",
-        "lastUpdated": "2026-03-19T17:42:52.900Z",
+        "lastUpdated": "2026-03-21T13:24:40.057Z",
         "gitCommitSha": "aa296ec81e8ccb49c9784f167c2c0aa625a86cec"
       }
     ],
@@ -114,41 +114,61 @@
     "frontend-design@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/frontend-design/d53f6ca4cdb0",
-        "version": "d53f6ca4cdb0",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/frontend-design/61c0597779bd",
+        "version": "61c0597779bd",
         "installedAt": "2026-02-27T11:41:01.948Z",
-        "lastUpdated": "2026-03-19T17:42:52.897Z",
+        "lastUpdated": "2026-03-21T13:24:40.055Z",
         "gitCommitSha": "55b58ec6e5649104f926ba7558b567dc8d33c5ff"
       }
     ],
     "commit-commands@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/commit-commands/d53f6ca4cdb0",
-        "version": "d53f6ca4cdb0",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/commit-commands/61c0597779bd",
+        "version": "61c0597779bd",
         "installedAt": "2026-03-03T13:49:16.435Z",
-        "lastUpdated": "2026-03-19T17:42:52.898Z",
+        "lastUpdated": "2026-03-21T13:24:40.056Z",
         "gitCommitSha": "55b58ec6e5649104f926ba7558b567dc8d33c5ff"
       }
     ],
     "security-guidance@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/security-guidance/d53f6ca4cdb0",
-        "version": "d53f6ca4cdb0",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/security-guidance/61c0597779bd",
+        "version": "61c0597779bd",
         "installedAt": "2026-03-03T13:49:27.081Z",
-        "lastUpdated": "2026-03-19T17:42:52.896Z",
+        "lastUpdated": "2026-03-21T13:24:40.055Z",
         "gitCommitSha": "55b58ec6e5649104f926ba7558b567dc8d33c5ff"
       }
     ],
     "skill-creator@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/skill-creator/d53f6ca4cdb0",
-        "version": "d53f6ca4cdb0",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/skill-creator/61c0597779bd",
+        "version": "61c0597779bd",
         "installedAt": "2026-03-09T13:46:29.939Z",
-        "lastUpdated": "2026-03-19T17:42:52.909Z",
+        "lastUpdated": "2026-03-21T13:24:40.065Z",
         "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
+      }
+    ],
+    "ui-ux-pro-max@ui-ux-pro-max-skill": [
+      {
+        "scope": "user",
+        "installPath": "$HOME/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.0.1",
+        "version": "2.0.1",
+        "installedAt": "2026-03-19T20:07:17.144Z",
+        "lastUpdated": "2026-03-19T20:07:17.144Z",
+        "gitCommitSha": "07f4ef3ac2568c25a3b0c8ef5165a86abc3e56e4"
+      }
+    ],
+    "axiom@axiom-marketplace": [
+      {
+        "scope": "user",
+        "installPath": "$HOME/.claude/plugins/cache/axiom-marketplace/axiom/2.34.2",
+        "version": "2.34.2",
+        "installedAt": "2026-03-19T23:29:21.117Z",
+        "lastUpdated": "2026-03-19T23:29:21.117Z",
+        "gitCommitSha": "b52e59433712889016289a94319d497c48ccdf6d"
       }
     ]
   }
