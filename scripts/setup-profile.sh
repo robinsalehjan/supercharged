@@ -80,7 +80,7 @@ main() {
 
 # Source guard: skip main() when sourced, run when executed directly
 if [[ -n "${ZSH_EVAL_CONTEXT:-}" ]]; then
-    if [[ "${ZSH_EVAL_CONTEXT}" != *:file:* ]]; then
+    if [[ "${ZSH_EVAL_CONTEXT}" != *file* ]]; then
         main "$@"
     fi
 else

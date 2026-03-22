@@ -29,6 +29,9 @@
     "test:watch": "watch 'npm test' tests scripts",
     "test:claude": "bats tests/claude/*.bats",
     "test:utils": "bats tests/utils/*.bats",
+    "test:mac": "bats tests/mac/*.bats",
+    "test:update": "bats tests/update/*.bats",
+    "test:setup": "bats tests/setup/*.bats",
     "pretest": "command -v bats >/dev/null || (echo '❌ bats not found. Install with: brew install bats-core' && exit 1)"
   }
 }
