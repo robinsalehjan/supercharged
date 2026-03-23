@@ -98,7 +98,12 @@ brew "bats-core"
 brew "duckdb"
 brew "sqlite"
 brew "beads"
-brew "btop"'
+brew "btop"
+brew "mas"
+brew "htop"
+brew "ollama"
+brew "pipx"
+brew "uv"'
 
     if [[ "${INSTALL_IOS_TOOLS:-Y}" =~ ^[Yy] ]]; then
         content="$content
@@ -116,7 +121,8 @@ brew \"ios-deploy\""
 brew \"k9s\"
 brew \"docker\"
 brew \"docker-compose\"
-brew \"colima\""
+brew \"colima\"
+brew \"kubernetes-cli\""
     fi
 
     content="$content
@@ -127,7 +133,12 @@ cask \"slack\"
 cask \"postman\"
 cask \"raycast\"
 cask \"google-chrome\"
-cask \"font-jetbrains-mono-nerd-font\""
+cask \"font-jetbrains-mono-nerd-font\"
+cask \"ollama\"
+cask \"reveal\"
+
+mas \"AdBlock\", id: 1402042596
+mas \"DaisyDisk\", id: 411643860"
 
     echo "$content"
 }
