@@ -456,6 +456,24 @@ validate_tool() {
     fi
 }
 
+# Setup RTK (Rust Token Killer) for Claude Code
+setup_rtk() {
+    if ! command_exists rtk; then
+        log_with_level "WARN" "RTK not installed, skipping configuration"
+        return 0
+    fi
+
+    log_with_level "INFO" "Configuring RTK (Rust Token Killer) for Claude Code..."
+
+    # Run rtk init with auto-patch to configure hooks
+    if rtk init -g --auto-patch >/dev/null 2>&1; then
+        log_with_level "SUCCESS" "RTK configured successfully"
+        log_with_level "INFO" "RTK will automatically optimize git commands to save 60-90% tokens"
+    else
+        log_with_level "WARN" "RTK configuration failed or already configured"
+    fi
+}
+
 validate_installation() {
     echo "🔍 Validating installation..."
     local failed=0

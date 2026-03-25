@@ -103,7 +103,8 @@ brew "mas"
 brew "htop"
 brew "ollama"
 brew "pipx"
-brew "uv"'
+brew "uv"
+brew "rtk"'
 
     if [[ "${INSTALL_IOS_TOOLS:-Y}" =~ ^[Yy] ]]; then
         content="$content
@@ -259,6 +260,9 @@ main() {
             log_with_level "INFO" "Restoring Claude configuration from repository..."
             "$SCRIPT_DIR/restore-claude.sh" --force || log_with_level "WARN" "Claude config restore skipped or failed"
         fi
+
+        # Setup RTK for token optimization
+        setup_rtk
     fi
 
     # Install additional tools based on preferences

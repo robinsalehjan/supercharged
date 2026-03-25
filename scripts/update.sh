@@ -216,6 +216,11 @@ main() {
         fi
     fi
 
+    # Ensure RTK is configured for Claude Code (if both are installed)
+    if command -v rtk >/dev/null 2>&1 && [ -d "$HOME/.claude" ]; then
+        setup_rtk
+    fi
+
     log_with_level "SUCCESS" "Update completed successfully!"
 }
 

@@ -31,6 +31,7 @@ gh (GitHub CLI), duckdb (in-process SQL OLAP database)
 sqlite (lightweight SQL database), beads (distributed git-backed issue tracker for AI agents)
 btop (resource monitor with CPU, memory, disk, network, and process stats)
 shellcheck (shell script linter), jq (JSON processor)
+rtk (Rust Token Killer - CLI proxy for 60-90% token savings in Claude Code)
 
 # Development languages (via asdf)
 nodejs   22.9.0       # LTS version, minimum 20.0.0 for modern features

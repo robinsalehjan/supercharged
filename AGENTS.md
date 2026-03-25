@@ -156,6 +156,31 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 - `utils.sh`: pure functions, no side effects on import
 - `.tool-versions`: one tool per line (`<plugin> <version>`), grouped by category
 
+## RTK (Rust Token Killer)
+
+RTK is automatically installed and configured as part of the setup. It provides 60-90% token savings on dev operations by optimizing CLI command output.
+
+**Installed by**: `brew install rtk` in `scripts/mac.sh`
+**Configured by**: `setup_rtk()` in `scripts/utils.sh` (runs `rtk init -g --auto-patch`)
+**Hook location**: `~/.claude/hooks/rtk-rewrite.sh`
+**Documentation**: `~/.claude/RTK.md`
+
+**Usage:**
+```bash
+rtk gain              # Show token savings analytics
+rtk gain --history    # Command history with savings
+rtk discover          # Analyze Claude Code history for missed opportunities
+rtk init --show       # Verify installation status
+```
+
+All git commands are automatically rewritten by Claude Code hooks (e.g., `git status` → `rtk git status`).
+
+**Setup is automatic** during `npm run setup` or `npm run update`. To manually reconfigure:
+```bash
+rtk init -g --auto-patch    # Reconfigure hooks
+rtk init -g --uninstall     # Remove hooks
+```
+
 ## Adding New Tools
 
 **Homebrew package**: Edit `BREWFILE_CONTENT` in `scripts/mac.sh`, add `brew "name"` or `cask "name"` to the appropriate conditional section. Update README.md.
