@@ -20,7 +20,7 @@ CLAUDE_HOME="$HOME/.claude"
 SANITIZE_MARKETPLACES=("vend-plugins")
 
 # List of env var keys to exclude from backup (sensitive credentials)
-SANITIZE_ENV_VARS=("GITHUB_PERSONAL_ACCESS_TOKEN")
+SANITIZE_ENV_VARS=("GITHUB_PERSONAL_ACCESS_TOKEN" "STITCH_API_KEY")
 
 # Validate that ~/.claude exists
 if [ ! -d "$CLAUDE_HOME" ]; then
