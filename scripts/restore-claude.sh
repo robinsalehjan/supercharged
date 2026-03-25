@@ -294,6 +294,67 @@ merge_marketplace_config() {
     fi
 }
 
+# Function to restore global MCP server configs into ~/.claude/settings.json
+# Sources ~/.secrets to substitute $VAR_NAME placeholders with actual env values
+# MCPs are injected globally so they work across all projects
+restore_mcp_servers() {
+    local src="$CLAUDE_CONFIG_DIR/mcp_servers.json"
+    local settings_json="$CLAUDE_HOME/settings.json"
+    local secrets_file="$HOME/.secrets"
+
+    if [ ! -f "$src" ]; then
+        log_with_level "INFO" "No MCP server configuration found in repository"
+        return
+    fi
+
+    if [ ! -f "$settings_json" ]; then
+        log_with_level "WARN" "settings.json not found, skipping MCP server restore"
+        return
+    fi
+
+    # Source secrets to populate env vars for placeholder substitution
+    if [ -f "$secrets_file" ]; then
+        # shellcheck source=/dev/null
+        source "$secrets_file" 2>/dev/null || log_with_level "WARN" "Failed to source $secrets_file"
+    else
+        log_with_level "WARN" "Secrets file not found at $secrets_file - MCP env vars will not be substituted"
+        log_with_level "WARN" "Create $secrets_file with your API keys (e.g. export STITCH_API_KEY='...')"
+    fi
+
+    # Expand $HOME placeholders and substitute $VAR_NAME env placeholders via jq env object
+    local mcp_with_secrets
+    if ! mcp_with_secrets=$(expand_portable_path < "$src" | jq 'to_entries | map(
+        .value.env = (.value.env // {} | to_entries | map(
+            if (.value | type == "string") and (.value | startswith("$")) then
+                .value = (env[.value[1:]] // .value)
+            else . end
+        ) | from_entries)
+    ) | from_entries' 2>/dev/null); then
+        log_with_level "ERROR" "Failed to process MCP server configuration"
+        return 1
+    fi
+
+    # Merge MCP servers into settings.json (repo servers take precedence, local extras preserved)
+    local updated
+    if ! updated=$(jq --argjson mcp "$mcp_with_secrets" '
+        .mcpServers = ((.mcpServers // {}) + $mcp)
+    ' "$settings_json" 2>/dev/null); then
+        log_with_level "ERROR" "Failed to merge MCP servers into settings.json"
+        return 1
+    fi
+
+    local tmp="${settings_json}.tmp.$$"
+    if echo "$updated" > "$tmp" && mv "$tmp" "$settings_json"; then
+        local server_count
+        server_count=$(echo "$mcp_with_secrets" | jq 'keys | length' 2>/dev/null || echo "?")
+        log_with_level "SUCCESS" "Restored $server_count global MCP server(s) to settings.json"
+    else
+        rm -f "$tmp"
+        log_with_level "ERROR" "Failed to write settings.json"
+        return 1
+    fi
+}
+
 # Main restore logic
 if [ "$FORCE_RESTORE" = true ]; then
     log_with_level "INFO" "Force restoring Claude Code configuration..."
@@ -326,11 +387,15 @@ merge_marketplace_config \
     "$CLAUDE_HOME/plugins/known_marketplaces.json" \
     "known_marketplaces.json"
 
+# Restore MCP server configurations into ~/.claude.json (env vars sourced from ~/.secrets)
+restore_mcp_servers
+
 log_with_level "SUCCESS" "Claude Code configuration restored!"
 echo ""
 echo "📥 Restored files to ~/.claude:"
 echo "   - settings.json"
 echo "   - plugins/installed_plugins.json"
 echo "   - plugins/known_marketplaces.json"
+echo "   - settings.json MCP servers (global, env vars from ~/.secrets)"
 echo ""
 echo "💡 Restart Claude Code for changes to take effect"

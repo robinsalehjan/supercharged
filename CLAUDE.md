@@ -18,12 +18,15 @@ See [AGENTS.md](./AGENTS.md) for complete npm commands reference.
 - `npm run update` - Update all components
 - `npm run backup:claude` - Backup Claude Code config to repo
 - `npm run restore:claude:force` - Restore Claude Code config from repo
+- `npm run lint` - ShellCheck all scripts
+- `npm test` - Run all BATS tests (requires `brew install bats-core`)
 - `npm run help` - Display all available commands
 
 ## Code Conventions
 
 - **Logging**: Use `log_with_level "INFO|WARN|ERROR|SUCCESS" "message"` from `utils.sh`
 - **Error handling**: Include `trap cleanup EXIT` in scripts
+- **Tests**: BATS (Bash Automated Testing System); test files in `tests/`; use `setup_test_env` + `teardown_test_env`
 - **Commits**: Conventional format (`feat(scope):`, `fix(scope):`, `docs(scope):`, `chore(scope):`)
 - **Shell scripts**: Written for zsh; ShellCheck `--shell=bash` flags (SC1071, SC2296) are safe to ignore
 - **Dotfiles**: Use env vars, no hardcoded paths
@@ -32,7 +35,7 @@ See [AGENTS.md](./AGENTS.md) for detailed code patterns and examples.
 
 ## Important Files
 
-- `.supercharged_install.log` - Installation/update logs (timestamped with levels)
+- `.supercharged_install.log` - Installation/update logs in repo root (timestamped with levels)
 - `~/.supercharged_preferences` - User setup choices
 - `~/.supercharged_backups/` - Backup history with timestamps
 - Claude backup/restore uses portable `$HOME` paths, sanitizes work marketplaces, preserves local plugins
