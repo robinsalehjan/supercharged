@@ -13,6 +13,9 @@ setup() {
 
   # Source utils.sh for expand_portable_path function
   source "$PROJECT_ROOT/scripts/utils.sh"
+
+  # Unset vars that restore_settings_env injects so tests don't leak into each other
+  unset GITHUB_PERSONAL_ACCESS_TOKEN
 }
 
 teardown() {
@@ -121,6 +124,91 @@ merge_marketplace_configs() {
 
   echo "$merged" > "$output_file"
   set +o pipefail
+}
+
+# Helper: Inject env vars from a secrets file into settings.json env section
+# Mirrors restore_settings_env() from restore-claude.sh with explicit var list argument
+inject_settings_env() {
+  local settings_json="$1"
+  local secrets_file="$2"
+  shift 2
+  local inject_vars=("$@")
+
+  if [ ! -f "$settings_json" ] || [ ! -f "$secrets_file" ]; then
+    return 0
+  fi
+
+  # shellcheck disable=SC1090
+  source "$secrets_file" 2>/dev/null || true
+
+  local vars_json
+  vars_json=$(printf '%s\n' "${inject_vars[@]}" | jq -R . | jq -s .)
+
+  local updated
+  if ! updated=$(jq --argjson vars "$vars_json" '
+      .env = (.env // {}) + (
+          $vars |
+          map(select(env[.] != null)) |
+          map({(.): env[.]}) |
+          add // {}
+      )
+  ' "$settings_json" 2>/dev/null); then
+    return 1
+  fi
+
+  echo "$updated" > "$settings_json"
+}
+
+# =============================================================================
+# Settings env injection tests
+# =============================================================================
+
+@test "injects GITHUB_PERSONAL_ACCESS_TOKEN from ~/.secrets into settings.json" {
+  # Arrange: settings.json without token (as if just restored from backup)
+  echo '{"env": {"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"}, "model": "sonnet"}' \
+    > "$TEMP_CLAUDE/settings.json"
+  echo 'export GITHUB_PERSONAL_ACCESS_TOKEN="test-ghp-token-abc123"' \
+    > "$HOME/.secrets"
+
+  # Act
+  inject_settings_env \
+    "$TEMP_CLAUDE/settings.json" \
+    "$HOME/.secrets" \
+    "GITHUB_PERSONAL_ACCESS_TOKEN"
+
+  # Assert: token injected
+  assert_json_field "$TEMP_CLAUDE/settings.json" \
+    ".env.GITHUB_PERSONAL_ACCESS_TOKEN" "test-ghp-token-abc123"
+
+  # Assert: existing env vars preserved
+  assert_json_field "$TEMP_CLAUDE/settings.json" \
+    ".env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS" "1"
+}
+
+@test "skips env injection when secrets file not found" {
+  echo '{"env": {"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"}}' \
+    > "$TEMP_CLAUDE/settings.json"
+
+  inject_settings_env \
+    "$TEMP_CLAUDE/settings.json" \
+    "$HOME/.nonexistent_secrets" \
+    "GITHUB_PERSONAL_ACCESS_TOKEN"
+
+  # Assert: env unchanged
+  assert_json_field "$TEMP_CLAUDE/settings.json" ".env | keys | length" "1"
+}
+
+@test "skips injection when var not set in secrets" {
+  echo '{"env": {}}' > "$TEMP_CLAUDE/settings.json"
+  echo '# no vars set' > "$HOME/.secrets"
+
+  inject_settings_env \
+    "$TEMP_CLAUDE/settings.json" \
+    "$HOME/.secrets" \
+    "GITHUB_PERSONAL_ACCESS_TOKEN"
+
+  # Assert: env still empty
+  assert_json_field "$TEMP_CLAUDE/settings.json" ".env | keys | length" "0"
 }
 
 # =============================================================================

@@ -23,6 +23,12 @@ CLAUDE_HOME="$HOME/.claude"
 # List of marketplaces to preserve locally (not overwritten during restore)
 # These are work-related and should remain untouched
 PRESERVE_MARKETPLACES=("vend-plugins")
+
+# List of env vars to inject from ~/.secrets back into settings.json
+# Must mirror SANITIZE_ENV_VARS in backup-claude.sh (what's stripped at backup, re-injected at restore)
+# Note: MCP-specific vars (e.g. STITCH_API_KEY) are handled separately by restore_mcp_servers
+INJECT_SETTINGS_ENV_VARS=("GITHUB_PERSONAL_ACCESS_TOKEN")
+
 FORCE_RESTORE=false
 
 # Parse arguments
@@ -294,6 +300,67 @@ merge_marketplace_config() {
     fi
 }
 
+# Function to inject global env vars from ~/.secrets back into settings.json
+# Complements restore_mcp_servers: MCP-specific vars (STITCH_API_KEY) are handled there
+# via $PLACEHOLDER substitution; this handles global Claude Code env vars (GITHUB_PERSONAL_ACCESS_TOKEN)
+restore_settings_env() {
+    local settings_json="$CLAUDE_HOME/settings.json"
+    local secrets_file="$HOME/.secrets"
+
+    if [ ! -f "$settings_json" ]; then
+        log_with_level "WARN" "settings.json not found, skipping env var injection"
+        return
+    fi
+
+    if [ ! -f "$secrets_file" ]; then
+        log_with_level "INFO" "No secrets file at $secrets_file, skipping env var injection"
+        log_with_level "INFO" "Create $secrets_file with your credentials (e.g. export GITHUB_PERSONAL_ACCESS_TOKEN='...')"
+        return
+    fi
+
+    # shellcheck source=/dev/null
+    source "$secrets_file" 2>/dev/null || log_with_level "WARN" "Failed to source $secrets_file"
+
+    # Count vars that are actually set after sourcing
+    local injected_count=0
+    for var in "${INJECT_SETTINGS_ENV_VARS[@]}"; do
+        if printenv "$var" > /dev/null 2>&1; then
+            injected_count=$((injected_count + 1))
+        fi
+    done
+
+    if [ "$injected_count" -eq 0 ]; then
+        log_with_level "INFO" "No env vars to inject (not set in $secrets_file)"
+        return
+    fi
+
+    # Build JSON array of var names, then use jq env[] to read their values
+    local vars_json
+    vars_json=$(printf '%s\n' "${INJECT_SETTINGS_ENV_VARS[@]}" | jq -R . | jq -s .)
+
+    local updated
+    if ! updated=$(jq --argjson vars "$vars_json" '
+        .env = (.env // {}) + (
+            $vars |
+            map(select(env[.] != null)) |
+            map({(.): env[.]}) |
+            add // {}
+        )
+    ' "$settings_json" 2>/dev/null); then
+        log_with_level "ERROR" "Failed to inject env vars into settings.json"
+        return 1
+    fi
+
+    local tmp="${settings_json}.tmp.$$"
+    if echo "$updated" > "$tmp" && mv "$tmp" "$settings_json"; then
+        log_with_level "SUCCESS" "Injected $injected_count env var(s) into settings.json from ~/.secrets"
+    else
+        rm -f "$tmp"
+        log_with_level "ERROR" "Failed to write settings.json"
+        return 1
+    fi
+}
+
 # Function to restore global MCP server configs into ~/.claude/settings.json
 # Sources ~/.secrets to substitute $VAR_NAME placeholders with actual env values
 # MCPs are injected globally so they work across all projects
@@ -374,6 +441,9 @@ restore_config_file \
     "$CLAUDE_CONFIG_DIR/settings.json" \
     "$CLAUDE_HOME/settings.json" \
     "settings.json"
+
+# Re-inject sensitive env vars stripped at backup time (sourced from ~/.secrets)
+restore_settings_env
 
 # Restore installed_plugins.json (merge to preserve local work plugins)
 merge_plugin_config \
