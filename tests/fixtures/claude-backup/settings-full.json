@@ -5,6 +5,10 @@
     "vend-internal@vend-plugins": true,
     "vend-api@vend-plugins": true
   },
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "GITHUB_PERSONAL_ACCESS_TOKEN": "github_pat_test_token_12345"
+  },
   "theme": "dark",
   "model": "claude-sonnet-4-5"
 }
