@@ -52,6 +52,15 @@ sanitize_marketplaces() {
   _sanitize_json 'del(.["vend-plugins"])' "$1" "$2"
 }
 
+# Note: mirrors the production jq filter in backup-claude.sh which strips
+# vend-plugins from enabledPlugins and removes sensitive env vars.
+# If SANITIZE_ENV_VARS grows, add corresponding del() clauses here.
+sanitize_settings() {
+  _sanitize_json \
+    '(. + {enabledPlugins: (.enabledPlugins | to_entries | map(select(.key | endswith("@vend-plugins") | not)) | from_entries)}) | del(.env["GITHUB_PERSONAL_ACCESS_TOKEN"])' \
+    "$1" "$2"
+}
+
 @test "removes vend-plugins entries from installed_plugins.json" {
   # Arrange: Load fixture
   load_fixture "claude-backup/plugins-mixed.json" "$TEMP_CLAUDE_PLUGINS/installed_plugins.json"
@@ -103,9 +112,8 @@ sanitize_marketplaces() {
   # Arrange: Load settings fixture
   load_fixture "claude-backup/settings-full.json" "$TEMP_CLAUDE/settings.json"
 
-  # Act: Sanitize settings (remove vend-plugins from enabledPlugins)
-  jq '{enabledPlugins: (.enabledPlugins | to_entries | map(select(.key | endswith("@vend-plugins") | not)) | from_entries)} + (. | del(.enabledPlugins))' \
-    "$TEMP_CLAUDE/settings.json" | sed "s|$ORIGINAL_HOME|\$HOME|g" > "$TEMP_REPO_CONFIG/settings.json"
+  # Act: Sanitize settings
+  sanitize_settings "$TEMP_CLAUDE/settings.json" "$TEMP_REPO_CONFIG/settings.json"
 
   # Assert: Vend plugins removed from enabledPlugins
   assert_json_field "$TEMP_REPO_CONFIG/settings.json" \
@@ -118,6 +126,43 @@ sanitize_marketplaces() {
   # Assert: Other settings fields preserved
   assert_json_field "$TEMP_REPO_CONFIG/settings.json" '.theme' "dark"
   assert_json_field "$TEMP_REPO_CONFIG/settings.json" '.model' "claude-sonnet-4-5"
+}
+
+@test "strips GITHUB_PERSONAL_ACCESS_TOKEN from settings.json env" {
+  # Arrange: Load settings fixture (contains token in env)
+  load_fixture "claude-backup/settings-full.json" "$TEMP_CLAUDE/settings.json"
+
+  # Act: Sanitize settings
+  sanitize_settings "$TEMP_CLAUDE/settings.json" "$TEMP_REPO_CONFIG/settings.json"
+
+  # Assert: Token removed
+  assert_json_field "$TEMP_REPO_CONFIG/settings.json" \
+    '.env | has("GITHUB_PERSONAL_ACCESS_TOKEN")' "false"
+}
+
+@test "preserves non-sensitive env vars in settings.json" {
+  # Arrange: Load settings fixture
+  load_fixture "claude-backup/settings-full.json" "$TEMP_CLAUDE/settings.json"
+
+  # Act: Sanitize settings
+  sanitize_settings "$TEMP_CLAUDE/settings.json" "$TEMP_REPO_CONFIG/settings.json"
+
+  # Assert: Non-sensitive env var preserved
+  assert_json_field "$TEMP_REPO_CONFIG/settings.json" \
+    '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS' "1"
+}
+
+@test "handles settings.json with no env section" {
+  # Arrange: Settings without env block
+  echo '{"enabledPlugins": {"superpowers@claude-plugins-official": true}, "theme": "dark"}' \
+    > "$TEMP_CLAUDE/settings.json"
+
+  # Act: Sanitize settings
+  sanitize_settings "$TEMP_CLAUDE/settings.json" "$TEMP_REPO_CONFIG/settings.json"
+
+  # Assert: Output is valid JSON with other fields intact
+  assert_json_field "$TEMP_REPO_CONFIG/settings.json" '.theme' "dark"
+  assert_json_field "$TEMP_REPO_CONFIG/settings.json" '.env' "null"
 }
 
 @test "preserves JSON structure during sanitization" {

@@ -19,6 +19,9 @@ CLAUDE_HOME="$HOME/.claude"
 # List of marketplaces to exclude from backup (work-related or sensitive plugins)
 SANITIZE_MARKETPLACES=("vend-plugins")
 
+# List of env var keys to exclude from backup (sensitive credentials)
+SANITIZE_ENV_VARS=("GITHUB_PERSONAL_ACCESS_TOKEN")
+
 # Validate that ~/.claude exists
 if [ ! -d "$CLAUDE_HOME" ]; then
     log_with_level "ERROR" "Claude Code directory not found at $CLAUDE_HOME"
@@ -52,16 +55,22 @@ if [ -f "$CLAUDE_HOME/settings.json" ]; then
     done
     jq_filter="$jq_filter | from_entries"
 
-    # Preserve all fields except enabledPlugins, then apply sanitized enabledPlugins
+    # Build jq filter to remove sensitive env vars
+    env_del_filter=""
+    for env_var in "${SANITIZE_ENV_VARS[@]}"; do
+        env_del_filter="${env_del_filter} | del(.env[\"${env_var}\"])"
+    done
+
+    # Preserve all fields except enabledPlugins, then apply sanitized enabledPlugins and strip sensitive env vars
     # Write to temp file first to avoid corrupting output on pipeline failure
-    if ! jq "${jq_args[@]}" ". + {enabledPlugins: ($jq_filter)}" "$CLAUDE_HOME/settings.json" | \
+    if ! jq "${jq_args[@]}" "(. + {enabledPlugins: ($jq_filter)})${env_del_filter}" "$CLAUDE_HOME/settings.json" | \
         make_path_portable > "$CLAUDE_CONFIG_DIR/settings.json.tmp"; then
         rm -f "$CLAUDE_CONFIG_DIR/settings.json.tmp"
         log_with_level "ERROR" "Failed to sanitize settings.json - backup aborted"
         exit 1
     fi
     mv "$CLAUDE_CONFIG_DIR/settings.json.tmp" "$CLAUDE_CONFIG_DIR/settings.json"
-    log_with_level "SUCCESS" "Backed up settings.json (sanitized ${#SANITIZE_MARKETPLACES[@]} marketplace(s) from enabledPlugins, paths made portable)"
+    log_with_level "SUCCESS" "Backed up settings.json (sanitized ${#SANITIZE_MARKETPLACES[@]} marketplace(s) from enabledPlugins, stripped ${#SANITIZE_ENV_VARS[@]} env var(s), paths made portable)"
 else
     log_with_level "WARN" "settings.json not found"
 fi
