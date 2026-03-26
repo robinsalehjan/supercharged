@@ -27,7 +27,23 @@ See [AGENTS.md](./AGENTS.md) for complete npm commands reference.
 - **Logging**: Use `log_with_level "INFO|WARN|ERROR|SUCCESS" "message"` from `utils.sh`
 - **Error handling**: Include `trap cleanup EXIT` in scripts
 - **Tests**: BATS (Bash Automated Testing System); test files in `tests/`; use `setup_test_env` + `teardown_test_env`
-- **Commits**: Conventional format (`feat(scope):`, `fix(scope):`, `docs(scope):`, `chore(scope):`)
+- **Commits**: Conventional format enforced by commitlint (`@commitlint/config-conventional`):
+
+  | Type | When to use |
+  |------|-------------|
+  | `feat` | New feature or capability |
+  | `fix` | Bug fix |
+  | `docs` | Documentation only |
+  | `refactor` | Code change that neither fixes a bug nor adds a feature |
+  | `test` | Adding or updating tests |
+  | `chore` | Maintenance tasks (deps, config, CI, backups) |
+  | `style` | Formatting, whitespace (no logic change) |
+  | `perf` | Performance improvement |
+  | `build` | Build system or tooling changes |
+  | `ci` | CI/CD pipeline changes |
+  | `revert` | Reverting a previous commit |
+
+  Scope is optional but encouraged: `feat(backup):`, `fix(restore):`, `chore(deps):`
 - **Shell scripts**: Written for zsh; ShellCheck `--shell=bash` flags (SC1071, SC2296) are safe to ignore
 - **Dotfiles**: Use env vars, no hardcoded paths
 
@@ -45,8 +61,8 @@ See [AGENTS.md](./AGENTS.md) for detailed code patterns and examples.
 **This repository is used on personal AND work machines** — comprehensive security enforced:
 
 **Automated checks** (see [SECURITY.md](./SECURITY.md) for details):
-- ✅ **Pre-commit hook** - Blocks secrets, hardcoded paths, requires shellcheck (`.husky/pre-commit`)
-- ✅ **Commit-msg hook** - Enforces conventional commits (`.husky/commit-msg`)
+- ✅ **Pre-commit hook** - Blocks secrets, hardcoded paths, requires shellcheck (Claude Code PreToolUse hook)
+- ✅ **Commitlint** - Enforces conventional commits (Claude Code PostToolUse hook with rollback)
 - ✅ **Hookify rules** - 11 Claude Code behavior rules (`.claude/hookify.*.local.md`)
 
 **Key rules**:

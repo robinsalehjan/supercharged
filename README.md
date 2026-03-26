@@ -352,7 +352,7 @@ grep ERROR .supercharged_install.log  # Filter for errors
 
 #### Automated Git Hooks
 
-**Pre-commit hook** (`.husky/pre-commit`) runs 7 checks before every commit:
+**Pre-commit hook** runs 7 checks before every commit (via Claude Code PreToolUse hook):
 1. ✅ **Shellcheck validation** - REQUIRED (commit fails if not installed)
 2. ✅ **Secrets detection** - Blocks API keys, tokens, passwords
 3. ✅ **Hardcoded paths** - Blocks `/Users/username/` in dotfiles (must use `$HOME`)
@@ -361,7 +361,7 @@ grep ERROR .supercharged_install.log  # Filter for errors
 6. ✅ **Large file detection** - Blocks files >1MB
 7. ✅ **BATS tests** - Runs test suite if bats is installed
 
-**Commit-msg hook** (`.husky/commit-msg`) enforces conventional commit format:
+**Commitlint** enforces conventional commit format via Claude Code PostToolUse hook with rollback:
 ```bash
 feat(scope): description
 fix(scope): description
@@ -369,29 +369,12 @@ docs(scope): description
 chore(scope): description
 ```
 
-#### Automatic Setup
-
-**All security components are configured automatically during setup:**
-
-```bash
-npm run setup
-# Automatically:
-# ✅ Installs shellcheck via Homebrew
-# ✅ Configures git hooks path (.husky)
-# ✅ Makes hooks executable
-# ✅ Ready to use - no manual steps needed
-```
-
 **Verification** (optional):
 ```bash
 # Verify shellcheck installed
 shellcheck --version
 
-# Verify git hooks configured
-git config core.hooksPath  # Should output: .husky
-
-# Test hooks work
-git commit --allow-empty -m "test: verify hooks"
+# Test hooks work (commit via Claude Code)
 # Should see: 🔒 Running security checks...
 ```
 
