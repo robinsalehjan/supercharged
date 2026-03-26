@@ -68,12 +68,14 @@
         "-y",
         "xcodebuildmcp@latest",
         "mcp"
-      ]
+      ],
+      "env": {}
     },
     "stitch": {
       "type": "stdio",
-      "command": "$HOME/.asdf/shims/stitch-mcp",
+      "command": "$HOME/.asdf/shims/npx",
       "args": [
+        "@_davideast/stitch-mcp",
         "proxy"
       ],
       "env": {}
