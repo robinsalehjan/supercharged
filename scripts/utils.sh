@@ -121,7 +121,7 @@ create_restoration_point() {
 
 # Restore from backup
 restore_from_backup() {
-    local backup_dir="$1"
+    local backup_dir="${1:-}"
 
     if [ -z "$backup_dir" ] && [ -f "$HOME/.supercharged_last_backup" ]; then
         backup_dir=$(cat "$HOME/.supercharged_last_backup")

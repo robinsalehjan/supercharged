@@ -20,7 +20,7 @@
     "update:npm": "./scripts/update.sh --skip-brew --skip-cask --skip-asdf --skip-zsh --skip-pip",
     "update:pip": "./scripts/update.sh --skip-brew --skip-cask --skip-asdf --skip-zsh --skip-npm",
     "validate": "cd scripts && ./utils.sh validate",
-    "restore": "cd scripts && source utils.sh && restore_from_backup",
+    "restore": "./scripts/restore.sh",
     "backup:claude": "./scripts/backup-claude.sh",
     "restore:claude": "./scripts/restore-claude.sh",
     "restore:claude:force": "./scripts/restore-claude.sh --force",
