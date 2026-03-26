@@ -59,5 +59,24 @@
       }
     }
   },
-  "effortLevel": "high"
+  "effortLevel": "high",
+  "mcpServers": {
+    "XcodeBuildMCP": {
+      "type": "stdio",
+      "command": "$HOME/.asdf/shims/npx",
+      "args": [
+        "-y",
+        "xcodebuildmcp@latest",
+        "mcp"
+      ]
+    },
+    "stitch": {
+      "type": "stdio",
+      "command": "$HOME/.asdf/shims/stitch-mcp",
+      "args": [
+        "proxy"
+      ],
+      "env": {}
+    }
+  }
 }

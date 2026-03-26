@@ -59,6 +59,7 @@ if [ -f "$CLAUDE_HOME/settings.json" ]; then
     env_del_filter=""
     for env_var in "${SANITIZE_ENV_VARS[@]}"; do
         env_del_filter="${env_del_filter} | del(.env[\"${env_var}\"])"
+        env_del_filter="${env_del_filter} | del(.mcpServers[]?.env[\"${env_var}\"])"
     done
 
     # Preserve all fields except enabledPlugins, then apply sanitized enabledPlugins and strip sensitive env vars

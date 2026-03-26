@@ -11,5 +11,15 @@
     "STITCH_API_KEY": "test_placeholder_not_a_real_key"
   },
   "theme": "dark",
-  "model": "claude-sonnet-4-5"
+  "model": "claude-sonnet-4-5",
+  "mcpServers": {
+    "stitch": {
+      "type": "stdio",
+      "command": "$HOME/.asdf/shims/stitch-mcp",
+      "args": ["proxy"],
+      "env": {
+        "STITCH_API_KEY": "test_placeholder_not_a_real_key"
+      }
+    }
+  }
 }

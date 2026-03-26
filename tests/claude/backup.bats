@@ -57,7 +57,7 @@ sanitize_marketplaces() {
 # If SANITIZE_ENV_VARS grows, add corresponding del() clauses here.
 sanitize_settings() {
   _sanitize_json \
-    '(. + {enabledPlugins: (.enabledPlugins | to_entries | map(select(.key | endswith("@vend-plugins") | not)) | from_entries)}) | del(.env["GITHUB_PERSONAL_ACCESS_TOKEN"]) | del(.env["STITCH_API_KEY"])' \
+    '(. + {enabledPlugins: (.enabledPlugins | to_entries | map(select(.key | endswith("@vend-plugins") | not)) | from_entries)}) | del(.env["GITHUB_PERSONAL_ACCESS_TOKEN"]) | del(.mcpServers[]?.env["GITHUB_PERSONAL_ACCESS_TOKEN"]) | del(.env["STITCH_API_KEY"]) | del(.mcpServers[]?.env["STITCH_API_KEY"])' \
     "$1" "$2"
 }
 
@@ -150,6 +150,20 @@ sanitize_settings() {
   # Assert: Token removed
   assert_json_field "$TEMP_REPO_CONFIG/settings.json" \
     '.env | has("STITCH_API_KEY")' "false"
+}
+
+@test "strips STITCH_API_KEY from mcpServers env block in settings.json" {
+  # Arrange: Load settings fixture (contains key nested under mcpServers[].env)
+  load_fixture "claude-backup/settings-full.json" "$TEMP_CLAUDE/settings.json"
+
+  # Act: Sanitize settings
+  sanitize_settings "$TEMP_CLAUDE/settings.json" "$TEMP_REPO_CONFIG/settings.json"
+
+  # Assert: Key removed from mcpServers env, server entry still present
+  assert_json_field "$TEMP_REPO_CONFIG/settings.json" \
+    '.mcpServers.stitch.env | has("STITCH_API_KEY")' "false"
+  assert_json_field "$TEMP_REPO_CONFIG/settings.json" \
+    '.mcpServers.stitch | has("command")' "true"
 }
 
 @test "preserves non-sensitive env vars in settings.json" {
