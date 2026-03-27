@@ -3,12 +3,16 @@ set -e
 
 source "$(dirname "$0")/utils.sh"
 
+REQUIRED_MACOS_VERSION="12.0"
+REQUIRED_DISK_SPACE_GB=10
+
 # System requirements validation
 validate_system() {
     log_with_level "INFO" "Validating system requirements..."
 
     # Check macOS version
-    local macos_version=$(sw_vers -productVersion | cut -d. -f1-2)
+    local macos_version
+    macos_version=$(sw_vers -productVersion | cut -d. -f1-2)
 
     if ! version_gte "$macos_version" "$REQUIRED_MACOS_VERSION"; then
         log_with_level "ERROR" "macOS $REQUIRED_MACOS_VERSION or later required (found: $macos_version)"
@@ -16,8 +20,10 @@ validate_system() {
     fi
 
     # Check available disk space (in GB)
-    local available_space_raw=$(df -h / | awk 'NR==2 {print $4}')
-    local available_space=$(echo "$available_space_raw" | sed 's/[^0-9.]//g')
+    local available_space_raw
+    available_space_raw=$(df -h / | awk 'NR==2 {print $4}')
+    local available_space
+    available_space=$(echo "$available_space_raw" | tr -dc '0-9.')
 
     # Convert to integer for comparison (remove decimal part if present)
     local available_space_int=${available_space%.*}

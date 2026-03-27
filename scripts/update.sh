@@ -106,6 +106,7 @@ main() {
         brew update --quiet
         outdated_brew=$(brew outdated --formula)
         if [ -n "$outdated_brew" ]; then
+            # shellcheck disable=SC2001
             echo "$outdated_brew" | sed 's/^/   /'
         else
             echo "   All formulae are up to date"
@@ -117,6 +118,7 @@ main() {
         log_with_level "INFO" "🖥️  Outdated Homebrew casks:"
         outdated_casks=$(brew outdated --cask)
         if [ -n "$outdated_casks" ]; then
+            # shellcheck disable=SC2001
             echo "$outdated_casks" | sed 's/^/   /'
         else
             echo "   All casks are up to date"
@@ -128,6 +130,7 @@ main() {
         log_with_level "INFO" "📦 Outdated npm global packages:"
         outdated_npm=$(npm outdated -g --depth=0 2>/dev/null || true)
         if [ -n "$outdated_npm" ]; then
+            # shellcheck disable=SC2001
             echo "$outdated_npm" | sed 's/^/   /'
         else
             echo "   All npm packages are up to date"

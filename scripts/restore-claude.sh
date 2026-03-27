@@ -67,7 +67,8 @@ get_newest_mtime() {
 
     for file in "$dir"/*.json; do
         if [ -f "$file" ]; then
-            local mtime=$(stat -f %m "$file" 2>/dev/null || echo 0)
+            local mtime
+            mtime=$(stat -f %m "$file" 2>/dev/null || echo 0)
             if [ "$mtime" -gt "$newest" ]; then
                 newest=$mtime
             fi
@@ -79,7 +80,8 @@ get_newest_mtime() {
 
 # Function to check if repo config is newer than home config
 is_repo_newer() {
-    local repo_mtime=$(get_newest_mtime "$CLAUDE_CONFIG_DIR")
+    local repo_mtime
+    repo_mtime=$(get_newest_mtime "$CLAUDE_CONFIG_DIR")
 
     # If Claude home doesn't exist, repo is considered newer
     if [ ! -d "$CLAUDE_HOME" ]; then
@@ -87,10 +89,11 @@ is_repo_newer() {
     fi
 
     local home_mtime=0
+    local mtime
 
     # Check settings.json
     if [ -f "$CLAUDE_HOME/settings.json" ]; then
-        local mtime=$(stat -f %m "$CLAUDE_HOME/settings.json" 2>/dev/null || echo 0)
+        mtime=$(stat -f %m "$CLAUDE_HOME/settings.json" 2>/dev/null || echo 0)
         if [ "$mtime" -gt "$home_mtime" ]; then
             home_mtime=$mtime
         fi
@@ -98,14 +101,14 @@ is_repo_newer() {
 
     # Check plugin files
     if [ -f "$CLAUDE_HOME/plugins/installed_plugins.json" ]; then
-        local mtime=$(stat -f %m "$CLAUDE_HOME/plugins/installed_plugins.json" 2>/dev/null || echo 0)
+        mtime=$(stat -f %m "$CLAUDE_HOME/plugins/installed_plugins.json" 2>/dev/null || echo 0)
         if [ "$mtime" -gt "$home_mtime" ]; then
             home_mtime=$mtime
         fi
     fi
 
     if [ -f "$CLAUDE_HOME/plugins/known_marketplaces.json" ]; then
-        local mtime=$(stat -f %m "$CLAUDE_HOME/plugins/known_marketplaces.json" 2>/dev/null || echo 0)
+        mtime=$(stat -f %m "$CLAUDE_HOME/plugins/known_marketplaces.json" 2>/dev/null || echo 0)
         if [ "$mtime" -gt "$home_mtime" ]; then
             home_mtime=$mtime
         fi
@@ -155,7 +158,8 @@ merge_plugin_config() {
     mkdir -p "$(dirname "$dest")"
 
     # Expand $HOME placeholder in source
-    local repo_content=$(expand_portable_path < "$src")
+    local repo_content
+    repo_content=$(expand_portable_path < "$src")
 
     # If destination doesn't exist, just copy
     if [ ! -f "$dest" ]; then
@@ -171,7 +175,8 @@ merge_plugin_config() {
     fi
 
     # Extract local plugins from preserved marketplaces (from .plugins object)
-    local local_content=$(cat "$dest")
+    local local_content
+    local_content=$(cat "$dest")
     local preserved_plugins="{}"
 
     for marketplace in "${PRESERVE_MARKETPLACES[@]}"; do
@@ -217,10 +222,12 @@ merge_plugin_config() {
     fi
 
     # Build final merged object
-    local merged=$(jq -n --argjson version "$version" --argjson plugins "$merged_plugins" '{version: $version, plugins: $plugins}')
+    local merged
+    merged=$(jq -n --argjson version "$version" --argjson plugins "$merged_plugins" '{version: $version, plugins: $plugins}')
     echo "$merged" > "$dest"
 
-    local preserved_count=$(echo "$preserved_plugins" | jq 'keys | length' 2>/dev/null || echo "0")
+    local preserved_count
+    preserved_count=$(echo "$preserved_plugins" | jq 'keys | length' 2>/dev/null || echo "0")
     if [ "$preserved_count" -gt 0 ]; then
         log_with_level "SUCCESS" "Restored $name (preserved $preserved_count local plugin(s))"
     else
@@ -242,7 +249,8 @@ merge_marketplace_config() {
     mkdir -p "$(dirname "$dest")"
 
     # Expand $HOME placeholder in source
-    local repo_content=$(expand_portable_path < "$src")
+    local repo_content
+    repo_content=$(expand_portable_path < "$src")
 
     # If destination doesn't exist, just copy
     if [ ! -f "$dest" ]; then
@@ -258,7 +266,8 @@ merge_marketplace_config() {
     fi
 
     # Extract preserved marketplaces from local config
-    local local_content=$(cat "$dest")
+    local local_content
+    local_content=$(cat "$dest")
     local preserved_marketplaces="{}"
 
     for marketplace in "${PRESERVE_MARKETPLACES[@]}"; do
@@ -292,7 +301,8 @@ merge_marketplace_config() {
 
     echo "$merged" > "$dest"
 
-    local preserved_count=$(echo "$preserved_marketplaces" | jq 'keys | length' 2>/dev/null || echo "0")
+    local preserved_count
+    preserved_count=$(echo "$preserved_marketplaces" | jq 'keys | length' 2>/dev/null || echo "0")
     if [ "$preserved_count" -gt 0 ]; then
         log_with_level "SUCCESS" "Restored $name (preserved $preserved_count local marketplace(s))"
     else

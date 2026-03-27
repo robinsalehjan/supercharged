@@ -10,8 +10,6 @@ UTILS_PROJECT_ROOT="$(cd "$UTILS_SCRIPT_DIR/.." 2>/dev/null && pwd)" || UTILS_PR
 UTILS_LOG_FILE="$UTILS_PROJECT_ROOT/.supercharged_install.log"
 
 # Constants
-REQUIRED_MACOS_VERSION="12.0"
-REQUIRED_DISK_SPACE_GB=10
 BACKUP_RETENTION_COUNT=5
 
 # Shared list of dotfiles for backup/restore/copy operations
@@ -19,15 +17,15 @@ MANAGED_DOTFILES=(.zshrc .zprofile .gitconfig .gitignore_global .p10k.zsh .tool-
 
 # Colored output for better user experience
 fancy_echo() {
-    local fmt="$1"; shift
-    printf "\n\033[1;32m==> $fmt\033[0m\n" "$@"
+    printf "\n\033[1;32m==> %s\033[0m\n" "$1"
 }
 
 # Enhanced logging with levels
 log_with_level() {
     local level=$1
     local message=$2
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    local timestamp
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
 
     case $level in
         "ERROR")
@@ -57,7 +55,8 @@ setup_logging() {
 
 # Create restoration point
 create_restoration_point() {
-    local timestamp=$(date +%Y%m%d_%H%M%S)
+    local timestamp
+    timestamp=$(date +%Y%m%d_%H%M%S)
     local backup_base="$HOME/.supercharged_backups"
     local backup_dir="$backup_base/$timestamp"
 
@@ -105,7 +104,8 @@ create_restoration_point() {
 
     # Clean up old backups, keeping only the last N
     if [[ "$backup_base" == "$HOME/.supercharged_backups" ]]; then
-        local backup_count=$(find "$backup_base" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')
+        local backup_count
+        backup_count=$(find "$backup_base" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')
         if [ "$backup_count" -gt "$BACKUP_RETENTION_COUNT" ]; then
             log_with_level "INFO" "Cleaning up old backups (keeping last $BACKUP_RETENTION_COUNT)..."
             find "$backup_base" -mindepth 1 -maxdepth 1 -type d -print0 | \
@@ -180,7 +180,8 @@ check_version() {
         return 1
     fi
 
-    local version=$(extract_tool_version "$cmd")
+    local version
+    version=$(extract_tool_version "$cmd")
 
     if ! version_gte "$version" "$min_version"; then
         log_with_level "WARN" "$cmd version $min_version or higher recommended (found: $version)"
@@ -276,7 +277,8 @@ standard_cleanup() {
         log_with_level "ERROR" "$script_name failed with exit code $exit_code"
 
         if [ -f "$HOME/.supercharged_last_backup" ]; then
-            local backup_dir=$(cat "$HOME/.supercharged_last_backup")
+            local backup_dir
+            backup_dir=$(cat "$HOME/.supercharged_last_backup")
             echo ""
             echo "💡 You can restore your previous configuration with:"
             echo "   npm run restore"
@@ -438,7 +440,8 @@ validate_tool() {
     local expected_version=$2
 
     if command_exists "$tool"; then
-        local version=$(extract_tool_version "$tool")
+        local version
+        version=$(extract_tool_version "$tool")
 
         if [ -z "$version" ] || [ "$version" = "0.0.0" ]; then
             echo "⚠️  $tool: version not detected"

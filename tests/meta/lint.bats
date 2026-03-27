@@ -4,7 +4,7 @@
 load '../helpers/setup'
 
 # Shellcheck exclusion rules (must match package.json lint command)
-SHELLCHECK_EXCLUDE='SC1071,SC2296'
+SHELLCHECK_EXCLUDE='SC1071,SC2296,SC1091'
 
 setup() {
   setup_test_env

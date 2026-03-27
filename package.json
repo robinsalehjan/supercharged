@@ -18,7 +18,7 @@
     "backup:claude": "./scripts/backup-claude.sh",
     "restore:claude": "./scripts/restore-claude.sh",
     "restore:claude:force": "./scripts/restore-claude.sh --force",
-    "lint": "shellcheck --shell=bash --exclude=SC1071,SC2296 scripts/*.sh",
+    "lint": "shellcheck --shell=bash --exclude=SC1071,SC2296,SC1091 scripts/*.sh",
     "test": "bats tests/**/*.bats",
     "test:watch": "watch 'npm test' tests scripts",
     "test:claude": "bats tests/claude/*.bats",
