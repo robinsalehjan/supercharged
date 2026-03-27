@@ -3,6 +3,9 @@
 # Load test helpers
 load '../helpers/setup'
 
+# Shellcheck exclusion rules (must match package.json lint command)
+SHELLCHECK_EXCLUDE='SC1071,SC2296'
+
 setup() {
   setup_test_env
 
@@ -35,29 +38,29 @@ teardown() {
   [ "$status" -eq 0 ] || [ "$status" -eq 1 ]
 }
 
-@test "lint command filters SC1071 warning lines" {
+@test "lint command excludes SC1071 warnings" {
   # Skip if shellcheck not installed
   if ! command -v shellcheck >/dev/null 2>&1; then
     skip "shellcheck not installed"
   fi
 
-  # Act - run shellcheck directly with the same filter
-  run bash -c "cd $PROJECT_ROOT && shellcheck --shell=bash scripts/*.sh 2>&1 | grep -Ev 'SC1071|SC2296' | grep SC1071"
+  # Act - run shellcheck with exclusions
+  run bash -c "cd $PROJECT_ROOT && shellcheck --shell=bash --exclude=$SHELLCHECK_EXCLUDE scripts/*.sh 2>&1 | grep SC1071"
 
-  # Assert - should fail to find SC1071 (exit code 1 from grep means not found)
+  # Assert - should fail to find SC1071 (excluded)
   [ "$status" -ne 0 ]
 }
 
-@test "lint command filters SC2296 warning lines" {
+@test "lint command excludes SC2296 warnings" {
   # Skip if shellcheck not installed
   if ! command -v shellcheck >/dev/null 2>&1; then
     skip "shellcheck not installed"
   fi
 
-  # Act - run shellcheck directly with the same filter
-  run bash -c "cd $PROJECT_ROOT && shellcheck --shell=bash scripts/*.sh 2>&1 | grep -Ev 'SC1071|SC2296' | grep SC2296"
+  # Act - run shellcheck with exclusions
+  run bash -c "cd $PROJECT_ROOT && shellcheck --shell=bash --exclude=$SHELLCHECK_EXCLUDE scripts/*.sh 2>&1 | grep SC2296"
 
-  # Assert - should fail to find SC2296 (exit code 1 from grep means not found)
+  # Assert - should fail to find SC2296 (excluded)
   [ "$status" -ne 0 ]
 }
 
@@ -74,7 +77,7 @@ teardown() {
   [ "$script_count" -gt 0 ]
 }
 
-@test "lint command uses bash shell mode" {
+@test "lint command uses bash shell mode and excludes known warnings" {
   # Skip if shellcheck not installed
   if ! command -v shellcheck >/dev/null 2>&1; then
     skip "shellcheck not installed"
@@ -83,6 +86,7 @@ teardown() {
   # Arrange - get the lint command from package.json
   lint_cmd=$(grep '"lint"' "$PROJECT_ROOT/package.json" | grep "shellcheck")
 
-  # Assert - should specify --shell=bash
+  # Assert - should specify --shell=bash and --exclude
   [[ "$lint_cmd" == *"--shell=bash"* ]]
+  [[ "$lint_cmd" == *"--exclude=$SHELLCHECK_EXCLUDE"* ]]
 }

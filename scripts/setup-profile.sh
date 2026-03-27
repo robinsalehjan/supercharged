@@ -3,8 +3,7 @@
 # ============================================================================
 # Profile Setup Script
 # ============================================================================
-# This script copies dotfiles from the dot_files directory to the user's home directory
-# It creates a backup before making any changes to preserve existing configurations
+# Creates a backup before making changes to preserve existing configurations
 #
 # Usage:
 #   ./setup-profile.sh           # Normal mode - copy files
@@ -21,10 +20,8 @@ DOT_FILES_DIR="$PROJECT_ROOT/dot_files"
 # Source utilities for backup functionality (provides MANAGED_DOTFILES)
 source "$SCRIPT_DIR/utils.sh"
 
-# Default flags
 DRY_RUN=false
 
-# Usage information
 show_help() {
     echo "Usage: $(basename "$0") [OPTIONS]"
     echo ""
