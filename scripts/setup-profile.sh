@@ -5,6 +5,10 @@
 # ============================================================================
 # This script copies dotfiles from the dot_files directory to the user's home directory
 # It creates a backup before making any changes to preserve existing configurations
+#
+# Usage:
+#   ./setup-profile.sh           # Normal mode - copy files
+#   ./setup-profile.sh --dry-run # Preview mode - show what would be copied
 
 set -e
 
@@ -17,22 +21,67 @@ DOT_FILES_DIR="$PROJECT_ROOT/dot_files"
 # Source utilities for backup functionality (provides MANAGED_DOTFILES)
 source "$SCRIPT_DIR/utils.sh"
 
-main() {
-    # Create backup before making changes
-    echo "💾 Creating backup of existing configuration..."
-    create_restoration_point
+# Default flags
+DRY_RUN=false
 
+# Usage information
+show_help() {
+    echo "Usage: $(basename "$0") [OPTIONS]"
     echo ""
-    echo "📁 Copying dotfiles to $HOME..."
+    echo "Copy dotfiles and Claude Code configuration to \$HOME"
+    echo ""
+    echo "Options:"
+    echo "  --dry-run      Preview what would be copied without making changes"
+    echo "  -h, --help     Show this help message"
+}
+
+main() {
+    # Parse command line arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --dry-run)
+                DRY_RUN=true
+                shift
+                ;;
+            -h|--help)
+                show_help
+                exit 0
+                ;;
+            *)
+                echo "Unknown option: $1"
+                show_help
+                exit 1
+                ;;
+        esac
+    done
+
+    if $DRY_RUN; then
+        echo "=== DRY RUN MODE - No changes will be made ==="
+        echo ""
+    fi
+
+    # Create backup before making changes (skip in dry-run)
+    if ! $DRY_RUN; then
+        echo "💾 Creating backup of existing configuration..."
+        create_restoration_point
+        echo ""
+    fi
+
+    echo "📁 Dotfiles that would be copied to $HOME:"
+    echo ""
 
     # Copy each dotfile (uses shared MANAGED_DOTFILES from utils.sh, excluding non-dotfiles)
     for file in "${MANAGED_DOTFILES[@]}"; do
         if [ -f "$DOT_FILES_DIR/$file" ]; then
-            cp "$DOT_FILES_DIR/$file" "$HOME/" || {
-                log_with_level "ERROR" "Failed to copy $file to $HOME"
-                continue
-            }
-            echo "  ✓ Copied $file"
+            if $DRY_RUN; then
+                echo "  → Would copy: $file"
+            else
+                cp "$DOT_FILES_DIR/$file" "$HOME/" || {
+                    log_with_level "ERROR" "Failed to copy $file to $HOME"
+                    continue
+                }
+                echo "  ✓ Copied $file"
+            fi
         elif [ "$file" = ".supercharged_preferences" ]; then
             # Preferences file is generated at runtime, not part of dot_files
             continue
@@ -40,6 +89,12 @@ main() {
             echo "  ⚠️  Warning: $file not found in $DOT_FILES_DIR"
         fi
     done
+
+    if $DRY_RUN; then
+        echo ""
+        echo "=== DRY RUN COMPLETE - No changes were made ==="
+        exit 0
+    fi
 
     echo "✅ Dotfiles copied to \$HOME"
 
