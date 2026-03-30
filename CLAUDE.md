@@ -19,7 +19,8 @@ See [AGENTS.md](./AGENTS.md) for complete npm commands reference.
 - `npm run backup:claude` - Backup Claude Code config to repo
 - `npm run restore:claude:force` - Restore Claude Code config from repo
 - `npm run lint` - ShellCheck all scripts
-- `npm test` - Run all BATS tests (requires `brew install bats-core`)
+- `npm test` - Run all BATS tests (requires `brew install bats-core`); covers mac, update, setup, utils, claude, restore, meta
+- `npm run test:watch` - Watch mode (requires: `brew install watch`)
 - `npm run help` - Display all available commands
 
 ## Code Conventions
@@ -27,23 +28,7 @@ See [AGENTS.md](./AGENTS.md) for complete npm commands reference.
 - **Logging**: Use `log_with_level "INFO|WARN|ERROR|SUCCESS" "message"` from `utils.sh`
 - **Error handling**: Include `trap cleanup EXIT` in scripts
 - **Tests**: BATS (Bash Automated Testing System); test files in `tests/`; use `setup_test_env` + `teardown_test_env`
-- **Commits**: Conventional format enforced by commitlint (`@commitlint/config-conventional`):
-
-  | Type | When to use |
-  |------|-------------|
-  | `feat` | New feature or capability |
-  | `fix` | Bug fix |
-  | `docs` | Documentation only |
-  | `refactor` | Code change that neither fixes a bug nor adds a feature |
-  | `test` | Adding or updating tests |
-  | `chore` | Maintenance tasks (deps, config, CI, backups) |
-  | `style` | Formatting, whitespace (no logic change) |
-  | `perf` | Performance improvement |
-  | `build` | Build system or tooling changes |
-  | `ci` | CI/CD pipeline changes |
-  | `revert` | Reverting a previous commit |
-
-  Scope is optional but encouraged: `feat(backup):`, `fix(restore):`, `chore(deps):`
+- **Commits**: Conventional format enforced by commitlint. See [AGENTS.md](./AGENTS.md) for full type table. Scope optional: `feat(backup):`, `fix(restore):`, `chore(deps):`
 - **Shell scripts**: Written for zsh; ShellCheck `--shell=bash` flags (SC1071, SC2296) are safe to ignore
 - **Dotfiles**: Use env vars, no hardcoded paths
 
@@ -60,10 +45,7 @@ See [AGENTS.md](./AGENTS.md) for detailed code patterns and examples.
 
 **This repository is used on personal AND work machines** — comprehensive security enforced:
 
-**Automated checks** (see [SECURITY.md](./SECURITY.md) for details):
-- ✅ **Pre-commit hook** - Blocks secrets, hardcoded paths, requires shellcheck (Claude Code PreToolUse hook)
-- ✅ **Commitlint** - Enforces conventional commits (Claude Code PostToolUse hook with rollback)
-- ✅ **Hookify rules** - 11 Claude Code behavior rules (`.claude/hookify.*.local.md`)
+**Automated checks**: Pre-commit (secrets, paths, shellcheck), commitlint, and 11 hookify rules. See [SECURITY.md](./SECURITY.md) for details and `.claude/hookify.*.local.md` for rules.
 
 **Key rules**:
 - Never commit secrets (`.secrets` is template only, in `.gitignore`)
