@@ -1,4 +1,4 @@
-# Security Setup for Personal/Work Machines
+# Security
 
 This repository is designed to run safely on both personal and work machines with comprehensive security checks to prevent credential leaks, hardcoded paths, and other security issues.
 
@@ -228,18 +228,5 @@ If the security checks flag legitimate code:
 - **"Can I disable security checks?"** - Not recommended. Use `--no-verify` only in emergencies with explicit permission.
 - **"Why is shellcheck required?"** - Prevents security vulnerabilities and errors in shell scripts.
 - **"Why block hardcoded paths?"** - Dotfiles must work on both personal and work machines.
-- **"What about Claude backups?"** - Automatically sanitized to remove work marketplace data.
+- **"What about Claude backups?"** - Automatically sanitized to remove work related marketplace data.
 - **"Why prevent --no-verify?"** - Bypassing security is dangerous; hookify blocks this in Claude Code sessions.
-
-## Summary
-
-Your supercharged repository is now protected with:
-
-- ✅ **11 hookify rules** (2 blocking, 9 warning)
-- ✅ **7 automated checks** in pre-commit hook (6 security + tests)
-- ✅ **Conventional commit enforcement**
-- ✅ **Multi-machine safety** (no hardcoded paths)
-- ✅ **Credential protection** (no secrets)
-- ✅ **Code quality** (shellcheck required)
-
-**Safe for use on personal and work machines!** 🔒
