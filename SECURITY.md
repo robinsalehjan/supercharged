@@ -24,17 +24,7 @@ This repository is designed to run safely on both personal and work machines wit
 - ✅ Exits immediately on first security issue
 - ✅ Provides actionable error messages
 
-### 2. Commit Message Validation (`.husky/commit-msg`)
-
-**Enforces conventional commit format:**
-```
-feat(scope): description
-fix(scope): description
-docs(scope): description
-chore(scope): description
-```
-
-### 3. Claude Code Hookify Rules (11 rules)
+### 2. Claude Code Hookify Rules (11 rules)
 
 **Active for AI-assisted development:**
 
@@ -77,7 +67,6 @@ git commit -m "feat(scripts): add new feature"
 # ✅ Check for secrets in staged files
 # ✅ Verify no hardcoded paths in dotfiles
 # ✅ Check .secrets template safety
-# ✅ Validate conventional commit format
 # ✅ Allow commit if all checks pass
 ```
 
@@ -116,7 +105,7 @@ Security is configured automatically by `npm run setup` (installs shellcheck, co
 ```bash
 # Hooks not running
 git config core.hooksPath              # Should output: .husky
-chmod +x .husky/pre-commit .husky/commit-msg
+chmod +x .husky/pre-commit
 
 # Shellcheck not found
 brew install shellcheck
@@ -129,5 +118,4 @@ brew install shellcheck
 | File | Purpose | Committed |
 |------|---------|-----------|
 | `.husky/pre-commit` | Git pre-commit security checks | Yes |
-| `.husky/commit-msg` | Commit message validation | Yes |
 | `.claude/hookify.*.local.md` | Claude Code behavior rules (11 files) | No (gitignored) |

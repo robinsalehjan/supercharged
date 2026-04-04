@@ -36,9 +36,6 @@ git commit --allow-empty -m "test: verify hooks"
 - ✅ Claude config sanitization
 - ✅ Large file detection (>1MB)
 
-**Commit-msg** (`.husky/commit-msg`):
-- ✅ Conventional commit format enforcement
-
 ### Hookify Rules (Claude Code Only)
 
 11 rules in `.claude/hookify.*.local.md`:
@@ -57,7 +54,6 @@ git commit -m "feat(scripts): add new feature"
 
 # Hooks automatically:
 # ✅ Run all 6 security checks
-# ✅ Enforce conventional commits
 # ✅ Block commit if issues found
 ```
 
@@ -82,7 +78,6 @@ git commit -m "feat: add feature"  # ✅ Passes
 - ❌ Real credentials in .secrets template
 - ❌ Files over 1MB
 - ❌ Missing shellcheck installation
-- ❌ Non-conventional commit messages
 - ❌ `git commit --no-verify` (in Claude Code)
 - ❌ `rm -rf /`, `rm -rf ~`, etc. (in Claude Code)
 
@@ -90,7 +85,7 @@ git commit -m "feat: add feature"  # ✅ Passes
 
 - ✅ Environment variables (`$HOME/path`)
 - ✅ Template placeholders (`YOUR_API_KEY_HERE`)
-- ✅ Conventional commits (`feat(scope): message`)
+- ✅ Conventional commits preferred (`feat(scope): message`)
 - ✅ Clean shell scripts (passing shellcheck)
 - ✅ Portable dotfiles (no machine-specific paths)
 
@@ -109,8 +104,6 @@ npm run lint
 # Test pre-commit hook manually
 ./.husky/pre-commit
 
-# Test commit-msg hook manually
-echo "bad commit message" | ./.husky/commit-msg
 ```
 
 ## 📚 Documentation
@@ -133,7 +126,6 @@ echo "bad commit message" | ./.husky/commit-msg
 
 - **11** hookify rules
 - **6** pre-commit security checks
-- **1** commit message format check
 - **2** blocking rules (prevent dangerous operations)
 - **9** warning rules (guide best practices)
 

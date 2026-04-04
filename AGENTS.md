@@ -188,9 +188,9 @@ rtk init -g --uninstall     # Remove hooks
 
 ## Security & Git Workflow
 
-Security is enforced automatically via pre-commit hooks and commitlint. See [SECURITY.md](./SECURITY.md) for full details.
+Security is enforced automatically via pre-commit hooks. See [SECURITY.md](./SECURITY.md) for full details.
 
-**Conventional commits**: `feat(scripts):`, `fix(zsh):`, `docs(readme):`, `chore(deps):`.
+**Conventional commits** (preferred, not enforced): `feat(scripts):`, `fix(zsh):`, `docs(readme):`, `chore(deps):`.
 
 **PR checklist**:
 - [ ] Hooks passed (required - can't commit otherwise)

@@ -28,7 +28,7 @@ See [AGENTS.md](./AGENTS.md) for complete npm commands reference.
 - **Logging**: Use `log_with_level "INFO|WARN|ERROR|SUCCESS" "message"` from `utils.sh`
 - **Error handling**: Include `trap cleanup EXIT` in scripts
 - **Tests**: BATS (Bash Automated Testing System); test files in `tests/`; use `setup_test_env` + `teardown_test_env`
-- **Commits**: Conventional format enforced by commitlint. See [AGENTS.md](./AGENTS.md) for full type table. Scope optional: `feat(backup):`, `fix(restore):`, `chore(deps):`
+- **Commits**: Conventional format preferred (not enforced). Scope optional: `feat(backup):`, `fix(restore):`, `chore(deps):`
 - **Shell scripts**: Written for zsh; ShellCheck `--shell=bash` flags (SC1071, SC2296) are safe to ignore
 - **Dotfiles**: Use env vars, no hardcoded paths
 
@@ -45,7 +45,7 @@ See [AGENTS.md](./AGENTS.md) for detailed code patterns and examples.
 
 **This repository is used on personal AND work machines** — comprehensive security enforced:
 
-**Automated checks**: Pre-commit (secrets, paths, shellcheck), commitlint, and 11 hookify rules. See [SECURITY.md](./SECURITY.md) for details and `.claude/hookify.*.local.md` for rules.
+**Automated checks**: Pre-commit (secrets, paths, shellcheck) and 11 hookify rules. See [SECURITY.md](./SECURITY.md) for details and `.claude/hookify.*.local.md` for rules.
 
 **Key rules**:
 - Never commit secrets (`.secrets` is template only, in `.gitignore`)

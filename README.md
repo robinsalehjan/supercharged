@@ -283,7 +283,7 @@ grep ERROR .supercharged_install.log  # Filter for errors
 
 ### Security Enforcement
 
-**This repository runs on both personal and work machines** with automated security enforcement: pre-commit hooks (shellcheck, secrets detection, hardcoded paths, large files, tests), commitlint, and 11 Claude Code hookify rules.
+**This repository runs on both personal and work machines** with automated security enforcement: pre-commit hooks (shellcheck, secrets detection, hardcoded paths, large files, tests) and 11 Claude Code hookify rules.
 
 See [SECURITY.md](./SECURITY.md) for full details.
 

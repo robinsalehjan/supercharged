@@ -110,7 +110,7 @@ main() {
     fi
 
     # Ensure hooks are executable
-    chmod +x .husky/pre-commit .husky/commit-msg 2>/dev/null || true
+    chmod +x .husky/pre-commit 2>/dev/null || true
     echo "  ✓ Made hooks executable"
 
     echo "✅ Git hooks configured"
