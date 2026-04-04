@@ -40,28 +40,9 @@ npm run test:setup            # Run setup-profile.sh smoke tests only
 npm run help                  # Display all available commands
 ```
 
-## Build and Test
+## ShellCheck Notes
 
-```bash
-# Dry-run to preview changes
-npm run update:dry-run
-
-# Update specific components
-npm run update:brew      # Homebrew only
-npm run update:asdf      # ASDF only
-npm run update:zsh       # ZSH plugins only
-npm run update:npm       # npm globals only
-npm run update:pip       # pip data science packages only
-
-# Lint shell scripts
-shellcheck --shell=bash scripts/*.sh 2>&1 | grep -v SC1071 || true
-
-# Test Claude Code backup/restore
-./scripts/backup-claude.sh
-./scripts/restore-claude.sh --force
-```
-
-**Safe ShellCheck warnings** (zsh scripts run through `--shell=bash`):
+**Safe warnings** (zsh scripts run through `--shell=bash`):
 SC1071 (zsh unsupported), SC2296 (zsh `${(%):-%x}`), SC1091 (sourced file), SC2155 (declare+assign), SC2001 (sed vs expansion), SC2012 (ls vs find).
 
 **Zsh-specific syntax** used in scripts:
@@ -207,82 +188,9 @@ rtk init -g --uninstall     # Remove hooks
 
 ## Security & Git Workflow
 
-**IMPORTANT**: This repository runs on personal AND work machines. Security is enforced automatically.
-
-### Automated Security (Git Hooks)
-
-**Pre-commit** (`.husky/pre-commit`) runs 7 checks:
-1. ✅ **Shellcheck** - REQUIRED (commit fails if not installed)
-2. ✅ **Secrets detection** - Blocks API keys, tokens, passwords
-3. ✅ **Hardcoded paths** - Blocks `/Users/username/` in dotfiles
-4. ✅ **.secrets safety** - Ensures template-only, no real credentials
-5. ✅ **Claude config** - Warns about work marketplace data
-6. ✅ **File size** - Blocks files >1MB
-7. ✅ **BATS tests** - Runs test suite if bats is installed
-
-**Commit-msg** (`.husky/commit-msg`) enforces conventional commits.
-
-**Setup** (automated via `npm run setup`):
-```bash
-# Setup automatically configures:
-# ✅ Installs shellcheck via Homebrew (REQUIRED)
-# ✅ Sets git hooks path to .husky
-# ✅ Makes hooks executable
-
-# No manual configuration needed!
-# Just run: npm run setup
-```
-
-### Hookify Rules (Claude Code)
-
-11 active rules in `.claude/hookify.*.local.md` (gitignored, local-only):
-
-**Blocking** (prevent operations):
-- `dangerous-rm` - Blocks `rm -rf /`, `rm -rf ~`, etc.
-- `no-bypass-hooks` - Blocks `git commit --no-verify`
-
-**Warnings** (guide behavior):
-- `hardcoded-paths` - Warn when editing dotfiles with machine-specific paths
-- `logging-pattern` - Remind to use `log_with_level` instead of echo
-- `secrets-template` - Warn when editing `.secrets`
-- `claude-config-edit` - Warn when modifying Claude backups
-- `sudo-in-scripts` - Warn against adding sudo
-- `conventional-commits` - Remind about commit format
-- `git-security-checks` - Show security check summary
-- `shellcheck-reminder` - Remind to run shellcheck
-- `documentation-sync` - Remind to update docs
-
-### Commits and PRs
+Security is enforced automatically via pre-commit hooks and commitlint. See [SECURITY.md](./SECURITY.md) for full details.
 
 **Conventional commits**: `feat(scripts):`, `fix(zsh):`, `docs(readme):`, `chore(deps):`.
-
-**Normal workflow**:
-```bash
-# Make changes
-vim scripts/mac.sh
-
-# Stage and commit (hooks run automatically)
-git add scripts/mac.sh
-git commit -m "feat(scripts): add new feature"
-
-# Hooks will:
-# 🔒 Run all 6 security checks
-# ✅ Enforce conventional commit format
-# ✅ Allow commit only if all checks pass
-```
-
-**If hooks fail**:
-```bash
-# Example: Secret detected
-❌ Potential secrets detected in staged files!
-   api_key="sk-1234..." in file.txt
-
-# Fix the issue
-vim file.txt  # Change to: YOUR_API_KEY_HERE
-
-# Commit again
-git commit -m "feat: add feature"  # ✅ Passes
-```
 
 **PR checklist**:
 - [ ] Hooks passed (required - can't commit otherwise)
@@ -290,7 +198,6 @@ git commit -m "feat: add feature"  # ✅ Passes
 - [ ] Logging follows `log_with_level` pattern
 - [ ] No hardcoded paths (use `$HOME`)
 - [ ] Shellcheck passed (`npm run lint`)
-- [ ] Documentation updated
 
 ## Debugging
 

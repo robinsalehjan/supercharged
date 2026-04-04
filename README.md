@@ -131,28 +131,6 @@ matplotlib      # Data visualization
 scikit-learn    # Machine learning library
 ```
 
-### Claude Code Configuration Backup
-```bash
-# Configuration files (backed up to claude_config/)
-settings.json              # Plugin enable/disable settings
-installed_plugins.json     # List of installed plugins with versions (portable $HOME paths)
-known_marketplaces.json    # Plugin marketplace configurations (portable $HOME paths)
-
-# Excluded (session/sensitive data):
-# - session-env/, todos/, debug/        # Session-specific data
-# - history.jsonl, shell-snapshots/     # Command history
-# - projects/, file-history/, plans/    # Project-specific data
-# - cache/, downloads/                  # Cache and temporary files
-# - statsig/, stats-cache.json          # Analytics data
-# - ide/                                # IDE lock files
-
-# Backup your Claude Code configuration (included in npm run update)
-npm run backup:claude
-
-# Restore Claude Code configuration (included in npm run setup:profile)
-npm run setup:profile
-```
-
 ## ⚡️ Quick Start
 
 ### Prerequisites
@@ -234,10 +212,6 @@ This runs a three-step process:
 
 ## 🧪 Testing
 
-This project uses [BATS (Bash Automated Testing System)](https://github.com/bats-core/bats-core) for testing shell scripts.
-
-### Run Tests
-
 ```bash
 npm test              # Run all tests
 npm run test:claude   # Run Claude backup/restore tests only
@@ -247,46 +221,7 @@ npm run test:update   # Run update.sh smoke tests only
 npm run test:setup    # Run setup-profile.sh smoke tests only
 ```
 
-### Test Coverage
-
-The test suite covers:
-- **Backup sanitization** - Verifies work-related plugins/marketplaces are removed during backup
-- **Restore merge logic** - Ensures local work plugins are preserved during restore
-- **Path portability** - Validates `$HOME` placeholder replacement works correctly
-- **Error scenarios** - Tests missing dependencies, malformed JSON, missing files
-- **Installation smoke tests** - System validation, Brewfile generation, Homebrew install, tool version parsing
-- **Update smoke tests** - Argument parsing, help output, dry-run mode, unknown flag rejection
-- **Setup smoke tests** - Dotfile copying, restoration points, version comparison
-
-### Test Requirements
-
-- bats-core (installed via setup)
-- jq (installed via setup)
-- shellcheck (installed via setup)
-
-Tests run automatically:
-- **Pre-commit hook** - Catches issues before commit
-- **GitHub Actions** - Runs on push to main and pull requests
-
-### Writing Tests
-
-Test files are organized hierarchically:
-```
-tests/
-├── claude/           # Claude Code backup/restore tests
-├── mac/              # mac.sh installation smoke tests
-├── setup/            # setup-profile.sh smoke tests
-├── update/           # update.sh smoke tests
-├── utils/            # Utility function tests
-├── helpers/          # Shared test utilities (setup, assertions, mocks)
-└── fixtures/         # Test data (JSON files)
-```
-
-See existing test files for examples. Key patterns:
-- Use `setup_test_env()` for isolated temp directories
-- Use jq-based assertions from `tests/helpers/assertions.bash`
-- Load fixtures from `tests/fixtures/` for test data
-- Source production scripts and test functions directly
+Tests run automatically via pre-commit hook and GitHub Actions. See [AGENTS.md](./AGENTS.md) for test structure, patterns, and writing guides.
 
 ## 🛡 Safety Features
 
@@ -348,51 +283,9 @@ grep ERROR .supercharged_install.log  # Filter for errors
 
 ### Security Enforcement
 
-**This repository is designed for use on both personal and work machines** with comprehensive security enforcement.
+**This repository runs on both personal and work machines** with automated security enforcement: pre-commit hooks (shellcheck, secrets detection, hardcoded paths, large files, tests), commitlint, and 11 Claude Code hookify rules.
 
-#### Automated Git Hooks
-
-**Pre-commit hook** runs 7 checks before every commit (via Claude Code PreToolUse hook):
-1. ✅ **Shellcheck validation** - REQUIRED (commit fails if not installed)
-2. ✅ **Secrets detection** - Blocks API keys, tokens, passwords
-3. ✅ **Hardcoded paths** - Blocks `/Users/username/` in dotfiles (must use `$HOME`)
-4. ✅ **.secrets template safety** - Ensures no real credentials
-5. ✅ **Claude config sanitization** - Warns about work marketplace data
-6. ✅ **Large file detection** - Blocks files >1MB
-7. ✅ **BATS tests** - Runs test suite if bats is installed
-
-**Commitlint** enforces conventional commit format via Claude Code PostToolUse hook with rollback:
-```bash
-feat(scope): description
-fix(scope): description
-docs(scope): description
-chore(scope): description
-```
-
-**Verification** (optional):
-```bash
-# Verify shellcheck installed
-shellcheck --version
-
-# Test hooks work (commit via Claude Code)
-# Should see: 🔒 Running security checks...
-```
-
-#### Security Best Practices
-
-✅ **DO**:
-- Use `$HOME/path` instead of `/Users/yourname/path`
-- Keep `.secrets` as template only with placeholders like `YOUR_API_KEY_HERE`
-- Run `npm run lint` before committing
-- Follow conventional commit format
-
-❌ **DON'T**:
-- Hardcode machine-specific paths in dotfiles
-- Commit real credentials or API keys
-- Bypass security hooks with `--no-verify` (blocked by Claude Code hookify)
-- Skip shellcheck validation
-
-**For full security documentation**, see [SECURITY.md](./SECURITY.md).
+See [SECURITY.md](./SECURITY.md) for full details.
 
 ## 🎯 Customization
 
@@ -532,20 +425,8 @@ exec zsh
 source ~/.zshrc
 ```
 
-### Debug Mode
-Enable verbose logging by checking:
-```bash
-cd /path/to/supercharged
-cat .supercharged_install.log
-```
-
 ### Reset Everything
-Complete reset (⚠️ **Careful** - this removes all configurations):
 ```bash
 # Restore from backup first
 npm run restore
-
-# Optional: Remove installed packages (use with extreme caution)
-# brew list | xargs brew uninstall --force
-# rm -rf ~/.oh-my-zsh ~/.asdf
 ```

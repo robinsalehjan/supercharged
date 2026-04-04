@@ -98,135 +98,36 @@ git add file.txt
 git commit -m "feat: add feature"  # ✅ Passes
 ```
 
-### Emergency Bypass (NOT RECOMMENDED)
+## Best Practices
 
-```bash
-# IF YOU ABSOLUTELY MUST bypass hooks (emergency only):
-git commit --no-verify -m "emergency: fix critical issue"
+- Use `$HOME/path` instead of `/Users/name/path`
+- Use placeholders in templates (`YOUR_API_KEY_HERE`)
+- Run `npm run lint` before committing
+- Follow conventional commits (`feat(scope): message`)
+- Never commit real credentials or large files
+- Never bypass hooks with `--no-verify` (blocked by hookify)
 
-# NOTE: Claude Code will BLOCK this with hookify rule
-# You must have explicit user permission
-```
+## Setup
 
-## Security Best Practices
-
-### ✅ DO
-
-- **Use environment variables:** `$HOME/path` instead of `/Users/robin/path`
-- **Use placeholders in templates:** `YOUR_API_KEY_HERE`
-- **Run shellcheck:** `npm run lint` before committing
-- **Follow conventional commits:** `feat(scope): message`
-- **Keep .secrets as template:** Never commit real credentials
-- **Run security checks:** Let pre-commit hook validate everything
-
-### ❌ DON'T
-
-- **Hardcode paths:** `/Users/yourname/` or `/home/yourname/`
-- **Commit secrets:** API keys, tokens, passwords
-- **Bypass hooks:** `--no-verify` circumvents all security
-- **Use sudo in automation:** Scripts should prompt if needed
-- **Skip shellcheck:** Required for security and quality
-- **Commit large files:** Keep repository lightweight
-
-## Installation/Setup
-
-### Fresh Machine Setup
-
-```bash
-# 1. Clone repository
-git clone https://github.com/yourusername/supercharged.git
-cd supercharged
-
-# 2. Install dependencies and run setup
-npm install
-npm run setup
-
-# Setup automatically:
-# ✅ Installs shellcheck via Homebrew
-# ✅ Configures git hooks path (.husky)
-# ✅ Makes hooks executable
-# ✅ Copies dotfiles to $HOME
-# ✅ Restores Claude Code config
-
-# 3. Test hooks work (optional verification)
-git commit --allow-empty -m "test: verify hooks"
-# Should see: 🔒 Running security checks...
-```
-
-### Verifying Security Setup
-
-```bash
-# Check shellcheck installed (automatically via setup)
-shellcheck --version
-
-# Check git hooks path (automatically configured via setup)
-git config core.hooksPath
-# Should output: .husky
-
-# Check hook permissions (automatically set via setup)
-ls -la .husky/
-# Should show executable bits (rwxr-xr-x)
-
-# Count hookify rules (created by Claude Code)
-ls .claude/hookify.*.local.md 2>/dev/null | wc -l
-# Should output: 11 (if using Claude Code)
-
-# Test hooks work
-git commit --allow-empty -m "test: verify hooks"
-# Should see: 🔒 Running security checks...
-```
+Security is configured automatically by `npm run setup` (installs shellcheck, configures git hooks path to `.husky`, sets permissions). See [README.md](./README.md) for installation instructions.
 
 ## Troubleshooting
 
-### Hooks Not Running
-
 ```bash
-# Verify git hooks path
-git config core.hooksPath
-# If empty or wrong: git config core.hooksPath .husky
-
-# Make hooks executable
+# Hooks not running
+git config core.hooksPath              # Should output: .husky
 chmod +x .husky/pre-commit .husky/commit-msg
 
-# Test manually
-./.husky/pre-commit
-```
-
-### Shellcheck Not Found
-
-```bash
-# Install shellcheck
+# Shellcheck not found
 brew install shellcheck
 
-# Verify installation
-shellcheck --version
-
-# Test manually
-npm run lint
+# False positives - review the error, use proper patterns ($HOME vs /Users/name)
 ```
 
-### False Positives
-
-If the security checks flag legitimate code:
-
-1. **Review the error** - Is it actually a security issue?
-2. **Fix if possible** - Use proper patterns (e.g., $HOME vs /Users/robin)
-3. **If truly legitimate** - Contact maintainer to adjust patterns
-4. **Emergency only** - Get user permission for `--no-verify`
-
-## Files Modified for Security
+## Files
 
 | File | Purpose | Committed |
 |------|---------|-----------|
-| `.husky/pre-commit` | Git pre-commit security checks | ✅ Yes |
-| `.husky/commit-msg` | Commit message validation | ✅ Yes |
-| `.claude/hookify.*.local.md` | Claude Code behavior rules (11 files) | ❌ No (gitignored) |
-| `SECURITY.md` | This documentation | ✅ Yes |
-
-## Questions?
-
-- **"Can I disable security checks?"** - Not recommended. Use `--no-verify` only in emergencies with explicit permission.
-- **"Why is shellcheck required?"** - Prevents security vulnerabilities and errors in shell scripts.
-- **"Why block hardcoded paths?"** - Dotfiles must work on both personal and work machines.
-- **"What about Claude backups?"** - Automatically sanitized to remove work related marketplace data.
-- **"Why prevent --no-verify?"** - Bypassing security is dangerous; hookify blocks this in Claude Code sessions.
+| `.husky/pre-commit` | Git pre-commit security checks | Yes |
+| `.husky/commit-msg` | Commit message validation | Yes |
+| `.claude/hookify.*.local.md` | Claude Code behavior rules (11 files) | No (gitignored) |
