@@ -28,7 +28,9 @@ See [AGENTS.md](./AGENTS.md) for complete npm commands reference.
 - **Logging**: Use `log_with_level "INFO|WARN|ERROR|SUCCESS" "message"` from `utils.sh`
 - **Error handling**: Include `trap cleanup EXIT` in scripts
 - **Tests**: BATS (Bash Automated Testing System); test files in `tests/`; use `setup_test_env` + `teardown_test_env`
-- **Commits**: Conventional format preferred (not enforced). Scope optional: `feat(backup):`, `fix(restore):`, `chore(deps):`
+- **Commits**: Conventional format preferred (not enforced). Scope optional.
+  - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `build`, `ci`, `revert`, `wip`, `update`, `add`, `remove`, `web`, `copilot`
+  - Examples: `feat(backup): add new feature`, `fix(restore): handle edge case`, `chore(deps): bump versions`
 - **Shell scripts**: Written for zsh; ShellCheck `--shell=bash` flags (SC1071, SC2296) are safe to ignore
 - **Dotfiles**: Use env vars, no hardcoded paths
 
