@@ -30,6 +30,7 @@ PRESERVE_MARKETPLACES=("vend-plugins")
 INJECT_SETTINGS_ENV_VARS=("GITHUB_PERSONAL_ACCESS_TOKEN")
 
 FORCE_RESTORE=false
+SECRETS_LOADED=false
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -310,28 +311,31 @@ merge_marketplace_config() {
     fi
 }
 
+# Load ~/.secrets once; sets SECRETS_LOADED=true on success
+load_secrets() {
+    local secrets_file="$HOME/.secrets"
+    if [ ! -f "$secrets_file" ]; then
+        log_with_level "WARN" "No secrets file found at $secrets_file - credentials will not be injected"
+        log_with_level "WARN" "Copy dot_files/.secrets to ~/.secrets and fill in your values"
+        return 1
+    fi
+    # shellcheck source=/dev/null
+    source "$secrets_file" 2>/dev/null || { log_with_level "WARN" "Failed to source $secrets_file"; return 1; }
+    SECRETS_LOADED=true
+}
+
 # Function to inject global env vars from ~/.secrets back into settings.json
 # Complements restore_mcp_servers: MCP-specific vars (STITCH_API_KEY) are handled there
 # via $PLACEHOLDER substitution; this handles global Claude Code env vars (GITHUB_PERSONAL_ACCESS_TOKEN)
 restore_settings_env() {
     local settings_json="$CLAUDE_HOME/settings.json"
-    local secrets_file="$HOME/.secrets"
 
     if [ ! -f "$settings_json" ]; then
         log_with_level "WARN" "settings.json not found, skipping env var injection"
         return
     fi
 
-    if [ ! -f "$secrets_file" ]; then
-        log_with_level "INFO" "No secrets file at $secrets_file, skipping env var injection"
-        log_with_level "INFO" "Create $secrets_file with your credentials (e.g. export GITHUB_PERSONAL_ACCESS_TOKEN='...')"
-        return
-    fi
-
-    # shellcheck source=/dev/null
-    source "$secrets_file" 2>/dev/null || log_with_level "WARN" "Failed to source $secrets_file"
-
-    # Count vars that are actually set after sourcing
+    # Count vars that are actually set
     local injected_count=0
     for var in "${INJECT_SETTINGS_ENV_VARS[@]}"; do
         if printenv "$var" > /dev/null 2>&1; then
@@ -340,7 +344,7 @@ restore_settings_env() {
     done
 
     if [ "$injected_count" -eq 0 ]; then
-        log_with_level "INFO" "No env vars to inject (not set in $secrets_file)"
+        log_with_level "INFO" "No env vars to inject (not found in ~/.secrets)"
         return
     fi
 
@@ -377,7 +381,6 @@ restore_settings_env() {
 restore_mcp_servers() {
     local src="$CLAUDE_CONFIG_DIR/mcp_servers.json"
     local settings_json="$CLAUDE_HOME/settings.json"
-    local secrets_file="$HOME/.secrets"
 
     if [ ! -f "$src" ]; then
         log_with_level "INFO" "No MCP server configuration found in repository"
@@ -389,13 +392,9 @@ restore_mcp_servers() {
         return
     fi
 
-    # Source secrets to populate env vars for placeholder substitution
-    if [ -f "$secrets_file" ]; then
-        # shellcheck source=/dev/null
-        source "$secrets_file" 2>/dev/null || log_with_level "WARN" "Failed to source $secrets_file"
-    else
-        log_with_level "WARN" "Secrets file not found at $secrets_file - MCP env vars will not be substituted"
-        log_with_level "WARN" "Create $secrets_file with your API keys (e.g. export STITCH_API_KEY='...')"
+    if [ "$SECRETS_LOADED" = false ]; then
+        log_with_level "WARN" "Skipping MCP server restore - API key placeholders would remain unsubstituted"
+        return 1
     fi
 
     # Expand $HOME placeholders and substitute $VAR_NAME env placeholders via jq env object
@@ -451,6 +450,9 @@ restore_config_file \
     "$CLAUDE_CONFIG_DIR/settings.json" \
     "$CLAUDE_HOME/settings.json" \
     "settings.json"
+
+# Load ~/.secrets once — used by both restore_settings_env and restore_mcp_servers
+load_secrets || true
 
 # Re-inject sensitive env vars stripped at backup time (sourced from ~/.secrets)
 restore_settings_env
