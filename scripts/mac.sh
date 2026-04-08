@@ -144,6 +144,7 @@ cask \"google-chrome\"
 cask \"font-jetbrains-mono-nerd-font\"
 cask \"ollama\"
 cask \"reveal\"
+cask \"mullvad-vpn\"
 
 mas \"AdBlock\", id: 1402042596
 mas \"DaisyDisk\", id: 411643860"

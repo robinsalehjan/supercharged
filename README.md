@@ -74,8 +74,9 @@ raycast            # macOS productivity launcher
 google-chrome      # Web browser
 
 # Utilities
-wireshark  # Network protocol analyzer
-spotify    # Music streaming
+wireshark    # Network protocol analyzer
+spotify      # Music streaming
+mullvad-vpn  # Privacy-focused VPN client
 ```
 
 ### ZSH Enhancements

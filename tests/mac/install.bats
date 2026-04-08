@@ -188,6 +188,7 @@ run_zsh_func() {
   [[ "$output" == *'spotify'* ]]
   [[ "$output" == *'visual-studio-code'* ]]
   [[ "$output" == *'raycast'* ]]
+  [[ "$output" == *'mullvad-vpn'* ]]
 }
 
 # =============================================================================
