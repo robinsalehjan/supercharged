@@ -16,6 +16,8 @@ See [AGENTS.md](./AGENTS.md) for complete npm commands reference.
 **Most common**:
 - `npm run setup` - Fresh install (interactive)
 - `npm run update` - Update all components
+- `npm run validate` - Verify all tools installed correctly
+- `npm run update:dry-run` - Preview outdated packages (read-only, safe)
 - `npm run backup:claude` - Backup Claude Code config to repo
 - `npm run restore:claude:force` - Restore Claude Code config from repo
 - `npm run lint` - ShellCheck all scripts
@@ -47,7 +49,7 @@ See [AGENTS.md](./AGENTS.md) for detailed code patterns and examples.
 
 **This repository is used on personal AND work machines** — comprehensive security enforced:
 
-**Automated checks**: Pre-commit (secrets, paths, shellcheck) and 11 hookify rules. See [SECURITY.md](./SECURITY.md) for details and `.claude/hookify.*.local.md` for rules.
+**Automated checks**: Pre-commit (secrets, paths, shellcheck) and hookify rules. See [SECURITY.md](./SECURITY.md) for details and `.claude/hookify.*.local.md` for rules.
 
 **Key rules**:
 - Never commit secrets (`.secrets` is template only, in `.gitignore`)
