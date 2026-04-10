@@ -71,14 +71,5 @@
       ],
       "env": {}
     },
-    "stitch": {
-      "type": "stdio",
-      "command": "$HOME/.asdf/shims/npx",
-      "args": [
-        "@_davideast/stitch-mcp",
-        "proxy"
-      ],
-      "env": {}
-    }
   }
 }

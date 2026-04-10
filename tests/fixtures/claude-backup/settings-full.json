@@ -7,19 +7,8 @@
   },
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
-    "GITHUB_PERSONAL_ACCESS_TOKEN": "test_placeholder_not_a_real_token",
-    "STITCH_API_KEY": "test_placeholder_not_a_real_key"
+    "GITHUB_PERSONAL_ACCESS_TOKEN": "test_placeholder_not_a_real_token"
   },
   "theme": "dark",
-  "model": "claude-sonnet-4-5",
-  "mcpServers": {
-    "stitch": {
-      "type": "stdio",
-      "command": "$HOME/.asdf/shims/stitch-mcp",
-      "args": ["proxy"],
-      "env": {
-        "STITCH_API_KEY": "test_placeholder_not_a_real_key"
-      }
-    }
-  }
+  "model": "claude-sonnet-4-5"
 }

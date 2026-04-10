@@ -26,7 +26,6 @@ PRESERVE_MARKETPLACES=("vend-plugins")
 
 # List of env vars to inject from ~/.secrets back into settings.json
 # Must mirror SANITIZE_ENV_VARS in backup-claude.sh (what's stripped at backup, re-injected at restore)
-# Note: MCP-specific vars (e.g. STITCH_API_KEY) are handled separately by restore_mcp_servers
 INJECT_SETTINGS_ENV_VARS=("GITHUB_PERSONAL_ACCESS_TOKEN")
 
 FORCE_RESTORE=false
@@ -325,8 +324,6 @@ load_secrets() {
 }
 
 # Function to inject global env vars from ~/.secrets back into settings.json
-# Complements restore_mcp_servers: MCP-specific vars (STITCH_API_KEY) are handled there
-# via $PLACEHOLDER substitution; this handles global Claude Code env vars (GITHUB_PERSONAL_ACCESS_TOKEN)
 restore_settings_env() {
     local settings_json="$CLAUDE_HOME/settings.json"
 

@@ -8,17 +8,5 @@
       "mcp"
     ],
     "env": {}
-  },
-  "stitch": {
-    "type": "stdio",
-    "command": "$HOME/.asdf/shims/npx",
-    "args": [
-      "@_davideast/stitch-mcp",
-      "proxy"
-    ],
-    "env": {
-      "STITCH_API_KEY": "$STITCH_API_KEY",
-      "PATH": "$HOME/.asdf/shims:$HOME/.asdf/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-    }
   }
 }
