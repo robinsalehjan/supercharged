@@ -126,7 +126,6 @@ brew \"ios-deploy\""
 
     if [[ "${INSTALL_DEV_TOOLS:-Y}" =~ ^[Yy] ]]; then
         content="$content
-brew \"k9s\"
 brew \"docker\"
 brew \"docker-compose\"
 brew \"colima\"

@@ -58,7 +58,6 @@ ios-deploy          # Deploy iOS apps from command line
 ### Development Tools (Optional - Interactive Setup)
 ```bash
 # Container and Kubernetes tools
-k9s                # Kubernetes CLI manager
 docker             # Docker CLI
 docker-compose     # Multi-container orchestration
 colima             # Lightweight container runtime for macOS (auto-starts)
@@ -294,7 +293,7 @@ See [SECURITY.md](./SECURITY.md) for full details.
 During setup, you'll be asked about:
 - **iOS Development Tools** [Y/n]: Xcode tools, Swift formatters, iOS deployment tools
 - **Data Science Tools** [y/N]: Jupyter, pandas, numpy, matplotlib, scikit-learn
-- **Additional Dev Tools** [Y/n]: Docker, Kubernetes tools (k9s), Colima
+- **Additional Dev Tools** [Y/n]: Docker, Colima
 
 Your preferences are saved to `~/.supercharged_preferences` and used during setup. These preferences include:
 - `INSTALL_IOS_TOOLS`: Whether to install iOS development tools

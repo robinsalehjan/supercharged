@@ -161,7 +161,6 @@ run_zsh_func() {
   [ "$status" -eq 0 ]
   [[ "$output" == *'docker'* ]]
   [[ "$output" == *'colima'* ]]
-  [[ "$output" == *'k9s'* ]]
 }
 
 @test "build_brewfile excludes dev tools when INSTALL_DEV_TOOLS=n" {

@@ -131,6 +131,7 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 - Sanitization: work-related marketplaces (e.g., `vend-plugins`) excluded
 - Merge logic: restore preserves local work plugins while applying repo settings
 - Timestamp comparison: only restores when repo config is newer (unless `--force`)
+- Secrets: `~/.secrets` is sourced once at restore start; MCP servers are skipped (not partially written) if it's absent
 
 **Script organization**:
 - `mac.sh`: validate system → Homebrew → Brewfile (conditional on user prefs) → ZSH plugins → ASDF → optional tools
