@@ -5,7 +5,7 @@ macOS environment setup automation — installs dev tools (Homebrew, ASDF), mana
 ## Project Structure
 
 See [README.md](./README.md) for detailed project structure. Key directories:
-- `scripts/` - Shell scripts (mac.sh, update.sh, utils.sh, backup/restore)
+- `scripts/` - Shell scripts (mac.sh, update.sh, utils.sh, restore.sh; backup-claude.sh/restore-claude.sh for Claude config)
 - `dot_files/` - Dotfiles copied to `$HOME`
 - `claude_config/` - Claude Code config backup
 

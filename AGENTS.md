@@ -63,6 +63,7 @@ npm run test:mac                  # mac.sh smoke tests
 npm run test:update               # update.sh smoke tests
 npm run test:setup                # setup-profile.sh smoke tests
 npm test -- --filter "pattern"    # Run specific tests
+# Note: no per-suite scripts for meta/ and restore/ — run via npm test only
 ```
 
 **Test structure:**
@@ -72,6 +73,9 @@ npm test -- --filter "pattern"    # Run specific tests
 - `tests/mac/install.bats` - Smoke tests for mac.sh (validate_system, build_brewfile, install_homebrew, parse_tool_versions)
 - `tests/setup/profile.bats` - Smoke tests for setup-profile.sh (dotfile copying, restoration points, version_gte)
 - `tests/update/update.bats` - Smoke tests for update.sh (argument parsing, help, dry-run, unknown flags)
+- `tests/meta/help.bats` - Tests for help.sh output
+- `tests/meta/lint.bats` - Tests for ShellCheck lint script
+- `tests/restore/restore.bats` - Tests for restore.sh (system backup restoration)
 - `tests/helpers/setup.bash` - Test environment setup and teardown utilities
 - `tests/helpers/assertions.bash` - jq-based JSON assertion utilities
 - `tests/helpers/mocks.bash` - Command mocking utilities
