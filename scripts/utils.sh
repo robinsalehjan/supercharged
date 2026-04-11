@@ -215,10 +215,16 @@ extract_tool_version() {
             ruby --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
             ;;
         "java")
-            java -version 2>&1 | head -n1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
+            local _out _line
+            _out=$(java -version 2>&1) || true
+            _line="${_out%%$'\n'*}"
+            echo "$_line" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
             ;;
         *)
-            $cmd --version 2>&1 | head -n1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
+            local _out _line
+            _out=$($cmd --version 2>&1) || true
+            _line="${_out%%$'\n'*}"
+            echo "$_line" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
             ;;
     esac
 }
