@@ -220,6 +220,18 @@ extract_tool_version() {
             _line="${_out%%$'\n'*}"
             echo "$_line" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
             ;;
+        "kotlin")
+            local _out _line
+            _out=$(kotlin -version 2>&1) || true
+            _line="${_out%%$'\n'*}"
+            _line="${_line%%\(*}"  # Strip "(JRE ...)" to avoid matching JRE version
+            echo "$_line" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
+            ;;
+        "shellcheck")
+            local _out
+            _out=$(shellcheck --version 2>&1) || true
+            echo "$_out" | grep -m1 'version:' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
+            ;;
         *)
             local _out _line
             _out=$($cmd --version 2>&1) || true
@@ -492,14 +504,30 @@ validate_installation() {
     local python_version="${TOOL_VERSIONS[python]}"
     local ruby_version="${TOOL_VERSIONS[ruby]}"
     local node_version="${TOOL_VERSIONS[nodejs]}"
+    local bundler_version="${TOOL_VERSIONS[bundler]}"
+    local gcloud_version="${TOOL_VERSIONS[gcloud]}"
+    local firebase_version="${TOOL_VERSIONS[firebase]}"
+    local java_version="${TOOL_VERSIONS[java]#*-}"  # Strip "openjdk-" prefix → semver
+    local kotlin_version="${TOOL_VERSIONS[kotlin]}"
 
     # Validate core tools
     validate_tool "brew" "" || ((failed++))
     validate_tool "git" "" || ((failed++))
     validate_tool "asdf" "" || ((failed++))
+    validate_tool "shellcheck" "" || ((failed++))
+    validate_tool "rtk" "" || ((failed++))
+
+    # Validate ASDF-managed languages and runtimes
     validate_tool "python3" "$python_version" || ((failed++))
     validate_tool "node" "$node_version" || ((failed++))
     validate_tool "ruby" "$ruby_version" || ((failed++))
+    validate_tool "bundler" "$bundler_version" || ((failed++))
+    validate_tool "java" "$java_version" || ((failed++))
+    validate_tool "kotlin" "$kotlin_version" || ((failed++))
+
+    # Validate cloud and DevOps tools
+    validate_tool "gcloud" "$gcloud_version" || ((failed++))
+    validate_tool "firebase" "$firebase_version" || ((failed++))
 
     if [ $failed -eq 0 ]; then
         echo "🎉 All validations passed!"
