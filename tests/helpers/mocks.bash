@@ -32,6 +32,19 @@ unmock_stat() {
   unset -f stat
 }
 
+# Ensure a mock bin dir exists on PATH for path-based mocking (works in zsh subprocesses)
+_ensure_mock_bin_dir() {
+  if [ -n "${TEST_TEMP_DIR:-}" ]; then
+    MOCK_BIN_DIR="$TEST_TEMP_DIR/bin"
+    mkdir -p "$MOCK_BIN_DIR"
+    export MOCK_BIN_DIR
+    case ":$PATH:" in
+      *":$MOCK_BIN_DIR:"*) ;;
+      *) export PATH="$MOCK_BIN_DIR:$PATH" ;;
+    esac
+  fi
+}
+
 # Mock brew to prevent real package operations
 mock_brew() {
   function brew() {
@@ -48,10 +61,31 @@ mock_brew() {
     esac
   }
   export -f brew
+
+  # Also create a path-based mock for zsh subprocess invocations
+  _ensure_mock_bin_dir
+  if [ -n "${MOCK_BIN_DIR:-}" ]; then
+    cat > "$MOCK_BIN_DIR/brew" << 'BREWEOF'
+#!/bin/sh
+case "$1" in
+  update|upgrade|cleanup|bundle) exit 0 ;;
+  list)
+    case "$2" in
+      --cask) echo "spotify visual-studio-code" ;;
+      *) echo "git jq shellcheck coreutils" ;;
+    esac
+    ;;
+  outdated) echo "" ;;
+  *) exit 0 ;;
+esac
+BREWEOF
+    chmod +x "$MOCK_BIN_DIR/brew"
+  fi
 }
 
 unmock_brew() {
   unset -f brew
+  [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/brew"
 }
 
 # Mock sw_vers for macOS version testing
@@ -103,15 +137,29 @@ unmock_xcode_select() {
 mock_ping_success() {
   function ping() { return 0; }
   export -f ping
+
+  # Also create a path-based mock for zsh subprocess invocations
+  _ensure_mock_bin_dir
+  if [ -n "${MOCK_BIN_DIR:-}" ]; then
+    printf '#!/bin/sh\nexit 0\n' > "$MOCK_BIN_DIR/ping"
+    chmod +x "$MOCK_BIN_DIR/ping"
+  fi
 }
 
 mock_ping_failure() {
   function ping() { return 1; }
   export -f ping
+
+  _ensure_mock_bin_dir
+  if [ -n "${MOCK_BIN_DIR:-}" ]; then
+    printf '#!/bin/sh\nexit 1\n' > "$MOCK_BIN_DIR/ping"
+    chmod +x "$MOCK_BIN_DIR/ping"
+  fi
 }
 
 unmock_ping() {
   unset -f ping
+  [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/ping"
 }
 
 # Mock asdf to prevent real plugin installs

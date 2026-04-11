@@ -5,7 +5,7 @@ macOS environment setup automation — installs dev tools (Homebrew, ASDF), mana
 ## Project Structure
 
 See [README.md](./README.md) for detailed project structure. Key directories:
-- `scripts/` - Shell scripts (mac.sh, update.sh, utils.sh, restore.sh; backup-claude.sh/restore-claude.sh for Claude config)
+- `scripts/` - Shell scripts (mac.sh, update.sh, utils.sh, restore.sh, setup-profile.sh, help.sh; backup-claude.sh/restore-claude.sh for Claude config)
 - `dot_files/` - Dotfiles copied to `$HOME`
 - `claude_config/` - Claude Code config backup
 
@@ -43,6 +43,7 @@ See [AGENTS.md](./AGENTS.md) for detailed code patterns and examples.
 - `.supercharged_install.log` - Installation/update logs in repo root (timestamped with levels)
 - `~/.supercharged_preferences` - User setup choices
 - `~/.supercharged_backups/` - Backup history with timestamps
+- `dot_files/.tool-versions` - ASDF tool versions (one tool per line); edit here to add/change a tool
 - Claude backup/restore uses portable `$HOME` paths, sanitizes work marketplaces, preserves local plugins
 
 ## Security
