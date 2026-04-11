@@ -7,17 +7,17 @@
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/hookify/unknown",
         "version": "unknown",
         "installedAt": "2026-02-01T00:33:03.464Z",
-        "lastUpdated": "2026-03-25T10:58:21.620Z",
+        "lastUpdated": "2026-04-08T22:15:44.340Z",
         "gitCommitSha": "27d2b86d72da27c64585150857cee8472ad47abb"
       }
     ],
     "superpowers@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.6",
-        "version": "5.0.6",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7",
+        "version": "5.0.7",
         "installedAt": "2026-02-01T00:33:05.232Z",
-        "lastUpdated": "2026-03-25T21:14:59.514Z",
+        "lastUpdated": "2026-04-08T10:52:46.419Z",
         "gitCommitSha": "06b92f36820f38175b2ed6ff3f8df45157d54731"
       }
     ],
@@ -37,7 +37,7 @@
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/firebase/unknown",
         "version": "unknown",
         "installedAt": "2026-02-04T23:06:20.033Z",
-        "lastUpdated": "2026-03-25T10:58:21.604Z",
+        "lastUpdated": "2026-04-08T22:15:44.341Z",
         "gitCommitSha": "27d2b86d72da27c64585150857cee8472ad47abb"
       }
     ],
@@ -67,7 +67,7 @@
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/plugin-dev/unknown",
         "version": "unknown",
         "installedAt": "2026-02-04T23:07:22.264Z",
-        "lastUpdated": "2026-03-25T10:58:21.629Z",
+        "lastUpdated": "2026-04-08T22:15:44.341Z",
         "gitCommitSha": "27d2b86d72da27c64585150857cee8472ad47abb"
       }
     ],
@@ -87,7 +87,7 @@
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/pr-review-toolkit/unknown",
         "version": "unknown",
         "installedAt": "2026-02-22T15:12:47.878Z",
-        "lastUpdated": "2026-03-25T10:58:21.610Z",
+        "lastUpdated": "2026-04-08T22:15:44.340Z",
         "gitCommitSha": "aa296ec81e8ccb49c9784f167c2c0aa625a86cec"
       }
     ],
@@ -107,17 +107,7 @@
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/frontend-design/unknown",
         "version": "unknown",
         "installedAt": "2026-02-27T11:41:01.948Z",
-        "lastUpdated": "2026-03-25T10:58:21.608Z",
-        "gitCommitSha": "55b58ec6e5649104f926ba7558b567dc8d33c5ff"
-      }
-    ],
-    "commit-commands@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/commit-commands/unknown",
-        "version": "unknown",
-        "installedAt": "2026-03-03T13:49:16.435Z",
-        "lastUpdated": "2026-03-25T10:58:21.609Z",
+        "lastUpdated": "2026-04-08T22:15:44.342Z",
         "gitCommitSha": "55b58ec6e5649104f926ba7558b567dc8d33c5ff"
       }
     ],
@@ -127,7 +117,7 @@
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/security-guidance/unknown",
         "version": "unknown",
         "installedAt": "2026-03-03T13:49:27.081Z",
-        "lastUpdated": "2026-03-25T10:58:21.607Z",
+        "lastUpdated": "2026-04-08T22:15:44.341Z",
         "gitCommitSha": "55b58ec6e5649104f926ba7558b567dc8d33c5ff"
       }
     ],
@@ -137,28 +127,17 @@
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/skill-creator/unknown",
         "version": "unknown",
         "installedAt": "2026-03-09T13:46:29.939Z",
-        "lastUpdated": "2026-03-25T10:58:21.618Z",
+        "lastUpdated": "2026-04-08T22:15:44.342Z",
         "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
       }
     ],
-    "ui-ux-pro-max@ui-ux-pro-max-skill": [
+    "agent-sdk-dev@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.0.1",
-        "version": "2.0.1",
-        "installedAt": "2026-03-19T20:07:17.144Z",
-        "lastUpdated": "2026-03-19T20:07:17.144Z",
-        "gitCommitSha": "07f4ef3ac2568c25a3b0c8ef5165a86abc3e56e4"
-      }
-    ],
-    "axiom@axiom-marketplace": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/axiom-marketplace/axiom/2.34.2",
-        "version": "2.34.2",
-        "installedAt": "2026-03-19T23:29:21.117Z",
-        "lastUpdated": "2026-03-19T23:29:21.117Z",
-        "gitCommitSha": "b52e59433712889016289a94319d497c48ccdf6d"
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/agent-sdk-dev/unknown",
+        "version": "unknown",
+        "installedAt": "2026-04-10T08:37:57.065Z",
+        "lastUpdated": "2026-04-10T08:37:57.065Z"
       }
     ]
   }

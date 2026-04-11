@@ -237,9 +237,9 @@ run_zsh_func() {
     echo \"ruby=\${TOOL_VERSIONS[ruby]}\"
   "
   [ "$status" -eq 0 ]
-  [[ "$output" == *"python=3.13.0"* ]]
-  [[ "$output" == *"nodejs=22.9.0"* ]]
-  [[ "$output" == *"ruby=2.7.7"* ]]
+  [[ "$output" == *"python=3.14.3"* ]]
+  [[ "$output" == *"nodejs=24.14.1"* ]]
+  [[ "$output" == *"ruby=3.4.9"* ]]
 }
 
 @test "parse_tool_versions skips comment lines" {
