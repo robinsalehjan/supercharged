@@ -64,7 +64,7 @@ if [ -f "$CLAUDE_HOME/settings.json" ]; then
 
     # Preserve all fields except enabledPlugins, then apply sanitized enabledPlugins and strip sensitive env vars
     # Write to temp file first to avoid corrupting output on pipeline failure
-    if ! jq "${jq_args[@]}" "(. + {enabledPlugins: ($jq_filter)})${env_del_filter}" "$CLAUDE_HOME/settings.json" | \
+    if ! jq -a "${jq_args[@]}" "(. + {enabledPlugins: ($jq_filter)})${env_del_filter}" "$CLAUDE_HOME/settings.json" | \
         make_path_portable > "$CLAUDE_CONFIG_DIR/settings.json.tmp"; then
         rm -f "$CLAUDE_CONFIG_DIR/settings.json.tmp"
         log_with_level "ERROR" "Failed to sanitize settings.json - backup aborted"

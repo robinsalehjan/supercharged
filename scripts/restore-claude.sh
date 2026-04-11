@@ -350,7 +350,7 @@ restore_settings_env() {
     vars_json=$(printf '%s\n' "${INJECT_SETTINGS_ENV_VARS[@]}" | jq -R . | jq -s .)
 
     local updated
-    if ! updated=$(jq --argjson vars "$vars_json" '
+    if ! updated=$(jq -a --argjson vars "$vars_json" '
         .env = (.env // {}) + (
             $vars |
             map(select(env[.] != null)) |
@@ -396,7 +396,7 @@ restore_mcp_servers() {
 
     # Expand $HOME placeholders and substitute $VAR_NAME env placeholders via jq env object
     local mcp_with_secrets
-    if ! mcp_with_secrets=$(expand_portable_path < "$src" | jq 'to_entries | map(
+    if ! mcp_with_secrets=$(expand_portable_path < "$src" | jq -a 'to_entries | map(
         .value.env = (.value.env // {} | to_entries | map(
             if (.value | type == "string") and (.value | startswith("$")) then
                 .value = (env[.value[1:]] // .value)
@@ -409,7 +409,7 @@ restore_mcp_servers() {
 
     # Merge MCP servers into settings.json (repo servers take precedence, local extras preserved)
     local updated
-    if ! updated=$(jq --argjson mcp "$mcp_with_secrets" '
+    if ! updated=$(jq -a --argjson mcp "$mcp_with_secrets" '
         .mcpServers = ((.mcpServers // {}) + $mcp)
     ' "$settings_json" 2>/dev/null); then
         log_with_level "ERROR" "Failed to merge MCP servers into settings.json"

@@ -145,7 +145,7 @@ inject_settings_env() {
   vars_json=$(printf '%s\n' "${inject_vars[@]}" | jq -R . | jq -s .)
 
   local updated
-  if ! updated=$(jq --argjson vars "$vars_json" '
+  if ! updated=$(jq -a --argjson vars "$vars_json" '
       .env = (.env // {}) + (
           $vars |
           map(select(env[.] != null)) |
@@ -209,6 +209,41 @@ inject_settings_env() {
 
   # Assert: env still empty
   assert_json_field "$TEMP_CLAUDE/settings.json" ".env | keys | length" "0"
+}
+
+@test "preserves ANSI escape sequences as JSON unicode escapes during env injection" {
+  # Arrange: settings.json with \u001b ANSI color codes in statusLine
+  load_fixture "claude-backup/settings-with-ansi.json" "$TEMP_CLAUDE/settings.json"
+  echo 'export GITHUB_PERSONAL_ACCESS_TOKEN="test-token"' > "$HOME/.secrets"
+
+  # Act: Inject env vars (runs through jq)
+  inject_settings_env \
+    "$TEMP_CLAUDE/settings.json" \
+    "$HOME/.secrets" \
+    "GITHUB_PERSONAL_ACCESS_TOKEN"
+
+  # Assert: Output is valid JSON (no literal control characters)
+  run python3 -c "import json; json.load(open('$TEMP_CLAUDE/settings.json'))"
+  [ "$status" -eq 0 ]
+
+  # Assert: No literal ESC bytes (0x1b) in the output file
+  run python3 -c "
+data = open('$TEMP_CLAUDE/settings.json', 'rb').read()
+esc_count = data.count(b'\x1b')
+u_count = data.count(b'\\\\u001b')
+if esc_count > 0:
+    print(f'Found {esc_count} literal ESC byte(s)')
+    exit(1)
+if u_count == 0:
+    print('No \\\\u001b sequences found - ANSI codes were lost')
+    exit(1)
+print(f'OK: {u_count} \\\\u001b escape(s), 0 literal ESC bytes')
+"
+  [ "$status" -eq 0 ]
+
+  # Assert: Env var was still injected correctly
+  assert_json_field "$TEMP_CLAUDE/settings.json" \
+    '.env.GITHUB_PERSONAL_ACCESS_TOKEN' "test-token"
 }
 
 # =============================================================================

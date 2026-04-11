@@ -31,7 +31,7 @@ _sanitize_json() {
   # Use ORIGINAL_HOME for path replacement since HOME is overridden in tests
   # pipefail ensures jq failures propagate through the pipe
   set -o pipefail
-  jq "$jq_filter" "$input_file" | sed "s|$ORIGINAL_HOME|\$HOME|g" > "$output_file"
+  jq -a "$jq_filter" "$input_file" | sed "s|$ORIGINAL_HOME|\$HOME|g" > "$output_file"
   local result=$?
   set +o pipefail
   return $result
@@ -210,6 +210,33 @@ sanitize_settings() {
   # Assert: Output is valid JSON with empty plugins
   assert_json_field "$TEMP_REPO_CONFIG/installed_plugins.json" ".plugins | length" "0"
   assert_json_field "$TEMP_REPO_CONFIG/installed_plugins.json" ".version" "2"
+}
+
+@test "preserves ANSI escape sequences as JSON unicode escapes during backup" {
+  # Arrange: Load settings fixture with \u001b ANSI color codes in statusLine
+  load_fixture "claude-backup/settings-with-ansi.json" "$TEMP_CLAUDE/settings.json"
+
+  # Act: Sanitize settings (runs through jq)
+  sanitize_settings "$TEMP_CLAUDE/settings.json" "$TEMP_REPO_CONFIG/settings.json"
+
+  # Assert: Output is valid JSON (no literal control characters)
+  run python3 -c "import json; json.load(open('$TEMP_REPO_CONFIG/settings.json'))"
+  [ "$status" -eq 0 ]
+
+  # Assert: No literal ESC bytes (0x1b) in the output file
+  run python3 -c "
+data = open('$TEMP_REPO_CONFIG/settings.json', 'rb').read()
+esc_count = data.count(b'\x1b')
+u_count = data.count(b'\\\\u001b')
+if esc_count > 0:
+    print(f'Found {esc_count} literal ESC byte(s)')
+    exit(1)
+if u_count == 0:
+    print('No \\\\u001b sequences found - ANSI codes were lost')
+    exit(1)
+print(f'OK: {u_count} \\\\u001b escape(s), 0 literal ESC bytes')
+"
+  [ "$status" -eq 0 ]
 }
 
 @test "handles all vend-plugins removed scenario" {
