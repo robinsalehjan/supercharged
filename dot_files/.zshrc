@@ -152,7 +152,7 @@ DISABLE_UNTRACKED_FILES_DIRTY="true"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git asdf zsh-autosuggestions zsh-syntax-highlighting gcloud docker tmux)
+plugins=(git asdf zsh-autosuggestions zsh-syntax-highlighting gcloud docker)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -300,6 +300,20 @@ function code() {
 # Check if command exists
 function exists() {
     command -v "$1" >/dev/null 2>&1
+}
+
+# tmux: name session after git repo or current directory
+function tmux() {
+  if [[ $# -gt 0 ]]; then
+    command tmux "$@"
+    return
+  fi
+
+  local name
+  name=$(git rev-parse --show-toplevel 2>/dev/null | xargs basename 2>/dev/null)
+  [[ -z "$name" ]] && name=$(basename "$PWD")
+
+  command tmux new-session -As "$name"
 }
 
 # Auto-start Colima if installed and not running
