@@ -459,3 +459,126 @@ EOF
 
   [ "$status" -ne 0 ]
 }
+
+# =============================================================================
+# JSON escape sequence preservation tests
+# =============================================================================
+
+@test "preserves ANSI escape sequences through full backup/restore cycle" {
+  # Arrange: Create settings.json with ANSI color codes (like real statusLine)
+  # Use jq to build it with proper escaping
+  jq -n --arg home "$HOME" '{
+    env: {
+      CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: "1"
+    },
+    hooks: {
+      PreToolUse: [
+        {
+          matcher: "Bash",
+          hooks: [
+            {
+              type: "command",
+              command: ($home + "/.claude/hooks/rtk-rewrite.sh")
+            }
+          ]
+        }
+      ]
+    },
+    statusLine: {
+      type: "command",
+      command: "input=$(cat); printf \"\\u001b[36m%s\\u001b[0m:\\u001b[34m%s\\u001b[0m\" \"user\" \"dir\""
+    }
+  }' > "$TEMP_CLAUDE/settings.json"
+
+  # Act: Backup (make portable)
+  make_path_portable < "$TEMP_CLAUDE/settings.json" > "$TEMP_REPO_CONFIG/settings.json"
+
+  # Act: Restore (expand)
+  expand_portable_path < "$TEMP_REPO_CONFIG/settings.json" > "$TEMP_CLAUDE/restored.json"
+
+  # Assert: Output is valid JSON
+  jq empty "$TEMP_CLAUDE/restored.json" || {
+    echo "Restored JSON is invalid"
+    cat "$TEMP_CLAUDE/restored.json"
+    return 1
+  }
+
+  # Assert: Hook command expanded
+  local hook_cmd
+  hook_cmd=$(jq -r '.hooks.PreToolUse[0].hooks[0].command' "$TEMP_CLAUDE/restored.json")
+  [[ "$hook_cmd" == "$HOME/.claude/hooks/rtk-rewrite.sh" ]] || {
+    echo "Hook command not expanded correctly: $hook_cmd"
+    return 1
+  }
+
+  # Assert: StatusLine ANSI codes preserved in JSON (as \u001b)
+  grep -q '\\u001b\[36m' "$TEMP_CLAUDE/restored.json" || {
+    echo "StatusLine ANSI cyan not preserved"
+    cat "$TEMP_CLAUDE/restored.json"
+    return 1
+  }
+
+  grep -q '\\u001b\[0m' "$TEMP_CLAUDE/restored.json" || {
+    echo "StatusLine ANSI reset not preserved"
+    cat "$TEMP_CLAUDE/restored.json"
+    return 1
+  }
+
+  grep -q '\\u001b\[34m' "$TEMP_CLAUDE/restored.json" || {
+    echo "StatusLine ANSI blue not preserved"
+    cat "$TEMP_CLAUDE/restored.json"
+    return 1
+  }
+}
+
+@test "preserves complex escape sequences in realistic settings.json" {
+  # Arrange: Use actual production settings.json format with jq
+  # This matches the real statusLine command with multiple ANSI codes and complex shell escaping
+  jq -n --arg home "$HOME" '{
+    hooks: {
+      PreToolUse: [
+        {
+          matcher: "Bash",
+          hooks: [
+            {
+              type: "command",
+              command: ($home + "/.claude/hooks/rtk-rewrite.sh")
+            }
+          ]
+        }
+      ]
+    },
+    statusLine: {
+      type: "command",
+      command: "input=$(cat); cwd=$(echo \"$input\" | jq -r '\''.workspace.current_dir'\''); user=$(whoami); dir=$(basename \"$cwd\"); branch=$(git -C \"$cwd\" branch --show-current 2>/dev/null || echo '\'''\''); git_info='\'''\''; [ -n \"$branch\" ] && git_info=\" (git:$branch)\"; remaining=$(echo \"$input\" | jq -r '\''.context_window.remaining_percentage // empty'\''); ctx_info='\'''\''; [ -n \"$remaining\" ] && ctx_info=\" [ctx:${remaining}%]\"; printf \"\\u001b[36m%s\\u001b[0m:\\u001b[34m%s\\u001b[0m%s%s\" \"$user\" \"$dir\" \"$git_info\" \"$ctx_info\""
+    }
+  }' > "$TEMP_CLAUDE/settings.json"
+
+  # Act: Backup and restore
+  make_path_portable < "$TEMP_CLAUDE/settings.json" > "$TEMP_REPO_CONFIG/settings.json"
+  expand_portable_path < "$TEMP_REPO_CONFIG/settings.json" > "$TEMP_CLAUDE/restored.json"
+
+  # Assert: Valid JSON
+  jq empty "$TEMP_CLAUDE/restored.json" || {
+    echo "Restored JSON is invalid"
+    cat "$TEMP_CLAUDE/restored.json"
+    return 1
+  }
+
+  # Assert: ANSI codes preserved in JSON (count \u001b sequences)
+  local esc_count
+  esc_count=$(grep -o '\\u001b' "$TEMP_CLAUDE/restored.json" | wc -l | tr -d ' ')
+  [[ "$esc_count" -ge 4 ]] || {
+    echo "Expected at least 4 ANSI escape sequences, found $esc_count"
+    cat "$TEMP_CLAUDE/restored.json"
+    return 1
+  }
+
+  # Assert: Path expanded
+  local hook_cmd
+  hook_cmd=$(jq -r '.hooks.PreToolUse[0].hooks[0].command' "$TEMP_CLAUDE/restored.json")
+  [[ "$hook_cmd" == "$HOME/.claude/hooks/rtk-rewrite.sh" ]] || {
+    echo "Hook path not expanded: $hook_cmd"
+    return 1
+  }
+}

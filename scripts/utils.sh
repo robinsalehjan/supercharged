@@ -194,11 +194,41 @@ check_version() {
 
 # Path portability helpers - make paths portable across machines
 make_path_portable() {
-    sed "s|$HOME|\$HOME|g"
+    # Save stdin to temp file to avoid shell escape sequence interpretation
+    local tmpfile
+    tmpfile=$(mktemp)
+    cat > "$tmpfile"
+
+    # Check if input is valid JSON
+    if jq empty "$tmpfile" 2>/dev/null; then
+        # JSON-aware path portability using jq walk to preserve escape sequences
+        # Uses walk to recursively process all string values in the JSON structure
+        jq --arg home "$HOME" 'walk(if type == "string" then gsub($home; "$HOME") else . end)' "$tmpfile"
+    else
+        # Fall back to sed for non-JSON files
+        sed "s|$HOME|\$HOME|g" "$tmpfile"
+    fi
+
+    rm -f "$tmpfile"
 }
 
 expand_portable_path() {
-    sed "s|\\\$HOME|$HOME|g"
+    # Save stdin to temp file to avoid shell escape sequence interpretation
+    local tmpfile
+    tmpfile=$(mktemp)
+    cat > "$tmpfile"
+
+    # Check if input is valid JSON
+    if jq empty "$tmpfile" 2>/dev/null; then
+        # JSON-aware path expansion using jq walk to preserve escape sequences
+        # Uses walk to recursively process all string values in the JSON structure
+        jq --arg home "$HOME" 'walk(if type == "string" then gsub("\\$HOME"; $home) else . end)' "$tmpfile"
+    else
+        # Fall back to sed for non-JSON files
+        sed "s|\\\$HOME|$HOME|g" "$tmpfile"
+    fi
+
+    rm -f "$tmpfile"
 }
 
 # Extract version from a tool command

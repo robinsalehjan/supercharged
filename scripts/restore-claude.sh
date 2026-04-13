@@ -185,7 +185,7 @@ merge_plugin_config() {
 
     # If destination doesn't exist, just copy
     if [ ! -f "$dest" ]; then
-        echo "$repo_content" > "$dest"
+        printf '%s\n' "$repo_content" > "$dest"
         log_with_level "SUCCESS" "Restored $name"
         return
     fi
@@ -246,7 +246,7 @@ merge_plugin_config() {
     # Build final merged object
     local merged
     merged=$(jq -n --argjson version "$version" --argjson plugins "$merged_plugins" '{version: $version, plugins: $plugins}')
-    echo "$merged" > "$dest"
+    printf '%s\n' "$merged" > "$dest"
 
     local preserved_count
     preserved_count=$(echo "$preserved_plugins" | jq 'keys | length' 2>/dev/null || echo "0")
@@ -276,7 +276,7 @@ merge_marketplace_config() {
 
     # If destination doesn't exist, just copy
     if [ ! -f "$dest" ]; then
-        echo "$repo_content" > "$dest"
+        printf '%s\n' "$repo_content" > "$dest"
         log_with_level "SUCCESS" "Restored $name"
         return
     fi
@@ -321,7 +321,7 @@ merge_marketplace_config() {
         return 1
     fi
 
-    echo "$merged" > "$dest"
+    printf '%s\n' "$merged" > "$dest"
 
     local preserved_count
     preserved_count=$(echo "$preserved_marketplaces" | jq 'keys | length' 2>/dev/null || echo "0")
@@ -385,7 +385,7 @@ restore_settings_env() {
     fi
 
     local tmp="${settings_json}.tmp.$$"
-    if echo "$updated" > "$tmp" && mv "$tmp" "$settings_json"; then
+    if printf '%s\n' "$updated" > "$tmp" && mv "$tmp" "$settings_json"; then
         log_with_level "SUCCESS" "Injected $injected_count env var(s) into settings.json from ~/.secrets"
     else
         rm -f "$tmp"
@@ -439,7 +439,7 @@ restore_mcp_servers() {
     fi
 
     local tmp="${settings_json}.tmp.$$"
-    if echo "$updated" > "$tmp" && mv "$tmp" "$settings_json"; then
+    if printf '%s\n' "$updated" > "$tmp" && mv "$tmp" "$settings_json"; then
         local server_count
         server_count=$(echo "$mcp_with_secrets" | jq 'keys | length' 2>/dev/null || echo "?")
         log_with_level "SUCCESS" "Restored $server_count global MCP server(s) to settings.json"
