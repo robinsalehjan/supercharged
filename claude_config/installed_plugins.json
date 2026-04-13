@@ -26,9 +26,8 @@
         "scope": "user",
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0",
         "version": "1.0.0",
-        "installedAt": "2026-02-01T23:13:11.990Z",
-        "lastUpdated": "2026-02-01T23:13:11.990Z",
-        "gitCommitSha": "27d2b86d72da27c64585150857cee8472ad47abb"
+        "installedAt": "2026-04-13T08:10:42.596Z",
+        "lastUpdated": "2026-04-13T08:10:42.596Z"
       }
     ],
     "firebase@claude-plugins-official": [
