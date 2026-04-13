@@ -30,6 +30,7 @@ See [AGENTS.md](./AGENTS.md) for complete npm commands reference.
 - **Logging**: Use `log_with_level "INFO|WARN|ERROR|SUCCESS" "message"` from `utils.sh`
 - **Error handling**: Include `trap cleanup EXIT` in scripts
 - **Tests**: BATS (Bash Automated Testing System); test files in `tests/`; use `setup_test_env` + `teardown_test_env`
+- **Testing workflow**: Add BATS tests in `tests/<script-name>/` for new script features; run `npm test` before committing script changes
 - **Commits**: Conventional format preferred (not enforced). Scope optional.
   - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `build`, `ci`, `revert`, `wip`, `update`, `add`, `remove`
   - Examples: `feat(backup): add new feature`, `fix(restore): handle edge case`, `chore(deps): bump versions`
@@ -43,8 +44,9 @@ See [AGENTS.md](./AGENTS.md) for detailed code patterns and examples.
 - `.supercharged_install.log` - Installation/update logs in repo root (timestamped with levels)
 - `~/.supercharged_preferences` - User setup choices
 - `~/.supercharged_backups/` - Backup history with timestamps
+- `.claude/` - Claude Code config: 11 hookify rules for security/conventions
 - `dot_files/.tool-versions` - ASDF tool versions (one tool per line); edit here to add/change a tool
-- Claude backup/restore uses portable `$HOME` paths, sanitizes work marketplaces, preserves local plugins
+- Claude backup/restore: sanitizes `@vend-plugins` marketplace and `GITHUB_PERSONAL_ACCESS_TOKEN` from backups, preserves local work plugins via additive merge on restore
 
 ## Security
 
