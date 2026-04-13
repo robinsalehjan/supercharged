@@ -44,26 +44,22 @@ if command -v asdf >/dev/null 2>&1 && asdf where kotlin >/dev/null 2>&1; then
     export KOTLIN_HOME=$(asdf where kotlin)
 fi
 
-# Function to deduplicate PATH
+# Function to deduplicate PATH (O(n) using associative array)
 deduplicate_path() {
     local IFS=':'
-    local path_array=($PATH)
-    local new_path=""
-    local seen=""
+    local -A seen
+    local new_path=()
 
-    for dir in "${path_array[@]}"; do
-        # Only check if the directory is not empty and not already seen
+    for dir in ${(s.:.)PATH}; do
+        # Only add if directory is not empty and not already seen
         # Don't filter based on directory existence to avoid removing essential system paths
-        if [[ -n "$dir" ]] && [[ ! "$seen" =~ (^|:)"$dir"(:|$) ]]; then
-            if [ -z "$new_path" ]; then
-                new_path="$dir"
-            else
-                new_path="$new_path:$dir"
-            fi
-            seen="$seen:$dir"
+        if [[ -n "$dir" && -z "${seen[$dir]}" ]]; then
+            new_path+=("$dir")
+            seen[$dir]=1
         fi
     done
-    echo "$new_path"
+
+    echo "${(j.:.)new_path}"
 }
 
 # Set PATH after ASDF is loaded
@@ -291,11 +287,6 @@ function docker-clean() {
 # Process management
 function myps() {
     ps "$@" -u "$USER" -o pid,%cpu,%mem,start,time,bsdtime,command
-}
-
-# VSCode
-function code() {
-    VSCODE_CWD="$PWD" open -b 'com.microsoft.VSCode' --args "$*"
 }
 
 # Check if command exists

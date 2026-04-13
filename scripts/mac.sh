@@ -20,16 +20,13 @@ validate_system() {
     fi
 
     # Check available disk space (in GB)
-    local available_space_raw
-    available_space_raw=$(df -h / | awk 'NR==2 {print $4}')
-    local available_space
-    available_space=$(echo "$available_space_raw" | tr -dc '0-9.')
+    # Use df -k for consistent kilobyte output, then convert to GB
+    local available_kb
+    available_kb=$(df -k / | awk 'NR==2 {print $4}')
+    local available_gb=$((available_kb / 1024 / 1024))
 
-    # Convert to integer for comparison (remove decimal part if present)
-    local available_space_int=${available_space%.*}
-
-    if [ -z "$available_space_int" ] || [ "$available_space_int" -lt "$REQUIRED_DISK_SPACE_GB" ]; then
-        log_with_level "ERROR" "At least ${REQUIRED_DISK_SPACE_GB}GB free space required (found: ${available_space_raw})"
+    if [ "$available_gb" -lt "$REQUIRED_DISK_SPACE_GB" ]; then
+        log_with_level "ERROR" "At least ${REQUIRED_DISK_SPACE_GB}GB free space required (found: ${available_gb}GB)"
         exit 1
     fi
 
@@ -263,9 +260,9 @@ main() {
         echo "$install_script" | bash
 
         # Restore Claude configuration from repository if available
-        if [ -x "$SCRIPT_DIR/restore-claude.sh" ]; then
+        if [ -x "$UTILS_SCRIPT_DIR/restore-claude.sh" ]; then
             log_with_level "INFO" "Restoring Claude configuration from repository..."
-            "$SCRIPT_DIR/restore-claude.sh" --force || log_with_level "WARN" "Claude config restore skipped or failed"
+            "$UTILS_SCRIPT_DIR/restore-claude.sh" --force || log_with_level "WARN" "Claude config restore skipped or failed"
         fi
 
         # Setup RTK for token optimization

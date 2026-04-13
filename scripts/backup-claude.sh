@@ -43,17 +43,9 @@ mkdir -p "$CLAUDE_CONFIG_DIR"
 
 # Backup settings.json (sanitize enabledPlugins from work-related marketplaces)
 if [ -f "$CLAUDE_HOME/settings.json" ]; then
-    # Build jq filter to remove enabledPlugins entries from sanitized marketplaces
-    # Uses --arg to avoid jq filter injection from marketplace names
-    jq_args=()
-    jq_filter='.enabledPlugins | to_entries'
-    i=0
-    for marketplace in "${SANITIZE_MARKETPLACES[@]}"; do
-        jq_args+=(--arg "mp$i" "@$marketplace")
-        jq_filter="$jq_filter | map(select(.key | endswith(\$mp$i) | not))"
-        i=$((i + 1))
-    done
-    jq_filter="$jq_filter | from_entries"
+    # Filter enabledPlugins to remove work-related marketplaces
+    settings_json=$(cat "$CLAUDE_HOME/settings.json")
+    filtered_plugins=$(filter_json_by_marketplace "$settings_json" ".enabledPlugins" "${SANITIZE_MARKETPLACES[@]}")
 
     # Build jq filter to remove sensitive env vars
     env_del_filter=""
@@ -64,7 +56,7 @@ if [ -f "$CLAUDE_HOME/settings.json" ]; then
 
     # Preserve all fields except enabledPlugins, then apply sanitized enabledPlugins and strip sensitive env vars
     # Write to temp file first to avoid corrupting output on pipeline failure
-    if ! jq -a "${jq_args[@]}" "(. + {enabledPlugins: ($jq_filter)})${env_del_filter}" "$CLAUDE_HOME/settings.json" | \
+    if ! jq -a --argjson plugins "$filtered_plugins" "(. + {enabledPlugins: \$plugins})${env_del_filter}" <<< "$settings_json" | \
         make_path_portable > "$CLAUDE_CONFIG_DIR/settings.json.tmp"; then
         rm -f "$CLAUDE_CONFIG_DIR/settings.json.tmp"
         log_with_level "ERROR" "Failed to sanitize settings.json - backup aborted"
@@ -78,21 +70,13 @@ fi
 
 # Backup plugin configuration files (strip home directory for portability and remove work-related marketplaces)
 if [ -f "$CLAUDE_HOME/plugins/installed_plugins.json" ]; then
-    # Build jq filter to remove all plugins from sanitized marketplaces
-    # Uses --arg to avoid jq filter injection from marketplace names
-    jq_args=()
-    jq_filter='.plugins | to_entries'
-    i=0
-    for marketplace in "${SANITIZE_MARKETPLACES[@]}"; do
-        jq_args+=(--arg "mp$i" "@$marketplace")
-        jq_filter="$jq_filter | map(select(.key | endswith(\$mp$i) | not))"
-        i=$((i + 1))
-    done
-    jq_filter="$jq_filter | from_entries"
+    # Filter plugins to remove work-related marketplaces
+    plugins_json=$(cat "$CLAUDE_HOME/plugins/installed_plugins.json")
+    filtered_plugins=$(filter_json_by_marketplace "$plugins_json" ".plugins" "${SANITIZE_MARKETPLACES[@]}")
 
     # Preserve version and update plugins
     # Write to temp file first to avoid corrupting output on pipeline failure
-    if ! jq "${jq_args[@]}" "{version: .version, plugins: ($jq_filter)}" "$CLAUDE_HOME/plugins/installed_plugins.json" | \
+    if ! jq --argjson plugins "$filtered_plugins" "{version: .version, plugins: \$plugins}" <<< "$plugins_json" | \
         make_path_portable > "$CLAUDE_CONFIG_DIR/installed_plugins.json.tmp"; then
         rm -f "$CLAUDE_CONFIG_DIR/installed_plugins.json.tmp"
         log_with_level "ERROR" "Failed to sanitize installed_plugins.json - backup aborted"

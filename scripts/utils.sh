@@ -204,39 +204,28 @@ expand_portable_path() {
 # Extract version from a tool command
 extract_tool_version() {
     local cmd=$1
+    local version_output
+
     case "$cmd" in
-        "python"|"python3")
-            python3 --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
-            ;;
-        "node"|"nodejs")
-            node --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
-            ;;
-        "ruby")
-            ruby --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
-            ;;
-        "java")
-            local _out _line
-            _out=$(java -version 2>&1) || true
-            _line="${_out%%$'\n'*}"
-            echo "$_line" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
-            ;;
         "kotlin")
-            local _out _line
-            _out=$(kotlin -version 2>&1) || true
-            _line="${_out%%$'\n'*}"
-            _line="${_line%%\(*}"  # Strip "(JRE ...)" to avoid matching JRE version
-            echo "$_line" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
+            # Special case: strip "(JRE ...)" to avoid matching JRE version
+            version_output=$(kotlin -version 2>&1 | head -1 || true)
+            version_output="${version_output%%\(*}"
+            echo "$version_output" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
             ;;
         "shellcheck")
-            local _out
-            _out=$(shellcheck --version 2>&1) || true
-            echo "$_out" | grep -m1 'version:' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
+            # Special case: version is in "version: X.Y.Z" format
+            version_output=$(shellcheck --version 2>&1 || true)
+            echo "$version_output" | grep -m1 'version:' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
+            ;;
+        "python"|"python3")
+            # Use python3 explicitly for consistency
+            python3 --version 2>&1 | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
             ;;
         *)
-            local _out _line
-            _out=$($cmd --version 2>&1) || true
-            _line="${_out%%$'\n'*}"
-            echo "$_line" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
+            # Default: try standard --version flag
+            version_output=$($cmd --version 2>&1 | head -1 || true)
+            echo "$version_output" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
             ;;
     esac
 }
@@ -493,6 +482,31 @@ setup_rtk() {
     else
         log_with_level "WARN" "RTK configuration failed or already configured"
     fi
+}
+
+# Filter JSON entries by marketplace suffix
+# Usage: filter_json_by_marketplace INPUT_JSON JQ_PATH MARKETPLACE1 MARKETPLACE2...
+# Returns: JSON with entries NOT matching @MARKETPLACE suffixes removed
+# Example: filter_json_by_marketplace file.json ".plugins" "vend-plugins" "work-plugins"
+filter_json_by_marketplace() {
+    local input="$1"
+    local jq_path="$2"
+    shift 2
+    local marketplaces=("$@")
+
+    # Build jq filter with --arg for safe injection
+    local jq_args=()
+    local jq_filter="$jq_path | to_entries"
+    local i=0
+
+    for marketplace in "${marketplaces[@]}"; do
+        jq_args+=(--arg "mp$i" "@$marketplace")
+        jq_filter="$jq_filter | map(select(.key | endswith(\$mp$i) | not))"
+        i=$((i + 1))
+    done
+    jq_filter="$jq_filter | from_entries"
+
+    jq "${jq_args[@]}" "$jq_filter" <<< "$input"
 }
 
 validate_installation() {

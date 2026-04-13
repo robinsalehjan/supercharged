@@ -50,7 +50,7 @@ run_zsh_func() {
 
 @test "validate_system passes with valid system" {
   create_mock_bin "sw_vers" "echo 14.0"
-  create_mock_bin "df" 'echo "Filesystem Size Used Avail Use% Mounted"; echo "/dev/disk1s1 460Gi 200Gi 50Gi 50% /"'
+  create_mock_bin "df" 'echo "Filesystem 1024-blocks Used Available Capacity Mounted"; echo "/dev/disk1s1 483041280 209715200 52428800 50% /"'
   create_mock_bin "xcode-select" "echo /Applications/Xcode.app/Contents/Developer; exit 0"
   create_mock_bin "ping" "exit 0"
   mkdir -p "$HOME/.oh-my-zsh"
@@ -62,7 +62,7 @@ run_zsh_func() {
 
 @test "validate_system rejects old macOS version" {
   create_mock_bin "sw_vers" "echo 11.0"
-  create_mock_bin "df" 'echo "Filesystem Size Used Avail Use% Mounted"; echo "/dev/disk1s1 460Gi 200Gi 50Gi 50% /"'
+  create_mock_bin "df" 'echo "Filesystem 1024-blocks Used Available Capacity Mounted"; echo "/dev/disk1s1 483041280 209715200 52428800 50% /"'
   create_mock_bin "xcode-select" "echo /Applications/Xcode.app/Contents/Developer; exit 0"
   create_mock_bin "ping" "exit 0"
   mkdir -p "$HOME/.oh-my-zsh"
@@ -74,7 +74,7 @@ run_zsh_func() {
 
 @test "validate_system rejects insufficient disk space" {
   create_mock_bin "sw_vers" "echo 14.0"
-  create_mock_bin "df" 'echo "Filesystem Size Used Avail Use% Mounted"; echo "/dev/disk1s1 460Gi 400Gi 5Gi 90% /"'
+  create_mock_bin "df" 'echo "Filesystem 1024-blocks Used Available Capacity Mounted"; echo "/dev/disk1s1 483041280 419430400 5242880 90% /"'
   create_mock_bin "xcode-select" "echo /Applications/Xcode.app/Contents/Developer; exit 0"
   create_mock_bin "ping" "exit 0"
   mkdir -p "$HOME/.oh-my-zsh"
@@ -86,7 +86,7 @@ run_zsh_func() {
 
 @test "validate_system fails without internet" {
   create_mock_bin "sw_vers" "echo 14.0"
-  create_mock_bin "df" 'echo "Filesystem Size Used Avail Use% Mounted"; echo "/dev/disk1s1 460Gi 200Gi 50Gi 50% /"'
+  create_mock_bin "df" 'echo "Filesystem 1024-blocks Used Available Capacity Mounted"; echo "/dev/disk1s1 483041280 209715200 52428800 50% /"'
   create_mock_bin "xcode-select" "echo /Applications/Xcode.app/Contents/Developer; exit 0"
   create_mock_bin "ping" "exit 1"
   mkdir -p "$HOME/.oh-my-zsh"
@@ -98,7 +98,7 @@ run_zsh_func() {
 
 @test "validate_system fails without Oh My Zsh" {
   create_mock_bin "sw_vers" "echo 14.0"
-  create_mock_bin "df" 'echo "Filesystem Size Used Avail Use% Mounted"; echo "/dev/disk1s1 460Gi 200Gi 50Gi 50% /"'
+  create_mock_bin "df" 'echo "Filesystem 1024-blocks Used Available Capacity Mounted"; echo "/dev/disk1s1 483041280 209715200 52428800 50% /"'
   create_mock_bin "xcode-select" "echo /Applications/Xcode.app/Contents/Developer; exit 0"
   create_mock_bin "ping" "exit 0"
   # No .oh-my-zsh directory

@@ -59,8 +59,30 @@ if [ ! -f "$CLAUDE_CONFIG_DIR/settings.json" ] && \
     exit 0
 fi
 
+# Cross-platform stat wrapper for modification time
+# Returns mtime in seconds since epoch
+get_file_mtime() {
+    local file="$1"
+    local mtime
+
+    # Try macOS/BSD stat first
+    if mtime=$(stat -f %m "$file" 2>/dev/null); then
+        echo "$mtime"
+        return 0
+    fi
+
+    # Fall back to GNU/Linux stat
+    if mtime=$(stat -c %Y "$file" 2>/dev/null); then
+        echo "$mtime"
+        return 0
+    fi
+
+    # If both fail, return 0
+    echo "0"
+    return 1
+}
+
 # Function to get the newest modification time from a directory's JSON files
-# Note: stat -f %m is macOS (BSD) specific; Linux uses stat -c %Y
 get_newest_mtime() {
     local dir="$1"
     local newest=0
@@ -68,7 +90,7 @@ get_newest_mtime() {
     for file in "$dir"/*.json; do
         if [ -f "$file" ]; then
             local mtime
-            mtime=$(stat -f %m "$file" 2>/dev/null || echo 0)
+            mtime=$(get_file_mtime "$file")
             if [ "$mtime" -gt "$newest" ]; then
                 newest=$mtime
             fi
@@ -93,7 +115,7 @@ is_repo_newer() {
 
     # Check settings.json
     if [ -f "$CLAUDE_HOME/settings.json" ]; then
-        mtime=$(stat -f %m "$CLAUDE_HOME/settings.json" 2>/dev/null || echo 0)
+        mtime=$(get_file_mtime "$CLAUDE_HOME/settings.json")
         if [ "$mtime" -gt "$home_mtime" ]; then
             home_mtime=$mtime
         fi
@@ -101,14 +123,14 @@ is_repo_newer() {
 
     # Check plugin files
     if [ -f "$CLAUDE_HOME/plugins/installed_plugins.json" ]; then
-        mtime=$(stat -f %m "$CLAUDE_HOME/plugins/installed_plugins.json" 2>/dev/null || echo 0)
+        mtime=$(get_file_mtime "$CLAUDE_HOME/plugins/installed_plugins.json")
         if [ "$mtime" -gt "$home_mtime" ]; then
             home_mtime=$mtime
         fi
     fi
 
     if [ -f "$CLAUDE_HOME/plugins/known_marketplaces.json" ]; then
-        mtime=$(stat -f %m "$CLAUDE_HOME/plugins/known_marketplaces.json" 2>/dev/null || echo 0)
+        mtime=$(get_file_mtime "$CLAUDE_HOME/plugins/known_marketplaces.json")
         if [ "$mtime" -gt "$home_mtime" ]; then
             home_mtime=$mtime
         fi
