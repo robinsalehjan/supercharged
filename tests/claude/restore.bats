@@ -26,14 +26,14 @@ teardown() {
 }
 
 # Helper: Merge plugin configs for restore testing
-# Note: Production (restore-claude.sh) uses dynamic jq filters built from the
-# PRESERVE_MARKETPLACES array and iterates over each marketplace with per-marketplace
-# error handling. This test hardcodes 'vend-plugins' for clarity. If new marketplaces
-# are added to PRESERVE_MARKETPLACES, corresponding test cases should be added here.
+# Mirrors merge_plugin_config() from restore-claude.sh with parameterized marketplaces.
+# Accepts marketplace array, builds dynamic jq filter for preservation.
 merge_plugin_configs() {
   local repo_file="$1"
   local local_file="$2"
   local output_file="$3"
+  shift 3
+  local marketplaces=("$@")
 
   set -o pipefail
 
@@ -44,13 +44,24 @@ merge_plugin_configs() {
     return 0
   fi
 
-  # Extract vend-plugins from local config
-  local local_vend
-  if ! local_vend=$(jq '.plugins // {} | to_entries | map(select(.key | endswith("@vend-plugins"))) | from_entries' "$local_file" 2>&1); then
-    echo "Failed to extract vend-plugins from local config: $local_vend" >&2
-    set +o pipefail
-    return 1
-  fi
+  # Build dynamic jq filter for preserving all specified marketplaces
+  local jq_args=()
+  local filter_parts=()
+
+  for marketplace in "${marketplaces[@]}"; do
+    # Extract plugins for this marketplace from local config
+    local preserved_var="preserved_${marketplace//-/_}"
+    local preserved_json
+    if ! preserved_json=$(jq ".plugins // {} | to_entries | map(select(.key | endswith(\"@${marketplace}\"))) | from_entries" "$local_file" 2>&1); then
+      echo "Failed to extract ${marketplace} from local config: $preserved_json" >&2
+      set +o pipefail
+      return 1
+    fi
+
+    # Add to jq args and filter
+    jq_args+=(--argjson "$preserved_var" "$preserved_json")
+    filter_parts+=("\$${preserved_var}")
+  done
 
   # Get repo plugins and expand paths
   local repo_plugins
@@ -60,9 +71,15 @@ merge_plugin_configs() {
     return 1
   fi
 
-  # Merge: repo + local vend plugins (local takes precedence)
+  # Build merge expression: . + $preserved_foo + $preserved_bar + ...
+  local merge_expr="."
+  for part in "${filter_parts[@]}"; do
+    merge_expr="$merge_expr + $part"
+  done
+
+  # Merge: repo + all preserved marketplaces (local takes precedence)
   local merged_plugins
-  if ! merged_plugins=$(echo "$repo_plugins" | jq --argjson vend "$local_vend" '. + $vend' 2>&1); then
+  if ! merged_plugins=$(echo "$repo_plugins" | jq "${jq_args[@]}" "$merge_expr" 2>&1); then
     echo "Failed to merge plugins: $merged_plugins" >&2
     set +o pipefail
     return 1
@@ -262,7 +279,8 @@ print(f'OK: {u_count} \\\\u001b escape(s), 0 literal ESC bytes')
   merge_plugin_configs \
     "$TEMP_REPO_CONFIG/installed_plugins.json" \
     "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" \
-    "$TEMP_CLAUDE_PLUGINS/merged.json"
+    "$TEMP_CLAUDE_PLUGINS/merged.json" \
+    "${TEST_PRESERVE_MARKETPLACES[@]}"
 
   # Assert: Repo plugins present
   assert_plugin_exists "$TEMP_CLAUDE_PLUGINS/merged.json" "superpowers@claude-plugins-official"
@@ -283,7 +301,8 @@ print(f'OK: {u_count} \\\\u001b escape(s), 0 literal ESC bytes')
   merge_plugin_configs \
     "$TEMP_REPO_CONFIG/installed_plugins.json" \
     "$TEMP_CLAUDE_PLUGINS/nonexistent.json" \
-    "$TEMP_CLAUDE_PLUGINS/merged.json"
+    "$TEMP_CLAUDE_PLUGINS/merged.json" \
+    "${TEST_PRESERVE_MARKETPLACES[@]}"
 
   # Assert: Repo plugins present
   assert_plugin_exists "$TEMP_CLAUDE_PLUGINS/merged.json" "superpowers@claude-plugins-official"
@@ -302,7 +321,8 @@ print(f'OK: {u_count} \\\\u001b escape(s), 0 literal ESC bytes')
   merge_plugin_configs \
     "$TEMP_REPO_CONFIG/installed_plugins.json" \
     "$TEMP_CLAUDE_PLUGINS/nonexistent.json" \
-    "$TEMP_CLAUDE_PLUGINS/merged.json"
+    "$TEMP_CLAUDE_PLUGINS/merged.json" \
+    "${TEST_PRESERVE_MARKETPLACES[@]}"
 
   # Assert: Paths expanded to actual HOME value
   local path
@@ -349,7 +369,8 @@ EOF
   merge_plugin_configs \
     "$TEMP_REPO_CONFIG/installed_plugins.json" \
     "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" \
-    "$TEMP_CLAUDE_PLUGINS/merged.json"
+    "$TEMP_CLAUDE_PLUGINS/merged.json" \
+    "${TEST_PRESERVE_MARKETPLACES[@]}"
 
   # Assert: All three vend plugins preserved
   assert_plugin_exists "$TEMP_CLAUDE_PLUGINS/merged.json" "vend-internal@vend-plugins"
@@ -369,7 +390,8 @@ EOF
   merge_plugin_configs \
     "$TEMP_REPO_CONFIG/installed_plugins.json" \
     "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" \
-    "$TEMP_CLAUDE_PLUGINS/merged.json"
+    "$TEMP_CLAUDE_PLUGINS/merged.json" \
+    "${TEST_PRESERVE_MARKETPLACES[@]}"
 
   # Assert: Repo plugins present
   assert_plugin_exists "$TEMP_CLAUDE_PLUGINS/merged.json" "superpowers@claude-plugins-official"
@@ -444,7 +466,8 @@ EOF
   run merge_plugin_configs \
     "$TEMP_REPO_CONFIG/installed_plugins.json" \
     "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" \
-    "$TEMP_CLAUDE_PLUGINS/merged.json"
+    "$TEMP_CLAUDE_PLUGINS/merged.json" \
+    "${TEST_PRESERVE_MARKETPLACES[@]}"
 
   [ "$status" -ne 0 ]
 }
