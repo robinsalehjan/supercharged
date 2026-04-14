@@ -16,6 +16,9 @@ setup() {
 
   # Unset vars that restore_settings_env injects so tests don't leak into each other
   unset GITHUB_PERSONAL_ACCESS_TOKEN
+
+  # Test configuration: define which marketplaces to preserve during restore
+  TEST_PRESERVE_MARKETPLACES=("vend-plugins")
 }
 
 teardown() {
