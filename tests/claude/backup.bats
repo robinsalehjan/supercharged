@@ -41,14 +41,27 @@ _sanitize_json() {
 }
 
 # Helper: Sanitize plugins for backup testing
+# Usage: sanitize_plugins INPUT OUTPUT MARKETPLACE...
 # Note: Production (backup-claude.sh) uses dynamic jq filters built from the
-# SANITIZE_MARKETPLACES array. This test uses hardcoded 'vend-plugins' filters
-# for clarity. If new marketplaces are added to SANITIZE_MARKETPLACES,
-# corresponding test cases should be added here.
+# SANITIZE_MARKETPLACES array. This test helper mirrors that approach.
 sanitize_plugins() {
-  _sanitize_json \
-    '{version: .version, plugins: (.plugins | to_entries | map(select(.key | endswith("@vend-plugins") | not)) | from_entries)}' \
-    "$1" "$2"
+  local input_file="$1"
+  local output_file="$2"
+  shift 2
+  local marketplaces=("$@")
+
+  # Build dynamic jq filter from marketplace array
+  local jq_filter='to_entries'
+  local i=0
+
+  for marketplace in "${marketplaces[@]}"; do
+    jq_filter="$jq_filter | map(select(.key | endswith(\"@$marketplace\") | not))"
+    i=$((i + 1))
+  done
+  jq_filter="$jq_filter | from_entries"
+
+  # Apply filter with path portability
+  _sanitize_json "{version: .version, plugins: (.plugins | $jq_filter)}" "$input_file" "$output_file"
 }
 
 sanitize_marketplaces() {
@@ -69,7 +82,7 @@ sanitize_settings() {
   load_fixture "claude-backup/plugins-mixed.json" "$TEMP_CLAUDE_PLUGINS/installed_plugins.json"
 
   # Act: Run sanitization
-  sanitize_plugins "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" "$TEMP_REPO_CONFIG/installed_plugins.json"
+  sanitize_plugins "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" "$TEMP_REPO_CONFIG/installed_plugins.json" "${TEST_SANITIZE_MARKETPLACES[@]}"
 
   # Assert: Vend plugins removed
   assert_plugin_not_exists "$TEMP_REPO_CONFIG/installed_plugins.json" "vend-internal@vend-plugins"
@@ -99,7 +112,7 @@ sanitize_settings() {
   load_fixture "claude-backup/plugins-mixed.json" "$TEMP_CLAUDE_PLUGINS/installed_plugins.json"
 
   # Act: Run sanitization (includes make_path_portable)
-  sanitize_plugins "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" "$TEMP_REPO_CONFIG/installed_plugins.json"
+  sanitize_plugins "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" "$TEMP_REPO_CONFIG/installed_plugins.json" "${TEST_SANITIZE_MARKETPLACES[@]}"
 
   # Assert: Paths contain $HOME placeholder
   local path
@@ -173,7 +186,7 @@ sanitize_settings() {
   load_fixture "claude-backup/plugins-mixed.json" "$TEMP_CLAUDE_PLUGINS/installed_plugins.json"
 
   # Act: Run sanitization
-  sanitize_plugins "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" "$TEMP_REPO_CONFIG/installed_plugins.json"
+  sanitize_plugins "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" "$TEMP_REPO_CONFIG/installed_plugins.json" "${TEST_SANITIZE_MARKETPLACES[@]}"
 
   # Assert: Version field preserved
   assert_json_field "$TEMP_REPO_CONFIG/installed_plugins.json" ".version" "2"
@@ -187,7 +200,7 @@ sanitize_settings() {
   load_fixture "claude-backup/plugins-malformed.json" "$TEMP_CLAUDE_PLUGINS/installed_plugins.json"
 
   # Act & Assert: Sanitization should fail with malformed input
-  run sanitize_plugins "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" "$TEMP_REPO_CONFIG/installed_plugins.json"
+  run sanitize_plugins "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" "$TEMP_REPO_CONFIG/installed_plugins.json" "${TEST_SANITIZE_MARKETPLACES[@]}"
 
   # Should fail (non-zero exit code)
   [ "$status" -ne 0 ]
@@ -197,7 +210,7 @@ sanitize_settings() {
   # Arrange: No fixture loaded (file doesn't exist)
 
   # Act: Attempt sanitization with missing file
-  run sanitize_plugins "$TEMP_CLAUDE_PLUGINS/nonexistent.json" "$TEMP_REPO_CONFIG/installed_plugins.json"
+  run sanitize_plugins "$TEMP_CLAUDE_PLUGINS/nonexistent.json" "$TEMP_REPO_CONFIG/installed_plugins.json" "${TEST_SANITIZE_MARKETPLACES[@]}"
 
   # Assert: Should fail
   [ "$status" -ne 0 ]
@@ -208,7 +221,7 @@ sanitize_settings() {
   echo '{"version": 2, "plugins": {}}' > "$TEMP_CLAUDE_PLUGINS/installed_plugins.json"
 
   # Act: Run sanitization
-  sanitize_plugins "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" "$TEMP_REPO_CONFIG/installed_plugins.json"
+  sanitize_plugins "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" "$TEMP_REPO_CONFIG/installed_plugins.json" "${TEST_SANITIZE_MARKETPLACES[@]}"
 
   # Assert: Output is valid JSON with empty plugins
   assert_json_field "$TEMP_REPO_CONFIG/installed_plugins.json" ".plugins | length" "0"
@@ -261,7 +274,7 @@ print(f'OK: {u_count} \\\\u001b escape(s), 0 literal ESC bytes')
 EOF
 
   # Act: Run sanitization
-  sanitize_plugins "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" "$TEMP_REPO_CONFIG/installed_plugins.json"
+  sanitize_plugins "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" "$TEMP_REPO_CONFIG/installed_plugins.json" "${TEST_SANITIZE_MARKETPLACES[@]}"
 
   # Assert: Result should have empty plugins object
   assert_json_field "$TEMP_REPO_CONFIG/installed_plugins.json" ".plugins | length" "0"
