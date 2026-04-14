@@ -514,6 +514,80 @@ setup_rtk() {
     fi
 }
 
+# Setup Plannotator (Visual annotation tool for AI coding agents)
+setup_plannotator() {
+    if command_exists plannotator; then
+        log_with_level "INFO" "Plannotator already installed"
+        return 0
+    fi
+
+    log_with_level "INFO" "Installing Plannotator..."
+
+    # Detect architecture
+    local arch
+    arch=$(uname -m)
+    if [[ "$arch" == "arm64" ]] || [[ "$arch" == "aarch64" ]]; then
+        arch="arm64"
+    elif [[ "$arch" == "x86_64" ]]; then
+        arch="x64"
+    else
+        log_with_level "ERROR" "Unsupported architecture: $arch"
+        return 1
+    fi
+
+    # Fetch latest version via GitHub API
+    local version
+    if command_exists gh; then
+        version=$(gh api repos/backnotprop/plannotator/releases/latest --jq '.tag_name' 2>/dev/null)
+    fi
+
+    if [ -z "$version" ]; then
+        log_with_level "WARN" "Could not fetch latest version via gh CLI, trying curl..."
+        version=$(curl -fsSL https://api.github.com/repos/backnotprop/plannotator/releases/latest | grep -o '"tag_name": *"[^"]*"' | sed 's/"tag_name": *"\(.*\)"/\1/' 2>/dev/null)
+    fi
+
+    if [ -z "$version" ]; then
+        log_with_level "ERROR" "Failed to determine latest plannotator version"
+        return 1
+    fi
+
+    log_with_level "INFO" "Latest plannotator version: $version"
+
+    # Download binary and checksum
+    local binary_url="https://github.com/backnotprop/plannotator/releases/download/${version}/plannotator-darwin-${arch}"
+    local checksum_url="https://github.com/backnotprop/plannotator/releases/download/${version}/plannotator-darwin-${arch}.sha256"
+    local tmp_dir
+    tmp_dir=$(mktemp -d)
+
+    if ! curl -fsSL -o "$tmp_dir/plannotator" "$binary_url"; then
+        log_with_level "ERROR" "Failed to download plannotator binary"
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    if ! curl -fsSL -o "$tmp_dir/plannotator.sha256" "$checksum_url"; then
+        log_with_level "ERROR" "Failed to download plannotator checksum"
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    # Verify checksum
+    if ! (cd "$tmp_dir" && shasum -a 256 -c plannotator.sha256 >/dev/null 2>&1); then
+        log_with_level "ERROR" "Plannotator checksum verification failed"
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    # Install to ~/.local/bin
+    mkdir -p "$HOME/.local/bin"
+    mv "$tmp_dir/plannotator" "$HOME/.local/bin/plannotator"
+    chmod +x "$HOME/.local/bin/plannotator"
+    rm -rf "$tmp_dir"
+
+    log_with_level "SUCCESS" "Plannotator installed successfully"
+    log_with_level "INFO" "Install the Claude Code plugin: /plugin marketplace add backnotprop/plannotator"
+}
+
 # Filter JSON entries by marketplace suffix
 # Usage: filter_json_by_marketplace INPUT_JSON JQ_PATH MARKETPLACE1 MARKETPLACE2...
 # Returns: JSON with entries NOT matching @MARKETPLACE suffixes removed

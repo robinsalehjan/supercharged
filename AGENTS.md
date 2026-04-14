@@ -177,6 +177,50 @@ rtk init -g --auto-patch    # Reconfigure hooks
 rtk init -g --uninstall     # Remove hooks
 ```
 
+## Plannotator (Visual Annotation Tool)
+
+Plannotator is a visual annotation tool for AI coding agents. It enables you to mark up and refine plans or code diffs using a visual UI, with team collaboration and encrypted sharing.
+
+**Installed by**: `setup_plannotator()` in `scripts/utils.sh` (downloads from GitHub releases)
+**Location**: `~/.local/bin/plannotator`
+**Claude Code plugin**: `backnotprop/plannotator` (manual installation required)
+
+**Features:**
+- Visual plan review with inline annotations
+- Automatic plan diff tracking when agents revise
+- Code review for git diffs and remote pull requests
+- File annotation and structured feedback
+- End-to-end encrypted sharing (auto-deletion after 7 days)
+
+**Usage:**
+```bash
+plannotator review [PR_URL]       # Review a pull request
+plannotator annotate <file>       # Annotate a file or folder
+plannotator last                  # Open last review session
+plannotator sessions              # List all review sessions
+plannotator archive               # Archive old sessions
+```
+
+**Claude Code integration:**
+After installation, add the plugin marketplace:
+```bash
+/plugin marketplace add backnotprop/plannotator
+```
+
+Then use slash commands in Claude Code:
+- `/plannotator-review` - Review code changes
+- `/plannotator-annotate` - Annotate plans or files
+- `/plannotator-last` - Open last session
+
+**Setup is automatic** during `npm run setup` or `npm run update`. To manually install:
+```bash
+# Via setup function (recommended)
+source scripts/utils.sh && setup_plannotator
+
+# Or manually download latest release from:
+# https://github.com/backnotprop/plannotator/releases
+```
+
 ## Adding New Tools
 
 **Homebrew package**: Edit `BREWFILE_CONTENT` in `scripts/mac.sh`, add `brew "name"` or `cask "name"` to the appropriate conditional section. Update README.md.

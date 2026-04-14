@@ -267,6 +267,9 @@ main() {
 
         # Setup RTK for token optimization
         setup_rtk
+
+        # Setup Plannotator for visual plan annotation
+        setup_plannotator
     fi
 
     # Install additional tools based on preferences

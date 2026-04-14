@@ -32,6 +32,7 @@ sqlite (lightweight SQL database), beads (distributed git-backed issue tracker f
 btop (resource monitor with CPU, memory, disk, network, and process stats)
 shellcheck (shell script linter), jq (JSON processor)
 rtk (Rust Token Killer - CLI proxy for 60-90% token savings in Claude Code)
+plannotator (Visual annotation tool for AI coding agents - plan review, code diff annotation)
 
 # Development languages (via asdf)
 nodejs   22.9.0       # LTS version, minimum 20.0.0 for modern features

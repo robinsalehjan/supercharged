@@ -5,6 +5,14 @@
       "repo": "anthropics/claude-plugins-official"
     },
     "installLocation": "$HOME/.claude/plugins/marketplaces/claude-plugins-official",
-    "lastUpdated": "2026-04-10T19:13:00.454Z"
+    "lastUpdated": "2026-04-14T13:21:58.644Z"
+  },
+  "plannotator": {
+    "source": {
+      "source": "github",
+      "repo": "backnotprop/plannotator"
+    },
+    "installLocation": "$HOME/.claude/plugins/marketplaces/plannotator",
+    "lastUpdated": "2026-04-14T13:38:22.117Z"
   }
 }
