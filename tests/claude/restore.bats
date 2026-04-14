@@ -101,11 +101,14 @@ merge_plugin_configs() {
 }
 
 # Helper: Merge marketplace configs for restore testing
-# Mirrors merge_marketplace_config() from restore-claude.sh with hardcoded 'vend-plugins'
+# Mirrors merge_marketplace_config() from restore-claude.sh
+# Args: repo_file local_file output_file marketplace1 [marketplace2 ...]
 merge_marketplace_configs() {
   local repo_file="$1"
   local local_file="$2"
   local output_file="$3"
+  shift 3
+  local -a marketplaces=("$@")
 
   set -o pipefail
 
@@ -126,10 +129,20 @@ merge_marketplace_configs() {
   local local_content
   local_content=$(cat "$local_file")
 
-  # Extract vend-plugins marketplace from local config
+  # Build dynamic jq filter for marketplace preservation
+  local jq_args=()
+  local jq_filter="."
+
+  for i in "${!marketplaces[@]}"; do
+    local mp="${marketplaces[$i]}"
+    jq_args+=(--arg "mp$i" "$mp")
+    jq_filter+=" | if has(\$mp$i) then . + {(\$mp$i): .[\$mp$i]} else . end"
+  done
+
+  # Extract preserved marketplaces from local config
   local preserved
-  if ! preserved=$(echo "$local_content" | jq 'if has("vend-plugins") then {"vend-plugins": .["vend-plugins"]} else {} end' 2>&1); then
-    echo "Failed to extract marketplace: $preserved" >&2
+  if ! preserved=$(echo "$local_content" | jq "${jq_args[@]}" "$jq_filter" 2>&1); then
+    echo "Failed to extract marketplaces: $preserved" >&2
     set +o pipefail
     return 1
   fi
@@ -415,7 +428,8 @@ EOF
   merge_marketplace_configs \
     "$TEMP_REPO_CONFIG/known_marketplaces.json" \
     "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json" \
-    "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json"
+    "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json" \
+    "${TEST_PRESERVE_MARKETPLACES[@]}"
 
   # Assert: Both marketplaces present
   assert_marketplace_exists "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json" "claude-plugins-official"
@@ -430,7 +444,8 @@ EOF
   merge_marketplace_configs \
     "$TEMP_REPO_CONFIG/known_marketplaces.json" \
     "$TEMP_CLAUDE_PLUGINS/nonexistent.json" \
-    "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json"
+    "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json" \
+    "${TEST_PRESERVE_MARKETPLACES[@]}"
 
   # Assert: Only repo marketplace present, no vend-plugins
   assert_marketplace_exists "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json" "claude-plugins-official"
@@ -446,7 +461,8 @@ EOF
   merge_marketplace_configs \
     "$TEMP_REPO_CONFIG/known_marketplaces.json" \
     "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json" \
-    "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json"
+    "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json" \
+    "${TEST_PRESERVE_MARKETPLACES[@]}"
 
   # Assert: Only repo marketplace present
   assert_marketplace_exists "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json" "claude-plugins-official"
@@ -481,7 +497,8 @@ EOF
   run merge_marketplace_configs \
     "$TEMP_REPO_CONFIG/known_marketplaces.json" \
     "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json" \
-    "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json"
+    "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json" \
+    "${TEST_PRESERVE_MARKETPLACES[@]}"
 
   [ "$status" -ne 0 ]
 }
