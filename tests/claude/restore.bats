@@ -5,6 +5,11 @@ load '../helpers/setup'
 load '../helpers/assertions'
 load '../helpers/mocks'
 
+# Test Configuration:
+# - To test with different marketplace, modify TEST_PRESERVE_MARKETPLACES in setup()
+# - Example: TEST_PRESERVE_MARKETPLACES=("palantir-plugins")
+# - Supports multiple marketplaces: TEST_PRESERVE_MARKETPLACES=("vend-plugins" "acme-plugins")
+
 setup() {
   setup_test_env
 

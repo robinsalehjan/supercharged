@@ -5,6 +5,11 @@ load '../helpers/setup'
 load '../helpers/assertions'
 load '../helpers/mocks'
 
+# Test Configuration:
+# - To test with different marketplace, modify TEST_SANITIZE_MARKETPLACES in setup()
+# - Example: TEST_SANITIZE_MARKETPLACES=("palantir-plugins")
+# - Supports multiple marketplaces: TEST_SANITIZE_MARKETPLACES=("vend-plugins" "acme-plugins")
+
 # Setup runs before each test
 setup() {
   setup_test_env
