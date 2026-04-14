@@ -82,7 +82,29 @@ sanitize_plugins() {
 }
 
 sanitize_marketplaces() {
-  _sanitize_json 'del(.["vend-plugins"])' "$1" "$2"
+  local input_file="$1"
+  local output_file="$2"
+  shift 2
+  local marketplaces=("$@")
+
+  # Build jq filter to delete each marketplace
+  local jq_args=()
+  local jq_filter='.'
+  local i=0
+
+  for marketplace in "${marketplaces[@]}"; do
+    jq_args+=(--arg "mp$i" "$marketplace")
+    jq_filter="$jq_filter | del(.[(\$mp$i)])"
+    i=$((i + 1))
+  done
+
+  # Apply filter with path portability
+  set -o pipefail
+  jq "${jq_args[@]}" "$jq_filter" "$input_file" | \
+    sed "s|$ORIGINAL_HOME|\$HOME|g" > "$output_file"
+  local result=$?
+  set +o pipefail
+  return $result
 }
 
 # Note: mirrors the production jq filter in backup-claude.sh which strips
@@ -115,7 +137,7 @@ sanitize_settings() {
   load_fixture "claude-backup/marketplaces-full.json" "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json"
 
   # Act: Run sanitization
-  sanitize_marketplaces "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json" "$TEMP_REPO_CONFIG/known_marketplaces.json"
+  sanitize_marketplaces "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json" "$TEMP_REPO_CONFIG/known_marketplaces.json" "${TEST_SANITIZE_MARKETPLACES[@]}"
 
   # Assert: Vend marketplace removed
   assert_marketplace_not_exists "$TEMP_REPO_CONFIG/known_marketplaces.json" "vend-plugins"
