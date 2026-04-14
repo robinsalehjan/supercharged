@@ -107,13 +107,36 @@ sanitize_marketplaces() {
   return $result
 }
 
+# Helper: Sanitize settings for backup testing
+# Usage: sanitize_settings INPUT OUTPUT MARKETPLACE...
 # Note: mirrors the production jq filter in backup-claude.sh which strips
-# vend-plugins from enabledPlugins and removes sensitive env vars.
-# If SANITIZE_ENV_VARS grows, add corresponding del() clauses here.
+# marketplaces from enabledPlugins and removes sensitive env vars.
 sanitize_settings() {
-  _sanitize_json \
-    '(. + {enabledPlugins: (.enabledPlugins | to_entries | map(select(.key | endswith("@vend-plugins") | not)) | from_entries)}) | del(.env["GITHUB_PERSONAL_ACCESS_TOKEN"]) | del(.mcpServers[]?.env["GITHUB_PERSONAL_ACCESS_TOKEN"])' \
-    "$1" "$2"
+  local input_file="$1"
+  local output_file="$2"
+  shift 2
+  local marketplaces=("$@")
+
+  # Build filter for enabledPlugins
+  local jq_args=()
+  local plugin_filter='to_entries'
+  local i=0
+
+  for marketplace in "${marketplaces[@]}"; do
+    jq_args+=(--arg "mp$i" "@$marketplace")
+    plugin_filter="$plugin_filter | map(select(.key | endswith(\$mp$i) | not))"
+    i=$((i + 1))
+  done
+  plugin_filter="$plugin_filter | from_entries"
+
+  # Combine marketplace filter with env var stripping
+  set -o pipefail
+  jq "${jq_args[@]}" \
+    "(. + {enabledPlugins: (.enabledPlugins | $plugin_filter)}) | del(.env[\"GITHUB_PERSONAL_ACCESS_TOKEN\"]) | del(.mcpServers[]?.env[\"GITHUB_PERSONAL_ACCESS_TOKEN\"])" \
+    "$input_file" | sed "s|$ORIGINAL_HOME|\$HOME|g" > "$output_file"
+  local result=$?
+  set +o pipefail
+  return $result
 }
 
 @test "removes vend-plugins entries from installed_plugins.json" {
@@ -168,7 +191,7 @@ sanitize_settings() {
   load_fixture "claude-backup/settings-full.json" "$TEMP_CLAUDE/settings.json"
 
   # Act: Sanitize settings
-  sanitize_settings "$TEMP_CLAUDE/settings.json" "$TEMP_REPO_CONFIG/settings.json"
+  sanitize_settings "$TEMP_CLAUDE/settings.json" "$TEMP_REPO_CONFIG/settings.json" "${TEST_SANITIZE_MARKETPLACES[@]}"
 
   # Assert: Vend plugins removed from enabledPlugins
   assert_json_field "$TEMP_REPO_CONFIG/settings.json" \
@@ -188,7 +211,7 @@ sanitize_settings() {
   load_fixture "claude-backup/settings-full.json" "$TEMP_CLAUDE/settings.json"
 
   # Act: Sanitize settings
-  sanitize_settings "$TEMP_CLAUDE/settings.json" "$TEMP_REPO_CONFIG/settings.json"
+  sanitize_settings "$TEMP_CLAUDE/settings.json" "$TEMP_REPO_CONFIG/settings.json" "${TEST_SANITIZE_MARKETPLACES[@]}"
 
   # Assert: Token removed
   assert_json_field "$TEMP_REPO_CONFIG/settings.json" \
@@ -200,7 +223,7 @@ sanitize_settings() {
   load_fixture "claude-backup/settings-full.json" "$TEMP_CLAUDE/settings.json"
 
   # Act: Sanitize settings
-  sanitize_settings "$TEMP_CLAUDE/settings.json" "$TEMP_REPO_CONFIG/settings.json"
+  sanitize_settings "$TEMP_CLAUDE/settings.json" "$TEMP_REPO_CONFIG/settings.json" "${TEST_SANITIZE_MARKETPLACES[@]}"
 
   # Assert: Non-sensitive env var preserved
   assert_json_field "$TEMP_REPO_CONFIG/settings.json" \
@@ -213,7 +236,7 @@ sanitize_settings() {
     > "$TEMP_CLAUDE/settings.json"
 
   # Act: Sanitize settings
-  sanitize_settings "$TEMP_CLAUDE/settings.json" "$TEMP_REPO_CONFIG/settings.json"
+  sanitize_settings "$TEMP_CLAUDE/settings.json" "$TEMP_REPO_CONFIG/settings.json" "${TEST_SANITIZE_MARKETPLACES[@]}"
 
   # Assert: Output is valid JSON with other fields intact
   assert_json_field "$TEMP_REPO_CONFIG/settings.json" '.theme' "dark"
@@ -272,7 +295,7 @@ sanitize_settings() {
   load_fixture "claude-backup/settings-with-ansi.json" "$TEMP_CLAUDE/settings.json"
 
   # Act: Sanitize settings (runs through jq)
-  sanitize_settings "$TEMP_CLAUDE/settings.json" "$TEMP_REPO_CONFIG/settings.json"
+  sanitize_settings "$TEMP_CLAUDE/settings.json" "$TEMP_REPO_CONFIG/settings.json" "${TEST_SANITIZE_MARKETPLACES[@]}"
 
   # Assert: Output is valid JSON (no literal control characters)
   run python3 -c "import json; json.load(open('$TEMP_REPO_CONFIG/settings.json'))"
