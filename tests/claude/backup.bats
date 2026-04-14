@@ -14,6 +14,9 @@ setup() {
 
   # Source utils.sh for make_path_portable function
   source "$PROJECT_ROOT/scripts/utils.sh"
+
+  # Test configuration: define which marketplaces to sanitize
+  TEST_SANITIZE_MARKETPLACES=("vend-plugins")
 }
 
 # Teardown runs after each test
