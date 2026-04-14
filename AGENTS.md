@@ -27,7 +27,7 @@ npm run restore               # Restore from latest backup
 # Claude Code Configuration
 npm run backup:claude         # Backup Claude Code config to repo
 npm run restore:claude        # Restore Claude Code config (only if repo is newer)
-npm run restore:claude:force  # Force restore Claude Code config
+npm run restore:claude:force  # Force restore Claude Code config (see Post-Restore Steps below)
 
 # Development
 npm run lint                  # ShellCheck all scripts (ignore zsh warnings)
@@ -136,6 +136,16 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 - Merge logic: restore preserves local work plugins while applying repo settings
 - Timestamp comparison: only restores when repo config is newer (unless `--force`)
 - Secrets: `~/.secrets` is sourced once at restore start; MCP servers are skipped (not partially written) if it's absent
+- **Post-restore**: Plugins must be manually installed/enabled (see Post-Restore Steps below)
+
+**Post-Restore Steps** (after `npm run restore:claude` or `npm run restore:claude:force`):
+1. Review `claude_config/installed_plugins.json` to see backed-up official plugins
+2. Install/enable plugins via Claude Code `/plugin` command or settings UI
+3. Enable work plugins (@vend-plugins) manually if on work machine — these are sanitized from backups for security
+4. Run `/reload-plugins` in Claude Code to force registry rescan if plugins don't appear
+5. Verify with `/help` that skills and agents are available
+
+Why manual? Plugin installation is stateful and environment-specific. Restore only handles config files, not plugin code or live registry state.
 
 **Script organization**:
 - `mac.sh`: validate system → Homebrew → Brewfile (conditional on user prefs) → ZSH plugins → ASDF → optional tools
