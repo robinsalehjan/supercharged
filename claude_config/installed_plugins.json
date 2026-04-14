@@ -138,6 +138,16 @@
         "installedAt": "2026-04-10T08:37:57.065Z",
         "lastUpdated": "2026-04-10T08:37:57.065Z"
       }
+    ],
+    "plannotator@plannotator": [
+      {
+        "scope": "user",
+        "installPath": "$HOME/.claude/plugins/cache/plannotator/plannotator/0.17.10",
+        "version": "0.17.10",
+        "installedAt": "2026-04-14T13:44:55.741Z",
+        "lastUpdated": "2026-04-14T13:44:55.741Z",
+        "gitCommitSha": "f1d3a880ed384f5779d019d743f52995b3151173"
+      }
     ]
   }
 }
