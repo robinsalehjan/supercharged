@@ -25,3 +25,6 @@ node_modules/
 
 # Task tracker (agent working document)
 .task-tracker.md
+
+# Superpowers planning artifacts (not needed for personal setup repo)
+docs/superpowers/
