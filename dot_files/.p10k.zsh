@@ -73,9 +73,6 @@
   typeset -g POWERLEVEL9K_DIR_ANCHOR_FOREGROUND=255
   typeset -g POWERLEVEL9K_DIR_ANCHOR_BOLD=true
 
-  # Shorten directory if too long
-  typeset -g POWERLEVEL9K_SHORTEN_STRATEGY=truncate_to_unique
-  typeset -g POWERLEVEL9K_SHORTEN_DELIMITER=''
 
   # ============================================================================
   # VCS (Git) Segment
