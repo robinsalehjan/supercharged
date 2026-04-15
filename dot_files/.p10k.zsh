@@ -20,16 +20,20 @@
   [[ $ZSH_VERSION == (5.<1->*|<6->.*) ]] || return
 
   # ============================================================================
+  # Color Palette (Rainbow Theme)
+  # ============================================================================
+  # 0=black, 1=red, 2=green, 3=yellow, 4=blue, 5=purple, 6=cyan, 7=white
+  # 8=gray, 254=light gray, 255=bright white
+
+  # ============================================================================
   # Prompt Elements
   # ============================================================================
 
-  # Left prompt: directory and git status
   typeset -g POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(
     dir
     vcs
   )
 
-  # Right prompt: error status, execution time, background jobs, kubernetes
   typeset -g POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(
     status
     command_execution_time
@@ -77,17 +81,14 @@
   # VCS (Git) Segment
   # ============================================================================
 
-  # Clean state (green)
   typeset -g POWERLEVEL9K_VCS_CLEAN_FOREGROUND=0
   typeset -g POWERLEVEL9K_VCS_CLEAN_BACKGROUND=2
 
-  # Modified/untracked state (yellow)
+  # Modified/untracked/conflicted all use yellow (intentionally identical)
   typeset -g POWERLEVEL9K_VCS_MODIFIED_FOREGROUND=0
   typeset -g POWERLEVEL9K_VCS_MODIFIED_BACKGROUND=3
   typeset -g POWERLEVEL9K_VCS_UNTRACKED_FOREGROUND=0
   typeset -g POWERLEVEL9K_VCS_UNTRACKED_BACKGROUND=3
-
-  # Conflicted state (yellow)
   typeset -g POWERLEVEL9K_VCS_CONFLICTED_FOREGROUND=0
   typeset -g POWERLEVEL9K_VCS_CONFLICTED_BACKGROUND=3
 
@@ -109,11 +110,10 @@
   # Status Segment (exit code on error)
   # ============================================================================
 
-  # Show status only on error
   typeset -g POWERLEVEL9K_STATUS_OK=false
   typeset -g POWERLEVEL9K_STATUS_OK_PIPE=false
 
-  # Error status (red)
+  # All error states use red (intentionally identical)
   typeset -g POWERLEVEL9K_STATUS_ERROR_FOREGROUND=255
   typeset -g POWERLEVEL9K_STATUS_ERROR_BACKGROUND=1
   typeset -g POWERLEVEL9K_STATUS_ERROR_SIGNAL_FOREGROUND=255
@@ -136,7 +136,6 @@
   typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_PRECISION=0
   typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_FORMAT='d h m s'
 
-  # Colors: green (<1m), yellow (1-5m), red (>5m)
   typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_FOREGROUND=0
   typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_BACKGROUND=2
 
