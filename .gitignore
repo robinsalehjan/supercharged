@@ -27,6 +27,7 @@ node_modules/
 .task-tracker.md
 
 # Superpowers planning artifacts (not needed for personal setup repo)
-# But keep design specs for reference
+# But keep design specs and implementation plans for reference
 docs/superpowers/*
 !docs/superpowers/specs/
+!docs/superpowers/plans/
