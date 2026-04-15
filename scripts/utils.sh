@@ -554,25 +554,26 @@ setup_plannotator() {
     log_with_level "INFO" "Latest plannotator version: $version"
 
     # Download binary and checksum
-    local binary_url="https://github.com/backnotprop/plannotator/releases/download/${version}/plannotator-darwin-${arch}"
-    local checksum_url="https://github.com/backnotprop/plannotator/releases/download/${version}/plannotator-darwin-${arch}.sha256"
+    local binary_name="plannotator-darwin-${arch}"
+    local binary_url="https://github.com/backnotprop/plannotator/releases/download/${version}/${binary_name}"
+    local checksum_url="${binary_url}.sha256"
     local tmp_dir
     tmp_dir=$(mktemp -d)
 
-    if ! curl -fsSL -o "$tmp_dir/plannotator" "$binary_url"; then
+    if ! curl -fsSL -o "$tmp_dir/${binary_name}" "$binary_url"; then
         log_with_level "ERROR" "Failed to download plannotator binary"
         rm -rf "$tmp_dir"
         return 1
     fi
 
-    if ! curl -fsSL -o "$tmp_dir/plannotator.sha256" "$checksum_url"; then
+    if ! curl -fsSL -o "$tmp_dir/${binary_name}.sha256" "$checksum_url"; then
         log_with_level "ERROR" "Failed to download plannotator checksum"
         rm -rf "$tmp_dir"
         return 1
     fi
 
-    # Verify checksum
-    if ! (cd "$tmp_dir" && shasum -a 256 -c plannotator.sha256 >/dev/null 2>&1); then
+    # Verify checksum (checksum file references the original binary filename)
+    if ! (cd "$tmp_dir" && shasum -a 256 -c "${binary_name}.sha256" >/dev/null 2>&1); then
         log_with_level "ERROR" "Plannotator checksum verification failed"
         rm -rf "$tmp_dir"
         return 1
@@ -580,7 +581,7 @@ setup_plannotator() {
 
     # Install to ~/.local/bin
     mkdir -p "$HOME/.local/bin"
-    mv "$tmp_dir/plannotator" "$HOME/.local/bin/plannotator"
+    mv "$tmp_dir/${binary_name}" "$HOME/.local/bin/plannotator"
     chmod +x "$HOME/.local/bin/plannotator"
     rm -rf "$tmp_dir"
 
