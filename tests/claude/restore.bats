@@ -5,10 +5,7 @@ load '../helpers/setup'
 load '../helpers/assertions'
 load '../helpers/mocks'
 
-# Test Configuration:
-# - To test with different marketplace, modify TEST_PRESERVE_MARKETPLACES in setup()
-# - Example: TEST_PRESERVE_MARKETPLACES=("palantir-plugins")
-# - Supports multiple marketplaces: TEST_PRESERVE_MARKETPLACES=("vend-plugins" "acme-plugins")
+# Override TEST_PRESERVE_MARKETPLACES in setup() to test non-default marketplaces
 
 setup() {
   setup_test_env
@@ -31,8 +28,7 @@ teardown() {
 }
 
 # Helper: Merge plugin configs for restore testing
-# Mirrors merge_plugin_config() from restore-claude.sh with parameterized marketplaces.
-# Accepts marketplace array, builds dynamic jq filter for preservation.
+# Usage: merge_plugin_configs REPO LOCAL OUTPUT MARKETPLACE...
 merge_plugin_configs() {
   local repo_file="$1"
   local local_file="$2"
@@ -49,7 +45,6 @@ merge_plugin_configs() {
     return 0
   fi
 
-  # Build dynamic jq filter for preserving all specified marketplaces
   local jq_args=()
   local filter_parts=()
 
@@ -106,8 +101,7 @@ merge_plugin_configs() {
 }
 
 # Helper: Merge marketplace configs for restore testing
-# Mirrors merge_marketplace_config() from restore-claude.sh
-# Args: repo_file local_file output_file marketplace1 [marketplace2 ...]
+# Usage: merge_marketplace_configs REPO LOCAL OUTPUT MARKETPLACE...
 merge_marketplace_configs() {
   local repo_file="$1"
   local local_file="$2"
@@ -134,7 +128,6 @@ merge_marketplace_configs() {
   local local_content
   local_content=$(cat "$local_file")
 
-  # Build dynamic jq filter for marketplace preservation
   local jq_args=()
   local jq_filter="."
 
@@ -144,7 +137,6 @@ merge_marketplace_configs() {
     jq_filter+=" | if has(\$mp$i) then . + {(\$mp$i): .[\$mp$i]} else . end"
   done
 
-  # Extract preserved marketplaces from local config
   local preserved
   if ! preserved=$(echo "$local_content" | jq "${jq_args[@]}" "$jq_filter" 2>&1); then
     echo "Failed to extract marketplaces: $preserved" >&2

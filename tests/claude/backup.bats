@@ -5,10 +5,7 @@ load '../helpers/setup'
 load '../helpers/assertions'
 load '../helpers/mocks'
 
-# Test Configuration:
-# - To test with different marketplace, modify TEST_SANITIZE_MARKETPLACES in setup()
-# - Example: TEST_SANITIZE_MARKETPLACES=("palantir-plugins")
-# - Supports multiple marketplaces: TEST_SANITIZE_MARKETPLACES=("vend-plugins" "acme-plugins")
+# Override TEST_SANITIZE_MARKETPLACES in setup() to test non-default marketplaces
 
 # Setup runs before each test
 setup() {
@@ -47,25 +44,12 @@ _sanitize_json() {
 
 # Helper: Sanitize plugins for backup testing
 # Usage: sanitize_plugins INPUT OUTPUT MARKETPLACE...
-# Note: Production (backup-claude.sh) uses dynamic jq filters built from the
-# SANITIZE_MARKETPLACES array. This test helper mirrors that approach.
 sanitize_plugins() {
   local input_file="$1"
   local output_file="$2"
   shift 2
   local marketplaces=("$@")
 
-  # Backwards compatibility: if no marketplaces provided, use hardcoded vend-plugins filter
-  if [ ${#marketplaces[@]} -eq 0 ]; then
-    set -o pipefail
-    jq '{version: .version, plugins: (.plugins | to_entries | map(select(.key | endswith("@vend-plugins") | not)) | from_entries)}' "$input_file" | \
-      sed "s|$ORIGINAL_HOME|\$HOME|g" > "$output_file"
-    local result=$?
-    set +o pipefail
-    return $result
-  fi
-
-  # Build dynamic jq filter from marketplace array
   local jq_args=()
   local jq_filter='to_entries'
   local i=0
@@ -77,7 +61,6 @@ sanitize_plugins() {
   done
   jq_filter="$jq_filter | from_entries"
 
-  # Apply filter with path portability
   set -o pipefail
   jq "${jq_args[@]}" "{version: .version, plugins: (.plugins | $jq_filter)}" "$input_file" | \
     sed "s|$ORIGINAL_HOME|\$HOME|g" > "$output_file"
@@ -92,7 +75,6 @@ sanitize_marketplaces() {
   shift 2
   local marketplaces=("$@")
 
-  # Build jq filter to delete each marketplace
   local jq_args=()
   local jq_filter='.'
   local i=0
@@ -103,7 +85,6 @@ sanitize_marketplaces() {
     i=$((i + 1))
   done
 
-  # Apply filter with path portability
   set -o pipefail
   jq "${jq_args[@]}" "$jq_filter" "$input_file" | \
     sed "s|$ORIGINAL_HOME|\$HOME|g" > "$output_file"
@@ -114,15 +95,12 @@ sanitize_marketplaces() {
 
 # Helper: Sanitize settings for backup testing
 # Usage: sanitize_settings INPUT OUTPUT MARKETPLACE...
-# Note: mirrors the production jq filter in backup-claude.sh which strips
-# marketplaces from enabledPlugins and removes sensitive env vars.
 sanitize_settings() {
   local input_file="$1"
   local output_file="$2"
   shift 2
   local marketplaces=("$@")
 
-  # Build filter for enabledPlugins
   local jq_args=()
   local plugin_filter='to_entries'
   local i=0
@@ -134,7 +112,6 @@ sanitize_settings() {
   done
   plugin_filter="$plugin_filter | from_entries"
 
-  # Combine marketplace filter with env var stripping
   set -o pipefail
   jq "${jq_args[@]}" \
     "(. + {enabledPlugins: (.enabledPlugins | $plugin_filter)}) | del(.env[\"GITHUB_PERSONAL_ACCESS_TOKEN\"]) | del(.mcpServers[]?.env[\"GITHUB_PERSONAL_ACCESS_TOKEN\"])" \
@@ -341,7 +318,7 @@ print(f'OK: {u_count} \\\\u001b escape(s), 0 literal ESC bytes')
 EOF
 
   # Act: Run sanitization
-  sanitize_plugins "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" "$TEMP_REPO_CONFIG/installed_plugins.json"
+  sanitize_plugins "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" "$TEMP_REPO_CONFIG/installed_plugins.json" "${TEST_SANITIZE_MARKETPLACES[@]}"
 
   # Assert: Result should have empty plugins object
   assert_json_field "$TEMP_REPO_CONFIG/installed_plugins.json" ".plugins | length" "0"
