@@ -139,6 +139,25 @@ else
     log_with_level "WARN" "CLAUDE.md not found"
 fi
 
+# Backup CLAUDE.md @-referenced files (RTK.md, claude-token-efficient.md, etc.)
+claude_md_refs_backed_up=()
+if [ -f "$CLAUDE_HOME/CLAUDE.md" ]; then
+    while IFS= read -r ref_file; do
+        if [ -f "$CLAUDE_HOME/$ref_file" ]; then
+            if ! make_path_portable < "$CLAUDE_HOME/$ref_file" > "$CLAUDE_CONFIG_DIR/$ref_file.tmp"; then
+                rm -f "$CLAUDE_CONFIG_DIR/$ref_file.tmp"
+                log_with_level "ERROR" "Failed to process $ref_file - backup aborted"
+                exit 1
+            fi
+            mv "$CLAUDE_CONFIG_DIR/$ref_file.tmp" "$CLAUDE_CONFIG_DIR/$ref_file"
+            claude_md_refs_backed_up+=("$ref_file")
+            log_with_level "SUCCESS" "Backed up $ref_file (CLAUDE.md @-reference, paths made portable)"
+        else
+            log_with_level "WARN" "$ref_file referenced in CLAUDE.md but not found"
+        fi
+    done < <(sed -n 's/^@\(.*\.md\)$/\1/p' "$CLAUDE_HOME/CLAUDE.md")
+fi
+
 log_with_level "SUCCESS" "Claude Code configuration backup completed!"
 echo ""
 echo "📦 Backed up files:"
@@ -147,5 +166,8 @@ echo "   - installed_plugins.json"
 echo "   - known_marketplaces.json"
 echo "   - keybindings.json"
 echo "   - CLAUDE.md"
+for ref_file in "${claude_md_refs_backed_up[@]}"; do
+    echo "   - $ref_file"
+done
 echo ""
 echo "💡 Commit these changes to git to save your Claude Code configuration"

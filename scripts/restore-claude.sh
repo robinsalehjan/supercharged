@@ -518,6 +518,20 @@ restore_config_file \
     "$CLAUDE_HOME/CLAUDE.md" \
     "CLAUDE.md"
 
+# Restore CLAUDE.md @-referenced files (RTK.md, claude-token-efficient.md, etc.)
+claude_md_refs_restored=()
+if [ -f "$CLAUDE_CONFIG_DIR/CLAUDE.md" ]; then
+    while IFS= read -r ref_file; do
+        if [ -f "$CLAUDE_CONFIG_DIR/$ref_file" ]; then
+            restore_config_file \
+                "$CLAUDE_CONFIG_DIR/$ref_file" \
+                "$CLAUDE_HOME/$ref_file" \
+                "$ref_file"
+            claude_md_refs_restored+=("$ref_file")
+        fi
+    done < <(sed -n 's/^@\(.*\.md\)$/\1/p' "$CLAUDE_CONFIG_DIR/CLAUDE.md")
+fi
+
 # Restore MCP server configurations into ~/.claude.json (env vars sourced from ~/.secrets)
 restore_mcp_servers
 
@@ -529,6 +543,9 @@ echo "   - plugins/installed_plugins.json"
 echo "   - plugins/known_marketplaces.json"
 echo "   - keybindings.json"
 echo "   - CLAUDE.md"
+for ref_file in "${claude_md_refs_restored[@]}"; do
+    echo "   - $ref_file"
+done
 echo "   - settings.json MCP servers (global, env vars from ~/.secrets)"
 echo ""
 echo "⚠️  IMPORTANT: Plugins must be manually configured after restore:"
