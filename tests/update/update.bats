@@ -26,6 +26,7 @@ teardown() {
   "
   [ "$status" -eq 0 ]
   [[ "$output" == *"Usage:"* ]]
+  [[ "$output" == *"--only COMPONENT"* ]]
   [[ "$output" == *"--dry-run"* ]]
   [[ "$output" == *"--skip-brew"* ]]
   [[ "$output" == *"--skip-asdf"* ]]
@@ -79,4 +80,41 @@ teardown() {
   run zsh "$PROJECT_ROOT/scripts/update.sh" --unknown-flag
   [ "$status" -ne 0 ]
   [[ "$output" == *"Unknown option"* ]]
+}
+
+# =============================================================================
+# --only flag tests
+# =============================================================================
+
+@test "update.sh --only brew includes brew section in dry-run" {
+  mock_brew
+  mock_ping_success
+
+  run zsh "$PROJECT_ROOT/scripts/update.sh" --only brew --dry-run
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Outdated Homebrew formulae"* ]]
+  [[ "$output" == *"Outdated Homebrew casks"* ]]
+  [[ "$output" != *"Outdated npm"* ]]
+}
+
+@test "update.sh --only asdf skips brew section in dry-run" {
+  mock_ping_success
+
+  run zsh "$PROJECT_ROOT/scripts/update.sh" --only asdf --dry-run
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"Outdated Homebrew formulae"* ]]
+  [[ "$output" != *"Outdated Homebrew casks"* ]]
+  [[ "$output" != *"Outdated npm"* ]]
+}
+
+@test "update.sh --only rejects unknown component" {
+  run zsh "$PROJECT_ROOT/scripts/update.sh" --only invalid
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Unknown component"* ]]
+}
+
+@test "update.sh --only without component shows error" {
+  run zsh "$PROJECT_ROOT/scripts/update.sh" --only
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Unknown component"* ]]
 }

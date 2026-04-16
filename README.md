@@ -192,15 +192,11 @@ This runs a three-step process:
 | **Updates** | |
 | `npm run update` | Update all installed packages and tools |
 | `npm run update:dry-run` | Preview outdated Homebrew and npm packages (read-only) |
-| `npm run update:brew` | Copy dotfiles, then update Homebrew (formulae + casks) |
-| `npm run update:asdf` | Copy dotfiles, then update ASDF plugins and versions |
-| `npm run update:zsh` | Update only ZSH plugins |
-| `npm run update:npm` | Update only npm global packages |
-| `npm run update:pip` | Update only pip data science packages |
+| `npm run update:only -- <comp>` | Copy dotfiles, then update one component (brew, asdf, zsh, npm, pip) |
 | **Claude Code** | |
 | `npm run backup:claude` | Backup Claude Code configuration to claude_config/ (with portable paths) |
 | `npm run restore:claude` | Restore Claude Code config (only if repo is newer) |
-| `npm run restore:claude:force` | Force restore Claude Code config |
+| `npm run restore:claude -- --force` | Force restore Claude Code config |
 | **Utilities** | |
 | `npm run validate` | Verify all tools are properly installed with correct versions |
 | `npm run restore` | Restore from the most recent backup (`~/.supercharged_last_backup`) |
@@ -208,21 +204,13 @@ This runs a three-step process:
 | `npm run help` | Show all available commands |
 | **Testing** | |
 | `npm test` | Run all BATS tests |
-| `npm run test:claude` | Run Claude backup/restore tests only |
-| `npm run test:utils` | Run utility function tests only |
-| `npm run test:mac` | Run mac.sh smoke tests only |
-| `npm run test:update` | Run update.sh smoke tests only |
-| `npm run test:setup` | Run setup-profile.sh smoke tests only |
+| `bats tests/<suite>/*.bats` | Run a specific test suite (claude, utils, mac, update, setup) |
 
 ## 🧪 Testing
 
 ```bash
-npm test              # Run all tests
-npm run test:claude   # Run Claude backup/restore tests only
-npm run test:utils    # Run utility function tests only
-npm run test:mac      # Run mac.sh smoke tests only
-npm run test:update   # Run update.sh smoke tests only
-npm run test:setup    # Run setup-profile.sh smoke tests only
+npm test                       # Run all tests
+bats tests/<suite>/*.bats     # Run a specific suite (claude, utils, mac, update, setup)
 ```
 
 Tests run automatically via pre-commit hook and GitHub Actions. See [AGENTS.md](./AGENTS.md) for test structure, patterns, and writing guides.

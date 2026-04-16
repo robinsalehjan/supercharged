@@ -11,6 +11,7 @@ SKIP_ASDF=false
 SKIP_ZSH=false
 SKIP_NPM=false
 SKIP_PIP=false
+ONLY_MODE=false
 
 # Usage information
 show_help() {
@@ -19,17 +20,21 @@ show_help() {
     echo "Update all dependencies and tools installed by mac.sh"
     echo ""
     echo "Options:"
-    echo "  --dry-run      Preview what would be updated without making changes"
-    echo "  --skip-brew    Skip Homebrew formula updates"
-    echo "  --skip-cask    Skip Homebrew cask updates"
-    echo "  --skip-asdf    Skip asdf plugin and version updates"
-    echo "  --skip-zsh     Skip zsh plugin updates"
-    echo "  --skip-npm     Skip npm global package updates"
-    echo "  --skip-pip     Skip pip package updates"
-    echo "  -h, --help     Show this help message"
+    echo "  --only COMPONENT  Update only the specified component (brew, asdf, zsh, npm, pip)"
+    echo "                    Can be repeated: --only brew --only npm"
+    echo "  --dry-run         Preview what would be updated without making changes"
+    echo "  --skip-brew       Skip Homebrew formula updates"
+    echo "  --skip-cask       Skip Homebrew cask updates"
+    echo "  --skip-asdf       Skip asdf plugin and version updates"
+    echo "  --skip-zsh        Skip zsh plugin updates"
+    echo "  --skip-npm        Skip npm global package updates"
+    echo "  --skip-pip        Skip pip package updates"
+    echo "  -h, --help        Show this help message"
     echo ""
     echo "Examples:"
     echo "  $(basename "$0")                    # Update everything"
+    echo "  $(basename "$0") --only brew        # Update only Homebrew (formulae + casks)"
+    echo "  $(basename "$0") --only brew --only npm  # Update Homebrew and npm only"
     echo "  $(basename "$0") --dry-run          # Preview all updates"
     echo "  $(basename "$0") --skip-npm --skip-pip  # Skip npm and pip updates"
 }
@@ -43,6 +48,31 @@ main() {
     # Parse command line arguments
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            --only)
+                if [[ "$ONLY_MODE" != true ]]; then
+                    ONLY_MODE=true
+                    SKIP_BREW=true
+                    SKIP_CASK=true
+                    SKIP_ASDF=true
+                    SKIP_ZSH=true
+                    SKIP_NPM=true
+                    SKIP_PIP=true
+                fi
+                shift
+                case "${1:-}" in
+                    brew) SKIP_BREW=false; SKIP_CASK=false ;;
+                    asdf) SKIP_ASDF=false ;;
+                    zsh)  SKIP_ZSH=false ;;
+                    npm)  SKIP_NPM=false ;;
+                    pip)  SKIP_PIP=false ;;
+                    *)
+                        echo "Unknown component: ${1:-<missing>}"
+                        echo "Valid components: brew, asdf, zsh, npm, pip"
+                        exit 1
+                        ;;
+                esac
+                shift
+                ;;
             --dry-run)
                 DRY_RUN=true
                 shift

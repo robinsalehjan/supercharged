@@ -11,14 +11,9 @@ npm run setup:profile         # Copy dotfiles + Claude config to $HOME
 
 # Updates
 # npm run update runs: backup:claude → setup:profile → update.sh
-# update:brew and update:asdf also copy dotfiles first (via setup:profile)
-npm run update                # Update all components (brew, asdf, zsh, npm, pip)
-npm run update:dry-run        # Preview outdated brew/npm packages (read-only)
-npm run update:brew           # Copy dotfiles + update Homebrew (formulae + casks)
-npm run update:asdf           # Copy dotfiles + update ASDF plugins and versions
-npm run update:zsh            # Update only ZSH plugins
-npm run update:npm            # Update only npm global packages
-npm run update:pip            # Update only pip data science packages
+npm run update                    # Update all components (brew, asdf, zsh, npm, pip)
+npm run update:dry-run            # Preview outdated brew/npm packages (read-only)
+npm run update:only -- <comp>     # Copy dotfiles + update one component (brew, asdf, zsh, npm, pip)
 
 # Validation and Recovery
 npm run validate              # Verify all tools installed correctly
@@ -26,18 +21,14 @@ npm run restore               # Restore from latest backup
 
 # Claude Code Configuration
 npm run backup:claude         # Backup Claude Code config to repo
-npm run restore:claude        # Restore Claude Code config (only if repo is newer)
-npm run restore:claude:force  # Force restore Claude Code config (see Post-Restore Steps below)
+npm run restore:claude            # Restore Claude Code config (only if repo is newer)
+npm run restore:claude -- --force # Force restore Claude Code config (see Post-Restore Steps below)
 
 # Development
-npm run lint                  # ShellCheck all scripts (ignore zsh warnings)
-npm test                      # Run all BATS tests
-npm run test:claude           # Run Claude backup/restore tests only
-npm run test:utils            # Run utility function tests only
-npm run test:mac              # Run mac.sh smoke tests only
-npm run test:update           # Run update.sh smoke tests only
-npm run test:setup            # Run setup-profile.sh smoke tests only
-npm run help                  # Display all available commands
+npm run lint                      # ShellCheck all scripts (ignore zsh warnings)
+npm test                          # Run all BATS tests
+bats tests/<suite>/*.bats        # Run a specific suite (claude, utils, mac, update, setup)
+npm run help                      # Display all available commands
 ```
 
 ## ShellCheck Notes
@@ -57,13 +48,12 @@ This project uses [BATS (Bash Automated Testing System)](https://github.com/bats
 **Running tests:**
 ```bash
 npm test                          # Run all BATS tests
-npm run test:claude               # Claude backup/restore tests
-npm run test:utils                # Utility function tests
-npm run test:mac                  # mac.sh smoke tests
-npm run test:update               # update.sh smoke tests
-npm run test:setup                # setup-profile.sh smoke tests
+bats tests/claude/*.bats          # Claude backup/restore tests
+bats tests/utils/*.bats           # Utility function tests
+bats tests/mac/*.bats             # mac.sh smoke tests
+bats tests/update/*.bats          # update.sh smoke tests
+bats tests/setup/*.bats           # setup-profile.sh smoke tests
 npm test -- --filter "pattern"    # Run specific tests
-# Note: no per-suite scripts for meta/ and restore/ — run via npm test only
 ```
 
 **Test structure:**
@@ -139,7 +129,7 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 - **Backed up files**: `settings.json`, `installed_plugins.json`, `known_marketplaces.json`, `keybindings.json`, `CLAUDE.md`
 - **Post-restore**: Plugins must be manually installed/enabled (see Post-Restore Steps below)
 
-**Post-Restore Steps** (after `npm run restore:claude` or `npm run restore:claude:force`):
+**Post-Restore Steps** (after `npm run restore:claude` or `npm run restore:claude -- --force`):
 1. Review `claude_config/installed_plugins.json` to see backed-up official plugins
 2. Install/enable plugins via Claude Code `/plugin` command or settings UI
 3. Enable work plugins (@vend-plugins) manually if on work machine — these are sanitized from backups for security

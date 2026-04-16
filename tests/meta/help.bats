@@ -34,7 +34,7 @@ teardown() {
   [[ "$output" == *"Backup & Restore Commands:"* ]]
   [[ "$output" == *"npm run backup:claude"* ]]
   [[ "$output" == *"npm run restore:claude"* ]]
-  [[ "$output" == *"npm run restore:claude:force"* ]]
+  [[ "$output" == *"-- --force"* ]]
 }
 
 @test "help.sh displays update commands" {
@@ -46,11 +46,7 @@ teardown() {
   [[ "$output" == *"Update Commands:"* ]]
   [[ "$output" == *"npm run update"* ]]
   [[ "$output" == *"npm run update:dry-run"* ]]
-  [[ "$output" == *"npm run update:brew"* ]]
-  [[ "$output" == *"npm run update:asdf"* ]]
-  [[ "$output" == *"npm run update:zsh"* ]]
-  [[ "$output" == *"npm run update:npm"* ]]
-  [[ "$output" == *"npm run update:pip"* ]]
+  [[ "$output" == *"npm run update:only"* ]]
 }
 
 @test "help.sh displays development commands" {
@@ -62,8 +58,7 @@ teardown() {
   [[ "$output" == *"Development Commands:"* ]]
   [[ "$output" == *"npm run lint"* ]]
   [[ "$output" == *"npm test"* ]]
-  [[ "$output" == *"npm run test:claude"* ]]
-  [[ "$output" == *"npm run test:utils"* ]]
+  [[ "$output" == *"bats tests/"* ]]
   [[ "$output" == *"npm run test:watch"* ]]
 }
 

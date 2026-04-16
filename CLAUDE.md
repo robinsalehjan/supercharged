@@ -33,7 +33,7 @@ See [AGENTS.md](./AGENTS.md) for complete npm commands reference.
 - `npm run validate` - Verify all tools installed correctly
 - `npm run update:dry-run` - Preview outdated packages (read-only, safe)
 - `npm run backup:claude` - Backup Claude Code config to repo
-- `npm run restore:claude:force` - Restore Claude Code config from repo
+- `npm run restore:claude -- --force` - Force restore Claude Code config from repo
 - `npm run lint` - ShellCheck all scripts
 - `npm test` - Run all BATS tests (requires `brew install bats-core`); covers mac, update, setup, utils, claude, restore, meta
 - `npm run test:watch` - Watch mode (requires: `brew install watch`)
@@ -94,7 +94,7 @@ All tools auto-configured during setup/update. See README.md for verification co
 
 ## Post-Restore Steps
 
-After running `npm run restore:claude` or `npm run restore:claude:force`, plugins must be manually configured:
+After running `npm run restore:claude` (or with `-- --force`), plugins must be manually configured:
 
 1. **Review backed-up plugins**: Check `claude_config/installed_plugins.json` to see which official plugins are in the backup
 2. **Install/enable plugins**: Use Claude Code's `/plugin` command or settings UI to install and enable required plugins
