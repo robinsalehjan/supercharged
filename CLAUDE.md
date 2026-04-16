@@ -76,6 +76,7 @@ All tools auto-configured during setup/update. See README.md for verification co
 
 - **Main model**: Opus 4.6 (maximum capability for complex reasoning and architecture)
 - **Subagent model**: Sonnet 4.5 (balanced speed/quality for research and execution)
+- **Teammates**: Default to the main model (Opus 4.6) unless overridden per-agent
 - Configured in `claude_config/settings.json` for portability across machines
 
 ## Security
