@@ -15,17 +15,7 @@
     ],
     "defaultMode": "acceptEdits"
   },
-  "model": "sonnet",
-  "effortLevel": "high",
-  "alwaysThinkingEnabled": true,
-  "showThinkingSummaries": true,
-  "respectGitignore": true,
-  "autoUpdatesChannel": "stable",
-  "cleanupPeriodDays": 30,
-  "attribution": {
-    "enabled": true,
-    "coAuthoredBy": "Claude Sonnet 4.5 <noreply@anthropic.com>"
-  },
+  "model": "opus",
   "hooks": {
     "PreToolUse": [
       {
@@ -67,6 +57,16 @@
       }
     }
   },
+  "effortLevel": "high",
+  "alwaysThinkingEnabled": true,
+  "showThinkingSummaries": true,
+  "respectGitignore": true,
+  "autoUpdatesChannel": "stable",
+  "cleanupPeriodDays": 30,
+  "attribution": {
+    "enabled": true,
+    "coAuthoredBy": "Claude Sonnet 4.5 <noreply@anthropic.com>"
+  },
   "mcpServers": {
     "XcodeBuildMCP": {
       "type": "stdio",
@@ -75,7 +75,9 @@
         "-y",
         "xcodebuildmcp@latest",
         "mcp"
-      ]
+      ],
+      "env": {}
     }
-  }
+  },
+  "tui": "fullscreen"
 }

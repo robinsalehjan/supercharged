@@ -72,6 +72,12 @@ This repo includes three-layer optimization for ~90% total token savings:
 
 All tools auto-configured during setup/update. See README.md for verification commands.
 
+## Model Configuration
+
+- **Main model**: Opus 4.6 (maximum capability for complex reasoning and architecture)
+- **Subagent model**: Sonnet 4.5 (balanced speed/quality for research and execution)
+- Configured in `claude_config/settings.json` for portability across machines
+
 ## Security
 
 **This repository is used on personal AND work machines** — comprehensive security enforced:
