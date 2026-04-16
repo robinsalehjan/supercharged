@@ -2,6 +2,20 @@
 
 macOS environment setup automation — installs dev tools (Homebrew, ASDF), manages dotfiles, and backs up Claude Code configuration.
 
+## Token Efficiency Guidelines
+
+- Think before acting. Read existing files before writing code.
+- Be concise in output but thorough in reasoning.
+- Prefer editing over rewriting whole files.
+- Do not re-read files you have already read unless the file may have changed.
+- Skip files over 100KB unless explicitly required.
+- Suggest running /cost when a session is running long to monitor cache ratio.
+- Recommend starting a new session when switching to an unrelated task.
+- Test your code before declaring done.
+- No sycophantic openers or closing fluff.
+- Keep solutions simple and direct.
+- User instructions always override this file.
+
 ## Project Structure
 
 See [README.md](./README.md) for detailed project structure. Key directories:
@@ -47,6 +61,16 @@ See [AGENTS.md](./AGENTS.md) for detailed code patterns and examples.
 - `.claude/` - Claude Code config: 11 hookify rules for security/conventions
 - `dot_files/.tool-versions` - ASDF tool versions (one tool per line); edit here to add/change a tool
 - Claude backup/restore: sanitizes `@vend-plugins` marketplace and `GITHUB_PERSONAL_ACCESS_TOKEN` from backups, preserves local work plugins via additive merge on restore
+
+## Token Optimization Stack
+
+This repo includes three-layer optimization for ~90% total token savings:
+
+1. **RTK (Input)**: Rust CLI proxy filters command output (60-90% savings on tool results)
+2. **Dippy (Flow)**: Permission automation for safe commands (~40% faster development)
+3. **claude-token-efficient (Output)**: Behavioral rules reduce verbosity (60% response reduction)
+
+All tools auto-configured during setup/update. See README.md for verification commands.
 
 ## Security
 

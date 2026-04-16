@@ -32,6 +32,7 @@ sqlite (lightweight SQL database)
 btop (resource monitor with CPU, memory, disk, network, and process stats)
 shellcheck (shell script linter), jq (JSON processor)
 rtk (Rust Token Killer - CLI proxy for 60-90% token savings in Claude Code)
+dippy (Permission automation for Claude Code - auto-approves safe commands, ~40% faster development)
 plannotator (Visual annotation tool for AI coding agents - plan review, code diff annotation)
 
 # Development languages (via asdf)
@@ -280,6 +281,37 @@ View logs:
 cd /path/to/supercharged
 tail -f .supercharged_install.log  # Follow logs in real-time
 grep ERROR .supercharged_install.log  # Filter for errors
+```
+
+### Claude Code Token Optimization
+
+**Three-layer optimization stack** for 90%+ total token savings:
+
+#### 1. RTK (Input Token Optimization)
+- **What**: Rust-based CLI proxy that filters command output
+- **Savings**: 60-90% reduction on tool output (git, npm, shell commands)
+- **Integration**: PreToolUse hook (automatic, transparent)
+- **Example**: `git status` → `rtk git status` (filtered for relevance)
+
+#### 2. Dippy (Permission Flow Optimization)
+- **What**: AST-based permission automation
+- **Savings**: ~40% faster development (reduced permission fatigue)
+- **How**: Auto-approves safe commands (ls, git status, cat) while blocking destructive ops
+- **Integration**: Installed via Homebrew (ldayton/dippy tap), works alongside RTK
+
+#### 3. claude-token-efficient (Output Token Optimization)
+- **What**: CLAUDE.md behavioral rules that reduce verbosity
+- **Savings**: 60% reduction in Claude's response length
+- **Rules**: No sycophantic openers, prefer editing over rewriting, test before declaring done
+- **Integration**: Merged into project CLAUDE.md (automatic via prompt caching)
+
+**Combined result**: RTK optimizes inputs, Dippy streamlines workflow, claude-token-efficient controls outputs.
+
+**Verify RTK setup**:
+```bash
+rtk gain              # Show token savings analytics
+rtk gain --history    # Command usage history with savings
+rtk discover          # Find missed optimization opportunities
 ```
 
 ### Security Enforcement

@@ -224,6 +224,11 @@ main() {
         setup_rtk
     fi
 
+    # Ensure Dippy is installed for permission automation (if Claude Code is installed)
+    if [ -d "$HOME/.claude" ] && ! command -v dippy >/dev/null 2>&1; then
+        setup_dippy
+    fi
+
     log_with_level "SUCCESS" "Update completed successfully!"
 }
 

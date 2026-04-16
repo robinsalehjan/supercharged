@@ -17,11 +17,6 @@ export LSCOLORS=ExFxBxDxCxegedabagacad
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 
-# Claude Code configuration
-export MAX_THINKING_TOKENS=64000
-export CLAUDE_CODE_MAX_OUTPUT_TOKENS=32000
-export CLAUDE_CODE_DISABLE_AUTO_MEMORY=1
-
 # History settings
 HISTSIZE=50000
 SAVEHIST=50000

@@ -79,6 +79,7 @@ install_homebrew() {
 build_brewfile() {
     local content='tap "thoughtbot/formulae"
 tap "homebrew/services"
+tap "ldayton/dippy"
 
 brew "coreutils"
 brew "git"
@@ -107,6 +108,7 @@ brew "ollama"
 brew "pipx"
 brew "uv"
 brew "rtk"
+brew "dippy"
 brew "watch"'
 
     if [[ "${INSTALL_IOS_TOOLS:-Y}" =~ ^[Yy] ]]; then
@@ -266,6 +268,9 @@ main() {
 
         # Setup RTK for token optimization
         setup_rtk
+
+        # Setup Dippy for permission automation
+        setup_dippy
 
         # Setup Plannotator for visual plan annotation
         setup_plannotator

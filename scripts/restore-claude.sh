@@ -54,7 +54,9 @@ fi
 # Check if any config files exist in repo
 if [ ! -f "$CLAUDE_CONFIG_DIR/settings.json" ] && \
    [ ! -f "$CLAUDE_CONFIG_DIR/installed_plugins.json" ] && \
-   [ ! -f "$CLAUDE_CONFIG_DIR/known_marketplaces.json" ]; then
+   [ ! -f "$CLAUDE_CONFIG_DIR/known_marketplaces.json" ] && \
+   [ ! -f "$CLAUDE_CONFIG_DIR/keybindings.json" ] && \
+   [ ! -f "$CLAUDE_CONFIG_DIR/CLAUDE.md" ]; then
     log_with_level "INFO" "No Claude configuration files found in repository"
     exit 0
 fi
@@ -131,6 +133,22 @@ is_repo_newer() {
 
     if [ -f "$CLAUDE_HOME/plugins/known_marketplaces.json" ]; then
         mtime=$(get_file_mtime "$CLAUDE_HOME/plugins/known_marketplaces.json")
+        if [ "$mtime" -gt "$home_mtime" ]; then
+            home_mtime=$mtime
+        fi
+    fi
+
+    # Check keybindings.json
+    if [ -f "$CLAUDE_HOME/keybindings.json" ]; then
+        mtime=$(get_file_mtime "$CLAUDE_HOME/keybindings.json")
+        if [ "$mtime" -gt "$home_mtime" ]; then
+            home_mtime=$mtime
+        fi
+    fi
+
+    # Check CLAUDE.md
+    if [ -f "$CLAUDE_HOME/CLAUDE.md" ]; then
+        mtime=$(get_file_mtime "$CLAUDE_HOME/CLAUDE.md")
         if [ "$mtime" -gt "$home_mtime" ]; then
             home_mtime=$mtime
         fi
@@ -488,6 +506,18 @@ merge_marketplace_config \
     "$CLAUDE_HOME/plugins/known_marketplaces.json" \
     "known_marketplaces.json"
 
+# Restore keybindings.json (custom keyboard shortcuts)
+restore_config_file \
+    "$CLAUDE_CONFIG_DIR/keybindings.json" \
+    "$CLAUDE_HOME/keybindings.json" \
+    "keybindings.json"
+
+# Restore CLAUDE.md (global personal instructions)
+restore_config_file \
+    "$CLAUDE_CONFIG_DIR/CLAUDE.md" \
+    "$CLAUDE_HOME/CLAUDE.md" \
+    "CLAUDE.md"
+
 # Restore MCP server configurations into ~/.claude.json (env vars sourced from ~/.secrets)
 restore_mcp_servers
 
@@ -497,6 +527,8 @@ echo "📥 Restored files to ~/.claude:"
 echo "   - settings.json"
 echo "   - plugins/installed_plugins.json"
 echo "   - plugins/known_marketplaces.json"
+echo "   - keybindings.json"
+echo "   - CLAUDE.md"
 echo "   - settings.json MCP servers (global, env vars from ~/.secrets)"
 echo ""
 echo "⚠️  IMPORTANT: Plugins must be manually configured after restore:"

@@ -113,11 +113,39 @@ else
     log_with_level "WARN" "known_marketplaces.json not found"
 fi
 
+# Backup keybindings.json (custom keyboard shortcuts)
+if [ -f "$CLAUDE_HOME/keybindings.json" ]; then
+    if ! make_path_portable < "$CLAUDE_HOME/keybindings.json" > "$CLAUDE_CONFIG_DIR/keybindings.json.tmp"; then
+        rm -f "$CLAUDE_CONFIG_DIR/keybindings.json.tmp"
+        log_with_level "ERROR" "Failed to process keybindings.json - backup aborted"
+        exit 1
+    fi
+    mv "$CLAUDE_CONFIG_DIR/keybindings.json.tmp" "$CLAUDE_CONFIG_DIR/keybindings.json"
+    log_with_level "SUCCESS" "Backed up keybindings.json (paths made portable)"
+else
+    log_with_level "WARN" "keybindings.json not found"
+fi
+
+# Backup CLAUDE.md (global personal instructions)
+if [ -f "$CLAUDE_HOME/CLAUDE.md" ]; then
+    if ! make_path_portable < "$CLAUDE_HOME/CLAUDE.md" > "$CLAUDE_CONFIG_DIR/CLAUDE.md.tmp"; then
+        rm -f "$CLAUDE_CONFIG_DIR/CLAUDE.md.tmp"
+        log_with_level "ERROR" "Failed to process CLAUDE.md - backup aborted"
+        exit 1
+    fi
+    mv "$CLAUDE_CONFIG_DIR/CLAUDE.md.tmp" "$CLAUDE_CONFIG_DIR/CLAUDE.md"
+    log_with_level "SUCCESS" "Backed up CLAUDE.md (global instructions, paths made portable)"
+else
+    log_with_level "WARN" "CLAUDE.md not found"
+fi
+
 log_with_level "SUCCESS" "Claude Code configuration backup completed!"
 echo ""
 echo "📦 Backed up files:"
 echo "   - settings.json"
 echo "   - installed_plugins.json"
 echo "   - known_marketplaces.json"
+echo "   - keybindings.json"
+echo "   - CLAUDE.md"
 echo ""
 echo "💡 Commit these changes to git to save your Claude Code configuration"
