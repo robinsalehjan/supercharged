@@ -60,7 +60,7 @@ See [AGENTS.md](./AGENTS.md) for detailed code patterns and examples.
 - `~/.supercharged_backups/` - Backup history with timestamps
 - `.claude/` - Claude Code config: 11 hookify rules for security/conventions
 - `dot_files/.tool-versions` - ASDF tool versions (one tool per line); edit here to add/change a tool
-- Claude backup/restore: sanitizes `@vend-plugins` marketplace and `GITHUB_PERSONAL_ACCESS_TOKEN` from backups, preserves local work plugins via additive merge on restore
+- Claude backup/restore: backs up `settings.json`, `installed_plugins.json`, `known_marketplaces.json`, `keybindings.json`, and `CLAUDE.md`; sanitizes `@vend-plugins` marketplace and `GITHUB_PERSONAL_ACCESS_TOKEN` from backups; preserves local work plugins via additive merge on restore
 
 ## Token Optimization Stack
 

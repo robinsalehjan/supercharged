@@ -136,6 +136,7 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 - Merge logic: restore preserves local work plugins while applying repo settings
 - Timestamp comparison: only restores when repo config is newer (unless `--force`)
 - Secrets: `~/.secrets` is sourced once at restore start; MCP servers are skipped (not partially written) if it's absent
+- **Backed up files**: `settings.json`, `installed_plugins.json`, `known_marketplaces.json`, `keybindings.json`, `CLAUDE.md`
 - **Post-restore**: Plugins must be manually installed/enabled (see Post-Restore Steps below)
 
 **Post-Restore Steps** (after `npm run restore:claude` or `npm run restore:claude:force`):
@@ -176,6 +177,22 @@ All git commands are automatically rewritten by Claude Code hooks (e.g., `git st
 rtk init -g --auto-patch    # Reconfigure hooks
 rtk init -g --uninstall     # Remove hooks
 ```
+
+## Dippy (Permission Automation)
+
+Dippy is an AST-based permission automation tool for Claude Code. It auto-approves safe commands while blocking destructive operations, reducing permission fatigue by ~40%.
+
+**Installed by**: `brew install dippy` (tap: `ldayton/dippy`) in `scripts/mac.sh`
+**Configured by**: `setup_dippy()` in `scripts/utils.sh`
+**Hook location**: PreToolUse hook in `~/.claude/settings.json` (runs before RTK rewrite)
+
+**How it works:**
+- Runs as a PreToolUse hook on `Bash` tool calls
+- Auto-approves safe, read-only commands (ls, git status, cat, etc.)
+- Blocks destructive operations that need human review
+- Works alongside RTK — Dippy handles permissions, RTK handles output filtering
+
+**Setup is automatic** during `npm run setup` or `npm run update`. The update script also checks for missing Dippy installation when Claude Code is present.
 
 ## Plannotator (Visual Annotation Tool)
 
@@ -240,6 +257,7 @@ source scripts/utils.sh && setup_plannotator
 | Change log format | `log_with_level()` in `scripts/utils.sh` (preserve timestamp + level) |
 | Add backup file | `create_restoration_point()` in `scripts/utils.sh` |
 | Update Claude sanitization | `SANITIZE_MARKETPLACES` in `backup-claude.sh`, `PRESERVE_MARKETPLACES` in `restore-claude.sh` |
+| Add Claude backup file | Add backup/restore logic in `backup-claude.sh` and `restore-claude.sh` (follow `keybindings.json` pattern) |
 | Modify pre-commit checks | `.husky/pre-commit` - add/remove security validations |
 | Add/disable hookify rule | Create/edit `.claude/hookify.{name}.local.md` or set `enabled: false` |
 | Test security hooks | `git add . && git commit -m "test"` - hooks run automatically |

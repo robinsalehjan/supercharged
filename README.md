@@ -121,6 +121,8 @@ git, asdf, zsh-autosuggestions, zsh-syntax-highlighting, gcloud, docker, tmux
 settings.json              # Claude Code plugin settings
 installed_plugins.json     # List of installed plugins with versions
 known_marketplaces.json    # Plugin marketplace configurations
+keybindings.json           # Custom keyboard shortcuts
+CLAUDE.md                  # Global personal instructions
 ```
 
 ### Data Science Tools (Optional - Interactive Setup)
@@ -241,7 +243,9 @@ Every installation creates a timestamped backup of your existing configurations 
     ├── claude_config/           # Claude Code configuration backup
     │   ├── settings.json
     │   ├── installed_plugins.json
-    │   └── known_marketplaces.json
+    │   ├── known_marketplaces.json
+    │   ├── keybindings.json
+    │   └── CLAUDE.md
     ├── brew_packages.txt    # List of installed Homebrew packages
     ├── brew_casks.txt       # List of installed Homebrew casks
     ├── asdf_plugins.txt     # List of ASDF plugins
@@ -297,7 +301,7 @@ grep ERROR .supercharged_install.log  # Filter for errors
 - **What**: AST-based permission automation
 - **Savings**: ~40% faster development (reduced permission fatigue)
 - **How**: Auto-approves safe commands (ls, git status, cat) while blocking destructive ops
-- **Integration**: Installed via Homebrew (ldayton/dippy tap), works alongside RTK
+- **Integration**: Installed via Homebrew (`ldayton/dippy` tap), runs as PreToolUse hook alongside RTK
 
 #### 3. claude-token-efficient (Output Token Optimization)
 - **What**: CLAUDE.md behavioral rules that reduce verbosity
