@@ -94,15 +94,7 @@ All tools auto-configured during setup/update. See README.md for verification co
 
 ## Post-Restore Steps
 
-After running `npm run restore:claude` (or with `-- --force`), plugins must be manually configured:
-
-1. **Review backed-up plugins**: Check `claude_config/installed_plugins.json` to see which official plugins are in the backup
-2. **Install/enable plugins**: Use Claude Code's `/plugin` command or settings UI to install and enable required plugins
-3. **Enable work plugins** (if on work machine): Work plugins (@vend-plugins) are sanitized from backups for security, so they must be re-enabled manually in `~/.claude/settings.json` or via `/plugin`
-4. **Reload plugin registry**: Run `/reload-plugins` in Claude Code to force registry rescan if plugins don't appear in UI
-5. **Verify plugins loaded**: Check that skills and agents are available by running `/help` or checking the available tools
-
-**Why manual?** Plugin installation/enablement is stateful and environment-specific (work vs personal). The restore process only restores configuration files — it cannot install plugin code or modify the live plugin registry.
+After `npm run restore:claude`, plugins must be manually installed/enabled — restore only handles config files, not live plugin state. See [AGENTS.md](./AGENTS.md) for the full procedure.
 
 ## Reference
 
