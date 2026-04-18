@@ -158,6 +158,16 @@ if [ -f "$CLAUDE_HOME/CLAUDE.md" ]; then
     done < <(sed -n 's/^@\(.*\.md\)$/\1/p' "$CLAUDE_HOME/CLAUDE.md")
 fi
 
+# Backup statusline Config.toml (theme and display configuration)
+STATUSLINE_CONFIG="$CLAUDE_HOME/statusline/Config.toml"
+if [ -f "$STATUSLINE_CONFIG" ]; then
+    mkdir -p "$CLAUDE_CONFIG_DIR/statusline"
+    cp "$STATUSLINE_CONFIG" "$CLAUDE_CONFIG_DIR/statusline/Config.toml"
+    log_with_level "SUCCESS" "Backed up statusline/Config.toml"
+else
+    log_with_level "WARN" "statusline/Config.toml not found"
+fi
+
 log_with_level "SUCCESS" "Claude Code configuration backup completed!"
 echo ""
 echo "📦 Backed up files:"
@@ -169,5 +179,6 @@ echo "   - CLAUDE.md"
 for ref_file in "${claude_md_refs_backed_up[@]}"; do
     echo "   - $ref_file"
 done
+echo "   - statusline/Config.toml"
 echo ""
 echo "💡 Commit these changes to git to save your Claude Code configuration"

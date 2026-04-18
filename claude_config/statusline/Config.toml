@@ -1,0 +1,131 @@
+# ============================================================================
+# Claude Code Statusline - Catppuccin Theme Configuration
+# ============================================================================
+
+# === THEME ===
+theme.name = "catppuccin"
+
+# === FEATURE TOGGLES ===
+features.show_commits = true
+features.show_version = true
+features.show_submodules = true
+features.hide_submodules_when_empty = true
+features.show_worktree = true
+features.show_mcp_status = true
+features.show_cost_tracking = true
+features.show_reset_info = true
+features.show_session_info = false
+features.show_prayer_times = false
+features.show_hijri_date = false
+features.show_code_productivity = true
+features.show_context_window = true
+features.show_usage_limits = true
+features.show_version_display = false
+features.show_vim_mode = true
+features.show_agent_display = true
+features.show_context_alert = true
+features.show_total_tokens = true
+
+# === EMOJIS ===
+emojis.opus = "🧠"
+emojis.haiku = "⚡"
+emojis.sonnet = "🎵"
+emojis.default_model = "🤖"
+emojis.clean_status = "✅"
+emojis.dirty_status = "📁"
+emojis.clock = "🕐"
+emojis.live_block = "🔥"
+
+# === TIMEOUTS ===
+timeouts.mcp = "3s"
+timeouts.version = "2s"
+
+# === COST TRACKING ===
+cost.session_source = "auto"
+cost.alerts.enabled = false
+
+# === CONTEXT WINDOW ===
+context_window.emoji = "🧠"
+context_window.show_tokens = true
+context_window.show_when_empty = false
+context_window.warn_threshold = 75
+context_window.critical_threshold = 90
+context_window.medium_threshold = 50
+
+# === USAGE LIMITS ===
+usage_limits.label = "Limit:"
+usage_limits.warn_threshold = 50
+usage_limits.critical_threshold = 80
+usage_limits.cache_ttl = 300
+
+# === CONTEXT ALERT ===
+context_alert.show_only_when_exceeded = true
+context_alert.threshold_label = ">200K"
+
+# === TOTAL TOKENS ===
+total_tokens.format = "split"
+
+# === CODE PRODUCTIVITY ===
+code_productivity.show_zero = false
+
+# === DISPLAY LAYOUT (5 lines) ===
+display.lines = 5
+
+# Line 1: Repository info
+display.line1.components = ["repo_info"]
+display.line1.separator = " │ "
+
+# Line 2: Model, git metrics, version, time
+display.line2.components = ["model_info", "commits", "submodules", "version_info", "time_display"]
+display.line2.separator = " │ "
+
+# Line 3: Cost analytics
+display.line3.components = ["cost_repo", "cost_monthly", "cost_weekly", "cost_daily", "cost_live"]
+display.line3.separator = " │ "
+
+# Line 4: Block metrics and context
+display.line4.components = ["burn_rate", "cache_efficiency", "code_productivity", "context_window"]
+display.line4.separator = " │ "
+
+# Line 5: MCP status + usage reset
+display.line5.components = ["mcp_status", "usage_reset"]
+display.line5.separator = " │ "
+display.line5.show_when_empty = false
+
+# === LABELS ===
+labels.commits = "Commits:"
+labels.repo = "REPO"
+labels.monthly = "30DAY"
+labels.weekly = "7DAY"
+labels.daily = "DAY"
+labels.mcp = "MCP"
+labels.version_prefix = "ver"
+labels.claude_code_prefix = "CC:"
+labels.statusline_prefix = "SL:"
+labels.submodule = "SUB:"
+labels.live = "LIVE"
+labels.reset = "RESET"
+
+# === PRAYER/HIJRI (disabled) ===
+prayer.enabled = false
+hijri.enabled = false
+
+# === BEDROCK (disabled) ===
+bedrock_model.enabled = false
+
+# === CACHE ===
+cache.base_directory = "auto"
+cache.enable_universal_caching = true
+cache.isolation.mode = "repository"
+cache.isolation.cost = "shared"
+
+# === DISPLAY FORMATS ===
+display.time_format = "%H:%M"
+display.date_format = "%Y-%m-%d"
+
+# === PERFORMANCE ===
+performance.parallel_data_collection = true
+performance.enable_smart_caching = true
+
+# === DEBUGGING ===
+debug.log_level = "error"
