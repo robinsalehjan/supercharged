@@ -7,8 +7,8 @@ theme.name = "catppuccin"
 
 # === FEATURE TOGGLES ===
 features.show_commits = true
-features.show_version = true
-features.show_submodules = true
+features.show_version = false
+features.show_submodules = false
 features.hide_submodules_when_empty = true
 features.show_worktree = true
 features.show_mcp_status = true
@@ -19,12 +19,12 @@ features.show_prayer_times = false
 features.show_hijri_date = false
 features.show_code_productivity = true
 features.show_context_window = true
-features.show_usage_limits = true
+features.show_usage_limits = false
 features.show_version_display = false
-features.show_vim_mode = true
-features.show_agent_display = true
-features.show_context_alert = true
-features.show_total_tokens = true
+features.show_vim_mode = false
+features.show_agent_display = false
+features.show_context_alert = false
+features.show_total_tokens = false
 
 # === EMOJIS ===
 emojis.opus = "🧠"
@@ -52,57 +52,34 @@ context_window.warn_threshold = 75
 context_window.critical_threshold = 90
 context_window.medium_threshold = 50
 
-# === USAGE LIMITS ===
-usage_limits.label = "Limit:"
-usage_limits.warn_threshold = 50
-usage_limits.critical_threshold = 80
-usage_limits.cache_ttl = 300
-
-# === CONTEXT ALERT ===
-context_alert.show_only_when_exceeded = true
-context_alert.threshold_label = ">200K"
-
-# === TOTAL TOKENS ===
-total_tokens.format = "split"
-
 # === CODE PRODUCTIVITY ===
 code_productivity.show_zero = false
 
-# === DISPLAY LAYOUT (5 lines) ===
-display.lines = 5
+# === DISPLAY LAYOUT (4 lines) ===
+display.lines = 4
 
-# Line 1: Repository info
-display.line1.components = ["repo_info"]
+# Line 1: Model, context, MCP
+display.line1.components = ["model_info", "context_window", "mcp_status"]
 display.line1.separator = " │ "
 
-# Line 2: Model, git metrics, version, time
-display.line2.components = ["model_info", "commits", "submodules", "version_info", "time_display"]
+# Line 2: Cache, diff, commits
+display.line2.components = ["cache_efficiency", "code_productivity", "commits"]
 display.line2.separator = " │ "
 
 # Line 3: Cost analytics
-display.line3.components = ["cost_repo", "cost_monthly", "cost_weekly", "cost_daily", "cost_live"]
+display.line3.components = ["cost_live", "cost_monthly", "cost_weekly"]
 display.line3.separator = " │ "
 
-# Line 4: Block metrics and context
-display.line4.components = ["burn_rate", "cache_efficiency", "code_productivity", "context_window"]
+# Line 4: Usage reset
+display.line4.components = ["usage_reset"]
 display.line4.separator = " │ "
-
-# Line 5: MCP status + usage reset
-display.line5.components = ["mcp_status", "usage_reset"]
-display.line5.separator = " │ "
-display.line5.show_when_empty = false
+display.line4.show_when_empty = false
 
 # === LABELS ===
-labels.commits = "Commits:"
-labels.repo = "REPO"
+labels.commits = "Commits: "
 labels.monthly = "30DAY"
 labels.weekly = "7DAY"
-labels.daily = "DAY"
-labels.mcp = "MCP"
-labels.version_prefix = "ver"
-labels.claude_code_prefix = "CC:"
-labels.statusline_prefix = "SL:"
-labels.submodule = "SUB:"
+labels.mcp = "MCP: "
 labels.live = "LIVE"
 labels.reset = "RESET"
 

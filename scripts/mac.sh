@@ -81,6 +81,7 @@ build_brewfile() {
 tap "homebrew/services"
 tap "ldayton/dippy"
 
+brew "bash"
 brew "coreutils"
 brew "git"
 brew "curl"

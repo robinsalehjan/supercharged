@@ -119,6 +119,7 @@ run_zsh_func() {
     build_brewfile
   "
   [ "$status" -eq 0 ]
+  [[ "$output" == *'brew "bash"'* ]]
   [[ "$output" == *'brew "git"'* ]]
   [[ "$output" == *'brew "shellcheck"'* ]]
   [[ "$output" == *'brew "jq"'* ]]
