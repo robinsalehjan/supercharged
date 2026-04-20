@@ -18,7 +18,6 @@
     ],
     "defaultMode": "acceptEdits"
   },
-  "model": "claude-opus-4-6",
   "hooks": {
     "PreToolUse": [
       {
@@ -67,9 +66,9 @@
   "alwaysThinkingEnabled": true,
   "effortLevel": "high",
   "autoUpdatesChannel": "stable",
-  "tui": "fullscreen",
   "showThinkingSummaries": true,
   "skipDangerousModePermissionPrompt": true,
+  "tui": "fullscreen",
   "mcpServers": {
     "XcodeBuildMCP": {
       "type": "stdio",
