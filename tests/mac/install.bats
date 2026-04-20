@@ -263,3 +263,33 @@ EOF
   [[ "$output" == *"nodejs=22.9.0"* ]]
   [[ "$output" == *"count=2"* ]]
 }
+
+# =============================================================================
+# setup_statusline tests
+# =============================================================================
+
+@test "setup_statusline detects existing installation" {
+  mkdir -p "$HOME/.claude/statusline/lib"
+  touch "$HOME/.claude/statusline/statusline.sh"
+
+  run zsh -c "
+    source '$PROJECT_ROOT/scripts/utils.sh'
+    setup_statusline
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"statusline already installed"* ]]
+}
+
+@test "setup_statusline installs when missing" {
+  # Create a mock curl that simulates the installer
+  create_mock_bin "curl" 'if [[ "$*" == *"install.sh"* ]]; then echo "#!/bin/sh" > "$6"; echo "mkdir -p \$HOME/.claude/statusline/lib" >> "$6"; echo "touch \$HOME/.claude/statusline/statusline.sh" >> "$6"; exit 0; else exit 1; fi'
+  create_mock_bin "bash" 'if [[ "$1" =~ /tmp ]]; then mkdir -p "$HOME/.claude/statusline/lib"; touch "$HOME/.claude/statusline/statusline.sh"; exit 0; else /bin/bash "$@"; fi'
+
+  run zsh -c "
+    export PATH='$MOCK_BIN_DIR:$REAL_PATH'
+    source '$PROJECT_ROOT/scripts/utils.sh'
+    setup_statusline
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Installing Claude Code enhanced statusline"* ]]
+}
