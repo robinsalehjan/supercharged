@@ -58,8 +58,8 @@ code_productivity.show_zero = false
 # === DISPLAY LAYOUT (5 lines) ===
 display.lines = 5
 
-# Line 1: Model, context, MCP
-display.line1.components = ["model_info", "context_window", "mcp_status"]
+# Line 1: Model, context
+display.line1.components = ["model_info", "context_window"]
 display.line1.separator = " │ "
 
 # Line 2: Cache, diff, commits
