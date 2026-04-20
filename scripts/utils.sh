@@ -622,6 +622,58 @@ setup_plannotator() {
     log_with_level "INFO" "Install the Claude Code plugin: /plugin marketplace add backnotprop/plannotator"
 }
 
+# Setup Claude Code Statusline (Enhanced terminal statusline)
+setup_statusline() {
+    # Check if statusline is already installed
+    if [ -f "$HOME/.claude/statusline/statusline.sh" ] && [ -d "$HOME/.claude/statusline/lib" ]; then
+        log_with_level "INFO" "Claude Code statusline already installed"
+        return 0
+    fi
+
+    log_with_level "INFO" "Installing Claude Code enhanced statusline..."
+
+    # Backup existing Config.toml if present (preserve user customizations)
+    local config_backup=""
+    if [ -f "$HOME/.claude/statusline/Config.toml" ]; then
+        config_backup=$(mktemp)
+        cp "$HOME/.claude/statusline/Config.toml" "$config_backup"
+        log_with_level "INFO" "Preserved existing Config.toml"
+    fi
+
+    # Download and run the installer
+    local installer_url="https://raw.githubusercontent.com/rz1989s/claude-code-statusline/main/install.sh"
+    local tmp_installer
+    tmp_installer=$(mktemp)
+
+    if ! curl -fsSL "$installer_url" -o "$tmp_installer"; then
+        log_with_level "ERROR" "Failed to download statusline installer"
+        rm -f "$tmp_installer"
+        [ -n "$config_backup" ] && rm -f "$config_backup"
+        return 1
+    fi
+
+    # Run the installer
+    if bash "$tmp_installer" >/dev/null 2>&1; then
+        # Restore backed up config if it existed
+        if [ -n "$config_backup" ] && [ -f "$config_backup" ]; then
+            cp "$config_backup" "$HOME/.claude/statusline/Config.toml"
+            log_with_level "INFO" "Restored preserved Config.toml"
+            rm -f "$config_backup"
+        fi
+
+        log_with_level "SUCCESS" "Claude Code statusline installed successfully"
+        log_with_level "INFO" "Statusline provides real-time metrics, cost tracking, and MCP monitoring"
+        log_with_level "INFO" "Customize: ~/.claude/statusline/Config.toml"
+    else
+        log_with_level "ERROR" "Statusline installation failed"
+        rm -f "$tmp_installer"
+        [ -n "$config_backup" ] && rm -f "$config_backup"
+        return 1
+    fi
+
+    rm -f "$tmp_installer"
+}
+
 # Filter JSON entries by marketplace suffix
 # Usage: filter_json_by_marketplace INPUT_JSON JQ_PATH MARKETPLACE1 MARKETPLACE2...
 # Returns: JSON with entries NOT matching @MARKETPLACE suffixes removed

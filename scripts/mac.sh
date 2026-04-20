@@ -261,12 +261,6 @@ main() {
         }
         echo "$install_script" | bash
 
-        # Restore Claude configuration from repository if available
-        if [ -x "$UTILS_SCRIPT_DIR/restore-claude.sh" ]; then
-            log_with_level "INFO" "Restoring Claude configuration from repository..."
-            "$UTILS_SCRIPT_DIR/restore-claude.sh" --force || log_with_level "WARN" "Claude config restore skipped or failed"
-        fi
-
         # Setup RTK for token optimization
         setup_rtk
 
@@ -275,6 +269,17 @@ main() {
 
         # Setup Plannotator for visual plan annotation
         setup_plannotator
+
+        # Setup Claude Code statusline for enhanced terminal display
+        setup_statusline
+
+        # Restore Claude configuration from repository if available
+        # IMPORTANT: This runs AFTER setup_statusline to ensure backed up Config.toml
+        # overwrites the default one created by the statusline installer
+        if [ -x "$UTILS_SCRIPT_DIR/restore-claude.sh" ]; then
+            log_with_level "INFO" "Restoring Claude configuration from repository..."
+            "$UTILS_SCRIPT_DIR/restore-claude.sh" --force || log_with_level "WARN" "Claude config restore skipped or failed"
+        fi
     fi
 
     # Install additional tools based on preferences
