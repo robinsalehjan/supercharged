@@ -55,8 +55,8 @@ context_window.medium_threshold = 50
 # === CODE PRODUCTIVITY ===
 code_productivity.show_zero = false
 
-# === DISPLAY LAYOUT (4 lines) ===
-display.lines = 4
+# === DISPLAY LAYOUT (5 lines) ===
+display.lines = 5
 
 # Line 1: Model, context, MCP
 display.line1.components = ["model_info", "context_window", "mcp_status"]
@@ -70,10 +70,14 @@ display.line2.separator = " │ "
 display.line3.components = ["cost_live", "cost_monthly", "cost_weekly"]
 display.line3.separator = " │ "
 
-# Line 4: Usage reset
-display.line4.components = ["usage_reset"]
+# Line 4: MCP servers and plugins
+display.line4.components = ["mcp_servers", "mcp_plugins"]
 display.line4.separator = " │ "
-display.line4.show_when_empty = false
+
+# Line 5: Usage reset
+display.line5.components = ["usage_reset"]
+display.line5.separator = " │ "
+display.line5.show_when_empty = false
 
 # === LABELS ===
 labels.commits = "Commits: "
@@ -82,6 +86,12 @@ labels.weekly = "7DAY"
 labels.mcp = "MCP: "
 labels.live = "LIVE"
 labels.reset = "RESET"
+
+# === MCP COMPONENT LABELS ===
+mcp_servers.label = "Remote"
+mcp_servers.max_name_length = 20
+mcp_plugins.label = "Plugin"
+mcp_plugins.max_name_length = 20
 
 # === PRAYER/HIJRI (disabled) ===
 prayer.enabled = false
