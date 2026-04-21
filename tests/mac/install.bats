@@ -137,7 +137,9 @@ run_zsh_func() {
   [[ "$output" == *'xcodes'* ]]
   [[ "$output" == *'swiftlint'* ]]
   [[ "$output" == *'swift-format'* ]]
+  [[ "$output" == *'swiftformat'* ]]
   [[ "$output" == *'ios-deploy'* ]]
+  [[ "$output" == *'periphery'* ]]
 }
 
 @test "build_brewfile excludes iOS tools when INSTALL_IOS_TOOLS=n" {
@@ -150,6 +152,7 @@ run_zsh_func() {
   [ "$status" -eq 0 ]
   [[ "$output" != *'xcodes'* ]]
   [[ "$output" != *'swiftlint'* ]]
+  [[ "$output" != *'periphery'* ]]
 }
 
 @test "build_brewfile includes dev tools when INSTALL_DEV_TOOLS=Y" {

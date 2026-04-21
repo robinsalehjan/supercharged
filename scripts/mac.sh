@@ -120,7 +120,10 @@ brew \"xcode-build-server\"
 brew \"xcbeautify\"
 brew \"swiftlint\"
 brew \"swift-format\"
-brew \"ios-deploy\""
+brew \"swiftformat\"
+brew \"ios-deploy\"
+tap \"peripheryapp/periphery\"
+brew \"periphery\""
     fi
 
     if [[ "${INSTALL_DEV_TOOLS:-Y}" =~ ^[Yy] ]]; then
