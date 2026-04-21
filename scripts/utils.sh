@@ -547,6 +547,36 @@ setup_dippy() {
     log_with_level "INFO" "Configure Dippy hook in ~/.claude/settings.json to enable it"
 }
 
+# Setup code-review-graph (AI-optimized code context via knowledge graph)
+setup_code_review_graph() {
+    if ! command_exists pipx; then
+        log_with_level "WARN" "pipx not installed, skipping code-review-graph"
+        return 0
+    fi
+
+    if command_exists code-review-graph; then
+        log_with_level "INFO" "code-review-graph already installed, ensuring Claude Code integration..."
+    else
+        log_with_level "INFO" "Installing code-review-graph (AI-optimized code context)..."
+        if pipx install code-review-graph >/dev/null 2>&1; then
+            log_with_level "SUCCESS" "code-review-graph installed successfully"
+        else
+            log_with_level "ERROR" "Failed to install code-review-graph via pipx"
+            return 1
+        fi
+    fi
+
+    # Configure for Claude Code
+    if code-review-graph install --platform claude-code >/dev/null 2>&1; then
+        log_with_level "SUCCESS" "code-review-graph configured for Claude Code"
+    else
+        log_with_level "WARN" "code-review-graph Claude Code configuration failed or already configured"
+    fi
+
+    log_with_level "INFO" "code-review-graph builds a knowledge graph of your codebase to reduce AI token usage by ~8x"
+    log_with_level "INFO" "Run 'code-review-graph build' in a repo to index it"
+}
+
 # Setup Plannotator (Visual annotation tool for AI coding agents)
 setup_plannotator() {
     if command_exists plannotator; then
@@ -720,6 +750,7 @@ validate_installation() {
     validate_tool "asdf" "" || ((failed++))
     validate_tool "shellcheck" "" || ((failed++))
     validate_tool "rtk" "" || ((failed++))
+    validate_tool "code-review-graph" "" || ((failed++))
 
     # Validate ASDF-managed languages and runtimes
     validate_tool "python3" "$python_version" || ((failed++))

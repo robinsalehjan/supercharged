@@ -259,6 +259,11 @@ main() {
         setup_dippy
     fi
 
+    # Ensure code-review-graph is configured for Claude Code (if both are installed)
+    if command -v code-review-graph >/dev/null 2>&1 && [ -d "$HOME/.claude" ]; then
+        setup_code_review_graph
+    fi
+
     log_with_level "SUCCESS" "Update completed successfully!"
 }
 

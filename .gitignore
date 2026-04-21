@@ -29,3 +29,5 @@ node_modules/
 # Keep design specs for reference (plans are local-only)
 docs/superpowers/*
 !docs/superpowers/specs/
+# Added by code-review-graph
+.code-review-graph/

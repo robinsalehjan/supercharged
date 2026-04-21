@@ -270,6 +270,9 @@ main() {
         # Setup Dippy for permission automation
         setup_dippy
 
+        # Setup code-review-graph for AI-optimized code context
+        setup_code_review_graph
+
         # Setup Plannotator for visual plan annotation
         setup_plannotator
 
