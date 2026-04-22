@@ -1,8 +1,6 @@
 # supercharged
 [![Tests](https://github.com/robinsalehjan/supercharged/actions/workflows/test.yml/badge.svg)](https://github.com/robinsalehjan/supercharged/actions/workflows/test.yml)
 
-macOS environment setup automation — installs dev tools (Homebrew, ASDF), manages dotfiles, and backs up Claude Code configuration.
-
 ## Quick Start
 
 ```bash
@@ -11,9 +9,7 @@ git clone git@github.com:robinsalehjan/supercharged.git
 cd supercharged && npm install && npm run setup
 ```
 
-Setup copies dotfiles, validates your system, asks for preferences (iOS/data science/dev tools/Claude Code), installs everything, and runs validation.
-
-## Common Commands
+## Commands
 
 ```bash
 npm run setup              # Fresh install (interactive)
@@ -29,9 +25,9 @@ npm run help               # Show all commands
 
 ## Safety & Security
 
+- **Security**: Pre-commit hooks + hookify rules enforce secrets detection, shellcheck, path validation. See [SECURITY.md](./SECURITY.md).
 - **Backups**: Timestamped backups in `~/.supercharged_backups/` (keeps last 5). Restore with `npm run restore`.
 - **Logging**: `.supercharged_install.log` with timestamps and levels.
-- **Security**: Pre-commit hooks + hookify rules enforce secrets detection, shellcheck, path validation. See [SECURITY.md](./SECURITY.md).
 
 ## Documentation
 
