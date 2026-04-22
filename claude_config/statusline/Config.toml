@@ -11,9 +11,9 @@ features.show_version = false
 features.show_submodules = false
 features.hide_submodules_when_empty = true
 features.show_worktree = true
-features.show_mcp_status = true
+features.show_mcp_status = false
 features.show_cost_tracking = true
-features.show_reset_info = true
+features.show_reset_info = false
 features.show_session_info = false
 features.show_prayer_times = false
 features.show_hijri_date = false
@@ -55,29 +55,21 @@ context_window.medium_threshold = 50
 # === CODE PRODUCTIVITY ===
 code_productivity.show_zero = false
 
-# === DISPLAY LAYOUT (5 lines) ===
-display.lines = 5
+# === DISPLAY LAYOUT (3x3 grid) ===
+display.lines = 3
 
-# Line 1: Model, context
-display.line1.components = ["model_info", "context_window"]
-display.line1.separator = " │ "
+# Line 1: Repo, model, context
+display.line1.components = ["repo_info", "model_info", "context_window"]
+display.line1.separator = " • "
 
 # Line 2: Cache, diff, commits
 display.line2.components = ["cache_efficiency", "code_productivity", "commits"]
-display.line2.separator = " │ "
+display.line2.separator = " • "
 
 # Line 3: Cost analytics
-display.line3.components = ["cost_live", "cost_monthly", "cost_weekly"]
-display.line3.separator = " │ "
+display.line3.components = ["cost_live", "cost_weekly", "cost_monthly"]
+display.line3.separator = " • "
 
-# Line 4: MCP servers and plugins
-display.line4.components = ["mcp_servers", "mcp_plugins"]
-display.line4.separator = " │ "
-
-# Line 5: Usage reset
-display.line5.components = ["usage_reset"]
-display.line5.separator = " │ "
-display.line5.show_when_empty = false
 
 # === LABELS ===
 labels.commits = "Commits: "
