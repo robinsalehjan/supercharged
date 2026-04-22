@@ -5,7 +5,7 @@
       "repo": "anthropics/claude-plugins-official"
     },
     "installLocation": "$HOME/.claude/plugins/marketplaces/claude-plugins-official",
-    "lastUpdated": "2026-04-20T08:11:48.082Z"
+    "lastUpdated": "2026-04-22T09:34:52.129Z"
   },
   "plannotator": {
     "source": {
@@ -14,5 +14,13 @@
     },
     "installLocation": "$HOME/.claude/plugins/marketplaces/plannotator",
     "lastUpdated": "2026-04-14T13:38:22.117Z"
+  },
+  "vladikk-modularity": {
+    "source": {
+      "source": "github",
+      "repo": "vladikk/modularity"
+    },
+    "installLocation": "$HOME/.claude/plugins/marketplaces/vladikk-modularity",
+    "lastUpdated": "2026-04-22T13:10:43.860Z"
   }
 }

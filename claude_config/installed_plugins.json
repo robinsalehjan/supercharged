@@ -130,15 +130,6 @@
         "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
       }
     ],
-    "agent-sdk-dev@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/agent-sdk-dev/unknown",
-        "version": "unknown",
-        "installedAt": "2026-04-10T08:37:57.065Z",
-        "lastUpdated": "2026-04-10T08:37:57.065Z"
-      }
-    ],
     "plannotator@plannotator": [
       {
         "scope": "user",
@@ -147,6 +138,25 @@
         "installedAt": "2026-04-14T13:44:55.741Z",
         "lastUpdated": "2026-04-14T13:44:55.741Z",
         "gitCommitSha": "f1d3a880ed384f5779d019d743f52995b3151173"
+      }
+    ],
+    "code-review@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/code-review/unknown",
+        "version": "unknown",
+        "installedAt": "2026-04-20T21:43:07.549Z",
+        "lastUpdated": "2026-04-20T21:43:07.549Z"
+      }
+    ],
+    "modularity@vladikk-modularity": [
+      {
+        "scope": "user",
+        "installPath": "$HOME/.claude/plugins/cache/vladikk-modularity/modularity/1.5.0",
+        "version": "1.5.0",
+        "installedAt": "2026-04-22T13:10:49.383Z",
+        "lastUpdated": "2026-04-22T13:10:49.383Z",
+        "gitCommitSha": "bcdca9a595764b9aa88d5d8d6020f52e7f5f1f52"
       }
     ]
   }
