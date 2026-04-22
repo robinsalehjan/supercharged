@@ -34,6 +34,7 @@ See [AGENTS.md](./AGENTS.md) for complete npm commands reference.
 - `npm run update:dry-run` - Preview outdated packages (read-only, safe)
 - `npm run backup:claude` - Backup Claude Code config to repo
 - `npm run restore:claude -- --force` - Force restore Claude Code config from repo
+- `npm run install:plugins` - Install all Claude Code marketplaces and plugins via CLI
 - `npm run lint` - ShellCheck all scripts
 - `npm test` - Run all BATS tests (requires `brew install bats-core`); covers mac, update, setup, utils, claude, restore, meta
 - `npm run test:watch` - Watch mode (requires: `brew install watch`)
@@ -94,7 +95,7 @@ All tools auto-configured during setup/update. See README.md for verification co
 
 ## Post-Restore Steps
 
-After `npm run restore:claude`, plugins must be manually installed/enabled — restore only handles config files, not live plugin state. See [AGENTS.md](./AGENTS.md) for the full procedure.
+After `npm run restore:claude`, run `npm run install:plugins` to install all marketplaces and plugins via the `claude` CLI. See [AGENTS.md](./AGENTS.md) for the full procedure.
 
 ## Reference
 

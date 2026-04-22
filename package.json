@@ -13,6 +13,7 @@
     "restore": "./scripts/restore.sh",
     "backup:claude": "./scripts/backup-claude.sh",
     "restore:claude": "./scripts/restore-claude.sh",
+    "install:plugins": "./scripts/install-plugins.sh",
     "lint": "shellcheck --shell=bash --exclude=SC1071,SC2296,SC1091 scripts/*.sh",
     "test": "bats tests/**/*.bats",
     "test:watch": "watch 'npm test' tests scripts",
