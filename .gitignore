@@ -26,8 +26,13 @@ node_modules/
 # Task tracker (agent working document)
 .task-tracker.md
 
-# Keep design specs for reference (plans are local-only)
-docs/superpowers/*
-!docs/superpowers/specs/
+# MCP config (machine-specific)
+.mcp.json
+
+# Husky (replaced by hookify rules)
+.husky/
+
+# Superpowers plans and specs are local-only
+docs/superpowers/
 # Added by code-review-graph
 .code-review-graph/
