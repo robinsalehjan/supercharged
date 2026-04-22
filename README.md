@@ -23,12 +23,6 @@ npm run lint               # ShellCheck all scripts
 npm run help               # Show all commands
 ```
 
-## Safety & Security
-
-- **Security**: Pre-commit hooks + hookify rules enforce secrets detection, shellcheck, path validation. See [SECURITY.md](./SECURITY.md).
-- **Backups**: Timestamped backups in `~/.supercharged_backups/` (keeps last 5). Restore with `npm run restore`.
-- **Logging**: `.supercharged_install.log` with timestamps and levels.
-
 ## Documentation
 
 | Document | Content |
