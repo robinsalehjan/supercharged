@@ -335,6 +335,36 @@ EOF
   }
 }
 
+# --- filter_json_by_marketplace tests ---
+
+@test "filter_json_by_marketplace filters single marketplace" {
+  local input='{"plugins":{"foo":1,"bar@vend-plugins":2,"baz":3}}'
+  run filter_json_by_marketplace "$input" ".plugins" "vend-plugins"
+  [[ "$status" -eq 0 ]]
+  # Should keep foo and baz, remove bar@vend-plugins
+  echo "$output" | jq -e '.foo == 1' >/dev/null
+  echo "$output" | jq -e '.baz == 3' >/dev/null
+  echo "$output" | jq -e 'has("bar@vend-plugins") | not' >/dev/null
+}
+
+@test "filter_json_by_marketplace filters multiple marketplaces" {
+  local input='{"plugins":{"a":1,"b@vend-plugins":2,"c@work-plugins":3,"d":4}}'
+  run filter_json_by_marketplace "$input" ".plugins" "vend-plugins" "work-plugins"
+  [[ "$status" -eq 0 ]]
+  echo "$output" | jq -e '.a == 1' >/dev/null
+  echo "$output" | jq -e '.d == 4' >/dev/null
+  echo "$output" | jq -e 'has("b@vend-plugins") | not' >/dev/null
+  echo "$output" | jq -e 'has("c@work-plugins") | not' >/dev/null
+}
+
+@test "filter_json_by_marketplace preserves all entries when no marketplaces match" {
+  local input='{"plugins":{"foo":1,"bar":2}}'
+  run filter_json_by_marketplace "$input" ".plugins" "vend-plugins"
+  [[ "$status" -eq 0 ]]
+  echo "$output" | jq -e '.foo == 1' >/dev/null
+  echo "$output" | jq -e '.bar == 2' >/dev/null
+}
+
 @test "handles non-JSON files gracefully" {
   # Arrange: Create a plain text file with $HOME
   cat > "$TEST_TEMP_DIR/plain.txt" <<EOF

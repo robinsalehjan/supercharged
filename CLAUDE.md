@@ -52,12 +52,12 @@ See [AGENTS.md](./AGENTS.md) for detailed code patterns and examples.
 
 **This repository is used on personal AND work machines** — comprehensive security enforced:
 
-**Automated checks**: Pre-commit (secrets, paths, shellcheck) and hookify rules. See [SECURITY.md](./SECURITY.md) for details and `.claude/hookify.*.local.md` for rules.
+**Automated checks**: Hookify rules enforce security during Claude Code sessions. See [SECURITY.md](./SECURITY.md) for details and `.claude/hookify.*.local.md` for rules.
 
 **Key rules**:
 - Never commit secrets (`.secrets` is template only, in `.gitignore`)
 - No hardcoded paths in dotfiles (use `$HOME`, not `/Users/username/`)
-- Shellcheck is REQUIRED (commit fails if not installed: `brew install shellcheck`)
+- Shellcheck is required for `npm run lint` (`brew install shellcheck`)
 - Claude backups sanitized (work marketplaces excluded)
 - No bypassing hooks with `--no-verify` (blocked by hookify)
 

@@ -8,7 +8,10 @@ create_restoration_point() {
     local backup_dir="$backup_base/$timestamp"
 
     log_with_level "INFO" "Creating restoration point at $backup_dir"
-    mkdir -p "$backup_dir"
+    if ! mkdir -p "$backup_dir"; then
+        log_with_level "ERROR" "Failed to create backup directory: $backup_dir"
+        return 1
+    fi
 
     # Backup existing configurations
     for file in "${MANAGED_DOTFILES[@]}"; do
@@ -18,9 +21,10 @@ create_restoration_point() {
         fi
     done
 
-    # Backup Claude Code configuration if available (strip home directory for portability)
+    # Backup Claude Code configuration if available
     if [ -d "$HOME/.claude" ]; then
         mkdir -p "$backup_dir/claude_config"
+        # Strip home directory for portability on plugin/marketplace files
         if [ -f "$HOME/.claude/settings.json" ]; then
             cp "$HOME/.claude/settings.json" "$backup_dir/claude_config/"
             log_with_level "INFO" "Backed up Claude Code settings.json"

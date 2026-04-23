@@ -48,7 +48,28 @@ teardown() {
         setup_rtk
     "
     [[ "$status" -eq 0 ]]
-    [[ "$output" == *"Configuring RTK"* ]] || [[ "$output" == *"configured successfully"* ]]
+    [[ "$output" == *"configured successfully"* ]]
+}
+
+@test "setup_rtk logs failure details when rtk init fails" {
+    _ensure_mock_bin_dir
+    cat > "$MOCK_BIN_DIR/rtk" << 'RTKEOF'
+#!/bin/sh
+case "$1" in
+    init) echo "permission denied" >&2; exit 1 ;;
+    --version) echo "rtk 0.5.0" ;;
+    *) exit 0 ;;
+esac
+RTKEOF
+    chmod +x "$MOCK_BIN_DIR/rtk"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_rtk
+    "
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"configuration failed"* ]]
 }
 
 # --- setup_dippy tests ---
@@ -63,6 +84,16 @@ teardown() {
     "
     [[ "$status" -eq 0 ]]
     [[ "$output" == *"already installed"* ]]
+}
+
+@test "setup_dippy fails when brew is not available" {
+    run zsh -c "
+        export HOME='$HOME' PATH='/usr/bin:/bin'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_dippy
+    "
+    [[ "$status" -eq 1 ]]
+    [[ "$output" == *"Homebrew not found"* ]]
 }
 
 # --- setup_code_review_graph tests ---
@@ -89,5 +120,6 @@ teardown() {
         setup_code_review_graph
     "
     [[ "$status" -eq 0 ]]
-    [[ "$output" == *"already configured"* ]] || [[ "$output" == *"already installed"* ]]
+    [[ "$output" == *"already configured"* ]]
+    [[ "$output" == *"already installed"* ]]
 }

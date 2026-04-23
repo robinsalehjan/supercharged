@@ -14,7 +14,7 @@
     "backup:claude": "./scripts/backup-claude.sh",
     "restore:claude": "./scripts/restore-claude.sh",
     "install:plugins": "./scripts/install-plugins.sh",
-    "lint": "shellcheck --shell=bash --exclude=SC1071,SC2296,SC1091 scripts/*.sh scripts/utils/*.sh",
+    "lint": "shellcheck --shell=bash --exclude=SC1071,SC2296,SC1091,SC2001 scripts/*.sh scripts/utils/*.sh",
     "test": "bats tests/**/*.bats",
     "test:watch": "watch 'npm test' tests scripts",
     "pretest": "command -v bats >/dev/null || (echo '❌ bats not found. Install with: brew install bats-core' && exit 1)"

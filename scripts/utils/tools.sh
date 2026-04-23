@@ -8,7 +8,7 @@ install_zsh_plugin() {
         echo "Plugin already installed at $dest"
     else
         git clone "$repo" "$dest" || {
-            echo "Failed to clone $repo"
+            log_with_level "ERROR" "Failed to clone $repo"
             return 1
         }
     fi
@@ -20,7 +20,7 @@ install_asdf_plugin() {
     if ! asdf plugin list | grep -q "^${plugin}$"; then
         fancy_echo "asdf: adding $plugin plugin"
         asdf plugin add "$plugin" || {
-            echo "Warning: Failed to add $plugin plugin"
+            log_with_level "WARN" "Failed to add $plugin plugin"
             return 1
         }
     else
@@ -52,7 +52,10 @@ install_asdf_version() {
         fancy_echo "asdf: $plugin $version already installed"
     fi
 
-    asdf set --home "$plugin" "$version"
+    if ! asdf set --home "$plugin" "$version"; then
+        log_with_level "ERROR" "Failed to set $plugin $version as global default"
+        return 1
+    fi
     log_with_level "SUCCESS" "asdf: $plugin set to version $version"
 }
 
@@ -72,11 +75,12 @@ setup_rtk() {
     log_with_level "INFO" "Configuring RTK (Rust Token Killer) for Claude Code..."
 
     # Run rtk init with auto-patch to configure hooks
-    if rtk init -g --auto-patch >/dev/null 2>&1; then
+    local rtk_output
+    if rtk_output=$(rtk init -g --auto-patch 2>&1); then
         log_with_level "SUCCESS" "RTK configured successfully"
         log_with_level "INFO" "RTK will automatically optimize git commands to save 60-90% tokens"
     else
-        log_with_level "WARN" "RTK configuration failed or already configured"
+        log_with_level "WARN" "RTK configuration failed: $rtk_output"
     fi
 }
 
@@ -96,10 +100,14 @@ setup_dippy() {
     fi
 
     # Add Dippy tap and install
-    if brew tap ldayton/dippy >/dev/null 2>&1; then
+    local tap_output
+    if tap_output=$(brew tap ldayton/dippy 2>&1); then
         log_with_level "INFO" "Added ldayton/dippy tap"
+    elif echo "$tap_output" | grep -qi "already tapped"; then
+        log_with_level "INFO" "Dippy tap already added"
     else
-        log_with_level "WARN" "Failed to add Dippy tap or already added"
+        log_with_level "ERROR" "Failed to add Dippy tap: $tap_output"
+        return 1
     fi
 
     if brew install dippy >/dev/null 2>&1; then
@@ -138,11 +146,12 @@ setup_code_review_graph() {
         return 0
     fi
 
-    # Configure for Claude Code
-    if code-review-graph install --platform claude-code >/dev/null 2>&1; then
+    # Configure for Claude Code (idempotency already handled above, so failure here is real)
+    local crg_output
+    if crg_output=$(code-review-graph install --platform claude-code 2>&1); then
         log_with_level "SUCCESS" "code-review-graph configured for Claude Code"
     else
-        log_with_level "WARN" "code-review-graph Claude Code configuration failed or already configured"
+        log_with_level "WARN" "code-review-graph Claude Code configuration failed: $crg_output"
     fi
 
     log_with_level "INFO" "code-review-graph builds a knowledge graph of your codebase to reduce AI token usage by ~8x"

@@ -36,7 +36,7 @@ npm run help                      # Display all available commands
 ## ShellCheck Notes
 
 **Safe warnings** (zsh scripts run through `--shell=bash`):
-SC1071 (zsh unsupported), SC2296 (zsh `${(%):-%x}`), SC1091 (sourced file), SC2155 (declare+assign), SC2001 (sed vs expansion), SC2012 (ls vs find).
+SC1071 (zsh unsupported), SC2296 (zsh `${(%):-%x}`), SC1091 (sourced file), SC2001 (sed vs expansion — excluded in lint). Also safe but not excluded: SC2155 (declare+assign), SC2012 (ls vs find).
 
 **Zsh-specific syntax** used in scripts:
 `${(%):-%x}`, `${(%):-%n}`, `&!` (disown), `path=(...)`, `setopt`.
@@ -147,7 +147,7 @@ Why two steps? `restore:claude` copies config files (settings, keybindings, CLAU
 RTK is automatically installed and configured as part of the setup. It provides 60-90% token savings on dev operations by optimizing CLI command output.
 
 **Installed by**: `brew install rtk` in `scripts/mac.sh`
-**Configured by**: `setup_rtk()` in `scripts/utils.sh` (runs `rtk init -g --auto-patch`)
+**Configured by**: `setup_rtk()` in `scripts/utils/tools.sh` (runs `rtk init -g --auto-patch`)
 **Hook location**: `~/.claude/hooks/rtk-rewrite.sh`
 **Documentation**: `~/.claude/RTK.md`
 
@@ -172,7 +172,7 @@ rtk init -g --uninstall     # Remove hooks
 Dippy is an AST-based permission automation tool for Claude Code. It auto-approves safe commands while blocking destructive operations, reducing permission fatigue by ~40%.
 
 **Installed by**: `brew install dippy` (tap: `ldayton/dippy`) in `scripts/mac.sh`
-**Configured by**: `setup_dippy()` in `scripts/utils.sh`
+**Configured by**: `setup_dippy()` in `scripts/utils/tools.sh`
 **Hook location**: PreToolUse hook in `~/.claude/settings.json` (runs before RTK rewrite)
 
 **How it works:**
@@ -187,7 +187,7 @@ Dippy is an AST-based permission automation tool for Claude Code. It auto-approv
 
 Plannotator is a visual annotation tool for AI coding agents. It enables you to mark up and refine plans or code diffs using a visual UI, with team collaboration and encrypted sharing.
 
-**Installed by**: `setup_plannotator()` in `scripts/utils.sh` (downloads from GitHub releases)
+**Installed by**: `setup_plannotator()` in `scripts/utils/tools.sh` (downloads from GitHub releases)
 **Location**: `~/.local/bin/plannotator`
 **Claude Code plugin**: `backnotprop/plannotator` (manual installation required)
 
@@ -243,9 +243,9 @@ source scripts/utils.sh && setup_plannotator
 |---|---|
 | Add ZSH alias | `dot_files/.zshrc` aliases section |
 | Add Homebrew tap | `BREWFILE_CONTENT` in `scripts/mac.sh`: `tap "owner/repo"` before packages |
-| Change log format | `log_with_level()` in `scripts/utils.sh` (preserve timestamp + level) |
+| Change log format | `log_with_level()` in `scripts/utils/logging.sh` (preserve timestamp + level) |
 | Add utility function | Appropriate file in `scripts/utils/` (logging, backup, validation, tools, json) |
-| Add backup file | `create_restoration_point()` in `scripts/utils.sh` |
+| Add backup file | `create_restoration_point()` in `scripts/utils/backup.sh` |
 | Update Claude sanitization | `SANITIZE_MARKETPLACES` in `backup-claude.sh`, `PRESERVE_MARKETPLACES` in `restore-claude.sh` |
 | Add Claude backup file | Add backup/restore logic in `backup-claude.sh` and `restore-claude.sh` (follow `keybindings.json` pattern) |
 | Add/disable hookify rule | Create/edit `.claude/hookify.{name}.local.md` or set `enabled: false` |
@@ -254,7 +254,7 @@ source scripts/utils.sh && setup_plannotator
 
 ## Security & Git Workflow
 
-Security is enforced automatically via pre-commit hooks. See [SECURITY.md](./SECURITY.md) for full details.
+Security is enforced automatically via hookify rules during Claude Code sessions. See [SECURITY.md](./SECURITY.md) for full details.
 
 **Conventional commits** (preferred, not enforced): `feat(scripts):`, `fix(zsh):`, `docs(readme):`, `chore(deps):`.
 

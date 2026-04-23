@@ -29,22 +29,18 @@ This repository is designed to run safely on both personal and work machines wit
 
 ### Normal Development
 
+> **Note:** Security checks run within Claude Code sessions via hookify rules, not as git commit hooks.
+
 ```bash
 # 1. Make changes
 vim scripts/mac.sh
 
-# 2. Stage changes
+# 2. Run shellcheck before committing
+npm run lint
+
+# 3. Stage and commit
 git add scripts/mac.sh
-
-# 3. Commit (hooks run automatically)
 git commit -m "feat(scripts): add new feature"
-
-# Hooks will:
-# ✅ Run shellcheck on all scripts
-# ✅ Check for secrets in staged files
-# ✅ Verify no hardcoded paths in dotfiles
-# ✅ Check .secrets template safety
-# ✅ Allow commit if all checks pass
 ```
 
 ### If Hooks Fail

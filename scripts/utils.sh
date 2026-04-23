@@ -20,16 +20,27 @@ UTILS_LOG_FILE="$UTILS_PROJECT_ROOT/.supercharged_install.log"
 # Constants (exported for submodules)
 export BACKUP_RETENTION_COUNT=5
 
-# Shared list of dotfiles for backup/restore/copy operations (exported for submodules)
-export MANAGED_DOTFILES
+# Shared list of dotfiles for backup/restore/copy operations
+# Note: array export only works in zsh; all consumers source utils.sh in-process so this is fine
+# shellcheck disable=SC2034  # Used by submodules (backup.sh, restore.sh) via source
 MANAGED_DOTFILES=(.zshrc .zprofile .gitconfig .gitignore_global .p10k.zsh .tool-versions .tmux.conf .supercharged_preferences)
 
-# Source submodules
-source "$UTILS_SCRIPT_DIR/utils/logging.sh"
-source "$UTILS_SCRIPT_DIR/utils/json.sh"
-source "$UTILS_SCRIPT_DIR/utils/validation.sh"
-source "$UTILS_SCRIPT_DIR/utils/backup.sh"
-source "$UTILS_SCRIPT_DIR/utils/tools.sh"
+# Source submodules (logging must load first — all others call log_with_level)
+_source_submodule() {
+    local module_path="$1"
+    if [[ ! -f "$module_path" ]]; then
+        echo "[ERROR] utils.sh: Required submodule not found: $module_path" >&2
+        return 1
+    fi
+    # shellcheck disable=SC1090  # Dynamic path resolved at runtime
+    source "$module_path"
+}
+
+_source_submodule "$UTILS_SCRIPT_DIR/utils/logging.sh" || return 1
+_source_submodule "$UTILS_SCRIPT_DIR/utils/json.sh" || return 1
+_source_submodule "$UTILS_SCRIPT_DIR/utils/validation.sh" || return 1
+_source_submodule "$UTILS_SCRIPT_DIR/utils/backup.sh" || return 1
+_source_submodule "$UTILS_SCRIPT_DIR/utils/tools.sh" || return 1
 
 # Fix wireshark symlinks and remove deprecated cask
 fix_wireshark_symlinks() {

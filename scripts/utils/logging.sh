@@ -1,5 +1,11 @@
 #!/bin/zsh
 
+# Guard: UTILS_LOG_FILE must be set by the parent loader (utils.sh)
+if [[ -z "${UTILS_LOG_FILE:-}" ]]; then
+    echo "[ERROR] logging.sh: UTILS_LOG_FILE is not set. Source utils.sh instead of submodules directly." >&2
+    return 1
+fi
+
 # Colored output for better user experience
 fancy_echo() {
     printf "\n\033[1;32m==> %s\033[0m\n" "$1"
