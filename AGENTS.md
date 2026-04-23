@@ -27,7 +27,7 @@ npm run install:plugins           # Install all marketplaces and plugins via cla
 npm run install:plugins -- --dry-run # Preview what would be installed
 
 # Development
-npm run lint                      # ShellCheck all scripts (ignore zsh warnings)
+npm run lint                      # ShellCheck all scripts (including utils/)
 npm test                          # Run all BATS tests
 bats tests/<suite>/*.bats        # Run a specific suite (claude, utils, mac, update, setup)
 npm run help                      # Display all available commands
@@ -138,7 +138,8 @@ Why two steps? `restore:claude` copies config files (settings, keybindings, CLAU
 
 **Script organization**:
 - `mac.sh`: validate system → Homebrew → Brewfile (conditional on user prefs) → ZSH plugins → ASDF → optional tools
-- `utils.sh`: pure functions, no side effects on import
+- `utils.sh`: thin loader sourcing submodules from `utils/` (logging, backup, validation, tools, json)
+- `utils/`: focused submodules — no side effects on import
 - `.tool-versions`: one tool per line (`<plugin> <version>`), grouped by category
 
 ## RTK (Rust Token Killer)
@@ -243,6 +244,7 @@ source scripts/utils.sh && setup_plannotator
 | Add ZSH alias | `dot_files/.zshrc` aliases section |
 | Add Homebrew tap | `BREWFILE_CONTENT` in `scripts/mac.sh`: `tap "owner/repo"` before packages |
 | Change log format | `log_with_level()` in `scripts/utils.sh` (preserve timestamp + level) |
+| Add utility function | Appropriate file in `scripts/utils/` (logging, backup, validation, tools, json) |
 | Add backup file | `create_restoration_point()` in `scripts/utils.sh` |
 | Update Claude sanitization | `SANITIZE_MARKETPLACES` in `backup-claude.sh`, `PRESERVE_MARKETPLACES` in `restore-claude.sh` |
 | Add Claude backup file | Add backup/restore logic in `backup-claude.sh` and `restore-claude.sh` (follow `keybindings.json` pattern) |
