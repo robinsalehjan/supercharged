@@ -4,27 +4,7 @@ This repository is designed to run safely on both personal and work machines wit
 
 ## Automated Security Layers
 
-### 1. Git Pre-Commit Hooks (`.husky/pre-commit`)
-
-**Runs automatically before every git commit:**
-
-| Check | What It Does | Action |
-|-------|--------------|--------|
-| **Shellcheck** | Validates all shell scripts for errors and security issues | ❌ BLOCKS commit |
-| **Secrets Detection** | Scans for API keys, tokens, passwords in staged files | ❌ BLOCKS commit |
-| **Hardcoded Paths** | Detects `/Users/username/` or `/home/username/` in dotfiles | ❌ BLOCKS commit |
-| **.secrets Template** | Ensures .secrets file only contains placeholders | ❌ BLOCKS commit |
-| **Claude Config** | Warns about work-related marketplace data | ⚠️ Prompts user |
-| **Large Files** | Prevents files >1MB from being committed | ❌ BLOCKS commit |
-| **BATS Tests** | Runs test suite if bats is installed | ❌ BLOCKS commit |
-
-**Key Features:**
-- ✅ Shellcheck is **REQUIRED** (not optional) - commit fails if not installed
-- ✅ Checks ALL staged files, not just changed lines
-- ✅ Exits immediately on first security issue
-- ✅ Provides actionable error messages
-
-### 2. Claude Code Hookify Rules (8 rules)
+### 1. Claude Code Hookify Rules (8 rules)
 
 **Active for AI-assisted development:**
 
@@ -95,15 +75,11 @@ git commit -m "feat: add feature"  # ✅ Passes
 
 ## Setup
 
-Security is configured automatically by `npm run setup` (installs shellcheck, configures git hooks path to `.husky`, sets permissions). See [README.md](./README.md) for installation instructions.
+Security is configured automatically by `npm run setup` (installs shellcheck, configures hookify rules). See [README.md](./README.md) for installation instructions.
 
 ## Troubleshooting
 
 ```bash
-# Hooks not running
-git config core.hooksPath              # Should output: .husky
-chmod +x .husky/pre-commit
-
 # Shellcheck not found
 brew install shellcheck
 
@@ -114,5 +90,4 @@ brew install shellcheck
 
 | File | Purpose | Committed |
 |------|---------|-----------|
-| `.husky/pre-commit` | Git pre-commit security checks | Yes |
 | `.claude/hookify.*.local.md` | Claude Code behavior rules (8 files) | No (gitignored) |

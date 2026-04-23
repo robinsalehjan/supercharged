@@ -84,9 +84,6 @@ npm test -- --filter "pattern"    # Run specific tests
 - Zsh-only functions tested via `run zsh -c "source script; function_call"` subprocess pattern
 - PATH-based mocking with `MOCK_BIN_DIR` for zsh subprocesses (bash `export -f` doesn't propagate to zsh)
 
-**Pre-commit integration:**
-Tests run automatically via `.husky/pre-commit` hook after security checks (if `tests/` directory exists and `bats` is installed).
-
 **CI integration:**
 Tests run on push to main and pull requests via `.github/workflows/test.yml`.
 
@@ -249,7 +246,6 @@ source scripts/utils.sh && setup_plannotator
 | Add backup file | `create_restoration_point()` in `scripts/utils.sh` |
 | Update Claude sanitization | `SANITIZE_MARKETPLACES` in `backup-claude.sh`, `PRESERVE_MARKETPLACES` in `restore-claude.sh` |
 | Add Claude backup file | Add backup/restore logic in `backup-claude.sh` and `restore-claude.sh` (follow `keybindings.json` pattern) |
-| Modify pre-commit checks | `.husky/pre-commit` - add/remove security validations |
 | Add/disable hookify rule | Create/edit `.claude/hookify.{name}.local.md` or set `enabled: false` |
 | Test security hooks | `git add . && git commit -m "test"` - hooks run automatically |
 | List hookify rules | `ls .claude/hookify.*.local.md` |
@@ -276,7 +272,5 @@ Security is enforced automatically via pre-commit hooks. See [SECURITY.md](./SEC
 - "Permission denied" → verify file permissions, check sudo requirements
 - "Plugin not found" → ensure ASDF plugin installed before version
 - "Backup failed" → check disk space in `~/.supercharged_backups/`
-- "Hooks not running" → verify `git config core.hooksPath` is `.husky`, make hooks executable
 - "Shellcheck not found" → install with `brew install shellcheck` (REQUIRED)
-- "Secret detected false positive" → review pattern, adjust `.husky/pre-commit` if legitimate
 - "Hookify rule not triggering" → check YAML frontmatter, verify pattern regex, ensure `enabled: true`

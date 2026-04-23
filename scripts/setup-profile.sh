@@ -95,26 +95,6 @@ main() {
 
     echo "✅ Dotfiles copied to \$HOME"
 
-    # Configure git hooks for security enforcement
-    echo ""
-    echo "🔧 Configuring git hooks..."
-    cd "$PROJECT_ROOT"
-
-    # Set git hooks path if not already set
-    CURRENT_HOOKS_PATH=$(git config core.hooksPath 2>/dev/null || echo "")
-    if [ "$CURRENT_HOOKS_PATH" != ".husky" ]; then
-        git config core.hooksPath .husky
-        echo "  ✓ Set git hooks path to .husky"
-    else
-        echo "  ✓ Git hooks path already configured"
-    fi
-
-    # Ensure hooks are executable
-    chmod +x .husky/pre-commit 2>/dev/null || true
-    echo "  ✓ Made hooks executable"
-
-    echo "✅ Git hooks configured"
-
     # Restore Claude Code configuration using dedicated script
     if [ -x "$SCRIPT_DIR/restore-claude.sh" ]; then
         echo ""
