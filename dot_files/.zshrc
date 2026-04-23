@@ -58,23 +58,21 @@ deduplicate_path() {
     echo "${(j.:.)new_path}"
 }
 
-# Set PATH after ASDF is loaded
-path=(
-    $HOME/.asdf/shims       # ASDF shims first
-    $HOME/.local/bin        # Local user binaries
-    /opt/homebrew/bin       # Apple Silicon Homebrew
-    /opt/homebrew/sbin
-    /usr/local/bin          # Intel Homebrew (for compatibility)
-    /usr/local/sbin
-    /usr/bin                # Essential system binaries
-    /usr/sbin               # Essential system admin binaries
-    /bin                    # Core system binaries
-    /sbin                   # Core system admin binaries
-    $path                   # Preserve existing path entries
-)
-
-# Export the deduplicated PATH (only once per session for performance)
+# Set PATH and deduplicate (only once per session for performance)
 if [ -z "$_SUPERCHARGED_PATH_DEDUPED" ]; then
+    path=(
+        $HOME/.asdf/shims       # ASDF shims first
+        $HOME/.local/bin        # Local user binaries
+        /opt/homebrew/bin       # Apple Silicon Homebrew
+        /opt/homebrew/sbin
+        /usr/local/bin          # Intel Homebrew (for compatibility)
+        /usr/local/sbin
+        /usr/bin                # Essential system binaries
+        /usr/sbin               # Essential system admin binaries
+        /bin                    # Core system binaries
+        /sbin                   # Core system admin binaries
+        $path                   # Preserve existing path entries
+    )
     export PATH=$(deduplicate_path)
     export _SUPERCHARGED_PATH_DEDUPED=1
 fi
