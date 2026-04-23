@@ -24,7 +24,7 @@ This repository is designed to run safely on both personal and work machines wit
 - ✅ Exits immediately on first security issue
 - ✅ Provides actionable error messages
 
-### 2. Claude Code Hookify Rules (11 rules)
+### 2. Claude Code Hookify Rules (8 rules)
 
 **Active for AI-assisted development:**
 
@@ -32,19 +32,16 @@ This repository is designed to run safely on both personal and work machines wit
 |------|-------|--------|---------|
 | dangerous-rm | bash | **BLOCK** | Prevents `rm -rf /`, `rm -rf ~`, etc. |
 | no-bypass-hooks | bash | **BLOCK** | Blocks `git commit --no-verify` |
+| git-conventions | bash | warn | Conventional commits + security check reminders |
 | hardcoded-paths | file | warn | Warns when editing dotfiles with hardcoded paths |
-| logging-pattern | file | warn | Reminds to use `log_with_level` instead of echo |
+| code-quality | file | warn | Logging patterns + no sudo in scripts |
 | secrets-template | file | warn | Warns when editing .secrets template |
-| claude-config-edit | file | warn | Warns when modifying Claude backups |
-| sudo-in-scripts | file | warn | Warns against adding sudo to automation |
-| conventional-commits | bash | warn | Reminds about commit format |
-| git-security-checks | bash | warn | Reminds about automated security checks |
-| shellcheck-reminder | stop | warn | Reminds to run shellcheck before stopping |
-| documentation-sync | stop | warn | Reminds to update docs after changes |
+| claude-config-edit | Edit,Write | warn | Warns when modifying Claude backups |
+| session-end-checks | stop | warn | Shellcheck + documentation sync reminders |
 
 **Key Features:**
 - 🔒 **2 blocking rules** prevent catastrophic operations
-- 📝 **9 warning rules** guide development best practices
+- 📝 **6 warning rules** guide development best practices
 - 🤖 Runs within Claude Code sessions
 - 🚫 Cannot be committed (`.claude/` is gitignored)
 
@@ -118,4 +115,4 @@ brew install shellcheck
 | File | Purpose | Committed |
 |------|---------|-----------|
 | `.husky/pre-commit` | Git pre-commit security checks | Yes |
-| `.claude/hookify.*.local.md` | Claude Code behavior rules (11 files) | No (gitignored) |
+| `.claude/hookify.*.local.md` | Claude Code behavior rules (8 files) | No (gitignored) |
