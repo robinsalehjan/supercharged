@@ -63,6 +63,12 @@ setup_rtk() {
         return 0
     fi
 
+    # Skip if already configured (hook file exists)
+    if [ -f "$HOME/.claude/hooks/rtk-rewrite.sh" ]; then
+        log_with_level "INFO" "RTK already configured, skipping"
+        return 0
+    fi
+
     log_with_level "INFO" "Configuring RTK (Rust Token Killer) for Claude Code..."
 
     # Run rtk init with auto-patch to configure hooks
@@ -124,6 +130,12 @@ setup_code_review_graph() {
             log_with_level "ERROR" "Failed to install code-review-graph via pipx"
             return 1
         fi
+    fi
+
+    # Skip Claude Code integration if already configured
+    if [ -f "$HOME/.claude/.mcp.json" ] && grep -q "code-review-graph" "$HOME/.claude/.mcp.json" 2>/dev/null; then
+        log_with_level "INFO" "code-review-graph already configured for Claude Code"
+        return 0
     fi
 
     # Configure for Claude Code
