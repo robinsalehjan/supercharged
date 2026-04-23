@@ -27,19 +27,6 @@ See [README.md](./README.md) for detailed project structure. Key directories:
 
 See [AGENTS.md](./AGENTS.md) for complete npm commands reference.
 
-**Most common**:
-- `npm run setup` - Fresh install (interactive)
-- `npm run update` - Update all components
-- `npm run validate` - Verify all tools installed correctly
-- `npm run update:dry-run` - Preview outdated packages (read-only, safe)
-- `npm run backup:claude` - Backup Claude Code config to repo
-- `npm run restore:claude -- --force` - Force restore Claude Code config from repo
-- `npm run install:plugins` - Install all Claude Code marketplaces and plugins via CLI
-- `npm run lint` - ShellCheck all scripts
-- `npm test` - Run all BATS tests (requires `brew install bats-core`); covers mac, update, setup, utils, claude, restore, meta
-- `npm run test:watch` - Watch mode (requires: `brew install watch`)
-- `npm run help` - Display all available commands
-
 ## Code Conventions
 
 - **Logging**: Use `log_with_level "INFO|WARN|ERROR|SUCCESS" "message"` from `utils.sh`
@@ -53,25 +40,6 @@ See [AGENTS.md](./AGENTS.md) for complete npm commands reference.
 - **Dotfiles**: Use env vars, no hardcoded paths
 
 See [AGENTS.md](./AGENTS.md) for detailed code patterns and examples.
-
-## Important Files
-
-- `.supercharged_install.log` - Installation/update logs in repo root (timestamped with levels)
-- `~/.supercharged_preferences` - User setup choices
-- `~/.supercharged_backups/` - Backup history with timestamps
-- `.claude/` - Claude Code config: 11 hookify rules for security/conventions
-- `dot_files/.tool-versions` - ASDF tool versions (one tool per line); edit here to add/change a tool
-- Claude backup/restore: backs up `settings.json`, `installed_plugins.json`, `known_marketplaces.json`, `keybindings.json`, and `CLAUDE.md`; sanitizes `@vend-plugins` marketplace and `GITHUB_PERSONAL_ACCESS_TOKEN` from backups; preserves local work plugins via additive merge on restore
-
-## Token Optimization Stack
-
-This repo includes three-layer optimization for ~90% total token savings:
-
-1. **RTK (Input)**: Rust CLI proxy filters command output (60-90% savings on tool results)
-2. **Dippy (Flow)**: Permission automation for safe commands (~40% faster development)
-3. **claude-token-efficient (Output)**: Behavioral rules reduce verbosity (60% response reduction)
-
-All tools auto-configured during setup/update. See README.md for verification commands.
 
 ## Model Configuration
 
@@ -93,10 +61,6 @@ All tools auto-configured during setup/update. See README.md for verification co
 - Claude backups sanitized (work marketplaces excluded)
 - No bypassing hooks with `--no-verify` (blocked by hookify)
 
-## Post-Restore Steps
-
-After `npm run restore:claude`, run `npm run install:plugins` to install all marketplaces and plugins via the `claude` CLI. See [AGENTS.md](./AGENTS.md) for the full procedure.
-
 ## Reference
 
 See [AGENTS.md](./AGENTS.md) for detailed patterns, testing workflows, and how-to guides.
@@ -110,16 +74,6 @@ code-review-graph MCP tools BEFORE using Grep/Glob/Read to explore
 the codebase.** The graph is faster, cheaper (fewer tokens), and gives
 you structural context (callers, dependents, test coverage) that file
 scanning cannot.
-
-### When to use graph tools FIRST
-
-- **Exploring code**: `semantic_search_nodes` or `query_graph` instead of Grep
-- **Understanding impact**: `get_impact_radius` instead of manually tracing imports
-- **Code review**: `detect_changes` + `get_review_context` instead of reading entire files
-- **Finding relationships**: `query_graph` with callers_of/callees_of/imports_of/tests_for
-- **Architecture questions**: `get_architecture_overview` + `list_communities`
-
-Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
 
 ### Key Tools
 
