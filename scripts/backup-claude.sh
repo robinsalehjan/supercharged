@@ -74,6 +74,15 @@ if [ -f "$CLAUDE_HOME/plugins/installed_plugins.json" ]; then
     plugins_json=$(cat "$CLAUDE_HOME/plugins/installed_plugins.json")
     filtered_plugins=$(filter_json_by_marketplace "$plugins_json" ".plugins" "${SANITIZE_MARKETPLACES[@]}")
 
+    # Save sanitized plugins to local file (machine-specific, gitignored)
+    local_plugins=$(extract_json_by_marketplace "$plugins_json" ".plugins" "${SANITIZE_MARKETPLACES[@]}")
+    local_count=$(jq 'length' <<< "$local_plugins")
+    if [ "$local_count" -gt 0 ]; then
+        jq --argjson plugins "$local_plugins" '{version: .version, plugins: $plugins}' <<< "$plugins_json" | \
+            make_path_portable > "$CLAUDE_CONFIG_DIR/installed_plugins.local.json"
+        log_with_level "SUCCESS" "Saved $local_count local plugin(s) to installed_plugins.local.json"
+    fi
+
     # Preserve version and update plugins
     # Write to temp file first to avoid corrupting output on pipeline failure
     if ! jq --argjson plugins "$filtered_plugins" "{version: .version, plugins: \$plugins}" <<< "$plugins_json" | \
@@ -100,9 +109,20 @@ if [ -f "$CLAUDE_HOME/plugins/known_marketplaces.json" ]; then
         i=$((i + 1))
     done
 
+    full_json=$(cat "$CLAUDE_HOME/plugins/known_marketplaces.json")
+    filtered_json=$(jq "${jq_args[@]}" "$jq_filter" <<< "$full_json")
+
+    # Save sanitized marketplaces to local file (machine-specific, gitignored)
+    local_marketplaces=$(jq --argjson filtered "$filtered_json" \
+        'with_entries(select(.key as $k | $filtered | has($k) | not))' <<< "$full_json")
+    local_mp_count=$(jq 'length' <<< "$local_marketplaces")
+    if [ "$local_mp_count" -gt 0 ]; then
+        make_path_portable <<< "$local_marketplaces" > "$CLAUDE_CONFIG_DIR/known_marketplaces.local.json"
+        log_with_level "SUCCESS" "Saved $local_mp_count local marketplace(s) to known_marketplaces.local.json"
+    fi
+
     # Write to temp file first to avoid corrupting output on pipeline failure
-    if ! jq "${jq_args[@]}" "$jq_filter" "$CLAUDE_HOME/plugins/known_marketplaces.json" | \
-        make_path_portable > "$CLAUDE_CONFIG_DIR/known_marketplaces.json.tmp"; then
+    if ! make_path_portable <<< "$filtered_json" > "$CLAUDE_CONFIG_DIR/known_marketplaces.json.tmp"; then
         rm -f "$CLAUDE_CONFIG_DIR/known_marketplaces.json.tmp"
         log_with_level "ERROR" "Failed to sanitize known_marketplaces.json - backup aborted"
         exit 1

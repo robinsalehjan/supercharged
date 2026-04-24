@@ -45,3 +45,26 @@ filter_json_by_marketplace() {
 
     jq "${jq_args[@]}" "$jq_filter" <<< "$input"
 }
+
+# Extract JSON entries matching marketplace suffixes (inverse of filter_json_by_marketplace)
+# Usage: extract_json_by_marketplace INPUT_JSON JQ_PATH MARKETPLACE1 MARKETPLACE2...
+# Returns: JSON with only entries matching @MARKETPLACE suffixes
+extract_json_by_marketplace() {
+    local input="$1"
+    local jq_path="$2"
+    shift 2
+    local marketplaces=("$@")
+
+    local jq_args=()
+    local conditions=""
+    local i=0
+
+    for marketplace in "${marketplaces[@]}"; do
+        jq_args+=(--arg "mp$i" "@$marketplace")
+        [ -n "$conditions" ] && conditions="$conditions or "
+        conditions="${conditions}(.key | endswith(\$mp$i))"
+        i=$((i + 1))
+    done
+
+    jq "${jq_args[@]}" "$jq_path | to_entries | map(select($conditions)) | from_entries" <<< "$input"
+}
