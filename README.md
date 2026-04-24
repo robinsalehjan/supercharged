@@ -6,7 +6,7 @@
 ```bash
 # Prerequisites: Oh My Zsh, macOS 12.0+, 10GB free space
 git clone git@github.com:robinsalehjan/supercharged.git
-cd supercharged && npm install && npm run setup
+cd supercharged && npm run setup
 ```
 
 ## Commands

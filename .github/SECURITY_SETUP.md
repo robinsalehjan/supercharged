@@ -8,7 +8,6 @@ This is a quick reference card for the security setup. For full documentation, s
 # Clone and run setup
 git clone <repo-url>
 cd supercharged
-npm install
 npm run setup
 
 # Setup automatically:

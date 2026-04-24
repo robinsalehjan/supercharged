@@ -22,7 +22,6 @@ jobs:
     - name: Install dependencies
       run: |
         brew install bats-core jq shellcheck
-        npm install
 
     - name: Run shellcheck
       run: npm run lint
