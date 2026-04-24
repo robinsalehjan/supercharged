@@ -32,6 +32,9 @@ node_modules/
 # Husky (replaced by hookify rules)
 .husky/
 
+# Local-only plugin config (machine-specific, not committed)
+claude_config/*.local.json
+
 # Superpowers plans and specs are local-only
 docs/superpowers/
 # Added by code-review-graph
