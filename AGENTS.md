@@ -126,15 +126,15 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 - Timestamp comparison: only restores when repo config is newer (unless `--force`)
 - Secrets: `~/.secrets` is sourced once at restore start; MCP servers are skipped (not partially written) if it's absent
 - **Backed up files**: `settings.json`, `installed_plugins.json`, `known_marketplaces.json`, `keybindings.json`, `CLAUDE.md`
-- **Post-restore**: Plugins must be manually installed/enabled (see Post-Restore Steps below)
+- **Local-only configs**: Work plugins/marketplaces are saved to `.local.json` files (gitignored) during backup, and merged back during install
+- **Post-restore**: Plugins are auto-installed at the end of `restore:claude`. If auto-install fails, run `npm run install:plugins` manually.
 
 **Post-Restore Steps** (after `npm run restore:claude` or `npm run restore:claude -- --force`):
-1. Run `npm run install:plugins` to install all marketplaces and plugins via the `claude` CLI
-2. Enable work plugins (@vend-plugins) manually if on work machine — these are sanitized from backups for security
-3. Run `/reload-plugins` in Claude Code to force registry rescan if plugins don't appear
-4. Verify with `/help` that skills and agents are available
+1. Enable work plugins (@vend-plugins) manually if on work machine — these are sanitized from backups for security
+2. Run `/reload-plugins` in Claude Code to force registry rescan if plugins don't appear
+3. Verify with `/help` that skills and agents are available
 
-Why two steps? `restore:claude` copies config files (settings, keybindings, CLAUDE.md). `install:plugins` activates plugins via the `claude` CLI, which downloads plugin code and registers them in the live runtime. Use `--dry-run` to preview first.
+Plugins are auto-installed during restore. `install:plugins` merges repo configs with `.local.json` files (work plugins/marketplaces), so work-specific configs survive across machines without being committed.
 
 **Script organization**:
 - `mac.sh`: validate system → Homebrew → Brewfile (conditional on user prefs) → ZSH plugins → ASDF → optional tools
@@ -246,7 +246,7 @@ source scripts/utils.sh && setup_plannotator
 | Change log format | `log_with_level()` in `scripts/utils/logging.sh` (preserve timestamp + level) |
 | Add utility function | Appropriate file in `scripts/utils/` (logging, backup, validation, tools, json) |
 | Add backup file | `create_restoration_point()` in `scripts/utils/backup.sh` |
-| Update Claude sanitization | `SANITIZE_MARKETPLACES` in `backup-claude.sh`, `PRESERVE_MARKETPLACES` in `restore-claude.sh` |
+| Update Claude sanitization | `SANITIZE_MARKETPLACES` in `backup-claude.sh`, `PRESERVE_MARKETPLACES` in `restore-claude.sh`; sanitized entries auto-saved to `.local.json` files |
 | Add Claude backup file | Add backup/restore logic in `backup-claude.sh` and `restore-claude.sh` (follow `keybindings.json` pattern) |
 | Add/disable hookify rule | Create/edit `.claude/hookify.{name}.local.md` or set `enabled: false` |
 | Test security hooks | `git add . && git commit -m "test"` - hooks run automatically |
