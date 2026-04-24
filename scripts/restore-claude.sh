@@ -543,6 +543,15 @@ fi
 restore_mcp_servers
 
 log_with_level "SUCCESS" "Claude Code configuration restored!"
+
+# Install plugins from the restored configuration
+log_with_level "INFO" "Installing plugins..."
+if "$PROJECT_ROOT/scripts/install-plugins.sh"; then
+    log_with_level "SUCCESS" "Plugins installed"
+else
+    log_with_level "WARN" "Plugin installation failed — run 'npm run install:plugins' manually"
+fi
+
 echo ""
 echo "📥 Restored files to ~/.claude:"
 echo "   - settings.json"
@@ -555,11 +564,5 @@ for ref_file in "${claude_md_refs_restored[@]}"; do
 done
 echo "   - statusline/Config.toml"
 echo "   - settings.json MCP servers (global, env vars from ~/.secrets)"
-echo ""
-echo "⚠️  IMPORTANT: Plugins must be installed after restore:"
-echo "   1. Run: npm run install:plugins        (or --dry-run to preview)"
-echo "   2. Enable work plugins (@vend-plugins) manually if on work machine"
-echo "   3. Run /reload-plugins in Claude Code to force registry rescan"
-echo "   4. Verify with /help that skills and agents are available"
 echo ""
 echo "💡 Restart Claude Code for changes to take effect"
