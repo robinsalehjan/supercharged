@@ -12,35 +12,22 @@ npm install
 npm run setup
 
 # Setup automatically:
-# ✅ Installs shellcheck via Homebrew (REQUIRED)
-# ✅ Configures git hooks path to .husky
-# ✅ Makes hooks executable
+# ✅ Installs shellcheck via Homebrew
+# ✅ Configures hookify rules for Claude Code sessions
 # ✅ Ready to use - zero manual configuration!
-
-# Verify (optional)
-git commit --allow-empty -m "test: verify hooks"
-# Should see: 🔒 Running security checks...
 ```
 
 **No manual setup needed!** Everything is configured automatically during `npm run setup`.
 
 ## 🔒 Automated Security Layers
 
-### Git Hooks (Everyone)
+### Hookify Rules (Claude Code Sessions)
 
-**Pre-commit** (`.husky/pre-commit`):
-- ✅ Shellcheck validation (REQUIRED)
-- ✅ Secrets detection
-- ✅ Hardcoded paths detection
-- ✅ .secrets template safety
-- ✅ Claude config sanitization
-- ✅ Large file detection (>1MB)
-
-### Hookify Rules (Claude Code Only)
-
-11 rules in `.claude/hookify.*.local.md`:
+8 rules in `.claude/hookify.*.local.md`:
 - 🚨 **2 BLOCKING**: dangerous rm, bypass hooks
-- ⚠️ **9 WARNING**: code quality, documentation, security
+- ⚠️ **6 WARNING**: code quality, documentation, security
+
+> **Note:** Security checks run within Claude Code sessions via hookify, not as git commit hooks.
 
 ## 📝 Normal Workflow
 
@@ -48,38 +35,39 @@ git commit --allow-empty -m "test: verify hooks"
 # Make changes
 vim scripts/mac.sh
 
-# Stage and commit (hooks run automatically)
+# Run shellcheck before committing
+npm run lint
+
+# Stage and commit
 git add scripts/mac.sh
 git commit -m "feat(scripts): add new feature"
-
-# Hooks automatically:
-# ✅ Run all 6 security checks
-# ✅ Block commit if issues found
 ```
 
-## ⚠️ If Hooks Fail
+## ⚠️ If Lint Fails
 
 ```bash
 # Example error
-❌ Potential secrets detected in staged files!
-   api_key="sk-1234..." in config.sh
+scripts/mac.sh:42: warning: SC2034: variable unused
 
 # Fix the issue
-vim config.sh  # Change to: YOUR_API_KEY_HERE
+vim scripts/mac.sh
 
-# Retry commit
+# Re-run lint and commit
+npm run lint
 git commit -m "feat: add feature"  # ✅ Passes
 ```
 
-## 🚫 What's Blocked
+## 🚫 What's Blocked (in Claude Code)
+
+- ❌ `rm -rf /`, `rm -rf ~`, etc. (blocked by hookify)
+- ❌ `git commit --no-verify` (blocked by hookify)
+
+## 🚫 What to Avoid
 
 - ❌ Secrets (API keys, tokens, passwords)
 - ❌ Hardcoded paths (`/Users/robin/` in dotfiles)
 - ❌ Real credentials in .secrets template
 - ❌ Files over 1MB
-- ❌ Missing shellcheck installation
-- ❌ `git commit --no-verify` (in Claude Code)
-- ❌ `rm -rf /`, `rm -rf ~`, etc. (in Claude Code)
 
 ## ✅ What's Allowed
 
@@ -95,15 +83,11 @@ git commit -m "feat: add feature"  # ✅ Passes
 # List hookify rules
 ls .claude/hookify.*.local.md
 
-# Count hookify rules (should be 11)
+# Count hookify rules (should be 8)
 ls .claude/hookify.*.local.md | wc -l
 
 # Run shellcheck manually
 npm run lint
-
-# Test pre-commit hook manually
-./.husky/pre-commit
-
 ```
 
 ## 📚 Documentation
@@ -117,16 +101,13 @@ npm run lint
 
 | Issue | Fix |
 |-------|-----|
-| Hooks not running | `git config core.hooksPath .husky` + `chmod +x .husky/*` |
 | Shellcheck not found | `brew install shellcheck` |
-| False positive secret | Review pattern in `.husky/pre-commit`, adjust if needed |
 | Hookify rule not triggering | Check YAML frontmatter, verify `enabled: true` |
 
 ## 📊 Security Stats
 
-- **11** hookify rules
-- **6** pre-commit security checks
+- **8** hookify rules
 - **2** blocking rules (prevent dangerous operations)
-- **9** warning rules (guide best practices)
+- **6** warning rules (guide best practices)
 
 **Result**: Safe for use on personal AND work machines! 🔒

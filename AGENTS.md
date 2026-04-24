@@ -27,7 +27,7 @@ npm run install:plugins           # Install all marketplaces and plugins via cla
 npm run install:plugins -- --dry-run # Preview what would be installed
 
 # Development
-npm run lint                      # ShellCheck all scripts (ignore zsh warnings)
+npm run lint                      # ShellCheck all scripts (including utils/)
 npm test                          # Run all BATS tests
 bats tests/<suite>/*.bats        # Run a specific suite (claude, utils, mac, update, setup)
 npm run help                      # Display all available commands
@@ -36,7 +36,7 @@ npm run help                      # Display all available commands
 ## ShellCheck Notes
 
 **Safe warnings** (zsh scripts run through `--shell=bash`):
-SC1071 (zsh unsupported), SC2296 (zsh `${(%):-%x}`), SC1091 (sourced file), SC2155 (declare+assign), SC2001 (sed vs expansion), SC2012 (ls vs find).
+SC1071 (zsh unsupported), SC2296 (zsh `${(%):-%x}`), SC1091 (sourced file), SC2001 (sed vs expansion — excluded in lint). Also safe but not excluded: SC2155 (declare+assign), SC2012 (ls vs find).
 
 **Zsh-specific syntax** used in scripts:
 `${(%):-%x}`, `${(%):-%n}`, `&!` (disown), `path=(...)`, `setopt`.
@@ -83,9 +83,6 @@ npm test -- --filter "pattern"    # Run specific tests
 - Domain assertions: `assert_plugin_exists`, `assert_plugin_not_exists`, `assert_marketplace_exists`, `assert_marketplace_not_exists`
 - Zsh-only functions tested via `run zsh -c "source script; function_call"` subprocess pattern
 - PATH-based mocking with `MOCK_BIN_DIR` for zsh subprocesses (bash `export -f` doesn't propagate to zsh)
-
-**Pre-commit integration:**
-Tests run automatically via `.husky/pre-commit` hook after security checks (if `tests/` directory exists and `bats` is installed).
 
 **CI integration:**
 Tests run on push to main and pull requests via `.github/workflows/test.yml`.
@@ -141,7 +138,8 @@ Why two steps? `restore:claude` copies config files (settings, keybindings, CLAU
 
 **Script organization**:
 - `mac.sh`: validate system → Homebrew → Brewfile (conditional on user prefs) → ZSH plugins → ASDF → optional tools
-- `utils.sh`: pure functions, no side effects on import
+- `utils.sh`: thin loader sourcing submodules from `utils/` (logging, backup, validation, tools, json)
+- `utils/`: focused submodules — no side effects on import
 - `.tool-versions`: one tool per line (`<plugin> <version>`), grouped by category
 
 ## RTK (Rust Token Killer)
@@ -149,7 +147,7 @@ Why two steps? `restore:claude` copies config files (settings, keybindings, CLAU
 RTK is automatically installed and configured as part of the setup. It provides 60-90% token savings on dev operations by optimizing CLI command output.
 
 **Installed by**: `brew install rtk` in `scripts/mac.sh`
-**Configured by**: `setup_rtk()` in `scripts/utils.sh` (runs `rtk init -g --auto-patch`)
+**Configured by**: `setup_rtk()` in `scripts/utils/tools.sh` (runs `rtk init -g --auto-patch`)
 **Hook location**: `~/.claude/hooks/rtk-rewrite.sh`
 **Documentation**: `~/.claude/RTK.md`
 
@@ -174,7 +172,7 @@ rtk init -g --uninstall     # Remove hooks
 Dippy is an AST-based permission automation tool for Claude Code. It auto-approves safe commands while blocking destructive operations, reducing permission fatigue by ~40%.
 
 **Installed by**: `brew install dippy` (tap: `ldayton/dippy`) in `scripts/mac.sh`
-**Configured by**: `setup_dippy()` in `scripts/utils.sh`
+**Configured by**: `setup_dippy()` in `scripts/utils/tools.sh`
 **Hook location**: PreToolUse hook in `~/.claude/settings.json` (runs before RTK rewrite)
 
 **How it works:**
@@ -189,7 +187,7 @@ Dippy is an AST-based permission automation tool for Claude Code. It auto-approv
 
 Plannotator is a visual annotation tool for AI coding agents. It enables you to mark up and refine plans or code diffs using a visual UI, with team collaboration and encrypted sharing.
 
-**Installed by**: `setup_plannotator()` in `scripts/utils.sh` (downloads from GitHub releases)
+**Installed by**: `setup_plannotator()` in `scripts/utils/tools.sh` (downloads from GitHub releases)
 **Location**: `~/.local/bin/plannotator`
 **Claude Code plugin**: `backnotprop/plannotator` (manual installation required)
 
@@ -245,18 +243,18 @@ source scripts/utils.sh && setup_plannotator
 |---|---|
 | Add ZSH alias | `dot_files/.zshrc` aliases section |
 | Add Homebrew tap | `BREWFILE_CONTENT` in `scripts/mac.sh`: `tap "owner/repo"` before packages |
-| Change log format | `log_with_level()` in `scripts/utils.sh` (preserve timestamp + level) |
-| Add backup file | `create_restoration_point()` in `scripts/utils.sh` |
+| Change log format | `log_with_level()` in `scripts/utils/logging.sh` (preserve timestamp + level) |
+| Add utility function | Appropriate file in `scripts/utils/` (logging, backup, validation, tools, json) |
+| Add backup file | `create_restoration_point()` in `scripts/utils/backup.sh` |
 | Update Claude sanitization | `SANITIZE_MARKETPLACES` in `backup-claude.sh`, `PRESERVE_MARKETPLACES` in `restore-claude.sh` |
 | Add Claude backup file | Add backup/restore logic in `backup-claude.sh` and `restore-claude.sh` (follow `keybindings.json` pattern) |
-| Modify pre-commit checks | `.husky/pre-commit` - add/remove security validations |
 | Add/disable hookify rule | Create/edit `.claude/hookify.{name}.local.md` or set `enabled: false` |
 | Test security hooks | `git add . && git commit -m "test"` - hooks run automatically |
 | List hookify rules | `ls .claude/hookify.*.local.md` |
 
 ## Security & Git Workflow
 
-Security is enforced automatically via pre-commit hooks. See [SECURITY.md](./SECURITY.md) for full details.
+Security is enforced automatically via hookify rules during Claude Code sessions. See [SECURITY.md](./SECURITY.md) for full details.
 
 **Conventional commits** (preferred, not enforced): `feat(scripts):`, `fix(zsh):`, `docs(readme):`, `chore(deps):`.
 
@@ -276,7 +274,5 @@ Security is enforced automatically via pre-commit hooks. See [SECURITY.md](./SEC
 - "Permission denied" → verify file permissions, check sudo requirements
 - "Plugin not found" → ensure ASDF plugin installed before version
 - "Backup failed" → check disk space in `~/.supercharged_backups/`
-- "Hooks not running" → verify `git config core.hooksPath` is `.husky`, make hooks executable
 - "Shellcheck not found" → install with `brew install shellcheck` (REQUIRED)
-- "Secret detected false positive" → review pattern, adjust `.husky/pre-commit` if legitimate
 - "Hookify rule not triggering" → check YAML frontmatter, verify pattern regex, ensure `enabled: true`
