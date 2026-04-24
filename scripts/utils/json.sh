@@ -7,7 +7,6 @@ make_path_portable() {
     if echo "$input" | jq empty 2>/dev/null; then
         echo "$input" | jq --arg home "$HOME" 'walk(if type == "string" then gsub($home; "$HOME") else . end)'
     else
-        log_with_level "WARN" "jq validation failed; falling back to sed-based path substitution"
         echo "$input" | sed "s|$HOME|\$HOME|g"
     fi
 }
@@ -18,7 +17,6 @@ expand_portable_path() {
     if echo "$input" | jq empty 2>/dev/null; then
         echo "$input" | jq --arg home "$HOME" 'walk(if type == "string" then gsub("\\$HOME"; $home) else . end)'
     else
-        log_with_level "WARN" "jq validation failed; falling back to sed-based path expansion"
         echo "$input" | sed "s|\\\$HOME|$HOME|g"
     fi
 }
