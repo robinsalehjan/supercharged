@@ -5,7 +5,7 @@
       "repo": "anthropics/claude-plugins-official"
     },
     "installLocation": "$HOME/.claude/plugins/marketplaces/claude-plugins-official",
-    "lastUpdated": "2026-04-22T09:34:52.129Z"
+    "lastUpdated": "2026-04-24T10:17:27.952Z"
   },
   "plannotator": {
     "source": {
@@ -22,5 +22,13 @@
     },
     "installLocation": "$HOME/.claude/plugins/marketplaces/vladikk-modularity",
     "lastUpdated": "2026-04-22T13:10:43.860Z"
+  },
+  "axiom-marketplace": {
+    "source": {
+      "source": "github",
+      "repo": "CharlesWiltgen/Axiom"
+    },
+    "installLocation": "$HOME/.claude/plugins/marketplaces/axiom-marketplace",
+    "lastUpdated": "2026-04-24T12:07:08.000Z"
   }
 }

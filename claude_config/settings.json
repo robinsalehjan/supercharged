@@ -54,7 +54,9 @@
     "skill-creator@claude-plugins-official": true,
     "plannotator@plannotator": true,
     "code-review@claude-plugins-official": true,
-    "modularity@vladikk-modularity": true
+    "modularity@vladikk-modularity": true,
+    "axiom@axiom-marketplace": true,
+    "frontend-design@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "plannotator": {
@@ -68,10 +70,23 @@
         "source": "github",
         "repo": "vladikk/modularity"
       }
+    },
+    "axiom-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "CharlesWiltgen/Axiom"
+      }
+    },
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
     }
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "high",
+  "awaySummaryEnabled": false,
   "autoUpdatesChannel": "stable",
   "showThinkingSummaries": true,
   "skipDangerousModePermissionPrompt": true,
@@ -87,6 +102,5 @@
       ],
       "env": {}
     }
-  },
-  "awaySummaryEnabled": false
+  }
 }
