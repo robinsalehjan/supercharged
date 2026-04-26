@@ -88,10 +88,13 @@ get_file_mtime() {
 get_newest_mtime() {
     local dir="$1"
     local newest=0
+    local mtime
 
+    # Note: `local mtime` MUST be declared outside the loop. In zsh, redeclaring
+    # `local` on an already-set variable inside a loop prints `var=value` to
+    # stdout, corrupting the captured output of this function.
     for file in "$dir"/*.json; do
         if [ -f "$file" ]; then
-            local mtime
             mtime=$(get_file_mtime "$file")
             if [ "$mtime" -gt "$newest" ]; then
                 newest=$mtime
@@ -218,11 +221,13 @@ merge_plugin_config() {
     local local_content
     local_content=$(cat "$dest")
     local preserved_plugins="{}"
+    local marketplace_plugins
 
+    # `local marketplace_plugins` is declared outside the loop — see note in
+    # get_newest_mtime() about zsh re-declaration printing `var=value`.
     for marketplace in "${PRESERVE_MARKETPLACES[@]}"; do
         # Extract plugins ending with @marketplace from the .plugins object
         # Uses --arg to avoid jq filter injection from marketplace names
-        local marketplace_plugins
         marketplace_plugins=$(echo "$local_content" | jq --arg mp "@$marketplace" '.plugins // {} | to_entries | map(select(.key | endswith($mp))) | from_entries') || {
             log_with_level "WARN" "Failed to extract plugins for marketplace $marketplace"
             continue
@@ -309,10 +314,12 @@ merge_marketplace_config() {
     local local_content
     local_content=$(cat "$dest")
     local preserved_marketplaces="{}"
+    local marketplace_entry
 
+    # `local marketplace_entry` is declared outside the loop — see note in
+    # get_newest_mtime() about zsh re-declaration printing `var=value`.
     for marketplace in "${PRESERVE_MARKETPLACES[@]}"; do
         # Uses --arg to avoid jq filter injection from marketplace names
-        local marketplace_entry
         marketplace_entry=$(echo "$local_content" | jq --arg mp "$marketplace" 'if has($mp) then {($mp): .[$mp]} else {} end') || {
             log_with_level "WARN" "Failed to extract marketplace $marketplace"
             continue
