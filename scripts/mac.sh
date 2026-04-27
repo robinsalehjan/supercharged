@@ -174,6 +174,7 @@ main() {
     python_version="${TOOL_VERSIONS[python]}"
     ruby_version="${TOOL_VERSIONS[ruby]}"
     node_version="${TOOL_VERSIONS[nodejs]}"
+    bundler_version="${TOOL_VERSIONS[bundler]}"
     gcloud_version="${TOOL_VERSIONS[gcloud]}"
     firebase_version="${TOOL_VERSIONS[firebase]}"
     java_version="${TOOL_VERSIONS[java]}"
@@ -181,7 +182,7 @@ main() {
 
     # Version checks
     check_version "git" "2.49.0"
-    check_version "python" "$python_version"
+    check_version "python3" "$python_version"
 
     install_homebrew
 
@@ -238,6 +239,7 @@ main() {
     install_asdf_plugin python
     install_asdf_plugin ruby
     install_asdf_plugin nodejs
+    install_asdf_plugin bundler
     install_asdf_plugin gcloud
     install_asdf_plugin firebase
     install_asdf_plugin java
@@ -247,6 +249,7 @@ main() {
     install_asdf_version python "$python_version"
     install_asdf_version ruby "$ruby_version"
     install_asdf_version nodejs "$node_version"
+    install_asdf_version bundler "$bundler_version"
     install_asdf_version gcloud "$gcloud_version"
     install_asdf_version firebase "$firebase_version"
     install_asdf_version java "$java_version"

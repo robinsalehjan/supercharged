@@ -72,13 +72,6 @@ parse_tool_versions() {
     done < "$tool_versions_file"
 }
 
-# Get specific tool version from .tool-versions file
-get_tool_version_from_file() {
-    local tool=$1
-    local versions_file="${2:-$UTILS_PROJECT_ROOT/dot_files/.tool-versions}"
-    awk -v tool="$tool" '$1 == tool {print $2; exit}' "$versions_file"
-}
-
 # Check internet connectivity
 require_internet() {
     if ! ping -c 1 -W 5 google.com >/dev/null 2>&1; then

@@ -12,8 +12,11 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # Source utilities
 source "$SCRIPT_DIR/utils.sh"
 
-# Setup trap for cleanup
-trap 'standard_cleanup "Restore"' EXIT
+# Setup trap for cleanup (consistent wrapper used by mac.sh / update.sh)
+cleanup() {
+    standard_cleanup "Restore"
+}
+trap cleanup EXIT
 
 # Call the restore function
 restore_from_backup "$@"

@@ -200,21 +200,21 @@ main() {
         asdf plugin update --all
 
         log_with_level "INFO" "Updating asdf tool versions..."
-        # Parse and update versions from .tool-versions if they exist
+        # Parse versions from .tool-versions using shared utility
         TOOL_VERSIONS_FILE="$UTILS_PROJECT_ROOT/dot_files/.tool-versions"
 
         if [ -f "$TOOL_VERSIONS_FILE" ]; then
-            while read -r line; do
-                if [[ ! "$line" =~ ^# ]] && [[ -n "$line" ]]; then
-                    plugin=$(echo "$line" | awk '{print $1}')
-                    version=$(echo "$line" | awk '{print $2}')
-                    if asdf plugin list | grep -q "^${plugin}$"; then
-                        log_with_level "INFO" "Updating $plugin to version $version"
-                        asdf install "$plugin" "$version"
-                        asdf set --home "$plugin" "$version"
-                    fi
+            parse_tool_versions "$TOOL_VERSIONS_FILE"
+            installed_plugins=$(asdf plugin list 2>/dev/null)
+            # shellcheck disable=SC2066  # zsh ${(@k)…} array-key expansion (script is zsh-only)
+            for plugin in "${(@k)TOOL_VERSIONS}"; do
+                version="${TOOL_VERSIONS[$plugin]}"
+                if echo "$installed_plugins" | grep -q "^${plugin}$"; then
+                    log_with_level "INFO" "Updating $plugin to version $version"
+                    asdf install "$plugin" "$version"
+                    asdf set --home "$plugin" "$version"
                 fi
-            done < "$TOOL_VERSIONS_FILE"
+            done
         fi
 
         log_with_level "INFO" "Running asdf reshim..."

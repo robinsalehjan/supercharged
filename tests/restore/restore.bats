@@ -38,12 +38,12 @@ teardown() {
 }
 
 @test "restore.sh has trap for cleanup" {
-  # Act
+  # Assert: trap is registered AND a cleanup wrapper invokes standard_cleanup
   run grep "trap.*cleanup" "$PROJECT_ROOT/scripts/restore.sh"
-
-  # Assert
   [ "$status" -eq 0 ]
-  [[ "$output" == *"standard_cleanup"* ]]
+
+  run grep "standard_cleanup" "$PROJECT_ROOT/scripts/restore.sh"
+  [ "$status" -eq 0 ]
 }
 
 @test "restore.sh accepts backup directory argument" {
