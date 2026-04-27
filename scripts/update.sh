@@ -259,6 +259,11 @@ main() {
         setup_dippy
     fi
 
+    # Ensure Worktrunk shell integration is configured (if installed)
+    if command -v wt >/dev/null 2>&1; then
+        setup_worktrunk
+    fi
+
     # Ensure code-review-graph is configured for Claude Code (if both are installed)
     if command -v code-review-graph >/dev/null 2>&1 && [ -d "$HOME/.claude" ]; then
         setup_code_review_graph

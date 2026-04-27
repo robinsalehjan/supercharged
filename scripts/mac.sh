@@ -110,6 +110,7 @@ brew "pipx"
 brew "uv"
 brew "rtk"
 brew "dippy"
+brew "worktrunk"
 brew "watch"'
 
     if [[ "${INSTALL_IOS_TOOLS:-Y}" =~ ^[Yy] ]]; then
@@ -272,6 +273,9 @@ main() {
 
         # Setup Dippy for permission automation
         setup_dippy
+
+        # Setup Worktrunk shell integration for git worktree management
+        setup_worktrunk
 
         # Setup code-review-graph for AI-optimized code context
         setup_code_review_graph

@@ -121,6 +121,30 @@ setup_dippy() {
     log_with_level "INFO" "Configure Dippy hook in ~/.claude/settings.json to enable it"
 }
 
+# Setup Worktrunk (Git worktree manager for parallel AI agents)
+setup_worktrunk() {
+    if ! command_exists wt; then
+        log_with_level "WARN" "Worktrunk not installed (wt command not found), skipping configuration"
+        return 0
+    fi
+
+    # Skip if shell integration already configured
+    if grep -q "worktrunk" "$HOME/.zshrc" 2>/dev/null; then
+        log_with_level "INFO" "Worktrunk shell integration already configured, skipping"
+        return 0
+    fi
+
+    log_with_level "INFO" "Configuring Worktrunk shell integration..."
+
+    local wt_output
+    if wt_output=$(wt config shell install 2>&1); then
+        log_with_level "SUCCESS" "Worktrunk shell integration installed (restart shell or run 'source ~/.zshrc')"
+        log_with_level "INFO" "Use 'wt switch -c <branch>' to create worktrees, 'wt remove' or 'wt merge main' to clean up"
+    else
+        log_with_level "WARN" "Worktrunk shell configuration failed: $wt_output"
+    fi
+}
+
 # Setup code-review-graph (AI-optimized code context via knowledge graph)
 setup_code_review_graph() {
     if ! command_exists pipx; then
