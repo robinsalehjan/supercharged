@@ -87,6 +87,7 @@
   "tui": "fullscreen",
   "showThinkingSummaries": true,
   "skipDangerousModePermissionPrompt": true,
+  "skipAutoPermissionPrompt": true,
   "mcpServers": {
     "XcodeBuildMCP": {
       "type": "stdio",
@@ -98,6 +99,5 @@
       ],
       "env": {}
     }
-  },
-  "skipAutoPermissionPrompt": true
+  }
 }
