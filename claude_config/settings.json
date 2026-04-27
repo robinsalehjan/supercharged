@@ -88,9 +88,9 @@
   "effortLevel": "high",
   "awaySummaryEnabled": false,
   "autoUpdatesChannel": "stable",
+  "tui": "fullscreen",
   "showThinkingSummaries": true,
   "skipDangerousModePermissionPrompt": true,
-  "tui": "fullscreen",
   "mcpServers": {
     "XcodeBuildMCP": {
       "type": "stdio",
@@ -102,5 +102,6 @@
       ],
       "env": {}
     }
-  }
+  },
+  "skipAutoPermissionPrompt": true
 }
