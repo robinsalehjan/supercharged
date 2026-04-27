@@ -183,6 +183,34 @@ Dippy is an AST-based permission automation tool for Claude Code. It auto-approv
 
 **Setup is automatic** during `npm run setup` or `npm run update`. The update script also checks for missing Dippy installation when Claude Code is present.
 
+## Worktrunk (Git Worktree Manager)
+
+Worktrunk is a CLI for git worktree management designed for running parallel AI agents. It makes worktrees as easy as branches and provides a clean merge + cleanup workflow.
+
+**Installed by**: `brew install worktrunk` in `scripts/mac.sh`
+**Configured by**: `setup_worktrunk()` in `scripts/utils/tools.sh` (runs `wt config shell install`)
+**Shell integration**: auto-configured during `npm run setup` / `npm run update`; restart shell after first install
+**Documentation**: <https://worktrunk.dev>
+
+**Core commands:**
+```bash
+wt switch -c <branch>        # Create branch + worktree, switch to it
+wt switch -c -x claude <br>  # Create worktree and start Claude in it
+wt list                      # List worktrees with status (HEAD diff, ahead/behind, CI)
+wt merge main                # Squash + rebase + fast-forward merge + auto-cleanup
+wt remove                    # Remove current worktree + delete branch
+```
+
+**Workflow rules** (also enforced via `~/.claude/CLAUDE.md`):
+- Use a worktree for any multi-file feature, bug fix, or experimental work — prefer `wt switch -c <branch>` over `git worktree add`.
+- After a PR is merged, **always** clean up: `wt remove` from inside the worktree, or `wt merge main` for the local-merge path (auto-cleans).
+- Verify with `wt list` — no stale entries should remain.
+- For parallel Claude agents: `wt switch -c -x claude <branch> -- '<task>'` spins up an isolated worktree per agent.
+
+**Alternatives** (when worktrunk isn't available):
+- `superpowers:using-git-worktrees` skill — invokes the manual git worktree workflow.
+- Agent tool with `isolation: "worktree"` — auto-creates and cleans a temporary worktree for a single subagent run.
+
 ## Plannotator (Visual Annotation Tool)
 
 Plannotator is a visual annotation tool for AI coding agents. It enables you to mark up and refine plans or code diffs using a visual UI, with team collaboration and encrypted sharing.

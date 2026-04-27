@@ -42,6 +42,13 @@ See [AGENTS.md](./AGENTS.md) for detailed code patterns and examples.
 - **Teammates**: Default to the main model (Opus 4.6) unless overridden per-agent
 - Configured in `claude_config/settings.json` for portability across machines
 
+## Git Worktrees
+
+For multi-file features, bug fixes, or experimental work, use a worktree (worktrunk is installed):
+- `wt switch -c <branch>` to create + enter, `wt list` to inspect, `wt merge main` for local merge + auto-cleanup, `wt remove` after a PR is merged.
+- Fallbacks: `superpowers:using-git-worktrees` skill, or Agent tool with `isolation: "worktree"`.
+- **Mandatory cleanup**: after a PR merges, run `wt remove` (or rely on `wt merge`'s auto-clean). Never leave merged worktrees on disk. See [AGENTS.md](./AGENTS.md#worktrunk-git-worktree-manager) for the full workflow.
+
 ## Security
 
 **This repository is used on personal AND work machines** — comprehensive security enforced:
