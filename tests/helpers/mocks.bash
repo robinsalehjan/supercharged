@@ -253,21 +253,8 @@ unmock_code_review_graph() {
     [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/code-review-graph"
 }
 
-# Mock dippy
-mock_dippy() {
-    _ensure_mock_bin_dir
-    if [ -n "${MOCK_BIN_DIR:-}" ]; then
-        printf '#!/bin/sh\necho "dippy 1.0.0"\n' > "$MOCK_BIN_DIR/dippy"
-        chmod +x "$MOCK_BIN_DIR/dippy"
-    fi
-}
-
-unmock_dippy() {
-    [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/dippy"
-}
-
 # Unmock all system command mocks — call in teardown to prevent leaks
 unmock_all() {
   unset -f brew sw_vers df xcode-select ping asdf uname curl 2>/dev/null || true
-  [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/rtk" "$MOCK_BIN_DIR/pipx" "$MOCK_BIN_DIR/code-review-graph" "$MOCK_BIN_DIR/dippy" "$MOCK_BIN_DIR/ping" "$MOCK_BIN_DIR/brew" 2>/dev/null || true
+  [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/rtk" "$MOCK_BIN_DIR/pipx" "$MOCK_BIN_DIR/code-review-graph" "$MOCK_BIN_DIR/ping" "$MOCK_BIN_DIR/brew" 2>/dev/null || true
 }

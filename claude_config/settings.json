@@ -25,10 +25,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "dippy"
-          },
-          {
-            "type": "command",
             "command": "$HOME/.claude/hooks/rtk-rewrite.sh"
           }
         ]

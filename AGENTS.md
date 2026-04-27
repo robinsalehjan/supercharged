@@ -167,22 +167,6 @@ rtk init -g --auto-patch    # Reconfigure hooks
 rtk init -g --uninstall     # Remove hooks
 ```
 
-## Dippy (Permission Automation)
-
-Dippy is an AST-based permission automation tool for Claude Code. It auto-approves safe commands while blocking destructive operations, reducing permission fatigue by ~40%.
-
-**Installed by**: `brew install dippy` (tap: `ldayton/dippy`) in `scripts/mac.sh`
-**Configured by**: `setup_dippy()` in `scripts/utils/tools.sh`
-**Hook location**: PreToolUse hook in `~/.claude/settings.json` (runs before RTK rewrite)
-
-**How it works:**
-- Runs as a PreToolUse hook on `Bash` tool calls
-- Auto-approves safe, read-only commands (ls, git status, cat, etc.)
-- Blocks destructive operations that need human review
-- Works alongside RTK — Dippy handles permissions, RTK handles output filtering
-
-**Setup is automatic** during `npm run setup` or `npm run update`. The update script also checks for missing Dippy installation when Claude Code is present.
-
 ## Worktrunk (Git Worktree Manager)
 
 Worktrunk is a CLI for git worktree management designed for running parallel AI agents. It makes worktrees as easy as branches and provides a clean merge + cleanup workflow.

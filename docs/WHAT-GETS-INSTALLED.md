@@ -10,7 +10,6 @@ sqlite (lightweight SQL database)
 btop (resource monitor with CPU, memory, disk, network, and process stats)
 shellcheck (shell script linter), jq (JSON processor)
 rtk (Rust Token Killer - CLI proxy for 60-90% token savings in Claude Code)
-dippy (Permission automation for Claude Code - auto-approves safe commands, ~40% faster development)
 worktrunk (Git worktree manager designed for parallel AI agents - `wt switch`, `wt merge`, `wt remove`)
 plannotator (Visual annotation tool for AI coding agents - plan review, code diff annotation)
 

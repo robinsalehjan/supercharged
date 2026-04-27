@@ -29,7 +29,7 @@ npm run help               # Show all commands
 |----------|---------|
 | [What Gets Installed](./docs/WHAT-GETS-INSTALLED.md) | Tools, languages, apps, config files |
 | [Customization](./docs/CUSTOMIZATION.md) | Interactive options, manual configuration |
-| [Token Optimization](./docs/TOKEN-OPTIMIZATION.md) | RTK + Dippy + claude-token-efficient (90%+ savings) |
+| [Token Optimization](./docs/TOKEN-OPTIMIZATION.md) | RTK + claude-token-efficient (significant savings) |
 | [Troubleshooting](./docs/TROUBLESHOOTING.md) | Common issues and solutions |
 | [Security](./SECURITY.md) | Security enforcement details |
 | [AGENTS.md](./AGENTS.md) | Code patterns, testing workflows, how-to guides |

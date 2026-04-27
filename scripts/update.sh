@@ -254,11 +254,6 @@ main() {
         setup_rtk
     fi
 
-    # Ensure Dippy is installed for permission automation (if Claude Code is installed)
-    if [ -d "$HOME/.claude" ] && ! command -v dippy >/dev/null 2>&1; then
-        setup_dippy
-    fi
-
     # Ensure Worktrunk shell integration is configured (if installed)
     if command -v wt >/dev/null 2>&1; then
         setup_worktrunk

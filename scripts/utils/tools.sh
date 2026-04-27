@@ -84,43 +84,6 @@ setup_rtk() {
     fi
 }
 
-# Setup Dippy (Permission automation for Claude Code)
-setup_dippy() {
-    if command_exists dippy; then
-        log_with_level "INFO" "Dippy already installed"
-        return 0
-    fi
-
-    log_with_level "INFO" "Installing Dippy (permission automation)..."
-
-    # Check if Homebrew is available
-    if ! command_exists brew; then
-        log_with_level "ERROR" "Homebrew not found, cannot install Dippy"
-        return 1
-    fi
-
-    # Add Dippy tap and install
-    local tap_output
-    if tap_output=$(brew tap ldayton/dippy 2>&1); then
-        log_with_level "INFO" "Added ldayton/dippy tap"
-    elif echo "$tap_output" | grep -qi "already tapped"; then
-        log_with_level "INFO" "Dippy tap already added"
-    else
-        log_with_level "ERROR" "Failed to add Dippy tap: $tap_output"
-        return 1
-    fi
-
-    if brew install dippy >/dev/null 2>&1; then
-        log_with_level "SUCCESS" "Dippy installed successfully via Homebrew"
-    else
-        log_with_level "ERROR" "Failed to install Dippy via Homebrew"
-        return 1
-    fi
-
-    log_with_level "INFO" "Dippy will auto-approve safe commands (ls, git status, cat) while blocking destructive operations"
-    log_with_level "INFO" "Configure Dippy hook in ~/.claude/settings.json to enable it"
-}
-
 # Setup Worktrunk (Git worktree manager for parallel AI agents)
 setup_worktrunk() {
     if ! command_exists wt; then

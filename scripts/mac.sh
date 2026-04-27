@@ -79,7 +79,6 @@ install_homebrew() {
 build_brewfile() {
     local content='tap "thoughtbot/formulae"
 tap "homebrew/services"
-tap "ldayton/dippy"
 
 brew "bash"
 brew "coreutils"
@@ -109,7 +108,6 @@ brew "ollama"
 brew "pipx"
 brew "uv"
 brew "rtk"
-brew "dippy"
 brew "worktrunk"
 brew "watch"'
 
@@ -270,9 +268,6 @@ main() {
 
         # Setup RTK for token optimization
         setup_rtk
-
-        # Setup Dippy for permission automation
-        setup_dippy
 
         # Setup Worktrunk shell integration for git worktree management
         setup_worktrunk

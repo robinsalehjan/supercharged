@@ -72,30 +72,6 @@ RTKEOF
     [[ "$output" == *"configuration failed"* ]]
 }
 
-# --- setup_dippy tests ---
-
-@test "setup_dippy skips when already installed" {
-    mock_dippy
-
-    run zsh -c "
-        export HOME='$HOME' PATH='$PATH'
-        source '$PROJECT_ROOT/scripts/utils.sh'
-        setup_dippy
-    "
-    [[ "$status" -eq 0 ]]
-    [[ "$output" == *"already installed"* ]]
-}
-
-@test "setup_dippy fails when brew is not available" {
-    run zsh -c "
-        export HOME='$HOME' PATH='/usr/bin:/bin'
-        source '$PROJECT_ROOT/scripts/utils.sh'
-        setup_dippy
-    "
-    [[ "$status" -eq 1 ]]
-    [[ "$output" == *"Homebrew not found"* ]]
-}
-
 # --- setup_code_review_graph tests ---
 
 @test "setup_code_review_graph skips without pipx" {
