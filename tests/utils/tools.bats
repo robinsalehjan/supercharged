@@ -72,6 +72,43 @@ RTKEOF
     [[ "$output" == *"configuration failed"* ]]
 }
 
+# --- setup_worktrunk tests ---
+
+@test "setup_worktrunk skips when wt not installed" {
+    run zsh -c "
+        export HOME='$HOME' PATH='/usr/bin:/bin'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_worktrunk
+    "
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"not installed"* ]]
+}
+
+@test "setup_worktrunk skips when shell integration already configured" {
+    mock_wt
+    echo '# worktrunk shell integration' > "$HOME/.zshrc"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_worktrunk
+    "
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"already configured"* ]]
+}
+
+@test "setup_worktrunk configures when wt exists but not configured" {
+    mock_wt
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_worktrunk
+    "
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"shell integration installed"* ]]
+}
+
 # --- setup_code_review_graph tests ---
 
 @test "setup_code_review_graph skips without pipx" {

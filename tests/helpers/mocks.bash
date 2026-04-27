@@ -253,8 +253,27 @@ unmock_code_review_graph() {
     [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/code-review-graph"
 }
 
+# Mock wt (Worktrunk) for setup testing
+mock_wt() {
+    _ensure_mock_bin_dir
+    if [ -n "${MOCK_BIN_DIR:-}" ]; then
+        cat > "$MOCK_BIN_DIR/wt" << 'WTEOF'
+#!/bin/sh
+case "$1 $2 $3" in
+    "config shell install") exit 0 ;;
+    *) exit 0 ;;
+esac
+WTEOF
+        chmod +x "$MOCK_BIN_DIR/wt"
+    fi
+}
+
+unmock_wt() {
+    [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/wt"
+}
+
 # Unmock all system command mocks — call in teardown to prevent leaks
 unmock_all() {
   unset -f brew sw_vers df xcode-select ping asdf uname curl 2>/dev/null || true
-  [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/rtk" "$MOCK_BIN_DIR/pipx" "$MOCK_BIN_DIR/code-review-graph" "$MOCK_BIN_DIR/ping" "$MOCK_BIN_DIR/brew" 2>/dev/null || true
+  [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/rtk" "$MOCK_BIN_DIR/pipx" "$MOCK_BIN_DIR/code-review-graph" "$MOCK_BIN_DIR/wt" "$MOCK_BIN_DIR/ping" "$MOCK_BIN_DIR/brew" 2>/dev/null || true
 }
