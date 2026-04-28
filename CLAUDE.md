@@ -2,14 +2,6 @@
 
 macOS environment setup automation — installs dev tools (Homebrew, ASDF), manages dotfiles, and backs up Claude Code configuration.
 
-## Token Efficiency Guidelines
-
-Core rules are in `~/.claude/claude-token-efficient.md` (loaded globally). Project-specific additions:
-
-- Suggest running /cost when a session is running long to monitor cache ratio.
-- Recommend starting a new session when switching to an unrelated task.
-- User instructions always override this file.
-
 ## Project Structure
 
 See [README.md](./README.md) for detailed project structure. Key directories:
@@ -34,20 +26,6 @@ See [AGENTS.md](./AGENTS.md) for complete npm commands reference.
 - **Dotfiles**: Use env vars, no hardcoded paths
 
 See [AGENTS.md](./AGENTS.md) for detailed code patterns and examples.
-
-## Model Configuration
-
-- **Main model**: Opus 4.6 (maximum capability for complex reasoning and architecture)
-- **Subagent model**: Sonnet 4.5 (balanced speed/quality for research and execution)
-- **Teammates**: Default to the main model (Opus 4.6) unless overridden per-agent
-- Configured in `claude_config/settings.json` for portability across machines
-
-## Git Worktrees
-
-For multi-file features, bug fixes, or experimental work, use a worktree (worktrunk is installed):
-- `wt switch -c <branch>` to create + enter, `wt list` to inspect, `wt merge main` for local merge + auto-cleanup, `wt remove` after a PR is merged.
-- Fallbacks: `superpowers:using-git-worktrees` skill, or Agent tool with `isolation: "worktree"`.
-- **Mandatory cleanup**: after a PR merges, run `wt remove` (or rely on `wt merge`'s auto-clean). Never leave merged worktrees on disk. See [AGENTS.md](./AGENTS.md#worktrunk-git-worktree-manager) for the full workflow.
 
 ## Security
 
