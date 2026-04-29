@@ -173,8 +173,8 @@
         "scope": "user",
         "installPath": "$HOME/.claude/plugins/cache/visual-explainer-marketplace/visual-explainer/0.7.1",
         "version": "0.7.1",
-        "installedAt": "2026-04-29T17:00:18.267Z",
-        "lastUpdated": "2026-04-29T17:00:18.267Z",
+        "installedAt": "2026-04-29T17:04:04.189Z",
+        "lastUpdated": "2026-04-29T17:04:04.189Z",
         "gitCommitSha": "8f1d0e38ab0f265632a31d2fd032f7b730c98c15"
       }
     ]
