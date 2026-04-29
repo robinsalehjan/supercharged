@@ -53,7 +53,8 @@
     "modularity@vladikk-modularity": true,
     "axiom@axiom-marketplace": true,
     "frontend-design@claude-plugins-official": true,
-    "codex@openai-codex": true
+    "codex@openai-codex": true,
+    "visual-explainer@visual-explainer-marketplace": true
   },
   "extraKnownMarketplaces": {
     "plannotator": {
@@ -85,6 +86,12 @@
         "source": "github",
         "repo": "openai/codex-plugin-cc"
       }
+    },
+    "visual-explainer-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "nicobailon/visual-explainer"
+      }
     }
   },
   "alwaysThinkingEnabled": true,
@@ -98,10 +105,8 @@
   "mcpServers": {
     "XcodeBuildMCP": {
       "type": "stdio",
-      "command": "$HOME/.asdf/shims/npx",
+      "command": "xcodebuildmcp",
       "args": [
-        "-y",
-        "xcodebuildmcp@latest",
         "mcp"
       ],
       "env": {}

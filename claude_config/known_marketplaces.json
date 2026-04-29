@@ -38,5 +38,13 @@
     },
     "installLocation": "$HOME/.claude/plugins/marketplaces/openai-codex",
     "lastUpdated": "2026-04-29T14:11:52.689Z"
+  },
+  "visual-explainer-marketplace": {
+    "source": {
+      "source": "github",
+      "repo": "nicobailon/visual-explainer"
+    },
+    "installLocation": "$HOME/.claude/plugins/marketplaces/visual-explainer-marketplace",
+    "lastUpdated": "2026-04-29T16:59:37.418Z"
   }
 }
