@@ -121,7 +121,9 @@ brew \"swift-format\"
 brew \"swiftformat\"
 brew \"ios-deploy\"
 tap \"peripheryapp/periphery\"
-brew \"periphery\""
+brew \"periphery\"
+tap \"getsentry/xcodebuildmcp\"
+brew \"xcodebuildmcp\""
     fi
 
     if [[ "${INSTALL_DEV_TOOLS:-Y}" =~ ^[Yy] ]]; then

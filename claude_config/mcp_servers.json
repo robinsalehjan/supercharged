@@ -1,10 +1,8 @@
 {
   "XcodeBuildMCP": {
     "type": "stdio",
-    "command": "$HOME/.asdf/shims/npx",
+    "command": "xcodebuildmcp",
     "args": [
-      "-y",
-      "xcodebuildmcp@latest",
       "mcp"
     ],
     "env": {}
