@@ -157,6 +157,16 @@
         "lastUpdated": "2026-04-27T10:35:45.283Z",
         "gitCommitSha": "f917a352bf41b019a4d8625b54c0eac889deaf4e"
       }
+    ],
+    "codex@openai-codex": [
+      {
+        "scope": "user",
+        "installPath": "$HOME/.claude/plugins/cache/openai-codex/codex/1.0.4",
+        "version": "1.0.4",
+        "installedAt": "2026-04-29T14:41:31.589Z",
+        "lastUpdated": "2026-04-29T14:41:31.589Z",
+        "gitCommitSha": "807e03ac9d5aa23bc395fdec8c3767500a86b3cf"
+      }
     ]
   }
 }

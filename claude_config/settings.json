@@ -52,7 +52,8 @@
     "code-review@claude-plugins-official": true,
     "modularity@vladikk-modularity": true,
     "axiom@axiom-marketplace": true,
-    "frontend-design@claude-plugins-official": true
+    "frontend-design@claude-plugins-official": true,
+    "codex@openai-codex": true
   },
   "extraKnownMarketplaces": {
     "plannotator": {
@@ -77,6 +78,12 @@
       "source": {
         "source": "github",
         "repo": "anthropics/claude-plugins-official"
+      }
+    },
+    "openai-codex": {
+      "source": {
+        "source": "github",
+        "repo": "openai/codex-plugin-cc"
       }
     }
   },
