@@ -11,5 +11,5 @@ Reserve the default (Opus) for tasks requiring deep reasoning, complex architect
 ## References
 
 @RTK.md
-@claude-token-efficient.md
-@worktrunk.md
+@CLAUDE-TOKEN-EFFICIENT.md
+@WORKTRUNK.md

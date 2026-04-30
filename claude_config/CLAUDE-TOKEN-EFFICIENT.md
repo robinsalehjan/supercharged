@@ -1,8 +1,4 @@
-# claude-token-efficient
-
-Behavioral rules to reduce output verbosity (~60% token savings).
-
-## Rules
+# Token Efficient
 
 - Think before acting. Read existing files before writing code.
 - Be concise in output but thorough in reasoning.
