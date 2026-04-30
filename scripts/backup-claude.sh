@@ -47,6 +47,12 @@ if [ -f "$CLAUDE_HOME/settings.json" ]; then
     settings_json=$(cat "$CLAUDE_HOME/settings.json")
     filtered_plugins=$(filter_json_by_marketplace "$settings_json" ".enabledPlugins" "${SANITIZE_MARKETPLACES[@]}")
 
+    # Build jq filter to remove sanitized marketplaces from pluginMarketplaces
+    marketplace_del_filter=""
+    for mp in "${SANITIZE_MARKETPLACES[@]}"; do
+        marketplace_del_filter="${marketplace_del_filter} | del(.extraKnownMarketplaces[\"${mp}\"])"
+    done
+
     # Build jq filter to remove sensitive env vars
     env_del_filter=""
     for env_var in "${SANITIZE_ENV_VARS[@]}"; do
@@ -54,16 +60,17 @@ if [ -f "$CLAUDE_HOME/settings.json" ]; then
         env_del_filter="${env_del_filter} | del(.mcpServers[]?.env[\"${env_var}\"])"
     done
 
-    # Preserve all fields except enabledPlugins, then apply sanitized enabledPlugins and strip sensitive env vars
+    # Preserve all fields except enabledPlugins, then apply sanitized enabledPlugins,
+    # strip sanitized marketplaces from pluginMarketplaces, and remove sensitive env vars
     # Write to temp file first to avoid corrupting output on pipeline failure
-    if ! jq -a --argjson plugins "$filtered_plugins" "(. + {enabledPlugins: \$plugins})${env_del_filter}" <<< "$settings_json" | \
+    if ! jq -a --argjson plugins "$filtered_plugins" "(. + {enabledPlugins: \$plugins})${marketplace_del_filter}${env_del_filter}" <<< "$settings_json" | \
         make_path_portable > "$CLAUDE_CONFIG_DIR/settings.json.tmp"; then
         rm -f "$CLAUDE_CONFIG_DIR/settings.json.tmp"
         log_with_level "ERROR" "Failed to sanitize settings.json - backup aborted"
         exit 1
     fi
     mv "$CLAUDE_CONFIG_DIR/settings.json.tmp" "$CLAUDE_CONFIG_DIR/settings.json"
-    log_with_level "SUCCESS" "Backed up settings.json (sanitized ${#SANITIZE_MARKETPLACES[@]} marketplace(s) from enabledPlugins, stripped ${#SANITIZE_ENV_VARS[@]} env var(s), paths made portable)"
+    log_with_level "SUCCESS" "Backed up settings.json (sanitized ${#SANITIZE_MARKETPLACES[@]} marketplace(s) from enabledPlugins and pluginMarketplaces, stripped ${#SANITIZE_ENV_VARS[@]} env var(s), paths made portable)"
 else
     log_with_level "WARN" "settings.json not found"
 fi
