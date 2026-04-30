@@ -22,7 +22,7 @@ teardown() {
   [ "$status" -eq 0 ]
   [[ "$output" == *"Setup Commands:"* ]]
   [[ "$output" == *"npm run setup"* ]]
-  [[ "$output" == *"npm run setup:profile"* ]]
+  [[ "$output" == *"npm run restore:dotfiles"* ]]
 }
 
 @test "help.sh displays backup and restore commands" {

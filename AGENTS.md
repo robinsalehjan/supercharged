@@ -7,10 +7,10 @@ Detailed reference for AI agents. For project overview, structure, commands, and
 ```bash
 # Setup and Installation
 npm run setup                 # Fresh install (interactive)
-npm run setup:profile         # Copy dotfiles + Claude config to $HOME
+npm run restore:dotfiles         # Copy dotfiles + Claude config to $HOME
 
 # Updates
-# npm run update runs: backup:claude → setup:profile → update.sh
+# npm run update runs: backup:claude → restore:dotfiles → update.sh
 npm run update                    # Update all components (brew, asdf, zsh, npm, pip)
 npm run update:dry-run            # Preview outdated brew/npm packages (read-only)
 npm run update:only -- <comp>     # Copy dotfiles + update one component (brew, asdf, zsh, npm, pip)
@@ -95,7 +95,7 @@ Tests run on push to main and pull requests via `.github/workflows/test.yml`.
 3. Verify logging matches existing patterns
 
 **Manual workflow**:
-1. `npm run setup:profile` to copy dotfiles
+1. `npm run restore:dotfiles` to copy dotfiles
 2. `source ~/.zshrc` — verify no errors
 3. `npm run validate` — check installations
 4. If issues: `npm run restore`

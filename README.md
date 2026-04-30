@@ -15,8 +15,10 @@ cd supercharged && npm run setup
 npm run setup              # Fresh install (interactive)
 npm run update             # Update all components
 npm run validate           # Verify tools installed correctly
-npm run backup:claude      # Backup Claude Code config
+npm run restore:all        # Restore Claude Code config and dotfiles
 npm run restore:claude     # Restore Claude Code config
+npm run restore:dotfiles   # Copy dotfiles to $HOME
+npm run backup:claude      # Backup Claude Code config
 npm run restore            # Restore from last backup
 npm test                   # Run all BATS tests
 npm run lint               # ShellCheck all scripts
