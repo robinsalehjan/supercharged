@@ -92,6 +92,12 @@
         "source": "github",
         "repo": "nicobailon/visual-explainer"
       }
+    },
+    "vend-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "m10s-green/claude-plugin-marketplace"
+      }
     }
   },
   "alwaysThinkingEnabled": true,

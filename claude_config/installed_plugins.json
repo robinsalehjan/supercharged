@@ -6,8 +6,8 @@
         "scope": "user",
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/hookify/unknown",
         "version": "unknown",
-        "installedAt": "2026-04-29T16:03:24.793Z",
-        "lastUpdated": "2026-04-29T16:03:24.793Z"
+        "installedAt": "2026-04-30T08:47:58.933Z",
+        "lastUpdated": "2026-04-30T08:47:58.933Z"
       }
     ],
     "superpowers@claude-plugins-official": [
@@ -15,8 +15,8 @@
         "scope": "user",
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7",
         "version": "5.0.7",
-        "installedAt": "2026-04-29T16:03:31.414Z",
-        "lastUpdated": "2026-04-29T16:03:31.414Z",
+        "installedAt": "2026-04-30T08:48:06.054Z",
+        "lastUpdated": "2026-04-30T08:48:06.054Z",
         "gitCommitSha": "6efe32c9e2dd002d0c394e861e0529675d1ab32e"
       }
     ],
@@ -25,8 +25,8 @@
         "scope": "user",
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0",
         "version": "1.0.0",
-        "installedAt": "2026-04-29T16:03:31.927Z",
-        "lastUpdated": "2026-04-29T16:03:31.927Z"
+        "installedAt": "2026-04-30T08:48:06.369Z",
+        "lastUpdated": "2026-04-30T08:48:06.369Z"
       }
     ],
     "firebase@claude-plugins-official": [
@@ -34,8 +34,8 @@
         "scope": "user",
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/firebase/unknown",
         "version": "unknown",
-        "installedAt": "2026-04-29T16:03:23.385Z",
-        "lastUpdated": "2026-04-29T16:03:23.385Z"
+        "installedAt": "2026-04-30T08:47:57.900Z",
+        "lastUpdated": "2026-04-30T08:47:57.900Z"
       }
     ],
     "claude-md-management@claude-plugins-official": [
@@ -43,8 +43,8 @@
         "scope": "user",
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/claude-md-management/1.0.0",
         "version": "1.0.0",
-        "installedAt": "2026-04-29T16:03:21.327Z",
-        "lastUpdated": "2026-04-29T16:03:21.327Z"
+        "installedAt": "2026-04-30T08:47:52.208Z",
+        "lastUpdated": "2026-04-30T08:47:52.208Z"
       }
     ],
     "claude-code-setup@claude-plugins-official": [
@@ -52,8 +52,8 @@
         "scope": "user",
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/claude-code-setup/1.0.0",
         "version": "1.0.0",
-        "installedAt": "2026-04-29T16:03:20.585Z",
-        "lastUpdated": "2026-04-29T16:03:20.585Z"
+        "installedAt": "2026-04-30T08:47:51.710Z",
+        "lastUpdated": "2026-04-30T08:47:51.710Z"
       }
     ],
     "plugin-dev@claude-plugins-official": [
@@ -61,8 +61,8 @@
         "scope": "user",
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/plugin-dev/unknown",
         "version": "unknown",
-        "installedAt": "2026-04-29T16:03:26.925Z",
-        "lastUpdated": "2026-04-29T16:03:26.925Z"
+        "installedAt": "2026-04-30T08:48:01.989Z",
+        "lastUpdated": "2026-04-30T08:48:01.989Z"
       }
     ],
     "typescript-lsp@claude-plugins-official": [
@@ -70,8 +70,8 @@
         "scope": "user",
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/typescript-lsp/1.0.0",
         "version": "1.0.0",
-        "installedAt": "2026-04-29T16:03:32.650Z",
-        "lastUpdated": "2026-04-29T16:03:32.650Z"
+        "installedAt": "2026-04-30T08:48:06.889Z",
+        "lastUpdated": "2026-04-30T08:48:06.889Z"
       }
     ],
     "pr-review-toolkit@claude-plugins-official": [
@@ -79,8 +79,8 @@
         "scope": "user",
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/pr-review-toolkit/unknown",
         "version": "unknown",
-        "installedAt": "2026-04-29T16:03:27.634Z",
-        "lastUpdated": "2026-04-29T16:03:27.634Z"
+        "installedAt": "2026-04-30T08:48:02.485Z",
+        "lastUpdated": "2026-04-30T08:48:02.485Z"
       }
     ],
     "pyright-lsp@claude-plugins-official": [
@@ -88,8 +88,8 @@
         "scope": "user",
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/pyright-lsp/1.0.0",
         "version": "1.0.0",
-        "installedAt": "2026-04-29T16:03:28.459Z",
-        "lastUpdated": "2026-04-29T16:03:28.459Z"
+        "installedAt": "2026-04-30T08:48:03.010Z",
+        "lastUpdated": "2026-04-30T08:48:03.010Z"
       }
     ],
     "frontend-design@claude-plugins-official": [
@@ -97,8 +97,8 @@
         "scope": "user",
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/frontend-design/unknown",
         "version": "unknown",
-        "installedAt": "2026-04-29T16:03:24.080Z",
-        "lastUpdated": "2026-04-29T16:03:24.080Z"
+        "installedAt": "2026-04-30T08:47:58.415Z",
+        "lastUpdated": "2026-04-30T08:47:58.415Z"
       }
     ],
     "security-guidance@claude-plugins-official": [
@@ -106,8 +106,8 @@
         "scope": "user",
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/security-guidance/unknown",
         "version": "unknown",
-        "installedAt": "2026-04-29T16:03:29.168Z",
-        "lastUpdated": "2026-04-29T16:03:29.168Z"
+        "installedAt": "2026-04-30T08:48:03.523Z",
+        "lastUpdated": "2026-04-30T08:48:03.523Z"
       }
     ],
     "skill-creator@claude-plugins-official": [
@@ -115,8 +115,8 @@
         "scope": "user",
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/skill-creator/unknown",
         "version": "unknown",
-        "installedAt": "2026-04-29T16:03:29.865Z",
-        "lastUpdated": "2026-04-29T16:03:29.865Z"
+        "installedAt": "2026-04-30T08:48:04.058Z",
+        "lastUpdated": "2026-04-30T08:48:04.058Z"
       }
     ],
     "plannotator@plannotator": [
@@ -124,9 +124,9 @@
         "scope": "user",
         "installPath": "$HOME/.claude/plugins/cache/plannotator/plannotator/0.17.10",
         "version": "0.17.10",
-        "installedAt": "2026-04-29T16:03:26.219Z",
-        "lastUpdated": "2026-04-29T16:03:26.219Z",
-        "gitCommitSha": "14bff361f8db5b02573908512df6a11db775b945"
+        "installedAt": "2026-04-30T08:48:01.453Z",
+        "lastUpdated": "2026-04-30T08:48:01.453Z",
+        "gitCommitSha": "f1d3a880ed384f5779d019d743f52995b3151173"
       }
     ],
     "code-review@claude-plugins-official": [
@@ -134,8 +134,8 @@
         "scope": "user",
         "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/code-review/unknown",
         "version": "unknown",
-        "installedAt": "2026-04-29T16:03:21.972Z",
-        "lastUpdated": "2026-04-29T16:03:21.972Z"
+        "installedAt": "2026-04-30T08:47:52.705Z",
+        "lastUpdated": "2026-04-30T08:47:52.705Z"
       }
     ],
     "modularity@vladikk-modularity": [
@@ -143,19 +143,19 @@
         "scope": "user",
         "installPath": "$HOME/.claude/plugins/cache/vladikk-modularity/modularity/1.5.0",
         "version": "1.5.0",
-        "installedAt": "2026-04-29T16:03:25.499Z",
-        "lastUpdated": "2026-04-29T16:03:25.499Z",
+        "installedAt": "2026-04-30T08:48:00.441Z",
+        "lastUpdated": "2026-04-30T08:48:00.441Z",
         "gitCommitSha": "bcdca9a595764b9aa88d5d8d6020f52e7f5f1f52"
       }
     ],
     "axiom@axiom-marketplace": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/axiom-marketplace/axiom/3.1.0",
-        "version": "3.1.0",
-        "installedAt": "2026-04-29T16:03:19.959Z",
-        "lastUpdated": "2026-04-29T16:03:19.959Z",
-        "gitCommitSha": "f917a352bf41b019a4d8625b54c0eac889deaf4e"
+        "installPath": "$HOME/.claude/plugins/cache/axiom-marketplace/axiom/3.1.1",
+        "version": "3.1.1",
+        "installedAt": "2026-04-30T08:47:51.329Z",
+        "lastUpdated": "2026-04-30T08:47:51.329Z",
+        "gitCommitSha": "d938278280a56bb96ad25c0f1bd48f9d40379fa5"
       }
     ],
     "codex@openai-codex": [
@@ -163,8 +163,8 @@
         "scope": "user",
         "installPath": "$HOME/.claude/plugins/cache/openai-codex/codex/1.0.4",
         "version": "1.0.4",
-        "installedAt": "2026-04-29T16:03:22.720Z",
-        "lastUpdated": "2026-04-29T16:03:22.720Z",
+        "installedAt": "2026-04-30T08:47:57.099Z",
+        "lastUpdated": "2026-04-30T08:47:57.099Z",
         "gitCommitSha": "807e03ac9d5aa23bc395fdec8c3767500a86b3cf"
       }
     ],
@@ -173,8 +173,8 @@
         "scope": "user",
         "installPath": "$HOME/.claude/plugins/cache/visual-explainer-marketplace/visual-explainer/0.7.1",
         "version": "0.7.1",
-        "installedAt": "2026-04-29T17:04:04.189Z",
-        "lastUpdated": "2026-04-29T17:04:04.189Z",
+        "installedAt": "2026-04-30T08:48:11.662Z",
+        "lastUpdated": "2026-04-30T08:48:11.662Z",
         "gitCommitSha": "8f1d0e38ab0f265632a31d2fd032f7b730c98c15"
       }
     ]
