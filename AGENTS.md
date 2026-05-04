@@ -144,24 +144,12 @@ Plugins are auto-installed during restore. `install:plugins` merges repo configs
 
 ## RTK (Rust Token Killer)
 
-RTK is automatically installed and configured as part of the setup. It provides 60-90% token savings on dev operations by optimizing CLI command output.
-
 **Installed by**: `brew install rtk` in `scripts/mac.sh`
 **Configured by**: `setup_rtk()` in `scripts/utils/tools.sh` (runs `rtk init -g --auto-patch`)
 **Hook location**: `~/.claude/hooks/rtk-rewrite.sh`
-**Documentation**: `~/.claude/RTK.md`
+**Usage**: see `~/.claude/RTK.md`
 
-**Usage:**
-```bash
-rtk gain              # Show token savings analytics
-rtk gain --history    # Command history with savings
-rtk discover          # Analyze Claude Code history for missed opportunities
-rtk init --show       # Verify installation status
-```
-
-All git commands are automatically rewritten by Claude Code hooks (e.g., `git status` → `rtk git status`).
-
-**Setup is automatic** during `npm run setup` or `npm run update`. To manually reconfigure:
+To manually reconfigure:
 ```bash
 rtk init -g --auto-patch    # Reconfigure hooks
 rtk init -g --uninstall     # Remove hooks
@@ -169,74 +157,21 @@ rtk init -g --uninstall     # Remove hooks
 
 ## Worktrunk (Git Worktree Manager)
 
-Worktrunk is a CLI for git worktree management designed for running parallel AI agents. It makes worktrees as easy as branches and provides a clean merge + cleanup workflow.
-
 **Installed by**: `brew install worktrunk` in `scripts/mac.sh`
 **Configured by**: `setup_worktrunk()` in `scripts/utils/tools.sh` (runs `wt config shell install`)
 **Shell integration**: auto-configured during `npm run setup` / `npm run update`; restart shell after first install
-**Documentation**: <https://worktrunk.dev>
-
-**Core commands:**
-```bash
-wt switch -c <branch>        # Create branch + worktree, switch to it
-wt switch -c -x claude <br>  # Create worktree and start Claude in it
-wt list                      # List worktrees with status (HEAD diff, ahead/behind, CI)
-wt merge main                # Squash + rebase + fast-forward merge + auto-cleanup
-wt remove                    # Remove current worktree + delete branch
-```
-
-**Workflow rules** (also enforced via `~/.claude/CLAUDE.md`):
-- Use a worktree for any multi-file feature, bug fix, or experimental work — prefer `wt switch -c <branch>` over `git worktree add`.
-- After a PR is merged, **always** clean up: `wt remove` from inside the worktree, or `wt merge main` for the local-merge path (auto-cleans).
-- Verify with `wt list` — no stale entries should remain.
-- For parallel Claude agents: `wt switch -c -x claude <branch> -- '<task>'` spins up an isolated worktree per agent.
-
-**Alternatives** (when worktrunk isn't available):
-- `superpowers:using-git-worktrees` skill — invokes the manual git worktree workflow.
-- Agent tool with `isolation: "worktree"` — auto-creates and cleans a temporary worktree for a single subagent run.
+**Usage**: see `~/.claude/WORKTRUNK.md` (or <https://worktrunk.dev>)
 
 ## Plannotator (Visual Annotation Tool)
-
-Plannotator is a visual annotation tool for AI coding agents. It enables you to mark up and refine plans or code diffs using a visual UI, with team collaboration and encrypted sharing.
 
 **Installed by**: `setup_plannotator()` in `scripts/utils/tools.sh` (downloads from GitHub releases)
 **Location**: `~/.local/bin/plannotator`
 **Claude Code plugin**: `backnotprop/plannotator` (manual installation required)
+**Usage**: see <https://github.com/backnotprop/plannotator>
 
-**Features:**
-- Visual plan review with inline annotations
-- Automatic plan diff tracking when agents revise
-- Code review for git diffs and remote pull requests
-- File annotation and structured feedback
-- End-to-end encrypted sharing (auto-deletion after 7 days)
-
-**Usage:**
+To manually install:
 ```bash
-plannotator review [PR_URL]       # Review a pull request
-plannotator annotate <file>       # Annotate a file or folder
-plannotator last                  # Open last review session
-plannotator sessions              # List all review sessions
-plannotator archive               # Archive old sessions
-```
-
-**Claude Code integration:**
-After installation, add the plugin marketplace:
-```bash
-/plugin marketplace add backnotprop/plannotator
-```
-
-Then use slash commands in Claude Code:
-- `/plannotator-review` - Review code changes
-- `/plannotator-annotate` - Annotate plans or files
-- `/plannotator-last` - Open last session
-
-**Setup is automatic** during `npm run setup` or `npm run update`. To manually install:
-```bash
-# Via setup function (recommended)
 source scripts/utils.sh && setup_plannotator
-
-# Or manually download latest release from:
-# https://github.com/backnotprop/plannotator/releases
 ```
 
 ## Adding New Tools
