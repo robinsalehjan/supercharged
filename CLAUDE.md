@@ -4,43 +4,26 @@ macOS environment setup automation — installs dev tools (Homebrew, ASDF), mana
 
 ## Project Structure
 
-See [README.md](./README.md) for detailed project structure. Key directories:
 - `scripts/` - Shell scripts (mac.sh, update.sh, utils.sh, restore.sh, setup-profile.sh, help.sh; backup-claude.sh/restore-claude.sh for Claude config)
 - `dot_files/` - Dotfiles copied to `$HOME`
 - `claude_config/` - Claude Code config backup
-
-## Commands
-
-See [AGENTS.md](./AGENTS.md) for complete npm commands reference.
 
 ## Code Conventions
 
 - **Logging**: Use `log_with_level "INFO|WARN|ERROR|SUCCESS" "message"` from `utils.sh`
 - **Error handling**: Include `trap cleanup EXIT` in scripts
-- **Tests**: BATS (Bash Automated Testing System); test files in `tests/`; use `setup_test_env` + `teardown_test_env`
-- **Testing workflow**: Add BATS tests in `tests/<script-name>/` for new script features; run `npm test` before committing script changes
+- **Tests**: BATS; test files in `tests/<suite>/`; use `setup_test_env` + `teardown_test_env`. Run `npm test` before committing script changes.
 - **Commits**: Conventional format preferred (not enforced). Scope optional.
   - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `build`, `ci`, `revert`, `wip`, `update`, `add`, `remove`
-  - Examples: `feat(backup): add new feature`, `fix(restore): handle edge case`, `chore(deps): bump versions`
-- **Shell scripts**: Written for zsh; ShellCheck `--shell=bash` flags (SC1071, SC2296) are safe to ignore
-- **Dotfiles**: Use env vars, no hardcoded paths
+- **Shell scripts**: Written for zsh; see [AGENTS.md](./AGENTS.md) > ShellCheck Notes for safe-to-ignore warnings.
+- **Dotfiles**: Use env vars, no hardcoded paths.
 
-See [AGENTS.md](./AGENTS.md) for detailed code patterns and examples.
+See [AGENTS.md](./AGENTS.md) for npm commands, code patterns, testing details, and how-to guides.
 
 ## Security
 
-**This repository is used on personal AND work machines** — comprehensive security enforced:
-
-**Automated checks**: Hookify rules enforce security during Claude Code sessions. See [SECURITY.md](./SECURITY.md) for details and `.claude/hookify.*.local.md` for rules.
-
-**Key rules**:
-- Never commit secrets (`.secrets` is template only, in `.gitignore`)
-- No hardcoded paths in dotfiles (use `$HOME`, not `/Users/username/`)
-- Shellcheck is required for `npm run lint` (`brew install shellcheck`)
-- Claude backups sanitized (work marketplaces excluded)
-- No bypassing hooks with `--no-verify` (blocked by hookify)
+Used on personal AND work machines; security enforced via hookify rules during Claude Code sessions. See [SECURITY.md](./SECURITY.md).
 
 ## Reference
 
-See [AGENTS.md](./AGENTS.md) for detailed patterns, testing workflows, and how-to guides.
 See [README.md](./README.md) for user-facing documentation.

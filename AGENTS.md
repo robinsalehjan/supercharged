@@ -199,18 +199,15 @@ source scripts/utils.sh && setup_plannotator
 | Test security hooks | `git add . && git commit -m "test"` - hooks run automatically |
 | List hookify rules | `ls .claude/hookify.*.local.md` |
 
-## Security & Git Workflow
+## PR Checklist
 
-Security is enforced automatically via hookify rules during Claude Code sessions. See [SECURITY.md](./SECURITY.md) for full details.
-
-**Conventional commits** (preferred, not enforced): `feat(scripts):`, `fix(zsh):`, `docs(readme):`, `chore(deps):`.
-
-**PR checklist**:
 - [ ] Hooks passed (required - can't commit otherwise)
 - [ ] README.md updated if user-facing changes
 - [ ] Logging follows `log_with_level` pattern
 - [ ] No hardcoded paths (use `$HOME`)
 - [ ] Shellcheck passed (`npm run lint`)
+
+See [SECURITY.md](./SECURITY.md) for security details and [CLAUDE.md](./CLAUDE.md) for commit conventions.
 
 ## Debugging
 
