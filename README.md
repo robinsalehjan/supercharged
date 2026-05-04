@@ -34,4 +34,3 @@ npm run help               # Show all commands
 | [Token Optimization](./docs/TOKEN-OPTIMIZATION.md) | RTK + claude-token-efficient (significant savings) |
 | [Troubleshooting](./docs/TROUBLESHOOTING.md) | Common issues and solutions |
 | [Security](./SECURITY.md) | Security enforcement details |
-| [AGENTS.md](./AGENTS.md) | Code patterns, testing workflows, how-to guides |
