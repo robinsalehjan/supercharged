@@ -109,7 +109,8 @@ brew "pipx"
 brew "uv"
 brew "rtk"
 brew "worktrunk"
-brew "hey"'
+brew "hey"
+brew "mitmproxy"'
 
     if [[ "${INSTALL_IOS_TOOLS:-Y}" =~ ^[Yy] ]]; then
         content="$content
@@ -146,6 +147,7 @@ cask \"google-chrome\"
 cask \"font-jetbrains-mono-nerd-font\"
 cask \"ollama\"
 cask \"reveal\"
+cask \"proxyman\"
 cask \"mullvad-vpn\"
 
 mas \"AdBlock\", id: 1402042596

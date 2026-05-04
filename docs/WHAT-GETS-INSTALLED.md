@@ -13,6 +13,7 @@ rtk (Rust Token Killer - CLI proxy for 60-90% token savings in Claude Code)
 worktrunk (Git worktree manager designed for parallel AI agents - `wt switch`, `wt merge`, `wt remove`)
 plannotator (Visual annotation tool for AI coding agents - plan review, code diff annotation)
 hey (HTTP load generator for benchmarking web endpoints)
+mitmproxy (interactive HTTPS proxy for debugging and testing)
 
 # Development languages (via asdf)
 nodejs   22.9.0       # LTS version, minimum 20.0.0 for modern features
@@ -50,6 +51,7 @@ colima             # Lightweight container runtime for macOS (auto-starts)
 visual-studio-code  # Code editor with shell integration
 slack              # Team communication
 postman            # API development and testing
+proxyman           # macOS HTTP debugging proxy
 raycast            # macOS productivity launcher
 google-chrome      # Web browser
 
