@@ -101,6 +101,14 @@ main() {
         "$SCRIPT_DIR/restore-claude.sh" --force
     fi
 
+    # Set up code-review-graph watcher (if both code-review-graph and Claude Code are installed)
+    if command -v code-review-graph >/dev/null 2>&1 && [ -d "$HOME/.claude" ]; then
+        echo ""
+        echo "🔍 Setting up code-review-graph infrastructure..."
+        setup_code_review_graph
+        setup_crg_watcher
+    fi
+
     # Display backup location for user reference
     echo ""
     if [ -f "$HOME/.supercharged_last_backup" ]; then
