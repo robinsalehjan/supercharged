@@ -127,8 +127,35 @@ setup_code_review_graph() {
         fi
     fi
 
-    # Skip Claude Code integration if already configured
-    if [ -f "$HOME/.claude/.mcp.json" ] && grep -q "code-review-graph" "$HOME/.claude/.mcp.json" 2>/dev/null; then
+    # MCP register step only makes sense when Claude Code is present.
+    # The pipx install above is useful regardless (e.g., for `crg-here` + watcher).
+    if [ ! -d "$HOME/.claude" ]; then
+        log_with_level "INFO" "Claude Code not detected at ~/.claude — skipping MCP registration"
+        return 0
+    fi
+
+    # Skip Claude Code integration if already configured.
+    # Claude Code reads MCP servers from ~/.claude.json (global state) and
+    # ~/.claude/settings.json — check both. Use jq when available for accuracy,
+    # fall back to grep for portability.
+    local mcp_files=("$HOME/.claude.json" "$HOME/.claude/settings.json")
+    local already_configured=false
+    for f in "${mcp_files[@]}"; do
+        [ -f "$f" ] || continue
+        if command_exists jq; then
+            if jq -e '.mcpServers["code-review-graph"]' "$f" >/dev/null 2>&1; then
+                already_configured=true
+                break
+            fi
+        else
+            if grep -q '"code-review-graph"' "$f" 2>/dev/null; then
+                already_configured=true
+                break
+            fi
+        fi
+    done
+
+    if $already_configured; then
         log_with_level "INFO" "code-review-graph already configured for Claude Code"
         return 0
     fi
@@ -142,7 +169,158 @@ setup_code_review_graph() {
     fi
 
     log_with_level "INFO" "code-review-graph builds a knowledge graph of your codebase to reduce AI token usage by ~8x"
-    log_with_level "INFO" "Run 'code-review-graph build' in a repo to index it"
+    log_with_level "INFO" "Run 'code-review-graph build' in a repo to index it (or 'crg-here' for register+build)"
+}
+
+# Setup the code-review-graph multi-repo watcher (launchd-managed).
+# Orchestrates library primitives: reads ~/.code-review-graph/registry.json
+# and runs `code-review-graph watch --repo <path>` for each registered repo.
+# Reloads automatically when the registry changes.
+setup_crg_watcher() {
+    if ! command_exists code-review-graph; then
+        log_with_level "INFO" "code-review-graph not installed, skipping watcher setup"
+        return 0
+    fi
+
+    local script_path="$HOME/.local/bin/crg-watch-all.sh"
+    local plist_path="$HOME/Library/LaunchAgents/com.code-review-graph.watcher.plist"
+    local script_tmp plist_tmp
+    script_tmp=$(mktemp)
+    plist_tmp=$(mktemp)
+
+    mkdir -p "$HOME/.local/bin" "$HOME/Library/LaunchAgents" "$HOME/.code-review-graph"
+
+    cat > "$script_tmp" <<'WATCHER_EOF'
+#!/usr/bin/env zsh
+# crg-watch-all.sh — Run `code-review-graph watch` for every registered repo.
+# Managed by launchd (com.code-review-graph.watcher). Exits on registry change
+# so launchd restarts us with fresh state.
+
+set -u
+emulate -L zsh
+
+REGISTRY="${HOME}/.code-review-graph/registry.json"
+CRG="${CRG_BIN:-$(command -v code-review-graph)}"
+INTERVAL="${CRG_WATCH_INTERVAL:-30}"
+
+if [[ -z "$CRG" || ! -x "$CRG" ]]; then
+    print -u2 "code-review-graph not on PATH"
+    sleep 60
+    exit 1
+fi
+
+if [[ ! -f "$REGISTRY" ]]; then
+    print -u2 "No registry at $REGISTRY"
+    sleep 60
+    exit 0
+fi
+
+paths=( "${(@f)$(jq -r '.repos[].path' "$REGISTRY" 2>/dev/null)}" )
+if (( ${#paths} == 0 )) || [[ -z "${paths[1]:-}" ]]; then
+    print -u2 "No registered repos"
+    sleep 60
+    exit 0
+fi
+
+typeset -a pids
+for p in "${paths[@]}"; do
+    [[ -d "$p" ]] || { print -u2 "skip missing: $p"; continue; }
+    "$CRG" watch --repo "$p" &
+    pids+=($!)
+    print -u2 "watching: $p (pid $!)"
+done
+
+if (( ${#pids} == 0 )); then
+    sleep 60
+    exit 0
+fi
+
+cleanup() {
+    for pid in $pids; do kill "$pid" 2>/dev/null; done
+    wait 2>/dev/null
+}
+trap cleanup EXIT INT TERM
+
+mtime=$(stat -f %m "$REGISTRY")
+while sleep "$INTERVAL"; do
+    new=$(stat -f %m "$REGISTRY" 2>/dev/null)
+    if [[ "$new" != "$mtime" ]]; then
+        print -u2 "registry changed — exiting for reload"
+        exit 0
+    fi
+done
+WATCHER_EOF
+
+    cat > "$plist_tmp" <<PLIST_EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.code-review-graph.watcher</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>${script_path}</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:${HOME}/.local/bin:/usr/bin:/bin</string>
+    </dict>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+    <key>StandardOutPath</key>
+    <string>${HOME}/.code-review-graph/watcher.log</string>
+    <key>StandardErrorPath</key>
+    <string>${HOME}/.code-review-graph/watcher.err</string>
+</dict>
+</plist>
+PLIST_EOF
+
+    if ! plutil -lint "$plist_tmp" >/dev/null 2>&1; then
+        log_with_level "ERROR" "Generated launchd plist failed validation"
+        rm -f "$script_tmp" "$plist_tmp"
+        return 1
+    fi
+
+    # Only rewrite + reload if content actually changed, to avoid disrupting an
+    # already-running watcher on every `npm run update` invocation.
+    local changed=false
+    if [ ! -f "$script_path" ] || ! cmp -s "$script_tmp" "$script_path"; then
+        mv "$script_tmp" "$script_path"
+        chmod +x "$script_path"
+        changed=true
+    else
+        rm -f "$script_tmp"
+    fi
+    if [ ! -f "$plist_path" ] || ! cmp -s "$plist_tmp" "$plist_path"; then
+        mv "$plist_tmp" "$plist_path"
+        changed=true
+    else
+        rm -f "$plist_tmp"
+    fi
+
+    if ! $changed; then
+        log_with_level "INFO" "code-review-graph watcher already up to date"
+        return 0
+    fi
+
+    if [ "${SUPERCHARGED_SKIP_LAUNCHCTL:-0}" = "1" ]; then
+        log_with_level "INFO" "SUPERCHARGED_SKIP_LAUNCHCTL=1 — skipping launchctl reload"
+        return 0
+    fi
+
+    launchctl unload "$plist_path" 2>/dev/null || true
+    if launchctl load "$plist_path" 2>/dev/null; then
+        log_with_level "SUCCESS" "code-review-graph watcher loaded (com.code-review-graph.watcher)"
+        log_with_level "INFO" "Use 'crg-here' inside a git repo to register + build"
+    else
+        log_with_level "WARN" "launchctl load failed for code-review-graph watcher"
+    fi
 }
 
 # Setup Plannotator (Visual annotation tool for AI coding agents)

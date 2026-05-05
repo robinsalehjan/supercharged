@@ -284,9 +284,6 @@ main() {
         # Setup Worktrunk shell integration for git worktree management
         setup_worktrunk
 
-        # Setup code-review-graph for AI-optimized code context
-        setup_code_review_graph
-
         # Setup Plannotator for visual plan annotation
         setup_plannotator
 
@@ -301,6 +298,14 @@ main() {
             "$UTILS_SCRIPT_DIR/restore-claude.sh" --force || log_with_level "WARN" "Claude config restore skipped or failed"
         fi
     fi
+
+    # Setup code-review-graph (independent of Claude Code — useful for `crg-here`
+    # + watcher even without Claude installed; the MCP register step inside
+    # short-circuits when ~/.claude is absent).
+    setup_code_review_graph
+
+    # Setup the code-review-graph multi-repo watcher (launchd)
+    setup_crg_watcher
 
     # Install additional tools based on preferences
     if [[ "${INSTALL_DATA_SCIENCE:-N}" =~ ^[Yy] ]]; then

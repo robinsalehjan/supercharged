@@ -132,6 +132,7 @@ validate_installation() {
     validate_tool "asdf" "" || ((failed++))
     validate_tool "shellcheck" "" || ((failed++))
     validate_tool "rtk" "" || ((failed++))
+    validate_tool "wt" "" || ((failed++))
     validate_tool "code-review-graph" "" || ((failed++))
 
     # Validate ASDF-managed languages and runtimes

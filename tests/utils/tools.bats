@@ -125,7 +125,10 @@ RTKEOF
     mock_pipx
     mock_code_review_graph
     mkdir -p "$HOME/.claude"
-    echo '{"code-review-graph": {}}' > "$HOME/.claude/.mcp.json"
+    # Claude Code reads MCP servers from ~/.claude.json (and ~/.claude/settings.json).
+    # The idempotency check looks for an entry with key "code-review-graph"
+    # under .mcpServers in either file.
+    echo '{"mcpServers": {"code-review-graph": {"command": "code-review-graph", "args": ["serve"]}}}' > "$HOME/.claude.json"
 
     run zsh -c "
         export HOME='$HOME' PATH='$PATH'
@@ -135,4 +138,86 @@ RTKEOF
     [[ "$status" -eq 0 ]]
     [[ "$output" == *"already configured"* ]]
     [[ "$output" == *"already installed"* ]]
+}
+
+@test "setup_code_review_graph skips MCP register when ~/.claude missing" {
+    mock_pipx
+    mock_code_review_graph
+    # setup_test_env creates ~/.claude; remove it for this test scenario
+    rm -rf "$HOME/.claude"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_code_review_graph
+    "
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"Claude Code not detected"* ]]
+}
+
+# --- setup_crg_watcher tests ---
+
+@test "setup_crg_watcher skips when code-review-graph not installed" {
+    run zsh -c "
+        export HOME='$HOME' PATH='/usr/bin:/bin'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_crg_watcher
+    "
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"not installed"* ]]
+}
+
+@test "setup_crg_watcher writes executable script and valid plist" {
+    mock_code_review_graph
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH' SUPERCHARGED_SKIP_LAUNCHCTL=1
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_crg_watcher
+    "
+    [[ "$status" -eq 0 ]]
+    [[ -x "$HOME/.local/bin/crg-watch-all.sh" ]]
+    [[ -f "$HOME/Library/LaunchAgents/com.code-review-graph.watcher.plist" ]]
+    plutil -lint "$HOME/Library/LaunchAgents/com.code-review-graph.watcher.plist" >/dev/null
+}
+
+@test "setup_crg_watcher is idempotent and skips reload when unchanged" {
+    mock_code_review_graph
+
+    # First run: creates files
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH' SUPERCHARGED_SKIP_LAUNCHCTL=1
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_crg_watcher
+    "
+    [[ "$status" -eq 0 ]]
+
+    # Capture mtime to verify second run doesn't rewrite
+    local first_mtime
+    first_mtime=$(stat -f %m "$HOME/.local/bin/crg-watch-all.sh")
+
+    # Second run: should detect no change
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH' SUPERCHARGED_SKIP_LAUNCHCTL=1
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_crg_watcher
+    "
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"already up to date"* ]]
+
+    local second_mtime
+    second_mtime=$(stat -f %m "$HOME/.local/bin/crg-watch-all.sh")
+    [[ "$first_mtime" == "$second_mtime" ]]
+}
+
+@test "setup_crg_watcher honors SUPERCHARGED_SKIP_LAUNCHCTL=1" {
+    mock_code_review_graph
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH' SUPERCHARGED_SKIP_LAUNCHCTL=1
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_crg_watcher
+    "
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"skipping launchctl reload"* ]]
 }

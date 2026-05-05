@@ -312,5 +312,29 @@ if [[ "${SUPERCHARGED_COLIMA_AUTOSTART:-0}" == "1" ]] && command -v colima >/dev
     fi
 fi
 
+# crg-here: register and build code-review-graph for the current repo.
+# Idempotent. Re-registering writes to ~/.code-review-graph/registry.json,
+# which triggers the launchd watcher (com.code-review-graph.watcher) to reload.
+crg-here() {
+    if ! command -v code-review-graph >/dev/null 2>&1; then
+        echo "code-review-graph not installed (pipx install code-review-graph)" >&2
+        return 1
+    fi
+    local repo
+    repo=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "not in a git repo" >&2; return 1; }
+    local repo_alias register_output register_status
+    repo_alias=$(basename "$repo")
+
+    register_output=$(code-review-graph register "$repo" --alias "$repo_alias" 2>&1)
+    register_status=$?
+    if (( register_status != 0 )) && [[ "$register_output" != *"already registered"* ]]; then
+        printf '%s\n' "$register_output" >&2
+        return $register_status
+    fi
+    [[ "$register_output" == *"already registered"* ]] || printf '%s\n' "$register_output"
+
+    code-review-graph build --repo "$repo"
+}
+
 # VSCode shell integration
 [[ "$TERM_PROGRAM" == "vscode" ]] && . "$(/Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin/code --locate-shell-integration-path zsh)"
