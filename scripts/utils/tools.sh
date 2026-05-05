@@ -116,10 +116,32 @@ setup_code_review_graph() {
     fi
 
     if command_exists code-review-graph; then
-        log_with_level "INFO" "code-review-graph already installed, ensuring Claude Code integration..."
+        log_with_level "INFO" "code-review-graph already installed, checking for extras..."
+
+        # Check if extras are installed in the pipx venv (not system Python)
+        local missing_extras=false
+        if ! pipx runpip code-review-graph list 2>/dev/null | grep -q "sentence-transformers"; then
+            log_with_level "INFO" "embeddings extra not found, will inject"
+            missing_extras=true
+        fi
+        if ! pipx runpip code-review-graph list 2>/dev/null | grep -q "igraph"; then
+            log_with_level "INFO" "communities extra not found, will inject"
+            missing_extras=true
+        fi
+
+        if $missing_extras; then
+            log_with_level "INFO" "Adding embeddings + communities extras to existing installation..."
+            if pipx inject code-review-graph sentence-transformers igraph >/dev/null 2>&1; then
+                log_with_level "SUCCESS" "code-review-graph extras added successfully"
+            else
+                log_with_level "WARN" "Failed to inject extras, continuing with base installation"
+            fi
+        else
+            log_with_level "INFO" "code-review-graph extras already installed"
+        fi
     else
-        log_with_level "INFO" "Installing code-review-graph (AI-optimized code context)..."
-        if pipx install code-review-graph >/dev/null 2>&1; then
+        log_with_level "INFO" "Installing code-review-graph with embeddings + community detection..."
+        if pipx install 'code-review-graph[embeddings,communities]' >/dev/null 2>&1; then
             log_with_level "SUCCESS" "code-review-graph installed successfully"
         else
             log_with_level "ERROR" "Failed to install code-review-graph via pipx"
