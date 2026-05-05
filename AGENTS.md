@@ -1,6 +1,27 @@
 # AGENTS.md
 
-Detailed reference for AI agents. For project overview, structure, commands, and conventions see [CLAUDE.md](./CLAUDE.md).
+macOS environment setup automation — installs dev tools (Homebrew, ASDF), manages dotfiles, and backs up Claude Code configuration.
+
+This file is the canonical reference for AI agents and contributors. See [README.md](./README.md) for user-facing documentation and [SECURITY.md](./SECURITY.md) for security policy.
+
+## Project Structure
+
+See [README.md](./README.md) for detailed project structure. Key directories:
+- `scripts/` - Shell scripts (mac.sh, update.sh, utils.sh, restore.sh, setup-profile.sh, help.sh; backup-claude.sh/restore-claude.sh for Claude config)
+- `dot_files/` - Dotfiles copied to `$HOME`
+- `claude_config/` - Claude Code config backup
+
+## Code Conventions
+
+- **Logging**: Use `log_with_level "INFO|WARN|ERROR|SUCCESS" "message"` from `utils.sh`
+- **Error handling**: Include `trap cleanup EXIT` in scripts
+- **Tests**: BATS (Bash Automated Testing System); test files in `tests/`; use `setup_test_env` + `teardown_test_env`
+- **Testing workflow**: Add BATS tests in `tests/<script-name>/` for new script features; run `npm test` before committing script changes
+- **Commits**: Conventional format preferred (not enforced). Scope optional.
+  - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `build`, `ci`, `revert`, `wip`, `update`, `add`, `remove`
+  - Examples: `feat(backup): add new feature`, `fix(restore): handle edge case`, `chore(deps): bump versions`
+- **Shell scripts**: Written for zsh; ShellCheck `--shell=bash` flags (SC1071, SC2296) are safe to ignore
+- **Dotfiles**: Use env vars, no hardcoded paths
 
 ## npm Commands Reference
 
@@ -23,13 +44,15 @@ npm run restore               # Restore from latest backup
 npm run backup:claude             # Backup Claude Code config to repo
 npm run restore:claude            # Restore Claude Code config (only if repo is newer)
 npm run restore:claude -- --force # Force restore Claude Code config (see Post-Restore Steps below)
+npm run restore:all               # Restore Claude config + dotfiles in one step
 npm run install:plugins           # Install all marketplaces and plugins via claude CLI
 npm run install:plugins -- --dry-run # Preview what would be installed
 
 # Development
 npm run lint                      # ShellCheck all scripts (including utils/)
 npm test                          # Run all BATS tests
-bats tests/<suite>/*.bats        # Run a specific suite (claude, utils, mac, update, setup)
+npm run test:watch                # Re-run tests on change (requires nodemon)
+bats tests/<suite>/*.bats        # Run a specific suite (claude, utils, mac, update, setup, restore, meta)
 npm run help                      # Display all available commands
 ```
 
@@ -62,6 +85,8 @@ npm test -- --filter "pattern"    # Run specific tests
 - `tests/claude/backup.bats` - Tests for Claude Code backup sanitization
 - `tests/claude/restore.bats` - Tests for Claude Code restore merging
 - `tests/utils/portability.bats` - Tests for portable path handling
+- `tests/utils/tools.bats` - Tests for `setup_*` helpers in `scripts/utils/tools.sh`
+- `tests/utils/validate.bats` - Tests for validation helpers in `scripts/utils/validation.sh`
 - `tests/mac/install.bats` - Smoke tests for mac.sh (validate_system, build_brewfile, install_homebrew, parse_tool_versions)
 - `tests/setup/profile.bats` - Smoke tests for setup-profile.sh (dotfile copying, restoration points, version_gte)
 - `tests/update/update.bats` - Smoke tests for update.sh (argument parsing, help, dry-run, unknown flags)
@@ -142,38 +167,6 @@ Plugins are auto-installed during restore. `install:plugins` merges repo configs
 - `utils/`: focused submodules — no side effects on import
 - `.tool-versions`: one tool per line (`<plugin> <version>`), grouped by category
 
-## RTK (Rust Token Killer)
-
-**Installed by**: `brew install rtk` in `scripts/mac.sh`
-**Configured by**: `setup_rtk()` in `scripts/utils/tools.sh` (runs `rtk init -g --auto-patch`)
-**Hook location**: `~/.claude/hooks/rtk-rewrite.sh`
-**Usage**: see `~/.claude/RTK.md`
-
-To manually reconfigure:
-```bash
-rtk init -g --auto-patch    # Reconfigure hooks
-rtk init -g --uninstall     # Remove hooks
-```
-
-## Worktrunk (Git Worktree Manager)
-
-**Installed by**: `brew install worktrunk` in `scripts/mac.sh`
-**Configured by**: `setup_worktrunk()` in `scripts/utils/tools.sh` (runs `wt config shell install`)
-**Shell integration**: auto-configured during `npm run setup` / `npm run update`; restart shell after first install
-**Usage**: see `~/.claude/WORKTRUNK.md` (or <https://worktrunk.dev>)
-
-## Plannotator (Visual Annotation Tool)
-
-**Installed by**: `setup_plannotator()` in `scripts/utils/tools.sh` (downloads from GitHub releases)
-**Location**: `~/.local/bin/plannotator`
-**Claude Code plugin**: `backnotprop/plannotator` (manual installation required)
-**Usage**: see <https://github.com/backnotprop/plannotator>
-
-To manually install:
-```bash
-source scripts/utils.sh && setup_plannotator
-```
-
 ## Adding New Tools
 
 **Homebrew package**: Edit `BREWFILE_CONTENT` in `scripts/mac.sh`, add `brew "name"` or `cask "name"` to the appropriate conditional section. Update README.md.
@@ -189,6 +182,7 @@ source scripts/utils.sh && setup_plannotator
 | Task | Where |
 |---|---|
 | Add ZSH alias | `dot_files/.zshrc` aliases section |
+| Onboard a repo to code-review-graph | `cd <repo> && crg-here` (registers + builds; the launchd watcher picks it up automatically) |
 | Add Homebrew tap | `BREWFILE_CONTENT` in `scripts/mac.sh`: `tap "owner/repo"` before packages |
 | Change log format | `log_with_level()` in `scripts/utils/logging.sh` (preserve timestamp + level) |
 | Add utility function | Appropriate file in `scripts/utils/` (logging, backup, validation, tools, json) |
@@ -201,6 +195,20 @@ source scripts/utils.sh && setup_plannotator
 
 ## PR Checklist
 
+**This repository is used on personal AND work machines** — comprehensive security enforced.
+
+**Automated checks**: Hookify rules enforce security during Claude Code sessions. See [SECURITY.md](./SECURITY.md) for full details and `.claude/hookify.*.local.md` for rules.
+
+**Key rules**:
+- Never commit secrets (`.secrets` is template only, in `.gitignore`)
+- No hardcoded paths in dotfiles (use `$HOME`, not `/Users/username/`)
+- Shellcheck is required for `npm run lint` (`brew install shellcheck`)
+- Claude backups sanitized (work marketplaces excluded)
+- No bypassing hooks with `--no-verify` (blocked by hookify)
+
+**Conventional commits** (preferred, not enforced): `feat(scripts):`, `fix(zsh):`, `docs(readme):`, `chore(deps):`.
+
+**PR checklist**:
 - [ ] Hooks passed (required - can't commit otherwise)
 - [ ] README.md updated if user-facing changes
 - [ ] Logging follows `log_with_level` pattern
