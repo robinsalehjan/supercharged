@@ -3,17 +3,22 @@
 ## Core Development Tools
 ```bash
 # Package managers and build tools
-coreutils, git, curl, openssl@3, readline, libyaml, gmp
+bash, coreutils, git, curl, openssl@3, readline, libyaml, gmp
 asdf (version manager), keychain, nmap, tree, ripgrep, tmux, aria2
 gh (GitHub CLI), duckdb (in-process SQL OLAP database)
 sqlite (lightweight SQL database)
-btop (resource monitor with CPU, memory, disk, network, and process stats)
+btop (resource monitor), htop (process viewer)
 shellcheck (shell script linter), jq (JSON processor)
+bats-core (Bash Automated Testing System)
+mas (Mac App Store CLI)
+pipx (install Python CLI tools in isolated environments)
+uv (fast Python package installer and resolver)
+ollama (run large language models locally)
 rtk (Rust Token Killer - CLI proxy for 60-90% token savings in Claude Code)
 worktrunk (Git worktree manager designed for parallel AI agents - `wt switch`, `wt merge`, `wt remove`)
 plannotator (Visual annotation tool for AI coding agents - plan review, code diff annotation)
+code-review-graph (AI-optimized code knowledge graph - installed via pipx with embeddings + communities extras)
 hey (HTTP load generator for benchmarking web endpoints)
-mitmproxy (interactive HTTPS proxy for debugging and testing)
 
 # Development languages (via asdf)
 nodejs   22.9.0       # LTS version, minimum 20.0.0 for modern features
@@ -33,8 +38,11 @@ xcodes              # Xcode version manager
 xcode-build-server  # Build server for Xcode projects
 xcbeautify          # Beautify Xcode build logs
 swiftlint           # Swift linting
-swift-format        # Swift code formatting
+swift-format        # Swift code formatting (Apple)
+swiftformat         # Swift code formatting (nicklockwood)
 ios-deploy          # Deploy iOS apps from command line
+periphery           # Dead code detection for Swift (tap: peripheryapp/periphery)
+xcodebuildmcp       # Xcode MCP build server (tap: getsentry/xcodebuildmcp)
 ```
 
 ## Development Tools (Optional - Interactive Setup)
@@ -43,6 +51,7 @@ ios-deploy          # Deploy iOS apps from command line
 docker             # Docker CLI
 docker-compose     # Multi-container orchestration
 colima             # Lightweight container runtime for macOS (auto-starts)
+kubernetes-cli     # kubectl for Kubernetes cluster management
 ```
 
 ## Applications
@@ -52,13 +61,28 @@ visual-studio-code  # Code editor with shell integration
 slack              # Team communication
 postman            # API development and testing
 proxyman           # macOS HTTP debugging proxy
+mitmproxy          # Interactive HTTPS proxy for debugging and testing
+reveal             # Runtime view debugging for iOS apps
 raycast            # macOS productivity launcher
 google-chrome      # Web browser
+ollama-app         # Desktop app for running local LLMs
 
 # Utilities
 wireshark    # Network protocol analyzer
 spotify      # Music streaming
 mullvad-vpn  # Privacy-focused VPN client
+
+# Fonts
+font-jetbrains-mono-nerd-font  # JetBrains Mono with Nerd Font icons
+
+# Mac App Store
+AdBlock      # Ad blocker for Safari
+DaisyDisk    # Disk usage analyzer
+```
+
+## AI Coding Tools (Installed with Claude Code)
+```bash
+zeroshot     # Autonomous AI coding CLI (@covibes/zeroshot via npm)
 ```
 
 ## ZSH Enhancements

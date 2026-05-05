@@ -57,8 +57,9 @@ kotlin 2.2.21
 # xcodes, swift-format, swiftlint, ios-deploy, etc.
 
 # Dev tools (conditional):
-# docker, docker-compose, k9s, colima
+# docker, docker-compose, colima, kubernetes-cli
 
 # Apps always installed:
-# VS Code, Slack, Postman, Raycast, Chrome, Wireshark, Spotify
+# VS Code, Slack, Postman, Raycast, Chrome, Wireshark, Spotify,
+# Proxyman, mitmproxy, Reveal, Ollama, Mullvad VPN
 ```
