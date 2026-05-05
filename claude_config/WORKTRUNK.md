@@ -1,5 +1,12 @@
 # Worktrunk
 
+**Official docs**: https://worktrunk.dev  
+**GitHub**: https://github.com/max-sixty/worktrunk
+
+Git worktree management for parallel AI agent workflows.
+
+**CLI tool**: `wt`
+
 ## Commands
 
 ```bash

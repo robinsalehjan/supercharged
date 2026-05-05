@@ -1,4 +1,8 @@
-# Rust Token Killer
+# Rust Token Killer (RTK)
+
+**Official docs**: https://www.rtk-ai.app
+
+Token-optimized command wrappers that filter noisy output from git, npm, and other CLI tools.
 
 ## Meta Commands
 
