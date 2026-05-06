@@ -149,47 +149,10 @@ setup_code_review_graph() {
         fi
     fi
 
-    # MCP register step only makes sense when Claude Code is present.
-    # The pipx install above is useful regardless (e.g., for `crg-here` + watcher).
-    if [ ! -d "$HOME/.claude" ]; then
-        log_with_level "INFO" "Claude Code not detected at ~/.claude — skipping MCP registration"
-        return 0
-    fi
-
-    # Skip Claude Code integration if already configured.
-    # Claude Code reads MCP servers from ~/.claude.json (global state) and
-    # ~/.claude/settings.json — check both. Use jq when available for accuracy,
-    # fall back to grep for portability.
-    local mcp_files=("$HOME/.claude.json" "$HOME/.claude/settings.json")
-    local already_configured=false
-    for f in "${mcp_files[@]}"; do
-        [ -f "$f" ] || continue
-        if command_exists jq; then
-            if jq -e '.mcpServers["code-review-graph"]' "$f" >/dev/null 2>&1; then
-                already_configured=true
-                break
-            fi
-        else
-            if grep -q '"code-review-graph"' "$f" 2>/dev/null; then
-                already_configured=true
-                break
-            fi
-        fi
-    done
-
-    if $already_configured; then
-        log_with_level "INFO" "code-review-graph already configured for Claude Code"
-        return 0
-    fi
-
-    # Configure for Claude Code (idempotency already handled above, so failure here is real)
-    local crg_output
-    if crg_output=$(code-review-graph install --platform claude-code 2>&1); then
-        log_with_level "SUCCESS" "code-review-graph configured for Claude Code"
-    else
-        log_with_level "WARN" "code-review-graph Claude Code configuration failed: $crg_output"
-    fi
-
+    # Per-repo MCP config (.mcp.json), hooks, skills, and .gitignore entries
+    # are committed in this repo. Other repos use `crg-here` (register + build).
+    # No `code-review-graph install` step is needed here — running it would
+    # re-inject boilerplate into CLAUDE.md on every restore.
     log_with_level "INFO" "code-review-graph builds a knowledge graph of your codebase to reduce AI token usage by ~8x"
     log_with_level "INFO" "Run 'code-review-graph build' in a repo to index it (or 'crg-here' for register+build)"
 }
