@@ -48,6 +48,13 @@ npm run restore:all               # Restore Claude config + dotfiles in one step
 npm run install:plugins           # Install all marketplaces and plugins via claude CLI
 npm run install:plugins -- --dry-run # Preview what would be installed
 
+# Versioning and Releases
+npm run version:show              # Print version, commit SHA, tag, branch, host
+npm run release -- patch          # Cut a release: bump, commit, tag vX.Y.Z, push
+npm run release -- minor          # Minor bump
+npm run release -- 1.2.3          # Explicit version
+npm run release -- --dry-run patch # Preview without making changes
+
 # Development
 npm run lint                      # ShellCheck all scripts (including utils/)
 npm test                          # Run all BATS tests
@@ -216,6 +223,28 @@ Plugins are auto-installed during restore. `install:plugins` merges repo configs
 - [ ] Shellcheck passed (`npm run lint`)
 
 See [SECURITY.md](./SECURITY.md) for security details and [CLAUDE.md](./CLAUDE.md) for commit conventions.
+
+## Releases
+
+Versioning lives in `package.json` (SemVer). To compare what's installed across machines:
+
+```bash
+npm run version:show
+# supercharged v1.2.3
+#   describe : v1.2.3
+#   commit   : a1b2c3d
+#   tag      : v1.2.3
+#   branch   : main
+#   host     : RSJ-MBP
+```
+
+To cut a release:
+
+```bash
+npm run release -- patch       # or: minor | major | 1.2.3
+```
+
+The release script (`scripts/release.sh`) refuses to run on a dirty tree, requires the local branch to be in sync with `origin`, bumps `package.json`, commits as `chore(release): vX.Y.Z`, tags `vX.Y.Z`, and pushes both. The `release.yml` workflow then verifies the tag matches `package.json` and publishes a GitHub Release with auto-generated notes from conventional commits.
 
 ## Debugging
 
