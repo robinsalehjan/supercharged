@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "help": "./scripts/help.sh",
+    "version:show": "./scripts/version.sh",
     "setup": "npm run restore:dotfiles && ./scripts/mac.sh && npm run validate",
     "restore:dotfiles": "./scripts/setup-profile.sh",
     "update": "(./scripts/backup-claude.sh || echo '⚠️  Claude backup skipped') && npm run restore:dotfiles && ./scripts/update.sh",
