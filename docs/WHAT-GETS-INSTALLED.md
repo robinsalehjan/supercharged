@@ -128,6 +128,7 @@ installed_plugins.json     # List of installed plugins with versions
 known_marketplaces.json    # Plugin marketplace configurations
 keybindings.json           # Custom keyboard shortcuts
 CLAUDE.md                  # Global personal instructions
+CRG.md, RTK.md, ...        # @-referenced from CLAUDE.md (auto-detected)
 ```
 
 ## Data Science Tools (Optional - Interactive Setup)
