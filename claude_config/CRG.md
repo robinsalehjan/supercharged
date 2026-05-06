@@ -5,10 +5,25 @@
 
 AI-optimized code knowledge graph for token-efficient codebase exploration.
 
+**IMPORTANT: When a project exposes the code-review-graph MCP server,
+ALWAYS use its tools BEFORE Grep/Glob/Read to explore the codebase.**
+The graph is faster, cheaper (fewer tokens), and gives structural
+context (callers, dependents, test coverage) that file scanning cannot.
+
 **CLI tool**: `code-review-graph`  
 **Shell helper**: `crg-here` (register + build, idempotent)
 
 Includes local embeddings (sentence-transformers) and community detection (igraph) — no API keys needed.
+
+## When to use graph tools FIRST
+
+- **Exploring code**: `semantic_search_nodes` or `query_graph` instead of Grep
+- **Understanding impact**: `get_impact_radius` instead of manually tracing imports
+- **Code review**: `detect_changes` + `get_review_context` instead of reading entire files
+- **Finding relationships**: `query_graph` with callers_of/callees_of/imports_of/tests_for
+- **Architecture questions**: `get_architecture_overview` + `list_communities`
+
+Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
 
 ## Key Tools
 
