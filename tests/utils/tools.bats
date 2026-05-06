@@ -121,14 +121,9 @@ RTKEOF
     [[ "$output" == *"pipx not installed"* ]]
 }
 
-@test "setup_code_review_graph skips when already configured" {
+@test "setup_code_review_graph never invokes 'code-review-graph install'" {
     mock_pipx
     mock_code_review_graph
-    mkdir -p "$HOME/.claude"
-    # Claude Code reads MCP servers from ~/.claude.json (and ~/.claude/settings.json).
-    # The idempotency check looks for an entry with key "code-review-graph"
-    # under .mcpServers in either file.
-    echo '{"mcpServers": {"code-review-graph": {"command": "code-review-graph", "args": ["serve"]}}}' > "$HOME/.claude.json"
 
     run zsh -c "
         export HOME='$HOME' PATH='$PATH'
@@ -136,23 +131,10 @@ RTKEOF
         setup_code_review_graph
     "
     [[ "$status" -eq 0 ]]
-    [[ "$output" == *"already configured"* ]]
-    [[ "$output" == *"already installed"* ]]
-}
-
-@test "setup_code_review_graph skips MCP register when ~/.claude missing" {
-    mock_pipx
-    mock_code_review_graph
-    # setup_test_env creates ~/.claude; remove it for this test scenario
-    rm -rf "$HOME/.claude"
-
-    run zsh -c "
-        export HOME='$HOME' PATH='$PATH'
-        source '$PROJECT_ROOT/scripts/utils.sh'
-        setup_code_review_graph
-    "
-    [[ "$status" -eq 0 ]]
-    [[ "$output" == *"Claude Code not detected"* ]]
+    # Per-repo MCP/hooks/skills are committed; running 'install' would
+    # re-inject boilerplate into CLAUDE.md on every restore.
+    [[ "$output" != *"code-review-graph install"* ]]
+    [[ "$output" != *"configured for Claude Code"* ]]
 }
 
 # --- setup_crg_watcher tests ---
