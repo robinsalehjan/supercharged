@@ -4,6 +4,7 @@
 # Usage:
 #   ./scripts/release.sh <patch|minor|major|x.y.z>   # bump and tag
 #   ./scripts/release.sh --dry-run <bump>            # preview only
+#   ./scripts/release.sh --yes <bump>                # skip confirmations (for non-TTY)
 #
 # After push, the GitHub Actions release workflow creates the GitHub Release.
 
@@ -17,18 +18,36 @@ cd "$REPO_ROOT"
 source "$SCRIPT_DIR/utils.sh"
 
 DRY_RUN=0
+ASSUME_YES=0
 BUMP=""
 
 for arg in "$@"; do
     case "$arg" in
         --dry-run|-n) DRY_RUN=1 ;;
+        --yes|-y) ASSUME_YES=1 ;;
         -h|--help)
-            sed -n '2,9p' "$0" | sed 's/^# \?//'
+            sed -n '2,10p' "$0" | sed 's/^# \?//'
             exit 0
             ;;
         *) BUMP="$arg" ;;
     esac
 done
+
+# Portable confirmation prompt that works in zsh and bash, with TTY and --yes support.
+confirm() {
+    local prompt="$1"
+    if [[ $ASSUME_YES -eq 1 ]]; then
+        return 0
+    fi
+    if [[ ! -t 0 ]]; then
+        log_with_level "ERROR" "No TTY available. Re-run with --yes to skip confirmations."
+        return 1
+    fi
+    printf '%s' "$prompt"
+    local ans=""
+    read -r ans
+    [[ "$ans" =~ ^[Yy] ]]
+}
 
 if [[ -z "$BUMP" ]]; then
     log_with_level "ERROR" "Missing bump argument. Use: patch | minor | major | x.y.z"
@@ -45,8 +64,7 @@ fi
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 if [[ "$BRANCH" != "main" ]]; then
     log_with_level "WARN" "Not on main (current: $BRANCH). Releases should be cut from main."
-    read -rp "Continue anyway? [y/N]: " ans
-    [[ "$ans" =~ ^[Yy] ]] || exit 1
+    confirm "Continue anyway? [y/N]: " || exit 1
 fi
 
 git fetch origin --quiet
@@ -91,8 +109,7 @@ if [[ $DRY_RUN -eq 1 ]]; then
     exit 0
 fi
 
-read -rp "Cut release $TAG? [y/N]: " ans
-[[ "$ans" =~ ^[Yy] ]] || { log_with_level "INFO" "Aborted."; exit 1; }
+confirm "Cut release $TAG? [y/N]: " || { log_with_level "INFO" "Aborted."; exit 1; }
 
 # Bump package.json + package-lock.json without auto-tagging (we tag explicitly).
 npm version "$NEW" --no-git-tag-version >/dev/null
