@@ -1,0 +1,39 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify tag matches package.json
+        env:
+          TAG_REF: ${{ github.ref_name }}
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$TAG_REF" != "v$PKG_VERSION" ]; then
+            echo "::error::Tag $TAG_REF does not match package.json version v$PKG_VERSION"
+            exit 1
+          fi
+          echo "Tag $TAG_REF matches package.json v$PKG_VERSION"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
