@@ -15,7 +15,7 @@ This repository is designed to run safely on both personal and work machines wit
 | git-conventions | bash | warn | Conventional commits + security check reminders |
 | hardcoded-paths | file | warn | Warns when editing dotfiles with hardcoded paths |
 | code-quality | file | warn | Logging patterns + no sudo in scripts |
-| secrets-template | file | warn | Warns when editing .secrets template |
+| secrets-template | file | warn | Warns when editing the `.secrets` template — match `dot_files/.secrets` (legacy file) **and** `dot_files/.secrets/**` (directory layout, including non-`*.sh` blob files like service-account JSON) |
 | claude-config-edit | Edit,Write | warn | Warns when modifying Claude backups |
 | session-end-checks | stop | warn | Shellcheck + documentation sync reminders |
 

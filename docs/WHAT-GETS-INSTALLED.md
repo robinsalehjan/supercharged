@@ -119,7 +119,7 @@ git, asdf, zsh-autosuggestions, zsh-syntax-highlighting, gcloud, docker, tmux
 .zshrc              # ZSH configuration with plugins and aliases
 .zprofile           # ZSH profile (environment variables)
 .tmux.conf          # tmux configuration
-.secrets            # Template for secret environment variables
+.secrets/           # Template for secret env vars (*.sh sourced) and blob credentials (e.g. GCP JSON)
 .p10k.zsh           # Powerlevel10k theme configuration
 
 # Claude Code configuration (backed up to claude_config/)

@@ -189,6 +189,19 @@ inject_settings_env() {
   echo "$updated" > "$settings_json"
 }
 
+# Helper: source the real load_secrets() function from restore-claude.sh so
+# tests exercise production code (not a re-implementation that could drift).
+# Stubs log_with_level so the function is callable in isolation.
+source_real_load_secrets() {
+  local script="$PROJECT_ROOT/scripts/restore-claude.sh"
+  local extracted="$BATS_TEST_TMPDIR/load_secrets.sh"
+  sed -n '/^load_secrets() {$/,/^}$/p' "$script" > "$extracted"
+  log_with_level() { :; }
+  SECRETS_LOADED=false
+  # shellcheck disable=SC1090
+  source "$extracted"
+}
+
 # =============================================================================
 # Settings env injection tests
 # =============================================================================
@@ -274,6 +287,73 @@ print(f'OK: {u_count} \\\\u001b escape(s), 0 literal ESC bytes')
   # Assert: Env var was still injected correctly
   assert_json_field "$TEMP_CLAUDE/settings.json" \
     '.env.GITHUB_PERSONAL_ACCESS_TOKEN' "test-token"
+}
+
+# =============================================================================
+# load_secrets() tests — exercises the real production function via extraction
+# =============================================================================
+
+@test "load_secrets sources a single ~/.secrets file (legacy layout)" {
+  source_real_load_secrets
+  echo 'export TEST_LOAD_SECRETS_X="from_file"' > "$HOME/.secrets"
+
+  load_secrets
+
+  [ "$SECRETS_LOADED" = "true" ]
+  [ "$TEST_LOAD_SECRETS_X" = "from_file" ]
+}
+
+@test "load_secrets sources *.sh files in ~/.secrets/ in lexical order" {
+  source_real_load_secrets
+  mkdir -p "$HOME/.secrets"
+  # Lex-order means 99-z.sh runs after 00-a.sh, so the later value wins
+  echo 'export TEST_LOAD_SECRETS_ORDER="first"' > "$HOME/.secrets/00-a.sh"
+  echo 'export TEST_LOAD_SECRETS_ORDER="last"'  > "$HOME/.secrets/99-z.sh"
+  echo 'export TEST_LOAD_SECRETS_OTHER="alongside"' > "$HOME/.secrets/50-m.sh"
+
+  load_secrets
+
+  [ "$SECRETS_LOADED" = "true" ]
+  [ "$TEST_LOAD_SECRETS_ORDER" = "last" ]
+  [ "$TEST_LOAD_SECRETS_OTHER" = "alongside" ]
+}
+
+@test "load_secrets ignores non-*.sh files (e.g. GCP JSON) in ~/.secrets/" {
+  source_real_load_secrets
+  mkdir -p "$HOME/.secrets"
+  echo 'export TEST_LOAD_SECRETS_SH="sourced"' > "$HOME/.secrets/creds.sh"
+  # Trap: a JSON file with a syntactically-valid shell export must NOT be sourced
+  echo 'export TEST_LOAD_SECRETS_JSON="should_NOT_be_set"' > "$HOME/.secrets/sa.json"
+  echo '{"key":"value"}' > "$HOME/.secrets/other.json"
+
+  load_secrets
+
+  [ "$SECRETS_LOADED" = "true" ]
+  [ "$TEST_LOAD_SECRETS_SH" = "sourced" ]
+  [ -z "${TEST_LOAD_SECRETS_JSON:-}" ]
+}
+
+@test "load_secrets fails when ~/.secrets is missing" {
+  source_real_load_secrets
+  rm -rf "$HOME/.secrets"
+
+  local rc=0
+  load_secrets || rc=$?
+
+  [ "$rc" -ne 0 ]
+  [ "$SECRETS_LOADED" = "false" ]
+}
+
+@test "load_secrets fails when ~/.secrets/ contains no *.sh files" {
+  source_real_load_secrets
+  mkdir -p "$HOME/.secrets"
+  echo '{}' > "$HOME/.secrets/blob.json"
+
+  local rc=0
+  load_secrets || rc=$?
+
+  [ "$rc" -ne 0 ]
+  [ "$SECRETS_LOADED" = "false" ]
 }
 
 # =============================================================================

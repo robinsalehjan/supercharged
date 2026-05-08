@@ -357,17 +357,46 @@ merge_marketplace_config() {
     fi
 }
 
-# Load ~/.secrets once; sets SECRETS_LOADED=true on success
+# Load ~/.secrets once; sets SECRETS_LOADED=true on success.
+# Accepts either a single file at ~/.secrets or a directory of *.sh files
+# under ~/.secrets/ (non-shell files like GCP JSON are ignored by the loader
+# and remain available on disk to be referenced by path).
 load_secrets() {
-    local secrets_file="$HOME/.secrets"
-    if [ ! -f "$secrets_file" ]; then
-        log_with_level "WARN" "No secrets file found at $secrets_file - credentials will not be injected"
-        log_with_level "WARN" "Copy dot_files/.secrets to ~/.secrets and fill in your values"
-        return 1
+    local secrets_path="$HOME/.secrets"
+
+    if [ -f "$secrets_path" ]; then
+        # shellcheck source=/dev/null
+        source "$secrets_path" 2>/dev/null || {
+            log_with_level "WARN" "Failed to source $secrets_path"
+            return 1
+        }
+        SECRETS_LOADED=true
+        return 0
     fi
-    # shellcheck source=/dev/null
-    source "$secrets_file" 2>/dev/null || { log_with_level "WARN" "Failed to source $secrets_file"; return 1; }
-    SECRETS_LOADED=true
+
+    if [ -d "$secrets_path" ]; then
+        local _f sourced=0
+        # Iterate top-level *.sh files in lexical order. find + NUL-delimited
+        # read works under both zsh (script shebang) and bash (shellcheck mode).
+        while IFS= read -r -d '' _f; do
+            # shellcheck source=/dev/null
+            if source "$_f" 2>/dev/null; then
+                sourced=$((sourced + 1))
+            else
+                log_with_level "WARN" "Failed to source $_f"
+            fi
+        done < <(find "$secrets_path" -maxdepth 1 -type f -name '*.sh' -print0 | sort -z)
+        if [ "$sourced" -eq 0 ]; then
+            log_with_level "WARN" "No *.sh files found in $secrets_path - credentials will not be injected"
+            return 1
+        fi
+        SECRETS_LOADED=true
+        return 0
+    fi
+
+    log_with_level "WARN" "No secrets found at $secrets_path - credentials will not be injected"
+    log_with_level "WARN" "Copy dot_files/.secrets/ to ~/.secrets/ (or create ~/.secrets/*.sh) and fill in your values"
+    return 1
 }
 
 # Function to inject global env vars from ~/.secrets back into settings.json
