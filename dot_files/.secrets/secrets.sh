@@ -1,7 +1,16 @@
 #!/bin/zsh
 # Secrets and sensitive environment variables
 # This file should NOT be committed to version control
-# Copy this to ~/.secrets and customize with your actual values
+#
+# Two layouts are supported — pick one:
+#
+#   1. Single-file:  cp dot_files/.secrets/secrets.sh ~/.secrets
+#   2. Directory:    cp -r dot_files/.secrets ~/.secrets
+#                    (then split into ~/.secrets/aws.sh, github.sh, gcp.sh, …
+#                     and drop blob credentials like service-account JSON
+#                     alongside — only *.sh is sourced; other files are left
+#                     on disk to be referenced by path, e.g.
+#                     export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.secrets/sa.json)
 
 # AWS Credentials
 # export AWS_ACCESS_KEY_ID=""

@@ -147,14 +147,21 @@ plugins=(git asdf zsh-autosuggestions zsh-syntax-highlighting gcloud docker)
 
 source $ZSH/oh-my-zsh.sh
 
-# Source secrets file with validation warning if unconfigured
-if [ -f ~/.secrets ]; then
-    # Check if secrets file has at least one uncommented export with a value
-    # Matches: export VAR="value" or export VAR='value'
-    if ! grep -qE "^export [A-Za-z_][A-Za-z0-9_]*=[\"'][^\"']+[\"']" ~/.secrets 2>/dev/null; then
+# Source secrets — supports either a single ~/.secrets file or a ~/.secrets/
+# directory of *.sh files. Non-shell files (e.g. GCP service-account JSON) may
+# sit alongside in the directory and be referenced by path from a *.sh file.
+if [ -f ~/.secrets ] || [ -d ~/.secrets ]; then
+    # Validation: at least one uncommented `export VAR="value"` anywhere under ~/.secrets
+    if ! grep -rqE "^export [A-Za-z_][A-Za-z0-9_]*=[\"'][^\"']+[\"']" ~/.secrets 2>/dev/null; then
         echo "⚠️  Warning: ~/.secrets appears to be unconfigured (template only)"
     fi
-    source ~/.secrets
+    if [ -f ~/.secrets ]; then
+        source ~/.secrets
+    else
+        # zsh (N) glob qualifier = nullglob: silently expands to nothing if no matches
+        for _secret_file in ~/.secrets/*.sh(N); do source "$_secret_file"; done
+        unset _secret_file
+    fi
 fi
 
 # SSH key management
