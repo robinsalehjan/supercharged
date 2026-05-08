@@ -38,6 +38,17 @@ npm run lint               # ShellCheck all scripts
 npm run help               # Show all commands
 ```
 
+## Terminal font
+
+Setup installs **JetBrainsMono Nerd Font** so the tmux/Catppuccin status bar renders correctly. After install, set your terminal's font to **JetBrainsMono Nerd Font Mono**:
+
+- **Apple Terminal** — Settings → Profiles → Text → Font → Change…
+  Also enable Settings → Profiles → Keyboard → "Use Option as Meta key" (the tmux config uses `Option-Shift-T` as prefix).
+- **iTerm2** — Settings → Profiles → Text → Font.
+- **Ghostty** — set `font-family = "JetBrainsMono Nerd Font Mono"` in `~/.config/ghostty/config`.
+
+If glyphs still appear as boxes, run `npm run validate` — the validator checks the font is registered and `npm run setup` will self-heal a stale Caskroom install.
+
 ## Releases
 
 Versioning follows [SemVer](https://semver.org). Releases are cut with `npm run release -- <bump>` and published automatically by the [Release workflow](./.github/workflows/release.yml) when a `vX.Y.Z` tag is pushed.

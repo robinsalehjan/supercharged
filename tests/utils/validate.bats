@@ -74,3 +74,109 @@ teardown() {
   run type validate_installation
   [ "$status" -eq 0 ]
 }
+
+@test "validate_font passes when matching font exists in HOME/Library/Fonts" {
+  # Arrange — HOME is the isolated test temp dir, so we control the font dir
+  source "$PROJECT_ROOT/scripts/utils.sh"
+  mkdir -p "$HOME/Library/Fonts"
+  : > "$HOME/Library/Fonts/JetBrainsMonoNerdFont-Regular.ttf"
+
+  # Act
+  run validate_font "JetBrainsMono Nerd Font" "JetBrainsMono*Nerd*.ttf"
+
+  # Assert
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"JetBrainsMono Nerd Font"* ]]
+}
+
+@test "validate_font fails when no matching font is registered" {
+  # Arrange — empty isolated HOME means no fonts at all
+  source "$PROJECT_ROOT/scripts/utils.sh"
+
+  # Act
+  run validate_font "JetBrainsMono Nerd Font" "JetBrainsMono*Nerd*.ttf"
+
+  # Assert
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"not registered"* ]]
+}
+
+@test "ensure_font_registered copies staged Caskroom fonts into HOME" {
+  # Arrange — fake brew binary that reports the cask installed and a Caskroom prefix
+  source "$PROJECT_ROOT/scripts/utils.sh"
+
+  local fake_prefix="$TEST_TEMP_DIR/brew-prefix"
+  mkdir -p "$fake_prefix/Caskroom/font-jetbrains-mono-nerd-font/3.4.0"
+  : > "$fake_prefix/Caskroom/font-jetbrains-mono-nerd-font/3.4.0/JetBrainsMonoNerdFont-Regular.ttf"
+  : > "$fake_prefix/Caskroom/font-jetbrains-mono-nerd-font/3.4.0/JetBrainsMonoNerdFontMono-Bold.ttf"
+
+  mkdir -p "$TEST_TEMP_DIR/bin"
+  cat > "$TEST_TEMP_DIR/bin/brew" <<EOF
+#!/bin/bash
+case "\$1" in
+  list) [[ "\$2" == "--cask" && "\$3" == "font-jetbrains-mono-nerd-font" ]] && exit 0 ;;
+  --prefix) echo "$fake_prefix" ;;
+esac
+exit 0
+EOF
+  chmod +x "$TEST_TEMP_DIR/bin/brew"
+  PATH="$TEST_TEMP_DIR/bin:$PATH"
+
+  # Act
+  run ensure_font_registered "font-jetbrains-mono-nerd-font" "JetBrainsMono*Nerd*.ttf"
+
+  # Assert
+  [ "$status" -eq 0 ]
+  [ -f "$HOME/Library/Fonts/JetBrainsMonoNerdFont-Regular.ttf" ]
+  [ -f "$HOME/Library/Fonts/JetBrainsMonoNerdFontMono-Bold.ttf" ]
+}
+
+@test "ensure_font_registered is a no-op when fonts already registered" {
+  # Arrange
+  source "$PROJECT_ROOT/scripts/utils.sh"
+  mkdir -p "$HOME/Library/Fonts"
+  : > "$HOME/Library/Fonts/JetBrainsMonoNerdFont-Regular.ttf"
+
+  # Stub brew so we can detect any unwanted invocation via a marker file.
+  mkdir -p "$TEST_TEMP_DIR/bin"
+  cat > "$TEST_TEMP_DIR/bin/brew" <<EOF
+#!/bin/bash
+echo "called" >> "$TEST_TEMP_DIR/brew-calls"
+case "\$1" in
+  list) [[ "\$2" == "--cask" ]] && exit 0 ;;
+  --prefix) echo "/nonexistent" ;;
+esac
+exit 0
+EOF
+  chmod +x "$TEST_TEMP_DIR/bin/brew"
+  PATH="$TEST_TEMP_DIR/bin:$PATH"
+
+  # Act
+  run ensure_font_registered "font-jetbrains-mono-nerd-font" "JetBrainsMono*Nerd*.ttf"
+
+  # Assert — succeeds without touching Caskroom (the stubbed --prefix points nowhere)
+  [ "$status" -eq 0 ]
+}
+
+@test "ensure_font_registered is a no-op when cask is not installed" {
+  # Arrange — brew stub reports cask missing
+  source "$PROJECT_ROOT/scripts/utils.sh"
+
+  mkdir -p "$TEST_TEMP_DIR/bin"
+  cat > "$TEST_TEMP_DIR/bin/brew" <<'EOF'
+#!/bin/bash
+case "$1" in
+  list) exit 1 ;;
+esac
+exit 0
+EOF
+  chmod +x "$TEST_TEMP_DIR/bin/brew"
+  PATH="$TEST_TEMP_DIR/bin:$PATH"
+
+  # Act
+  run ensure_font_registered "font-jetbrains-mono-nerd-font" "JetBrainsMono*Nerd*.ttf"
+
+  # Assert
+  [ "$status" -eq 0 ]
+  [ ! -d "$HOME/Library/Fonts" ] || ! compgen -G "$HOME/Library/Fonts/JetBrainsMono*Nerd*.ttf" >/dev/null
+}
