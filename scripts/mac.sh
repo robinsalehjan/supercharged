@@ -200,6 +200,11 @@ main() {
 
     echo "$BREWFILE_CONTENT" | brew bundle --file=-
 
+    # Some setups end up with the font cask installed but the .ttf files never
+    # copied into ~/Library/Fonts, leaving Nerd Font glyphs broken in tmux.
+    # Self-heal that case.
+    ensure_font_registered "font-jetbrains-mono-nerd-font" "JetBrainsMono*Nerd*.ttf"
+
     log_with_level "INFO" "Installing zsh themes and plugins..."
     install_zsh_plugin \
         "https://github.com/zsh-users/zsh-autosuggestions" \

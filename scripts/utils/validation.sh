@@ -111,6 +111,106 @@ validate_tool() {
     fi
 }
 
+# Return 0 if any file matching the given glob pattern exists in either the
+# user or system font directory. `find` is used (instead of bash-only
+# `compgen -G` or shell globbing) because this file is sourced from both
+# bash and zsh, and the two shells handle non-matching globs differently.
+_font_pattern_matches() {
+    local pattern="$1"
+    local hit
+    hit="$(find "$HOME/Library/Fonts" "/Library/Fonts" -maxdepth 1 -name "$pattern" -print -quit 2>/dev/null)"
+    [[ -n "$hit" ]]
+}
+
+# Check whether a font family is registered with macOS.
+# Looks for .ttf/.otf files matching the given filename pattern in the standard
+# user/system font directories. Faster and more deterministic than parsing
+# `system_profiler SPFontsDataType` (which can take seconds).
+validate_font() {
+    local label="$1"          # human label, e.g. "JetBrainsMono Nerd Font"
+    local pattern="$2"        # filename glob, e.g. "JetBrainsMono*Nerd*.ttf"
+
+    if _font_pattern_matches "$pattern"; then
+        echo "✅ font: $label"
+        return 0
+    else
+        echo "❌ font: $label not registered (run 'npm run setup' or see README)"
+        return 1
+    fi
+}
+
+# Ensure a Homebrew font cask is actually registered with macOS.
+# Some environments end up with the cask "installed" per `brew list --cask`
+# but the .ttf files only staged in the Caskroom — never copied into
+# ~/Library/Fonts. This function detects that mismatch and copies the staged
+# fonts into the user font directory, where macOS auto-discovers them.
+ensure_font_registered() {
+    local cask="$1"           # e.g. "font-jetbrains-mono-nerd-font"
+    local pattern="$2"        # e.g. "JetBrainsMono*Nerd*.ttf"
+
+    # Skip silently if the cask isn't installed — `brew bundle` will handle it.
+    if ! brew list --cask "$cask" >/dev/null 2>&1; then
+        return 0
+    fi
+
+    # Already registered — nothing to do.
+    if _font_pattern_matches "$pattern"; then
+        return 0
+    fi
+
+    local caskroom
+    caskroom="$(brew --prefix 2>/dev/null)/Caskroom/$cask"
+    if [[ ! -d "$caskroom" ]]; then
+        log_with_level "WARN" "Cask '$cask' marked installed but Caskroom missing; reinstall recommended"
+        return 1
+    fi
+
+    # Pick the highest version directory present (sorts version-aware).
+    local version_dir
+    version_dir="$(find "$caskroom" -mindepth 1 -maxdepth 1 -type d ! -name '.metadata' \
+        | sort -V | tail -n1)"
+    if [[ -z "$version_dir" ]]; then
+        log_with_level "WARN" "No staged fonts found in $caskroom"
+        return 1
+    fi
+
+    mkdir -p "$HOME/Library/Fonts"
+    # Use find to avoid glob expansion issues with shopt/extglob differences.
+    # -L follows symlinks; -type f then matches both real files and symlinks
+    # whose target exists. Dangling symlinks (a real-world failure mode where
+    # the cask was installed once but ~/Library/Fonts was wiped) are skipped.
+    local copied=0
+    while IFS= read -r -d '' ttf; do
+        cp -fL "$ttf" "$HOME/Library/Fonts/" && copied=$((copied + 1))
+    done < <(find -L "$version_dir" -maxdepth 1 -type f \( -iname '*.ttf' -o -iname '*.otf' \) -print0 2>/dev/null)
+
+    if [[ $copied -gt 0 ]]; then
+        log_with_level "SUCCESS" "Registered $copied font file(s) from $cask into ~/Library/Fonts"
+        return 0
+    fi
+
+    # Caskroom has nothing usable (e.g. only dangling symlinks pointing back at
+    # ~/Library/Fonts that were since deleted). Re-run the cask install to
+    # re-download and re-register the fonts.
+    log_with_level "WARN" "Cask '$cask' has no usable font files; reinstalling..."
+    if brew reinstall --cask "$cask" >/dev/null 2>&1; then
+        copied=0
+        while IFS= read -r -d '' ttf; do
+            cp -fL "$ttf" "$HOME/Library/Fonts/" 2>/dev/null && copied=$((copied + 1))
+        done < <(find -L "$version_dir" -maxdepth 1 -type f \( -iname '*.ttf' -o -iname '*.otf' \) -print0 2>/dev/null)
+
+        # After a reinstall the fonts may already be in ~/Library/Fonts (cask
+        # does that itself). Treat either success path as a win.
+        if [[ $copied -gt 0 ]] || _font_pattern_matches "$pattern"; then
+            log_with_level "SUCCESS" "Reinstalled and registered $cask"
+            return 0
+        fi
+    fi
+
+    log_with_level "WARN" "Could not register $cask; run 'brew reinstall --cask $cask' manually"
+    return 1
+}
+
 validate_installation() {
     echo "🔍 Validating installation..."
     local failed=0
@@ -146,6 +246,9 @@ validate_installation() {
     # Validate cloud and DevOps tools
     validate_tool "gcloud" "$gcloud_version" || ((failed++))
     validate_tool "firebase" "$firebase_version" || ((failed++))
+
+    # Validate Nerd Font (required for tmux/Catppuccin glyphs)
+    validate_font "JetBrainsMono Nerd Font" "JetBrainsMono*Nerd*.ttf" || ((failed++))
 
     if [ $failed -eq 0 ]; then
         echo "🎉 All validations passed!"

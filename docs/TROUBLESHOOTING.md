@@ -71,6 +71,36 @@ exec zsh
 source ~/.zshrc
 ```
 
+### "Tmux icons render as `?` or boxes"
+
+The tmux status bar uses Nerd Font glyphs (folder, clock, battery, separators). If they render as `?`, ▯, or empty, work down the chain — the failure is almost always one of three steps.
+
+```bash
+# 1. Is the Nerd Font registered with macOS?
+#    npm run validate reports this; on failure, npm run setup self-heals
+#    by reinstalling the cask and copying staged .ttf files into ~/Library/Fonts.
+npm run validate                       # look for "✅ font: JetBrainsMono Nerd Font"
+ls ~/Library/Fonts/ | grep -i jetbrains  # should list ~96 .ttf files
+```
+
+```bash
+# 2. Is your terminal profile actually using the Nerd Font?
+#    A correctly registered font is invisible until the profile picks it up.
+#    Apple Terminal: Settings → Profiles → <your profile> → Text → Font →
+#                    Change… → "JetBrainsMono Nerd Font Mono"
+#    iTerm2:        Settings → Profiles → Text → Font
+#    Ghostty:       font-family = "JetBrainsMono Nerd Font Mono" in config
+```
+
+```bash
+# 3. Apple Terminal only: enable "Use Option as Meta key"
+#    The .tmux.conf prefix is Option-Shift-T (M-T). Without this setting,
+#    Terminal swallows Option keys and no prefix-based shortcuts work.
+#    Settings → Profiles → Keyboard → "Use Option as Meta key"
+```
+
+**Note on Apple Terminal + Plane 15 glyphs.** Apple Terminal cannot render Unicode Plane 15 (SPUA-A, U+F0000+) code points even with a Nerd Font selected. The repo's `.tmux.conf` overrides Catppuccin's defaults with FontAwesome glyphs from the BMP private-use area (U+E000–U+F8FF) so icons render in every Nerd Font-capable terminal. If you've customized icons and see `?`, check your custom code points are in the BMP range, or switch to iTerm2/Ghostty/kitty (which all handle Plane 15 natively).
+
 ## Reset Everything
 ```bash
 # Restore from backup first
