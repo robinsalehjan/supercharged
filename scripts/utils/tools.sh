@@ -92,7 +92,7 @@ setup_worktrunk() {
     fi
 
     # Skip if shell integration already configured
-    if grep -q "worktrunk" "$HOME/.zshrc" 2>/dev/null; then
+    if grep -q "wt config shell init" "$HOME/.zshrc" 2>/dev/null; then
         log_with_level "INFO" "Worktrunk shell integration already configured, skipping"
         return 0
     fi

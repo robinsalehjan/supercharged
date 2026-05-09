@@ -86,7 +86,7 @@ RTKEOF
 
 @test "setup_worktrunk skips when shell integration already configured" {
     mock_wt
-    echo '# worktrunk shell integration' > "$HOME/.zshrc"
+    echo 'eval "$(command wt config shell init zsh)"' > "$HOME/.zshrc"
 
     run zsh -c "
         export HOME='$HOME' PATH='$PATH'
