@@ -101,6 +101,12 @@ main() {
         "$SCRIPT_DIR/restore-claude.sh" --force
     fi
 
+    # Re-apply Worktrunk shell integration — restoring dotfiles overwrites
+    # ~/.zshrc, which strips any line `wt config shell install` previously
+    # added. setup_worktrunk is internally idempotent (skips when wt is
+    # missing or the integration is already present).
+    setup_worktrunk
+
     # Set up code-review-graph watcher (if both code-review-graph and Claude Code are installed)
     if command -v code-review-graph >/dev/null 2>&1 && [ -d "$HOME/.claude" ]; then
         echo ""

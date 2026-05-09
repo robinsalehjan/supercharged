@@ -100,7 +100,7 @@ setup_worktrunk() {
     log_with_level "INFO" "Configuring Worktrunk shell integration..."
 
     local wt_output
-    if wt_output=$(wt config shell install 2>&1); then
+    if wt_output=$(wt config shell install -y 2>&1); then
         log_with_level "SUCCESS" "Worktrunk shell integration installed (restart shell or run 'source ~/.zshrc')"
         log_with_level "INFO" "Use 'wt switch -c <branch>' to create worktrees, 'wt remove' or 'wt merge main' to clean up"
     else
