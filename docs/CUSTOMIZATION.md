@@ -60,6 +60,6 @@ kotlin 2.2.21
 # docker, docker-compose, colima, kubernetes-cli
 
 # Apps always installed:
-# VS Code, Slack, Postman, Raycast, Chrome, Wireshark, Spotify,
+# VS Code, Slack, Raycast, Wireshark, Spotify,
 # Proxyman, mitmproxy, Reveal, Ollama, Mullvad VPN
 ```

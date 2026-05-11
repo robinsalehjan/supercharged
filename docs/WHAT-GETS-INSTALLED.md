@@ -59,12 +59,10 @@ kubernetes-cli     # kubectl for Kubernetes cluster management
 # Development and productivity
 visual-studio-code  # Code editor with shell integration
 slack              # Team communication
-postman            # API development and testing
 proxyman           # macOS HTTP debugging proxy
 mitmproxy          # Interactive HTTPS proxy for debugging and testing
 reveal             # Runtime view debugging for iOS apps
 raycast            # macOS productivity launcher
-google-chrome      # Web browser
 ollama-app         # Desktop app for running local LLMs
 
 # Utilities
