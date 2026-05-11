@@ -165,7 +165,8 @@ EOF
 # Note: In zsh, $0 changes to the sourced file name, so we also check
 # that no other script has sourced us by looking for the validate argument
 if [[ "${1:-}" == "validate" ]]; then
-    # Enable strict error handling for validation
-    set -euo pipefail
+    # Enable strict undefined variable checking but not -e since we handle
+    # errors explicitly with counters in validate_installation
+    set -uo pipefail
     validate_installation
 fi

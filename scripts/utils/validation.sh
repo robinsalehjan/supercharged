@@ -51,6 +51,26 @@ extract_tool_version() {
             # Use python3 explicitly for consistency
             python3 --version 2>&1 | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
             ;;
+        "rg")
+            # ripgrep: version is on the first line as "ripgrep X.Y.Z"
+            version_output=$(rg --version 2>&1 | head -1 || true)
+            echo "$version_output" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0"
+            ;;
+        "tmux")
+            # tmux uses -V and may have letter suffix (e.g., "tmux 3.6a")
+            version_output=$(tmux -V 2>&1 || true)
+            # Keep letter suffix as it's part of the version identifier
+            echo "$version_output" | grep -oE '[0-9]+\.[0-9]+[a-z]?' || echo "0.0.0"
+            ;;
+        "nmap")
+            # nmap: "Nmap version X.Y"
+            version_output=$(nmap --version 2>&1 | head -1 || true)
+            echo "$version_output" | grep -oE '[0-9]+\.[0-9]+' || echo "0.0.0"
+            ;;
+        "plannotator")
+            # plannotator has no version flag - just check if executable
+            echo "installed"
+            ;;
         *)
             # Default: try standard --version flag
             version_output=$($cmd --version 2>&1 | head -1 || true)
@@ -95,7 +115,11 @@ validate_tool() {
         local version
         version=$(extract_tool_version "$tool")
 
-        if [ -z "$version" ] || [ "$version" = "0.0.0" ]; then
+        if [ "$version" = "installed" ]; then
+            # Special case for tools without version flags
+            echo "✅ $tool: installed"
+            return 0
+        elif [ -z "$version" ] || [ "$version" = "0.0.0" ]; then
             echo "⚠️  $tool: version not detected"
             return 1
         elif [ "$version" = "$expected_version" ] || [ "$expected_version" = "" ]; then
@@ -211,9 +235,53 @@ ensure_font_registered() {
     return 1
 }
 
+validate_zsh_plugin() {
+    local plugin_name=$1
+    local plugin_path=$2
+
+    if [ -d "$plugin_path" ]; then
+        echo "✅ zsh plugin: $plugin_name"
+        return 0
+    else
+        echo "❌ zsh plugin: $plugin_name not found at $plugin_path"
+        return 1
+    fi
+}
+
+validate_tmux_setup() {
+    local label=$1
+
+    if [ ! -f "$HOME/.tmux.conf" ]; then
+        echo "❌ tmux: .tmux.conf not found"
+        return 1
+    fi
+
+    if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
+        echo "❌ tmux: TPM (Tmux Plugin Manager) not installed"
+        return 1
+    fi
+
+    echo "✅ tmux: configuration and TPM installed"
+    return 0
+}
+
+validate_claude_component() {
+    local component=$1
+    local check_path=$2
+
+    if [ -f "$check_path" ] || [ -d "$check_path" ]; then
+        echo "✅ Claude Code: $component"
+        return 0
+    else
+        echo "⚠️  Claude Code: $component not configured"
+        return 1
+    fi
+}
+
 validate_installation() {
     echo "🔍 Validating installation..."
     local failed=0
+    local warned=0
 
     # Read versions from .tool-versions using helper function
     parse_tool_versions
@@ -226,16 +294,38 @@ validate_installation() {
     local java_version="${TOOL_VERSIONS[java]#*-}"  # Strip "openjdk-" prefix → semver
     local kotlin_version="${TOOL_VERSIONS[kotlin]}"
 
-    # Validate core tools
+    echo ""
+    echo "Core Tools:"
     validate_tool "brew" "" || ((failed++))
     validate_tool "git" "" || ((failed++))
     validate_tool "asdf" "" || ((failed++))
     validate_tool "shellcheck" "" || ((failed++))
-    validate_tool "rtk" "" || ((failed++))
-    validate_tool "wt" "" || ((failed++))
-    validate_tool "code-review-graph" "" || ((failed++))
+    validate_tool "gh" "" || ((warned++))  # GitHub CLI (optional but useful)
 
-    # Validate ASDF-managed languages and runtimes
+    echo ""
+    echo "Development Tools:"
+    validate_tool "jq" "" || ((warned++))
+    validate_tool "tree" "" || ((warned++))
+    validate_tool "rg" "" || ((warned++))  # ripgrep command is 'rg'
+    validate_tool "tmux" "" || ((warned++))
+    validate_tool "htop" "" || true  # Optional, don't count if missing
+    validate_tool "btop" "" || true  # Optional, don't count if missing
+    validate_tool "nmap" "" || ((warned++))
+    validate_tool "aria2c" "" || ((warned++))
+    validate_tool "duckdb" "" || ((warned++))
+    validate_tool "sqlite3" "" || ((warned++))
+
+    echo ""
+    echo "AI & Optimization Tools:"
+    validate_tool "rtk" "" || ((warned++))
+    validate_tool "wt" "" || ((warned++))
+    validate_tool "code-review-graph" "" || ((warned++))
+    validate_tool "ollama" "" || true  # Optional local AI runtime
+    validate_tool "pipx" "" || ((warned++))
+    validate_tool "uv" "" || ((warned++))
+
+    echo ""
+    echo "Language Runtimes:"
     validate_tool "python3" "$python_version" || ((failed++))
     validate_tool "node" "$node_version" || ((failed++))
     validate_tool "ruby" "$ruby_version" || ((failed++))
@@ -243,18 +333,190 @@ validate_installation() {
     validate_tool "java" "$java_version" || ((failed++))
     validate_tool "kotlin" "$kotlin_version" || ((failed++))
 
-    # Validate cloud and DevOps tools
+    echo ""
+    echo "Cloud & DevOps:"
     validate_tool "gcloud" "$gcloud_version" || ((failed++))
     validate_tool "firebase" "$firebase_version" || ((failed++))
 
-    # Validate Nerd Font (required for tmux/Catppuccin glyphs)
+    # Check for optional iOS tools if preference file indicates they should be installed
+    if [ -f "$HOME/.supercharged_preferences" ]; then
+        # shellcheck disable=SC1091
+        source "$HOME/.supercharged_preferences"
+
+        if [[ "${INSTALL_IOS_TOOLS:-Y}" =~ ^[Yy] ]]; then
+            echo ""
+            echo "iOS Development Tools:"
+            validate_tool "xcodes" "" || ((warned++))
+            validate_tool "xcode-build-server" "" || ((warned++))
+            validate_tool "xcbeautify" "" || ((warned++))
+            validate_tool "swiftlint" "" || ((warned++))
+            validate_tool "swift-format" "" || ((warned++))
+            validate_tool "swiftformat" "" || ((warned++))
+            validate_tool "ios-deploy" "" || ((warned++))
+            validate_tool "periphery" "" || ((warned++))
+        fi
+
+        if [[ "${INSTALL_DEV_TOOLS:-Y}" =~ ^[Yy] ]]; then
+            echo ""
+            echo "Container & Orchestration Tools:"
+            validate_tool "docker" "" || ((warned++))
+            validate_tool "docker-compose" "" || ((warned++))
+            validate_tool "colima" "" || ((warned++))
+            validate_tool "kubectl" "" || ((warned++))
+        fi
+    fi
+
+    echo ""
+    echo "Shell Configuration:"
+    # Check for Oh My Zsh
+    if [ -d "$HOME/.oh-my-zsh" ]; then
+        echo "✅ Oh My Zsh installed"
+    else
+        echo "❌ Oh My Zsh not installed"
+        ((failed++))
+    fi
+
+    # Check zsh plugins
+    local zsh_custom="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+    validate_zsh_plugin "zsh-autosuggestions" "$zsh_custom/plugins/zsh-autosuggestions" || ((warned++))
+    validate_zsh_plugin "zsh-syntax-highlighting" "$zsh_custom/plugins/zsh-syntax-highlighting" || ((warned++))
+    validate_zsh_plugin "powerlevel10k" "$zsh_custom/themes/powerlevel10k" || ((warned++))
+
+    # Check for Worktrunk shell integration
+    if grep -q "wt config shell init" "$HOME/.zshrc" 2>/dev/null; then
+        echo "✅ Worktrunk shell integration configured"
+    else
+        echo "⚠️  Worktrunk shell integration not configured"
+        ((warned++))
+    fi
+
+    echo ""
+    echo "Tmux Setup:"
+    validate_tmux_setup "tmux" || ((warned++))
+
+    echo ""
+    echo "Fonts:"
     validate_font "JetBrainsMono Nerd Font" "JetBrainsMono*Nerd*.ttf" || ((failed++))
 
-    if [ $failed -eq 0 ]; then
+    # Check Claude Code components (all optional)
+    if command_exists claude; then
+        echo ""
+        echo "Claude Code Components:"
+        validate_claude_component "RTK hooks" "$HOME/.claude/hooks/rtk-rewrite.sh" || ((warned++))
+        validate_claude_component "Statusline" "$HOME/.claude/statusline/statusline.sh" || ((warned++))
+        validate_tool "plannotator" "" || ((warned++))
+        validate_tool "zeroshot" "" || true  # Optional AI workflow tool
+
+        # Check for code-review-graph watcher
+        # Note: grep -q can cause SIGPIPE with pipefail, so use redirect instead
+        if [ -f "$HOME/Library/LaunchAgents/com.code-review-graph.watcher.plist" ]; then
+            if launchctl list | grep "com.code-review-graph.watcher" >/dev/null 2>&1; then
+                echo "✅ Claude Code: code-review-graph watcher running"
+            else
+                echo "⚠️  Claude Code: code-review-graph watcher not running"
+                ((warned++))
+            fi
+        else
+            echo "⚠️  Claude Code: code-review-graph watcher not configured"
+            ((warned++))
+        fi
+    fi
+
+    echo ""
+    echo "Configuration Files:"
+    if [ -f "$HOME/.gitconfig" ]; then
+        echo "✅ Git configuration (.gitconfig)"
+    else
+        echo "❌ Git configuration (.gitconfig) not found"
+        ((failed++))
+    fi
+
+    if [ -f "$HOME/.zshrc" ]; then
+        echo "✅ Zsh configuration (.zshrc)"
+    else
+        echo "❌ Zsh configuration (.zshrc) not found"
+        ((failed++))
+    fi
+
+    echo ""
+
+    # Collect actionable recommendations
+    local actions=()
+
+    # Check bundler version (use local var from top of function)
+    if command_exists bundler; then
+        local bundler_current
+        bundler_current=$(extract_tool_version "bundler")
+        if [ "$bundler_current" != "$bundler_version" ] && [ -n "$bundler_version" ]; then
+            actions+=("Update bundler: asdf install bundler $bundler_version && asdf global bundler $bundler_version")
+        fi
+    fi
+
+    # Check gcloud version (use local var from top of function)
+    if command_exists gcloud; then
+        local gcloud_current
+        gcloud_current=$(extract_tool_version "gcloud")
+        if [ "$gcloud_current" != "$gcloud_version" ] && [ -n "$gcloud_version" ]; then
+            actions+=("Update gcloud: asdf install gcloud $gcloud_version && asdf global gcloud $gcloud_version")
+        fi
+    fi
+
+    # Check for code-review-graph watcher (only if it's installed but not running)
+    # Note: grep -q can cause SIGPIPE with pipefail, so use redirect instead
+    if command_exists code-review-graph; then
+        if [ -f "$HOME/Library/LaunchAgents/com.code-review-graph.watcher.plist" ]; then
+            if ! launchctl list | grep "com.code-review-graph.watcher" >/dev/null 2>&1; then
+                actions+=("Start code-review-graph watcher: launchctl load ~/Library/LaunchAgents/com.code-review-graph.watcher.plist")
+            fi
+        fi
+    fi
+
+    # Check for missing Oh My Zsh
+    if [ ! -d "$HOME/.oh-my-zsh" ]; then
+        actions+=("Install Oh My Zsh: sh -c \"\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\"")
+    fi
+
+    # Suggest optional tools if user might want them
+    local optional_missing=()
+    command_exists htop || optional_missing+=("htop")
+    command_exists btop || optional_missing+=("btop")
+    command_exists ollama || optional_missing+=("ollama")
+
+    if [ $failed -eq 0 ] && [ $warned -eq 0 ]; then
         echo "🎉 All validations passed!"
+
+        if [ ${#optional_missing[@]} -gt 0 ]; then
+            echo ""
+            echo "💡 Optional tools you might want to install:"
+            for tool in "${optional_missing[@]}"; do
+                echo "   - $tool: brew install $tool"
+            done
+        fi
+        return 0
+    elif [ $failed -eq 0 ]; then
+        echo "✅ Core validations passed ($warned optional component(s) missing)"
+
+        if [ ${#actions[@]} -gt 0 ]; then
+            echo ""
+            echo "💡 Recommended actions:"
+            for action in "${actions[@]}"; do
+                echo "   $action"
+            done
+        fi
         return 0
     else
-        echo "💥 $failed validation(s) failed"
+        echo "💥 $failed critical validation(s) failed, $warned warning(s)"
+
+        if [ ${#actions[@]} -gt 0 ]; then
+            echo ""
+            echo "🔧 Required actions to fix failures:"
+            for action in "${actions[@]}"; do
+                echo "   $action"
+            done
+        fi
+
+        echo ""
+        echo "💡 Run 'npm run setup' to install missing components"
         return 1
     fi
 }
