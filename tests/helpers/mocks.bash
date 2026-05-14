@@ -272,8 +272,50 @@ unmock_wt() {
     [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/wt"
 }
 
+# Mock gh CLI for Obscura release-download tests.
+# Intercepts `gh release download --pattern <name> --dir <dir>` and writes a
+# fake tarball at <dir>/<name> containing two stub binaries (obscura,
+# obscura-worker). Binaries are placed at archive root only — the
+# subdir-nesting fallback in setup_obscura's `find` call is NOT exercised
+# by this mock. Any other gh subcommand is a silent success.
+mock_gh_release_obscura() {
+    _ensure_mock_bin_dir
+    if [ -n "${MOCK_BIN_DIR:-}" ]; then
+        cat > "$MOCK_BIN_DIR/gh" << 'GHEOF'
+#!/bin/sh
+if [ "$1" = "release" ] && [ "$2" = "download" ]; then
+    # Parse --pattern and --dir
+    pattern=""
+    dir=""
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --pattern) pattern="$2"; shift 2 ;;
+            --dir) dir="$2"; shift 2 ;;
+            *) shift ;;
+        esac
+    done
+    [ -n "$pattern" ] && [ -n "$dir" ] || exit 1
+    mkdir -p "$dir"
+    staging=$(mktemp -d)
+    printf '#!/bin/sh\necho obscura-stub\n' > "$staging/obscura"
+    printf '#!/bin/sh\necho obscura-worker-stub\n' > "$staging/obscura-worker"
+    chmod +x "$staging/obscura" "$staging/obscura-worker"
+    tar -czf "$dir/$pattern" -C "$staging" obscura obscura-worker
+    rm -rf "$staging"
+    exit 0
+fi
+exit 0
+GHEOF
+        chmod +x "$MOCK_BIN_DIR/gh"
+    fi
+}
+
+unmock_gh_release_obscura() {
+    [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/gh"
+}
+
 # Unmock all system command mocks — call in teardown to prevent leaks
 unmock_all() {
   unset -f brew sw_vers df xcode-select ping asdf uname curl 2>/dev/null || true
-  [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/rtk" "$MOCK_BIN_DIR/pipx" "$MOCK_BIN_DIR/code-review-graph" "$MOCK_BIN_DIR/wt" "$MOCK_BIN_DIR/ping" "$MOCK_BIN_DIR/brew" 2>/dev/null || true
+  [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/rtk" "$MOCK_BIN_DIR/pipx" "$MOCK_BIN_DIR/code-review-graph" "$MOCK_BIN_DIR/wt" "$MOCK_BIN_DIR/gh" "$MOCK_BIN_DIR/obscura" "$MOCK_BIN_DIR/obscura-worker" "$MOCK_BIN_DIR/ping" "$MOCK_BIN_DIR/brew" 2>/dev/null || true
 }

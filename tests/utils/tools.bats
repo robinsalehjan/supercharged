@@ -203,3 +203,142 @@ RTKEOF
     [[ "$status" -eq 0 ]]
     [[ "$output" == *"skipping launchctl reload"* ]]
 }
+
+# --- setup_obscura tests ---
+
+@test "setup_obscura skips when gh CLI not available" {
+    run zsh -c "
+        export HOME='$HOME' PATH='/usr/bin:/bin'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_obscura
+    "
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"gh CLI required"* ]]
+    [[ ! -e "$HOME/.local/bin/obscura" ]]
+}
+
+@test "setup_obscura skips when both binaries exist at ~/.local/bin" {
+    mkdir -p "$HOME/.local/bin"
+    printf '#!/bin/sh\nexit 0\n' > "$HOME/.local/bin/obscura"
+    printf '#!/bin/sh\nexit 0\n' > "$HOME/.local/bin/obscura-worker"
+    chmod +x "$HOME/.local/bin/obscura" "$HOME/.local/bin/obscura-worker"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_obscura
+    "
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"already installed"* ]]
+}
+
+@test "setup_obscura installs both binaries on supported arch" {
+    mock_gh_release_obscura
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        # Force a known arch so the asset name is deterministic
+        uname() { [ \"\$1\" = '-m' ] && echo 'arm64' || command uname \"\$@\"; }
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_obscura
+    "
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"installed to ~/.local/bin"* ]]
+    [[ -x "$HOME/.local/bin/obscura" ]]
+    [[ -x "$HOME/.local/bin/obscura-worker" ]]
+}
+
+@test "setup_obscura installs both binaries on x86_64" {
+    mock_gh_release_obscura
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        uname() { [ \"\$1\" = '-m' ] && echo 'x86_64' || command uname \"\$@\"; }
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_obscura
+    "
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"installed to ~/.local/bin"* ]]
+    [[ -x "$HOME/.local/bin/obscura" ]]
+    [[ -x "$HOME/.local/bin/obscura-worker" ]]
+}
+
+@test "setup_obscura logs gh failure details and leaves no binaries behind" {
+    _ensure_mock_bin_dir
+    # Failing gh stub that emits a recognizable stderr line on `release download`
+    cat > "$MOCK_BIN_DIR/gh" << 'GHEOF'
+#!/bin/sh
+if [ "$1" = "release" ] && [ "$2" = "download" ]; then
+    echo "HTTP 401: Bad credentials" >&2
+    exit 1
+fi
+exit 0
+GHEOF
+    chmod +x "$MOCK_BIN_DIR/gh"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_obscura
+    "
+    [[ "$status" -ne 0 ]]
+    [[ "$output" == *"Failed to download"* ]]
+    [[ "$output" == *"HTTP 401"* ]]
+    [[ ! -e "$HOME/.local/bin/obscura" ]]
+    [[ ! -e "$HOME/.local/bin/obscura-worker" ]]
+}
+
+@test "setup_obscura errors when archive is missing required binaries" {
+    _ensure_mock_bin_dir
+    # gh stub that produces a tarball containing only `obscura` (no worker)
+    cat > "$MOCK_BIN_DIR/gh" << 'GHEOF'
+#!/bin/sh
+if [ "$1" = "release" ] && [ "$2" = "download" ]; then
+    pattern=""
+    dir=""
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --pattern) pattern="$2"; shift 2 ;;
+            --dir) dir="$2"; shift 2 ;;
+            *) shift ;;
+        esac
+    done
+    mkdir -p "$dir"
+    staging=$(mktemp -d)
+    printf '#!/bin/sh\nexit 0\n' > "$staging/obscura"
+    chmod +x "$staging/obscura"
+    tar -czf "$dir/$pattern" -C "$staging" obscura
+    rm -rf "$staging"
+    exit 0
+fi
+exit 0
+GHEOF
+    chmod +x "$MOCK_BIN_DIR/gh"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        uname() { [ \"\$1\" = '-m' ] && echo 'arm64' || command uname \"\$@\"; }
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_obscura
+    "
+    [[ "$status" -ne 0 ]]
+    [[ "$output" == *"missing expected binaries"* ]]
+    [[ ! -e "$HOME/.local/bin/obscura" ]]
+    [[ ! -e "$HOME/.local/bin/obscura-worker" ]]
+}
+
+@test "setup_obscura skips unsupported architecture without blocking setup" {
+    mock_gh_release_obscura
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        uname() { [ \"\$1\" = '-m' ] && echo 'powerpc' || command uname \"\$@\"; }
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_obscura
+    "
+    # WARN + return 0: don't abort the larger setup pipeline over optional tooling
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"Unsupported architecture"* ]]
+    [[ "$output" == *"skipping"* ]]
+    [[ ! -e "$HOME/.local/bin/obscura" ]]
+}

@@ -403,6 +403,91 @@ setup_plannotator() {
     log_with_level "INFO" "Install the Claude Code plugin: /plugin marketplace add backnotprop/plannotator"
 }
 
+# Setup Obscura (Rust-based headless browser for AI agents and web scraping)
+# Upstream: https://github.com/h4ckf0r0day/obscura
+# Releases ship as tarballs containing two binaries (`obscura` + `obscura-worker`)
+# and don't include .sha256 sidecars, so we rely on TLS-pinned download via
+# `gh release download` for integrity rather than the checksum-verification
+# pattern used by Plannotator.
+setup_obscura() {
+    # Path-based idempotency check — `command_exists` would miss a prior
+    # install when ~/.local/bin isn't on PATH in the current shell (e.g.
+    # non-interactive runs before .zshrc is sourced).
+    if [ -x "$HOME/.local/bin/obscura" ] && [ -x "$HOME/.local/bin/obscura-worker" ]; then
+        log_with_level "INFO" "Obscura already installed"
+        return 0
+    fi
+
+    # Defensive guard for standalone or sourced invocations that bypass the
+    # full setup sequence.
+    if ! command_exists gh; then
+        log_with_level "WARN" "gh CLI required to install Obscura (TLS-pinned download), skipping"
+        return 0
+    fi
+
+    log_with_level "INFO" "Installing Obscura (headless browser for AI agents)..."
+
+    local arch_uname asset_arch
+    arch_uname=$(uname -m)
+    case "$arch_uname" in
+        arm64|aarch64) asset_arch="aarch64-macos" ;;
+        x86_64)        asset_arch="x86_64-macos" ;;
+        *)
+            # Obscura is optional tooling; don't abort the larger setup pipeline
+            # over an unsupported arch (matches the gh-missing precedent above).
+            log_with_level "WARN" "Unsupported architecture for Obscura: $arch_uname — skipping"
+            return 0
+            ;;
+    esac
+
+    local asset_name="obscura-${asset_arch}.tar.gz"
+    local tmp_dir
+    tmp_dir=$(mktemp -d)
+    # shellcheck disable=SC2064
+    trap "rm -rf '$tmp_dir'" RETURN
+
+    # Capture stderr separately so failure messages carry the actual cause
+    # (auth, rate limit, 404, mismatched pattern) instead of a generic line.
+    local gh_err
+    if ! gh_err=$(gh release download \
+            --repo h4ckf0r0day/obscura \
+            --pattern "$asset_name" \
+            --dir "$tmp_dir" 2>&1 >/dev/null); then
+        log_with_level "ERROR" "Failed to download $asset_name from h4ckf0r0day/obscura: $gh_err"
+        return 1
+    fi
+
+    local tar_err
+    if ! tar_err=$(tar -xzf "$tmp_dir/$asset_name" -C "$tmp_dir" 2>&1); then
+        log_with_level "ERROR" "Failed to extract Obscura archive: $tar_err"
+        return 1
+    fi
+
+    # Locate the two binaries anywhere in the extracted tree (some releases
+    # nest them in a subdir, others put them at the archive root).
+    local obscura_bin worker_bin
+    obscura_bin=$(find "$tmp_dir" -type f -name obscura -perm -u+x 2>/dev/null | head -1)
+    worker_bin=$(find "$tmp_dir" -type f -name obscura-worker -perm -u+x 2>/dev/null | head -1)
+    if [ -z "$obscura_bin" ] || [ -z "$worker_bin" ]; then
+        log_with_level "ERROR" "Obscura archive missing expected binaries (obscura, obscura-worker)"
+        return 1
+    fi
+
+    # Single guarded block — a partial install (one binary moved, the other
+    # failed) would otherwise log SUCCESS with nothing usable on disk.
+    if ! mkdir -p "$HOME/.local/bin" \
+        || ! mv "$obscura_bin" "$HOME/.local/bin/obscura" \
+        || ! mv "$worker_bin" "$HOME/.local/bin/obscura-worker" \
+        || ! chmod +x "$HOME/.local/bin/obscura" "$HOME/.local/bin/obscura-worker"; then
+        log_with_level "ERROR" "Failed to install Obscura binaries to ~/.local/bin"
+        rm -f "$HOME/.local/bin/obscura" "$HOME/.local/bin/obscura-worker"
+        return 1
+    fi
+
+    log_with_level "SUCCESS" "Obscura installed to ~/.local/bin"
+    log_with_level "INFO" "Test with: obscura fetch https://example.com --eval 'document.title'"
+}
+
 # Setup Claude Code Statusline (Enhanced terminal statusline)
 setup_statusline() {
     # Check if statusline is already installed

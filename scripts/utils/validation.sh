@@ -431,6 +431,7 @@ validate_installation() {
         validate_claude_component "RTK hooks" "$HOME/.claude/hooks/rtk-rewrite.sh" || ((warned++))
         validate_claude_component "Statusline" "$HOME/.claude/statusline/statusline.sh" || ((warned++))
         validate_tool "plannotator" "" || ((warned++))
+        validate_tool "obscura" "" || ((warned++))
         validate_tool "zeroshot" "" || true  # Optional AI workflow tool
 
         # Check for code-review-graph watcher
