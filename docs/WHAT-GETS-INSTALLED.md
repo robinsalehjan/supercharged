@@ -25,8 +25,19 @@ nodejs   22.9.0       # LTS version, minimum 20.0.0 for modern features
 python   3.13.0       # Latest stable, minimum 3.10.0 for type hints
 ruby     2.7.7        # Stable version, minimum 2.7.0 for pattern matching
 bundler  2.2.32       # Ruby package manager, minimum 2.2.0
+```
+
+## Cloud SDKs (Default on - Opt-out via INSTALL_CLOUD_TOOLS=N)
+```bash
 gcloud   522.0.0      # Google Cloud SDK for cloud deployments
 firebase 14.3.1       # Firebase CLI for Firebase projects
+```
+
+## Network Tools (Default on - Opt-out via INSTALL_NETWORK_TOOLS=N)
+```bash
+wireshark    # Network protocol analyzer (CLI + GUI)
+mitmproxy    # Interactive HTTPS proxy for debugging
+proxyman     # macOS HTTP debugging proxy (cask)
 ```
 
 ## JVM Toolchain (Optional - Interactive Setup)
@@ -68,14 +79,11 @@ kubernetes-cli     # kubectl for Kubernetes cluster management
 # Development and productivity
 visual-studio-code  # Code editor with shell integration
 slack              # Team communication
-proxyman           # macOS HTTP debugging proxy
-mitmproxy          # Interactive HTTPS proxy for debugging and testing
 reveal             # Runtime view debugging for iOS apps
 raycast            # macOS productivity launcher
 ollama-app         # Desktop app for running local LLMs
 
 # Utilities
-wireshark    # Network protocol analyzer
 spotify      # Music streaming
 mullvad-vpn  # Privacy-focused VPN client
 

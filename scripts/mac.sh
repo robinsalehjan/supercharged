@@ -136,7 +136,6 @@ brew \"kubernetes-cli\""
     fi
 
     content="$content
-brew \"wireshark\"
 cask \"spotify\"
 cask \"visual-studio-code\"
 cask \"slack\"
@@ -144,9 +143,14 @@ cask \"raycast\"
 cask \"font-jetbrains-mono-nerd-font\"
 cask \"ollama-app\"
 cask \"reveal\"
-cask \"mitmproxy\"
-cask \"proxyman\"
 cask \"mullvad-vpn\""
+
+    if [[ "${INSTALL_NETWORK_TOOLS:-Y}" =~ ^[Yy] ]]; then
+        content="$content
+brew \"wireshark\"
+cask \"mitmproxy\"
+cask \"proxyman\""
+    fi
 
     if [[ "${INSTALL_EXTRA_APPS:-N}" =~ ^[Yy] ]]; then
         content="$content
@@ -203,8 +207,10 @@ main() {
     # Build brewfile based on user preferences
     BREWFILE_CONTENT=$(build_brewfile)
 
-    # Fix wireshark symlinks and remove deprecated cask
-    fix_wireshark_symlinks
+    # Fix wireshark symlinks only when wireshark is in the brewfile
+    if [[ "${INSTALL_NETWORK_TOOLS:-Y}" =~ ^[Yy] ]]; then
+        fix_wireshark_symlinks
+    fi
 
     echo "$BREWFILE_CONTENT" | brew bundle --file=-
 
@@ -256,16 +262,23 @@ main() {
     install_asdf_plugin ruby
     install_asdf_plugin nodejs
     install_asdf_plugin bundler
-    install_asdf_plugin gcloud
-    install_asdf_plugin firebase
 
     # Install versions
     install_asdf_version python "$python_version"
     install_asdf_version ruby "$ruby_version"
     install_asdf_version nodejs "$node_version"
     install_asdf_version bundler "$bundler_version"
-    install_asdf_version gcloud "$gcloud_version"
-    install_asdf_version firebase "$firebase_version"
+
+    # Cloud SDKs are gated — work machines need them, personal often does not.
+    if [[ "${INSTALL_CLOUD_TOOLS:-Y}" =~ ^[Yy] ]]; then
+        log_with_level "INFO" "Installing cloud SDKs (gcloud, firebase)..."
+        install_asdf_plugin gcloud
+        install_asdf_plugin firebase
+        install_asdf_version gcloud "$gcloud_version"
+        install_asdf_version firebase "$firebase_version"
+    else
+        log_with_level "INFO" "Skipping cloud SDKs (gcloud, firebase) — INSTALL_CLOUD_TOOLS not set"
+    fi
 
     # JVM toolchain is opt-in (work machines only by default). When no pin is
     # provided in .tool-versions, install the latest available version.

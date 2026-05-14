@@ -8,6 +8,8 @@ During setup, you'll be asked about:
 - **Claude Code** [Y/n]: AI coding assistant
 - **JVM Tooling** [y/N]: Java + Kotlin (default off — opt in on machines that need JVM/Android work)
 - **Extra GUI Apps** [y/N]: Postman + Google Chrome (default off — opt in on machines that need API testing or Chrome)
+- **Cloud SDKs** [Y/n]: gcloud + firebase via asdf (default on — opt out on personal machines without GCP/Firebase work)
+- **Network Tools** [Y/n]: Wireshark + mitmproxy + Proxyman (default on — opt out on personal machines that don't intercept HTTP)
 
 Your preferences are saved to `~/.supercharged_preferences` and used during setup. These preferences include:
 - `INSTALL_IOS_TOOLS`: Whether to install iOS development tools
@@ -16,6 +18,8 @@ Your preferences are saved to `~/.supercharged_preferences` and used during setu
 - `INSTALL_CLAUDE_CODE`: Whether to install Claude Code AI assistant
 - `INSTALL_JVM_TOOLS`: Whether to install Java + Kotlin via asdf (JVM/Android work)
 - `INSTALL_EXTRA_APPS`: Whether to install Postman + Google Chrome
+- `INSTALL_CLOUD_TOOLS`: Whether to install gcloud + firebase via asdf
+- `INSTALL_NETWORK_TOOLS`: Whether to install Wireshark + mitmproxy + Proxyman
 - `SETUP_DATE`: When the configuration was last set
 
 ## Manual Customization

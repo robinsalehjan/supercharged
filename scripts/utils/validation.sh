@@ -336,15 +336,31 @@ validate_installation() {
     validate_tool "ruby" "$ruby_version" || ((failed++))
     validate_tool "bundler" "$bundler_version" || ((failed++))
 
-    echo ""
-    echo "Cloud & DevOps:"
-    validate_tool "gcloud" "$gcloud_version" || ((failed++))
-    validate_tool "firebase" "$firebase_version" || ((failed++))
-
-    # Check for optional iOS tools if preference file indicates they should be installed
+    # Check for optional categories if preference file indicates they should be installed
     if [ -f "$HOME/.supercharged_preferences" ]; then
         # shellcheck disable=SC1091
         source "$HOME/.supercharged_preferences"
+
+        if [[ "${INSTALL_CLOUD_TOOLS:-Y}" =~ ^[Yy] ]]; then
+            echo ""
+            echo "Cloud & DevOps:"
+            validate_tool "gcloud" "$gcloud_version" || ((failed++))
+            validate_tool "firebase" "$firebase_version" || ((failed++))
+        fi
+
+        if [[ "${INSTALL_NETWORK_TOOLS:-Y}" =~ ^[Yy] ]]; then
+            echo ""
+            echo "Network Tools:"
+            validate_tool "wireshark" "" || ((warned++))
+            validate_tool "mitmproxy" "" || ((warned++))
+            # Proxyman is a cask without a top-level CLI shim, so just check the .app exists
+            if [ -d "/Applications/Proxyman.app" ]; then
+                echo "✅ Proxyman installed"
+            else
+                echo "⚠️  Proxyman not installed"
+                ((warned++))
+            fi
+        fi
 
         if [[ "${INSTALL_JVM_TOOLS:-N}" =~ ^[Yy] ]]; then
             echo ""
