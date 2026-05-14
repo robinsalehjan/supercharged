@@ -247,7 +247,7 @@ RTKEOF
     [[ -x "$HOME/.local/bin/obscura-worker" ]]
 }
 
-@test "setup_obscura errors on unsupported architecture" {
+@test "setup_obscura skips unsupported architecture without blocking setup" {
     mock_gh_release_obscura
 
     run zsh -c "
@@ -256,7 +256,9 @@ RTKEOF
         source '$PROJECT_ROOT/scripts/utils.sh'
         setup_obscura
     "
-    [[ "$status" -ne 0 ]]
+    # WARN + return 0: don't abort the larger setup pipeline over optional tooling
+    [[ "$status" -eq 0 ]]
     [[ "$output" == *"Unsupported architecture"* ]]
+    [[ "$output" == *"skipping"* ]]
     [[ ! -e "$HOME/.local/bin/obscura" ]]
 }

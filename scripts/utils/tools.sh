@@ -425,15 +425,16 @@ setup_obscura() {
 
     log_with_level "INFO" "Installing Obscura (headless browser for AI agents)..."
 
-    # Obscura's release assets are named obscura-<arch>-macos.tar.gz
     local arch_uname asset_arch
     arch_uname=$(uname -m)
     case "$arch_uname" in
         arm64|aarch64) asset_arch="aarch64-macos" ;;
         x86_64)        asset_arch="x86_64-macos" ;;
         *)
-            log_with_level "ERROR" "Unsupported architecture for Obscura: $arch_uname"
-            return 1
+            # Obscura is optional tooling; don't abort the larger setup pipeline
+            # over an unsupported arch (matches the gh-missing precedent above).
+            log_with_level "WARN" "Unsupported architecture for Obscura: $arch_uname — skipping"
+            return 0
             ;;
     esac
 
@@ -441,17 +442,21 @@ setup_obscura() {
     local tmp_dir
     tmp_dir=$(mktemp -d)
 
-    if ! gh release download \
+    # Capture stderr separately so failure messages carry the actual cause
+    # (auth, rate limit, 404, mismatched pattern) instead of a generic line.
+    local gh_err
+    if ! gh_err=$(gh release download \
             --repo h4ckf0r0day/obscura \
             --pattern "$asset_name" \
-            --dir "$tmp_dir" >/dev/null 2>&1; then
-        log_with_level "ERROR" "Failed to download $asset_name from h4ckf0r0day/obscura"
+            --dir "$tmp_dir" 2>&1 >/dev/null); then
+        log_with_level "ERROR" "Failed to download $asset_name from h4ckf0r0day/obscura: $gh_err"
         rm -rf "$tmp_dir"
         return 1
     fi
 
-    if ! tar -xzf "$tmp_dir/$asset_name" -C "$tmp_dir" 2>/dev/null; then
-        log_with_level "ERROR" "Failed to extract Obscura archive"
+    local tar_err
+    if ! tar_err=$(tar -xzf "$tmp_dir/$asset_name" -C "$tmp_dir" 2>&1); then
+        log_with_level "ERROR" "Failed to extract Obscura archive: $tar_err"
         rm -rf "$tmp_dir"
         return 1
     fi
@@ -467,10 +472,17 @@ setup_obscura() {
         return 1
     fi
 
-    mkdir -p "$HOME/.local/bin"
-    mv "$obscura_bin" "$HOME/.local/bin/obscura"
-    mv "$worker_bin" "$HOME/.local/bin/obscura-worker"
-    chmod +x "$HOME/.local/bin/obscura" "$HOME/.local/bin/obscura-worker"
+    # Single guarded block — a partial install (one binary moved, the other
+    # failed) would otherwise log SUCCESS with nothing usable on disk.
+    if ! mkdir -p "$HOME/.local/bin" \
+        || ! mv "$obscura_bin" "$HOME/.local/bin/obscura" \
+        || ! mv "$worker_bin" "$HOME/.local/bin/obscura-worker" \
+        || ! chmod +x "$HOME/.local/bin/obscura" "$HOME/.local/bin/obscura-worker"; then
+        log_with_level "ERROR" "Failed to install Obscura binaries to ~/.local/bin"
+        rm -f "$HOME/.local/bin/obscura" "$HOME/.local/bin/obscura-worker"
+        rm -rf "$tmp_dir"
+        return 1
+    fi
     rm -rf "$tmp_dir"
 
     log_with_level "SUCCESS" "Obscura installed to ~/.local/bin"

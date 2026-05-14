@@ -275,7 +275,9 @@ unmock_wt() {
 # Mock gh CLI for Obscura release-download tests.
 # Intercepts `gh release download --pattern <name> --dir <dir>` and writes a
 # fake tarball at <dir>/<name> containing two stub binaries (obscura,
-# obscura-worker). Any other gh subcommand is a silent success.
+# obscura-worker). Binaries are placed at archive root only — the
+# subdir-nesting fallback in setup_obscura's `find` call is NOT exercised
+# by this mock. Any other gh subcommand is a silent success.
 mock_gh_release_obscura() {
     _ensure_mock_bin_dir
     if [ -n "${MOCK_BIN_DIR:-}" ]; then
