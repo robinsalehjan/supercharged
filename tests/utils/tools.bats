@@ -203,3 +203,60 @@ RTKEOF
     [[ "$status" -eq 0 ]]
     [[ "$output" == *"skipping launchctl reload"* ]]
 }
+
+# --- setup_obscura tests ---
+
+@test "setup_obscura skips when gh CLI not available" {
+    run zsh -c "
+        export HOME='$HOME' PATH='/usr/bin:/bin'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_obscura
+    "
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"gh CLI required"* ]]
+    [[ ! -e "$HOME/.local/bin/obscura" ]]
+}
+
+@test "setup_obscura skips when obscura already on PATH" {
+    _ensure_mock_bin_dir
+    printf '#!/bin/sh\nexit 0\n' > "$MOCK_BIN_DIR/obscura"
+    chmod +x "$MOCK_BIN_DIR/obscura"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_obscura
+    "
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"already installed"* ]]
+}
+
+@test "setup_obscura installs both binaries on supported arch" {
+    mock_gh_release_obscura
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        # Force a known arch so the asset name is deterministic
+        uname() { [ \"\$1\" = '-m' ] && echo 'arm64' || command uname \"\$@\"; }
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_obscura
+    "
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"installed to ~/.local/bin"* ]]
+    [[ -x "$HOME/.local/bin/obscura" ]]
+    [[ -x "$HOME/.local/bin/obscura-worker" ]]
+}
+
+@test "setup_obscura errors on unsupported architecture" {
+    mock_gh_release_obscura
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        uname() { [ \"\$1\" = '-m' ] && echo 'powerpc' || command uname \"\$@\"; }
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_obscura
+    "
+    [[ "$status" -ne 0 ]]
+    [[ "$output" == *"Unsupported architecture"* ]]
+    [[ ! -e "$HOME/.local/bin/obscura" ]]
+}
