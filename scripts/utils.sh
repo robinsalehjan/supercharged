@@ -138,6 +138,26 @@ setup_user_preferences() {
     read -r install_claude
     install_claude=${install_claude:-Y}
 
+    # Ask about JVM tooling (Java + Kotlin via asdf)
+    printf "Install JVM tooling (java, kotlin)? [y/N]: "
+    read -r install_jvm
+    install_jvm=${install_jvm:-N}
+
+    # Ask about extra GUI apps (Postman + Google Chrome)
+    printf "Install extra GUI apps (postman, google-chrome)? [y/N]: "
+    read -r install_extras
+    install_extras=${install_extras:-N}
+
+    # Ask about cloud SDKs (gcloud + firebase via asdf)
+    printf "Install cloud SDKs (gcloud, firebase)? [Y/n]: "
+    read -r install_cloud
+    install_cloud=${install_cloud:-Y}
+
+    # Ask about network/HTTP debugging tools (Wireshark, mitmproxy, Proxyman)
+    printf "Install network tools (wireshark, mitmproxy, proxyman)? [Y/n]: "
+    read -r install_network
+    install_network=${install_network:-Y}
+
     # Re-enable strict mode
     set -u
 
@@ -149,6 +169,10 @@ INSTALL_IOS_TOOLS=${install_ios}
 INSTALL_DATA_SCIENCE=${install_datascience}
 INSTALL_DEV_TOOLS=${install_devtools}
 INSTALL_CLAUDE_CODE=${install_claude}
+INSTALL_JVM_TOOLS=${install_jvm}
+INSTALL_EXTRA_APPS=${install_extras}
+INSTALL_CLOUD_TOOLS=${install_cloud}
+INSTALL_NETWORK_TOOLS=${install_network}
 SETUP_DATE=$(date)
 EOF
 
@@ -159,6 +183,10 @@ EOF
     export INSTALL_DATA_SCIENCE="$install_datascience"
     export INSTALL_DEV_TOOLS="$install_devtools"
     export INSTALL_CLAUDE_CODE="$install_claude"
+    export INSTALL_JVM_TOOLS="$install_jvm"
+    export INSTALL_EXTRA_APPS="$install_extras"
+    export INSTALL_CLOUD_TOOLS="$install_cloud"
+    export INSTALL_NETWORK_TOOLS="$install_network"
 }
 
 # Run validation if script is called directly with validation argument

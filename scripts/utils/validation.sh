@@ -291,8 +291,13 @@ validate_installation() {
     local bundler_version="${TOOL_VERSIONS[bundler]}"
     local gcloud_version="${TOOL_VERSIONS[gcloud]}"
     local firebase_version="${TOOL_VERSIONS[firebase]}"
-    local java_version="${TOOL_VERSIONS[java]#*-}"  # Strip "openjdk-" prefix → semver
-    local kotlin_version="${TOOL_VERSIONS[kotlin]}"
+    # JVM toolchain — only used when INSTALL_JVM_TOOLS=Y.
+    # When pinned in .tool-versions, validate against that; otherwise just check presence
+    # (the install path resolves `asdf latest` so we don't know the target version up-front).
+    # Strip "openjdk-" prefix from java pin → semver for `java --version` comparison.
+    local java_pin="${TOOL_VERSIONS[java]:-}"
+    local java_version="${java_pin#*-}"
+    local kotlin_version="${TOOL_VERSIONS[kotlin]:-}"
 
     echo ""
     echo "Core Tools:"
@@ -330,18 +335,39 @@ validate_installation() {
     validate_tool "node" "$node_version" || ((failed++))
     validate_tool "ruby" "$ruby_version" || ((failed++))
     validate_tool "bundler" "$bundler_version" || ((failed++))
-    validate_tool "java" "$java_version" || ((failed++))
-    validate_tool "kotlin" "$kotlin_version" || ((failed++))
 
-    echo ""
-    echo "Cloud & DevOps:"
-    validate_tool "gcloud" "$gcloud_version" || ((failed++))
-    validate_tool "firebase" "$firebase_version" || ((failed++))
-
-    # Check for optional iOS tools if preference file indicates they should be installed
+    # Check for optional categories if preference file indicates they should be installed
     if [ -f "$HOME/.supercharged_preferences" ]; then
         # shellcheck disable=SC1091
         source "$HOME/.supercharged_preferences"
+
+        if [[ "${INSTALL_CLOUD_TOOLS:-Y}" =~ ^[Yy] ]]; then
+            echo ""
+            echo "Cloud & DevOps:"
+            validate_tool "gcloud" "$gcloud_version" || ((failed++))
+            validate_tool "firebase" "$firebase_version" || ((failed++))
+        fi
+
+        if [[ "${INSTALL_NETWORK_TOOLS:-Y}" =~ ^[Yy] ]]; then
+            echo ""
+            echo "Network Tools:"
+            validate_tool "wireshark" "" || ((warned++))
+            validate_tool "mitmproxy" "" || ((warned++))
+            # Proxyman is a cask without a top-level CLI shim, so just check the .app exists
+            if [ -d "/Applications/Proxyman.app" ]; then
+                echo "✅ Proxyman installed"
+            else
+                echo "⚠️  Proxyman not installed"
+                ((warned++))
+            fi
+        fi
+
+        if [[ "${INSTALL_JVM_TOOLS:-N}" =~ ^[Yy] ]]; then
+            echo ""
+            echo "JVM Toolchain:"
+            validate_tool "java" "$java_version" || ((failed++))
+            validate_tool "kotlin" "$kotlin_version" || ((failed++))
+        fi
 
         if [[ "${INSTALL_IOS_TOOLS:-Y}" =~ ^[Yy] ]]; then
             echo ""

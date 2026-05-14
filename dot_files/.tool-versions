@@ -23,12 +23,11 @@ gcloud 564.0.0
 # Firebase CLI - Latest stable, minimum 12.0.0 for modern deployment features
 firebase 15.14.0
 
-# JVM Languages
-# Java - For Android development and JVM projects, minimum 21 LTS
-java openjdk-25.0.2
-
-# Kotlin - For Android and multiplatform development, minimum 1.9.0
-kotlin 2.3.20
+# JVM toolchain (java, kotlin) is opt-in via INSTALL_JVM_TOOLS=Y.
+# By default setup resolves `asdf latest java openjdk` and `asdf latest kotlin`.
+# To pin a specific version on a work machine, add lines like:
+#   java openjdk-25.0.2
+#   kotlin 2.3.20
 
 # Additional tools can be added here
 # Example:

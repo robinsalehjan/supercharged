@@ -196,6 +196,56 @@ run_zsh_func() {
   [[ "$output" == *'mullvad-vpn'* ]]
 }
 
+@test "build_brewfile includes extra apps when INSTALL_EXTRA_APPS=Y" {
+  run zsh -c "
+    export INSTALL_EXTRA_APPS=Y
+    source '$PROJECT_ROOT/scripts/utils.sh'
+    source '$PROJECT_ROOT/scripts/mac.sh'
+    build_brewfile
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'postman'* ]]
+  [[ "$output" == *'google-chrome'* ]]
+}
+
+@test "build_brewfile excludes extra apps by default" {
+  run zsh -c "
+    unset INSTALL_EXTRA_APPS
+    source '$PROJECT_ROOT/scripts/utils.sh'
+    source '$PROJECT_ROOT/scripts/mac.sh'
+    build_brewfile
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" != *'postman'* ]]
+  [[ "$output" != *'google-chrome'* ]]
+}
+
+@test "build_brewfile includes network tools by default" {
+  run zsh -c "
+    unset INSTALL_NETWORK_TOOLS
+    source '$PROJECT_ROOT/scripts/utils.sh'
+    source '$PROJECT_ROOT/scripts/mac.sh'
+    build_brewfile
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'wireshark'* ]]
+  [[ "$output" == *'mitmproxy'* ]]
+  [[ "$output" == *'proxyman'* ]]
+}
+
+@test "build_brewfile excludes network tools when INSTALL_NETWORK_TOOLS=n" {
+  run zsh -c "
+    export INSTALL_NETWORK_TOOLS=n
+    source '$PROJECT_ROOT/scripts/utils.sh'
+    source '$PROJECT_ROOT/scripts/mac.sh'
+    build_brewfile
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" != *'wireshark'* ]]
+  [[ "$output" != *'mitmproxy'* ]]
+  [[ "$output" != *'proxyman'* ]]
+}
+
 # =============================================================================
 # install_homebrew architecture detection tests
 # =============================================================================

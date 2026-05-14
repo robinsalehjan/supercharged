@@ -77,8 +77,10 @@ install_homebrew() {
 }
 
 build_brewfile() {
+    # Note: homebrew/services and homebrew/bundle are now built into core brew,
+    # so they no longer need to be tapped explicitly. Tapping them produces
+    # deprecation warnings on brew 5.1.11+.
     local content='tap "thoughtbot/formulae"
-tap "homebrew/services"
 
 brew "bash"
 brew "coreutils"
@@ -136,7 +138,6 @@ brew \"kubernetes-cli\""
     fi
 
     content="$content
-brew \"wireshark\"
 cask \"spotify\"
 cask \"visual-studio-code\"
 cask \"slack\"
@@ -144,9 +145,22 @@ cask \"raycast\"
 cask \"font-jetbrains-mono-nerd-font\"
 cask \"ollama-app\"
 cask \"reveal\"
+cask \"mullvad-vpn\""
+
+    if [[ "${INSTALL_NETWORK_TOOLS:-Y}" =~ ^[Yy] ]]; then
+        content="$content
+brew \"wireshark\"
 cask \"mitmproxy\"
-cask \"proxyman\"
-cask \"mullvad-vpn\"
+cask \"proxyman\""
+    fi
+
+    if [[ "${INSTALL_EXTRA_APPS:-N}" =~ ^[Yy] ]]; then
+        content="$content
+cask \"postman\"
+cask \"google-chrome\""
+    fi
+
+    content="$content
 
 mas \"AdBlock\", id: 1402042596
 mas \"DaisyDisk\", id: 411643860"
@@ -178,8 +192,10 @@ main() {
     bundler_version="${TOOL_VERSIONS[bundler]}"
     gcloud_version="${TOOL_VERSIONS[gcloud]}"
     firebase_version="${TOOL_VERSIONS[firebase]}"
-    java_version="${TOOL_VERSIONS[java]}"
-    kotlin_version="${TOOL_VERSIONS[kotlin]}"
+    # JVM toolchain pins are optional — see INSTALL_JVM_TOOLS block below.
+    # If absent in .tool-versions, the setup falls back to `asdf latest`.
+    java_version="${TOOL_VERSIONS[java]:-}"
+    kotlin_version="${TOOL_VERSIONS[kotlin]:-}"
 
     # Version checks
     check_version "git" "2.49.0"
@@ -193,8 +209,10 @@ main() {
     # Build brewfile based on user preferences
     BREWFILE_CONTENT=$(build_brewfile)
 
-    # Fix wireshark symlinks and remove deprecated cask
-    fix_wireshark_symlinks
+    # Fix wireshark symlinks only when wireshark is in the brewfile
+    if [[ "${INSTALL_NETWORK_TOOLS:-Y}" =~ ^[Yy] ]]; then
+        fix_wireshark_symlinks
+    fi
 
     echo "$BREWFILE_CONTENT" | brew bundle --file=-
 
@@ -246,20 +264,43 @@ main() {
     install_asdf_plugin ruby
     install_asdf_plugin nodejs
     install_asdf_plugin bundler
-    install_asdf_plugin gcloud
-    install_asdf_plugin firebase
-    install_asdf_plugin java
-    install_asdf_plugin kotlin
 
     # Install versions
     install_asdf_version python "$python_version"
     install_asdf_version ruby "$ruby_version"
     install_asdf_version nodejs "$node_version"
     install_asdf_version bundler "$bundler_version"
-    install_asdf_version gcloud "$gcloud_version"
-    install_asdf_version firebase "$firebase_version"
-    install_asdf_version java "$java_version"
-    install_asdf_version kotlin "$kotlin_version"
+
+    # Cloud SDKs are gated — work machines need them, personal often does not.
+    if [[ "${INSTALL_CLOUD_TOOLS:-Y}" =~ ^[Yy] ]]; then
+        log_with_level "INFO" "Installing cloud SDKs (gcloud, firebase)..."
+        install_asdf_plugin gcloud
+        install_asdf_plugin firebase
+        install_asdf_version gcloud "$gcloud_version"
+        install_asdf_version firebase "$firebase_version"
+    else
+        log_with_level "INFO" "Skipping cloud SDKs (gcloud, firebase) — INSTALL_CLOUD_TOOLS not set"
+    fi
+
+    # JVM toolchain is opt-in (work machines only by default). When no pin is
+    # provided in .tool-versions, install the latest available version.
+    if [[ "${INSTALL_JVM_TOOLS:-N}" =~ ^[Yy] ]]; then
+        log_with_level "INFO" "Installing JVM toolchain (java, kotlin)..."
+        install_asdf_plugin java
+        install_asdf_plugin kotlin
+        if [ -n "$java_version" ]; then
+            install_asdf_version java "$java_version"
+        else
+            install_asdf_latest java openjdk
+        fi
+        if [ -n "$kotlin_version" ]; then
+            install_asdf_version kotlin "$kotlin_version"
+        else
+            install_asdf_latest kotlin
+        fi
+    else
+        log_with_level "INFO" "Skipping JVM toolchain (java, kotlin) — INSTALL_JVM_TOOLS not set"
+    fi
 
     # Reshim to ensure all binaries are available
     asdf reshim
