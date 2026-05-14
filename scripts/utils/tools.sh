@@ -410,14 +410,16 @@ setup_plannotator() {
 # `gh release download` for integrity rather than the checksum-verification
 # pattern used by Plannotator.
 setup_obscura() {
-    if command_exists obscura; then
+    # Path-based idempotency check — `command_exists` would miss a prior
+    # install when ~/.local/bin isn't on PATH in the current shell (e.g.
+    # non-interactive runs before .zshrc is sourced).
+    if [ -x "$HOME/.local/bin/obscura" ] && [ -x "$HOME/.local/bin/obscura-worker" ]; then
         log_with_level "INFO" "Obscura already installed"
         return 0
     fi
 
-    # gh is provided by `brew "gh"` and is always installed by the time this
-    # function runs from `npm run setup`. This check is a defensive fallback
-    # for standalone/sourced invocations where the brewfile hasn't run.
+    # Defensive guard for standalone or sourced invocations that bypass the
+    # full setup sequence.
     if ! command_exists gh; then
         log_with_level "WARN" "gh CLI required to install Obscura (TLS-pinned download), skipping"
         return 0
@@ -441,6 +443,8 @@ setup_obscura() {
     local asset_name="obscura-${asset_arch}.tar.gz"
     local tmp_dir
     tmp_dir=$(mktemp -d)
+    # shellcheck disable=SC2064
+    trap "rm -rf '$tmp_dir'" RETURN
 
     # Capture stderr separately so failure messages carry the actual cause
     # (auth, rate limit, 404, mismatched pattern) instead of a generic line.
@@ -450,14 +454,12 @@ setup_obscura() {
             --pattern "$asset_name" \
             --dir "$tmp_dir" 2>&1 >/dev/null); then
         log_with_level "ERROR" "Failed to download $asset_name from h4ckf0r0day/obscura: $gh_err"
-        rm -rf "$tmp_dir"
         return 1
     fi
 
     local tar_err
     if ! tar_err=$(tar -xzf "$tmp_dir/$asset_name" -C "$tmp_dir" 2>&1); then
         log_with_level "ERROR" "Failed to extract Obscura archive: $tar_err"
-        rm -rf "$tmp_dir"
         return 1
     fi
 
@@ -468,7 +470,6 @@ setup_obscura() {
     worker_bin=$(find "$tmp_dir" -type f -name obscura-worker -perm -u+x 2>/dev/null | head -1)
     if [ -z "$obscura_bin" ] || [ -z "$worker_bin" ]; then
         log_with_level "ERROR" "Obscura archive missing expected binaries (obscura, obscura-worker)"
-        rm -rf "$tmp_dir"
         return 1
     fi
 
@@ -480,10 +481,8 @@ setup_obscura() {
         || ! chmod +x "$HOME/.local/bin/obscura" "$HOME/.local/bin/obscura-worker"; then
         log_with_level "ERROR" "Failed to install Obscura binaries to ~/.local/bin"
         rm -f "$HOME/.local/bin/obscura" "$HOME/.local/bin/obscura-worker"
-        rm -rf "$tmp_dir"
         return 1
     fi
-    rm -rf "$tmp_dir"
 
     log_with_level "SUCCESS" "Obscura installed to ~/.local/bin"
     log_with_level "INFO" "Test with: obscura fetch https://example.com --eval 'document.title'"

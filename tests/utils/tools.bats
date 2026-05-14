@@ -217,10 +217,11 @@ RTKEOF
     [[ ! -e "$HOME/.local/bin/obscura" ]]
 }
 
-@test "setup_obscura skips when obscura already on PATH" {
-    _ensure_mock_bin_dir
-    printf '#!/bin/sh\nexit 0\n' > "$MOCK_BIN_DIR/obscura"
-    chmod +x "$MOCK_BIN_DIR/obscura"
+@test "setup_obscura skips when both binaries exist at ~/.local/bin" {
+    mkdir -p "$HOME/.local/bin"
+    printf '#!/bin/sh\nexit 0\n' > "$HOME/.local/bin/obscura"
+    printf '#!/bin/sh\nexit 0\n' > "$HOME/.local/bin/obscura-worker"
+    chmod +x "$HOME/.local/bin/obscura" "$HOME/.local/bin/obscura-worker"
 
     run zsh -c "
         export HOME='$HOME' PATH='$PATH'
