@@ -330,14 +330,16 @@ PLIST_EOF
 
 # Setup Plannotator (Visual annotation tool for AI coding agents)
 setup_plannotator() {
-    if command_exists plannotator; then
+    # Path-based idempotency check — `command_exists` would miss a prior
+    # install when ~/.local/bin isn't on PATH in the current shell (e.g.
+    # non-interactive runs before .zshrc is sourced).
+    if [ -x "$HOME/.local/bin/plannotator" ]; then
         log_with_level "INFO" "Plannotator already installed"
         return 0
     fi
 
     log_with_level "INFO" "Installing Plannotator..."
 
-    # Detect architecture
     local arch
     arch=$(uname -m)
     if [[ "$arch" == "arm64" ]] || [[ "$arch" == "aarch64" ]]; then
@@ -345,19 +347,26 @@ setup_plannotator() {
     elif [[ "$arch" == "x86_64" ]]; then
         arch="x64"
     else
-        log_with_level "ERROR" "Unsupported architecture: $arch"
-        return 1
+        # Plannotator is optional tooling; don't abort the larger setup pipeline
+        # over an unsupported arch (matches setup_obscura's policy).
+        log_with_level "WARN" "Unsupported architecture for Plannotator: $arch — skipping"
+        return 0
     fi
 
-    # Fetch latest version via GitHub API
-    local version
+    # Fetch latest version via GitHub API. gh failures are handled by the
+    # curl fallback below (and stderr would just be noise here); if both
+    # fail, the final "Failed to determine latest plannotator version"
+    # error is the actionable line.
+    local version=""
     if command_exists gh; then
-        version=$(gh api repos/backnotprop/plannotator/releases/latest --jq '.tag_name' 2>/dev/null)
+        version=$(gh api repos/backnotprop/plannotator/releases/latest --jq '.tag_name' 2>/dev/null) || version=""
     fi
 
     if [ -z "$version" ]; then
         log_with_level "WARN" "Could not fetch latest version via gh CLI, trying curl..."
-        version=$(curl -fsSL https://api.github.com/repos/backnotprop/plannotator/releases/latest | grep -o '"tag_name": *"[^"]*"' | sed 's/"tag_name": *"\(.*\)"/\1/' 2>/dev/null)
+        version=$(curl -fsSL https://api.github.com/repos/backnotprop/plannotator/releases/latest 2>/dev/null \
+            | grep -o '"tag_name": *"[^"]*"' \
+            | sed 's/"tag_name": *"\(.*\)"/\1/')
     fi
 
     if [ -z "$version" ]; then
@@ -367,37 +376,43 @@ setup_plannotator() {
 
     log_with_level "INFO" "Latest plannotator version: $version"
 
-    # Download binary and checksum
     local binary_name="plannotator-darwin-${arch}"
     local binary_url="https://github.com/backnotprop/plannotator/releases/download/${version}/${binary_name}"
     local checksum_url="${binary_url}.sha256"
     local tmp_dir
     tmp_dir=$(mktemp -d)
+    # shellcheck disable=SC2064
+    trap "rm -rf '$tmp_dir'" RETURN
 
-    if ! curl -fsSL -o "$tmp_dir/${binary_name}" "$binary_url"; then
-        log_with_level "ERROR" "Failed to download plannotator binary"
-        rm -rf "$tmp_dir"
+    # Capture stderr to surface the actual failure reason (HTTP 404, DNS, etc.)
+    local curl_err
+    if ! curl_err=$(curl -fsSL -o "$tmp_dir/${binary_name}" "$binary_url" 2>&1); then
+        log_with_level "ERROR" "Failed to download plannotator binary ($binary_url): $curl_err"
         return 1
     fi
 
-    if ! curl -fsSL -o "$tmp_dir/${binary_name}.sha256" "$checksum_url"; then
-        log_with_level "ERROR" "Failed to download plannotator checksum"
-        rm -rf "$tmp_dir"
+    if ! curl_err=$(curl -fsSL -o "$tmp_dir/${binary_name}.sha256" "$checksum_url" 2>&1); then
+        log_with_level "ERROR" "Failed to download plannotator checksum ($checksum_url): $curl_err"
         return 1
     fi
 
     # Verify checksum (checksum file references the original binary filename)
-    if ! (cd "$tmp_dir" && shasum -a 256 -c "${binary_name}.sha256" >/dev/null 2>&1); then
-        log_with_level "ERROR" "Plannotator checksum verification failed"
-        rm -rf "$tmp_dir"
+    local shasum_err
+    if ! shasum_err=$(cd "$tmp_dir" && shasum -a 256 -c "${binary_name}.sha256" 2>&1); then
+        log_with_level "ERROR" "Plannotator checksum verification failed: $shasum_err"
         return 1
     fi
 
-    # Install to ~/.local/bin
-    mkdir -p "$HOME/.local/bin"
-    mv "$tmp_dir/${binary_name}" "$HOME/.local/bin/plannotator"
-    chmod +x "$HOME/.local/bin/plannotator"
-    rm -rf "$tmp_dir"
+    # Single guarded block — without this, a failed mv (cross-device, disk
+    # full, permission denied) would silently log SUCCESS with no binary on
+    # disk.
+    if ! mkdir -p "$HOME/.local/bin" \
+        || ! mv "$tmp_dir/${binary_name}" "$HOME/.local/bin/plannotator" \
+        || ! chmod +x "$HOME/.local/bin/plannotator"; then
+        log_with_level "ERROR" "Failed to install plannotator binary to ~/.local/bin"
+        rm -f "$HOME/.local/bin/plannotator"
+        return 1
+    fi
 
     log_with_level "SUCCESS" "Plannotator installed successfully"
     log_with_level "INFO" "Install the Claude Code plugin: /plugin marketplace add backnotprop/plannotator"
