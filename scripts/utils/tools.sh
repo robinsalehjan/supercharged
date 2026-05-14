@@ -415,6 +415,9 @@ setup_obscura() {
         return 0
     fi
 
+    # gh is provided by `brew "gh"` and is always installed by the time this
+    # function runs from `npm run setup`. This check is a defensive fallback
+    # for standalone/sourced invocations where the brewfile hasn't run.
     if ! command_exists gh; then
         log_with_level "WARN" "gh CLI required to install Obscura (TLS-pinned download), skipping"
         return 0
