@@ -105,6 +105,8 @@ google-chrome   # Chromium-based browser
 ## AI Coding Tools (Installed with Claude Code)
 ```bash
 zeroshot     # Autonomous AI coding CLI (@covibes/zeroshot via npm)
+obscura      # Rust-based headless browser for AI agents / web scraping
+             # (h4ckf0r0day/obscura — GitHub release binary to ~/.local/bin)
 ```
 
 ## ZSH Enhancements

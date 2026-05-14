@@ -403,6 +403,77 @@ setup_plannotator() {
     log_with_level "INFO" "Install the Claude Code plugin: /plugin marketplace add backnotprop/plannotator"
 }
 
+# Setup Obscura (Rust-based headless browser for AI agents and web scraping)
+# Upstream: https://github.com/h4ckf0r0day/obscura
+# Releases ship as tarballs containing two binaries (`obscura` + `obscura-worker`)
+# and don't include .sha256 sidecars, so we rely on TLS-pinned download via
+# `gh release download` for integrity rather than the checksum-verification
+# pattern used by Plannotator.
+setup_obscura() {
+    if command_exists obscura; then
+        log_with_level "INFO" "Obscura already installed"
+        return 0
+    fi
+
+    if ! command_exists gh; then
+        log_with_level "WARN" "gh CLI required to install Obscura (TLS-pinned download), skipping"
+        return 0
+    fi
+
+    log_with_level "INFO" "Installing Obscura (headless browser for AI agents)..."
+
+    # Obscura's release assets are named obscura-<arch>-macos.tar.gz
+    local arch_uname asset_arch
+    arch_uname=$(uname -m)
+    case "$arch_uname" in
+        arm64|aarch64) asset_arch="aarch64-macos" ;;
+        x86_64)        asset_arch="x86_64-macos" ;;
+        *)
+            log_with_level "ERROR" "Unsupported architecture for Obscura: $arch_uname"
+            return 1
+            ;;
+    esac
+
+    local asset_name="obscura-${asset_arch}.tar.gz"
+    local tmp_dir
+    tmp_dir=$(mktemp -d)
+
+    if ! gh release download \
+            --repo h4ckf0r0day/obscura \
+            --pattern "$asset_name" \
+            --dir "$tmp_dir" >/dev/null 2>&1; then
+        log_with_level "ERROR" "Failed to download $asset_name from h4ckf0r0day/obscura"
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    if ! tar -xzf "$tmp_dir/$asset_name" -C "$tmp_dir" 2>/dev/null; then
+        log_with_level "ERROR" "Failed to extract Obscura archive"
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    # Locate the two binaries anywhere in the extracted tree (some releases
+    # nest them in a subdir, others put them at the archive root).
+    local obscura_bin worker_bin
+    obscura_bin=$(find "$tmp_dir" -type f -name obscura -perm -u+x 2>/dev/null | head -1)
+    worker_bin=$(find "$tmp_dir" -type f -name obscura-worker -perm -u+x 2>/dev/null | head -1)
+    if [ -z "$obscura_bin" ] || [ -z "$worker_bin" ]; then
+        log_with_level "ERROR" "Obscura archive missing expected binaries (obscura, obscura-worker)"
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    mkdir -p "$HOME/.local/bin"
+    mv "$obscura_bin" "$HOME/.local/bin/obscura"
+    mv "$worker_bin" "$HOME/.local/bin/obscura-worker"
+    chmod +x "$HOME/.local/bin/obscura" "$HOME/.local/bin/obscura-worker"
+    rm -rf "$tmp_dir"
+
+    log_with_level "SUCCESS" "Obscura installed to ~/.local/bin"
+    log_with_level "INFO" "Test with: obscura fetch https://example.com --eval 'document.title'"
+}
+
 # Setup Claude Code Statusline (Enhanced terminal statusline)
 setup_statusline() {
     # Check if statusline is already installed

@@ -331,6 +331,9 @@ main() {
         # Setup Plannotator for visual plan annotation
         setup_plannotator
 
+        # Setup Obscura (Rust-based headless browser for AI agents / web scraping)
+        setup_obscura
+
         # Setup Claude Code statusline for enhanced terminal display
         setup_statusline
 
