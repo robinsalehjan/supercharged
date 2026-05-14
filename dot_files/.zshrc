@@ -40,6 +40,18 @@ if command -v asdf >/dev/null 2>&1 && asdf where kotlin >/dev/null 2>&1; then
     export KOTLIN_HOME=$(asdf where kotlin)
 fi
 
+# Export DEVELOPER_DIR from the active Xcode toolchain so tools with hardcoded
+# `/Applications/Xcode.app` rpaths (e.g. periphery 3.7+) work when Xcode is
+# installed under a versioned name (e.g. via `xcodes` as Xcode-X.Y.Z.app).
+# Always resolves at shell init — no hardcoded path. Survives `xcodes select`.
+if command -v xcode-select >/dev/null 2>&1; then
+    _xcode_developer_dir=$(xcode-select -p 2>/dev/null)
+    if [ -n "$_xcode_developer_dir" ] && [ -d "$_xcode_developer_dir" ]; then
+        export DEVELOPER_DIR="$_xcode_developer_dir"
+    fi
+    unset _xcode_developer_dir
+fi
+
 # Function to deduplicate PATH (O(n) using associative array)
 deduplicate_path() {
     local IFS=':'

@@ -458,8 +458,12 @@ setup_obscura() {
     local asset_name="obscura-${asset_arch}.tar.gz"
     local tmp_dir
     tmp_dir=$(mktemp -d)
-    # shellcheck disable=SC2064
-    trap "rm -rf '$tmp_dir'" RETURN
+
+    # Cleanup helper — `trap ... RETURN` is bash-only (zsh errors with
+    # "undefined signal: RETURN"), and `trap ... EXIT` inside a function fires
+    # on shell exit in zsh, not function return. So clean up explicitly at
+    # each exit path via this helper.
+    _obscura_cleanup() { rm -rf "$tmp_dir"; }
 
     # Capture stderr separately so failure messages carry the actual cause
     # (auth, rate limit, 404, mismatched pattern) instead of a generic line.
@@ -469,12 +473,14 @@ setup_obscura() {
             --pattern "$asset_name" \
             --dir "$tmp_dir" 2>&1 >/dev/null); then
         log_with_level "ERROR" "Failed to download $asset_name from h4ckf0r0day/obscura: $gh_err"
+        _obscura_cleanup
         return 1
     fi
 
     local tar_err
     if ! tar_err=$(tar -xzf "$tmp_dir/$asset_name" -C "$tmp_dir" 2>&1); then
         log_with_level "ERROR" "Failed to extract Obscura archive: $tar_err"
+        _obscura_cleanup
         return 1
     fi
 
@@ -485,6 +491,7 @@ setup_obscura() {
     worker_bin=$(find "$tmp_dir" -type f -name obscura-worker -perm -u+x 2>/dev/null | head -1)
     if [ -z "$obscura_bin" ] || [ -z "$worker_bin" ]; then
         log_with_level "ERROR" "Obscura archive missing expected binaries (obscura, obscura-worker)"
+        _obscura_cleanup
         return 1
     fi
 
@@ -496,9 +503,11 @@ setup_obscura() {
         || ! chmod +x "$HOME/.local/bin/obscura" "$HOME/.local/bin/obscura-worker"; then
         log_with_level "ERROR" "Failed to install Obscura binaries to ~/.local/bin"
         rm -f "$HOME/.local/bin/obscura" "$HOME/.local/bin/obscura-worker"
+        _obscura_cleanup
         return 1
     fi
 
+    _obscura_cleanup
     log_with_level "SUCCESS" "Obscura installed to ~/.local/bin"
     log_with_level "INFO" "Test with: obscura fetch https://example.com --eval 'document.title'"
 }

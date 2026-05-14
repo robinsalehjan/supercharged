@@ -124,6 +124,9 @@ brew \"swift-format\"
 brew \"swiftformat\"
 brew \"ios-deploy\"
 tap \"peripheryapp/periphery\"
+# Formula only — do NOT also install \`brew install --cask periphery\`. The cask
+# ships an older standalone build and its presence prevents \`brew\` from linking
+# the formula's \`periphery\` binary into /opt/homebrew/bin, breaking PATH lookup.
 brew \"periphery\"
 tap \"getsentry/xcodebuildmcp\"
 brew \"xcodebuildmcp\""

@@ -71,6 +71,30 @@ extract_tool_version() {
             # plannotator has no version flag - just check if executable
             echo "installed"
             ;;
+        "xcodes")
+            # xcodes uses `xcodes version` subcommand (rejects --version)
+            xcodes version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || echo "0.0.0"
+            ;;
+        "xcode-build-server")
+            # No version flag at all - both --version and version print usage
+            echo "installed"
+            ;;
+        "kubectl")
+            # kubectl rejects --version; `version --client` avoids server ping
+            kubectl version --client 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || echo "0.0.0"
+            ;;
+        "obscura")
+            # No version flag (clap rejects --version/-V/version subcommand)
+            echo "installed"
+            ;;
+        "periphery")
+            # Binary needs DEVELOPER_DIR to resolve its hardcoded
+            # `/Applications/Xcode.app` rpath when Xcode is installed under
+            # a versioned name (e.g. Xcode-26.4.1.app via `xcodes`). Setting
+            # it from `xcode-select -p` lets `periphery version` run cleanly.
+            DEVELOPER_DIR="$(xcode-select -p 2>/dev/null)" periphery version 2>&1 \
+                | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || echo "0.0.0"
+            ;;
         *)
             # Default: try standard --version flag
             version_output=$($cmd --version 2>&1 | head -1 || true)
@@ -351,7 +375,10 @@ validate_installation() {
         if [[ "${INSTALL_NETWORK_TOOLS:-Y}" =~ ^[Yy] ]]; then
             echo ""
             echo "Network Tools:"
-            validate_tool "wireshark" "" || ((warned++))
+            # The `wireshark` brew formula ships CLI tools (tshark, dumpcap)
+            # but no `wireshark` binary on macOS — that's the separate cask.
+            # Check tshark, which is the formula's primary entry point.
+            validate_tool "tshark" "" || ((warned++))
             validate_tool "mitmproxy" "" || ((warned++))
             # Proxyman is a cask without a top-level CLI shim, so just check the .app exists
             if [ -d "/Applications/Proxyman.app" ]; then

@@ -1,5 +1,14 @@
 #!/bin/zsh
 
+# Defensive: clear interactive-safety aliases (cp -iv, mv -iv, mkdir -pv from
+# dot_files/.zshrc) that would prompt on overwrite when this file is sourced
+# from a user's interactive shell. Scripts executed via shebang start a fresh
+# non-interactive zsh and never see these aliases, but sourcing into a live
+# session (e.g. `source scripts/utils.sh && setup_obscura`) would otherwise
+# inherit them and break unattended cp/mv calls inside setup_* helpers.
+# `|| true` keeps `set -e` callers happy when the aliases don't exist.
+unalias cp mv mkdir 2>/dev/null || true
+
 # Compute paths once at script load time
 # When sourced, use bash's BASH_SOURCE or zsh's special handling
 if [[ -n "${BASH_SOURCE[0]}" ]]; then
