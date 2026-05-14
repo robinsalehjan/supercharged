@@ -247,6 +247,85 @@ RTKEOF
     [[ -x "$HOME/.local/bin/obscura-worker" ]]
 }
 
+@test "setup_obscura installs both binaries on x86_64" {
+    mock_gh_release_obscura
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        uname() { [ \"\$1\" = '-m' ] && echo 'x86_64' || command uname \"\$@\"; }
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_obscura
+    "
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"installed to ~/.local/bin"* ]]
+    [[ -x "$HOME/.local/bin/obscura" ]]
+    [[ -x "$HOME/.local/bin/obscura-worker" ]]
+}
+
+@test "setup_obscura logs gh failure details and leaves no binaries behind" {
+    _ensure_mock_bin_dir
+    # Failing gh stub that emits a recognizable stderr line on `release download`
+    cat > "$MOCK_BIN_DIR/gh" << 'GHEOF'
+#!/bin/sh
+if [ "$1" = "release" ] && [ "$2" = "download" ]; then
+    echo "HTTP 401: Bad credentials" >&2
+    exit 1
+fi
+exit 0
+GHEOF
+    chmod +x "$MOCK_BIN_DIR/gh"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_obscura
+    "
+    [[ "$status" -ne 0 ]]
+    [[ "$output" == *"Failed to download"* ]]
+    [[ "$output" == *"HTTP 401"* ]]
+    [[ ! -e "$HOME/.local/bin/obscura" ]]
+    [[ ! -e "$HOME/.local/bin/obscura-worker" ]]
+}
+
+@test "setup_obscura errors when archive is missing required binaries" {
+    _ensure_mock_bin_dir
+    # gh stub that produces a tarball containing only `obscura` (no worker)
+    cat > "$MOCK_BIN_DIR/gh" << 'GHEOF'
+#!/bin/sh
+if [ "$1" = "release" ] && [ "$2" = "download" ]; then
+    pattern=""
+    dir=""
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --pattern) pattern="$2"; shift 2 ;;
+            --dir) dir="$2"; shift 2 ;;
+            *) shift ;;
+        esac
+    done
+    mkdir -p "$dir"
+    staging=$(mktemp -d)
+    printf '#!/bin/sh\nexit 0\n' > "$staging/obscura"
+    chmod +x "$staging/obscura"
+    tar -czf "$dir/$pattern" -C "$staging" obscura
+    rm -rf "$staging"
+    exit 0
+fi
+exit 0
+GHEOF
+    chmod +x "$MOCK_BIN_DIR/gh"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        uname() { [ \"\$1\" = '-m' ] && echo 'arm64' || command uname \"\$@\"; }
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_obscura
+    "
+    [[ "$status" -ne 0 ]]
+    [[ "$output" == *"missing expected binaries"* ]]
+    [[ ! -e "$HOME/.local/bin/obscura" ]]
+    [[ ! -e "$HOME/.local/bin/obscura-worker" ]]
+}
+
 @test "setup_obscura skips unsupported architecture without blocking setup" {
     mock_gh_release_obscura
 
