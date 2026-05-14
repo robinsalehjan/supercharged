@@ -77,8 +77,10 @@ install_homebrew() {
 }
 
 build_brewfile() {
+    # Note: homebrew/services and homebrew/bundle are now built into core brew,
+    # so they no longer need to be tapped explicitly. Tapping them produces
+    # deprecation warnings on brew 5.1.11+.
     local content='tap "thoughtbot/formulae"
-tap "homebrew/services"
 
 brew "bash"
 brew "coreutils"
