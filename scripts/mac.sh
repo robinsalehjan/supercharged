@@ -146,7 +146,15 @@ cask \"ollama-app\"
 cask \"reveal\"
 cask \"mitmproxy\"
 cask \"proxyman\"
-cask \"mullvad-vpn\"
+cask \"mullvad-vpn\""
+
+    if [[ "${INSTALL_EXTRA_APPS:-N}" =~ ^[Yy] ]]; then
+        content="$content
+cask \"postman\"
+cask \"google-chrome\""
+    fi
+
+    content="$content
 
 mas \"AdBlock\", id: 1402042596
 mas \"DaisyDisk\", id: 411643860"
@@ -178,8 +186,10 @@ main() {
     bundler_version="${TOOL_VERSIONS[bundler]}"
     gcloud_version="${TOOL_VERSIONS[gcloud]}"
     firebase_version="${TOOL_VERSIONS[firebase]}"
-    java_version="${TOOL_VERSIONS[java]}"
-    kotlin_version="${TOOL_VERSIONS[kotlin]}"
+    # JVM toolchain pins are optional — see INSTALL_JVM_TOOLS block below.
+    # If absent in .tool-versions, the setup falls back to `asdf latest`.
+    java_version="${TOOL_VERSIONS[java]:-}"
+    kotlin_version="${TOOL_VERSIONS[kotlin]:-}"
 
     # Version checks
     check_version "git" "2.49.0"
@@ -248,8 +258,6 @@ main() {
     install_asdf_plugin bundler
     install_asdf_plugin gcloud
     install_asdf_plugin firebase
-    install_asdf_plugin java
-    install_asdf_plugin kotlin
 
     # Install versions
     install_asdf_version python "$python_version"
@@ -258,8 +266,26 @@ main() {
     install_asdf_version bundler "$bundler_version"
     install_asdf_version gcloud "$gcloud_version"
     install_asdf_version firebase "$firebase_version"
-    install_asdf_version java "$java_version"
-    install_asdf_version kotlin "$kotlin_version"
+
+    # JVM toolchain is opt-in (work machines only by default). When no pin is
+    # provided in .tool-versions, install the latest available version.
+    if [[ "${INSTALL_JVM_TOOLS:-N}" =~ ^[Yy] ]]; then
+        log_with_level "INFO" "Installing JVM toolchain (java, kotlin)..."
+        install_asdf_plugin java
+        install_asdf_plugin kotlin
+        if [ -n "$java_version" ]; then
+            install_asdf_version java "$java_version"
+        else
+            install_asdf_latest java openjdk
+        fi
+        if [ -n "$kotlin_version" ]; then
+            install_asdf_version kotlin "$kotlin_version"
+        else
+            install_asdf_latest kotlin
+        fi
+    else
+        log_with_level "INFO" "Skipping JVM toolchain (java, kotlin) — INSTALL_JVM_TOOLS not set"
+    fi
 
     # Reshim to ensure all binaries are available
     asdf reshim

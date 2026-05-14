@@ -28,6 +28,26 @@ install_asdf_plugin() {
     fi
 }
 
+# Resolve `latest` for an asdf plugin and install it (optionally filtered).
+# Usage: install_asdf_latest <plugin> [filter]
+#   filter is passed through to `asdf latest` (e.g. "openjdk" for the java plugin).
+install_asdf_latest() {
+    local plugin=$1
+    local filter="${2:-}"
+    local resolved
+    if [ -n "$filter" ]; then
+        resolved=$(asdf latest "$plugin" "$filter" 2>/dev/null || true)
+    else
+        resolved=$(asdf latest "$plugin" 2>/dev/null || true)
+    fi
+    if [ -z "$resolved" ]; then
+        log_with_level "ERROR" "Failed to resolve latest version for $plugin${filter:+ (filter: $filter)}"
+        return 1
+    fi
+    log_with_level "INFO" "asdf: latest $plugin${filter:+ ($filter)} → $resolved"
+    install_asdf_version "$plugin" "$resolved"
+}
+
 # Function to safely install asdf versions (idempotent)
 install_asdf_version() {
     local plugin=$1
