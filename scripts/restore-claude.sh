@@ -379,10 +379,19 @@ uninstall_orphan_plugins() {
 
     # Desired set: marketplace names + plugin-keys ("plugin@marketplace") from
     # the restored registry, augmented by any marketplaces we always preserve.
-    local desired_marketplaces
-    desired_marketplaces=$(jq -r 'keys[]' "$marketplaces_file" 2>/dev/null || true)
-    local desired_plugin_keys
-    desired_plugin_keys=$(jq -r '.plugins // {} | keys[]' "$plugins_file" 2>/dev/null || true)
+    # Bail on jq parse errors — falling back to an empty set would mark every
+    # cached plugin as orphaned and rm -rf the whole cache.
+    local desired_marketplaces desired_plugin_keys jq_err
+    if ! desired_marketplaces=$(jq -r 'keys[]' "$marketplaces_file" 2>&1); then
+        jq_err="$desired_marketplaces"
+        log_with_level "ERROR" "Failed to parse $marketplaces_file — skipping orphan plugin cleanup ($jq_err)"
+        return 1
+    fi
+    if ! desired_plugin_keys=$(jq -r '.plugins // {} | keys[]' "$plugins_file" 2>&1); then
+        jq_err="$desired_plugin_keys"
+        log_with_level "ERROR" "Failed to parse $plugins_file — skipping orphan plugin cleanup ($jq_err)"
+        return 1
+    fi
 
     local keep_marketplaces="$desired_marketplaces"
     local mp
@@ -686,7 +695,8 @@ else
     log_with_level "WARN" "Plugin installation failed — run 'npm run install:plugins' manually"
 fi
 
-# Remove caches for plugins/marketplaces that are no longer tracked
+# Prune caches/marketplaces no longer in the newly-restored registry — must
+# run after install-plugins.sh so freshly-installed entries aren't pruned.
 uninstall_orphan_plugins
 
 # Install git-cloned skills from the restored configuration

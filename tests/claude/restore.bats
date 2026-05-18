@@ -861,3 +861,63 @@ run_uninstall_orphan_plugins() {
   [ -d "$TEMP_CLAUDE_PLUGINS/cache/axiom-marketplace/axiom/3.5.0" ]
   [ -d "$TEMP_CLAUDE_PLUGINS/marketplaces/axiom-marketplace" ]
 }
+
+@test "uninstall_orphan_plugins is idempotent — second invocation is a no-op" {
+  seed_plugin_tree \
+    "axiom-marketplace/axiom/3.5.0" \
+    "visual-explainer-marketplace/visual-explainer/0.7.1" \
+    -- \
+    "axiom-marketplace" \
+    "nicobailon-visual-explainer"
+
+  write_registry \
+    '{"version":2,"plugins":{"axiom@axiom-marketplace":[{}]}}' \
+    '{"axiom-marketplace":{}}'
+
+  run_uninstall_orphan_plugins
+  # Second invocation against the now-pruned tree must succeed and leave the
+  # kept entries intact — guards against rmdir/grep regressions.
+  run run_uninstall_orphan_plugins
+
+  [ "$status" -eq 0 ]
+  [ -d "$TEMP_CLAUDE_PLUGINS/cache/axiom-marketplace/axiom/3.5.0" ]
+  [ -d "$TEMP_CLAUDE_PLUGINS/marketplaces/axiom-marketplace" ]
+  [ ! -d "$TEMP_CLAUDE_PLUGINS/cache/visual-explainer-marketplace" ]
+  [ ! -d "$TEMP_CLAUDE_PLUGINS/marketplaces/nicobailon-visual-explainer" ]
+}
+
+@test "uninstall_orphan_plugins bails on malformed installed_plugins.json rather than nuking the cache" {
+  # Regression guard: malformed JSON used to silently produce an empty desired
+  # set, which made grep -Fxq match nothing and rm -rf the whole cache.
+  seed_plugin_tree \
+    "axiom-marketplace/axiom/3.5.0" \
+    -- \
+    "axiom-marketplace"
+
+  # Valid marketplaces file, malformed plugins file.
+  printf '%s\n' '{"axiom-marketplace":{}}' > "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json"
+  printf '%s\n' '{not valid json' > "$TEMP_CLAUDE_PLUGINS/installed_plugins.json"
+
+  run run_uninstall_orphan_plugins
+
+  [ "$status" -ne 0 ]
+  # Cache must survive — the whole point of the regression guard.
+  [ -d "$TEMP_CLAUDE_PLUGINS/cache/axiom-marketplace/axiom/3.5.0" ]
+  [ -d "$TEMP_CLAUDE_PLUGINS/marketplaces/axiom-marketplace" ]
+}
+
+@test "uninstall_orphan_plugins bails on malformed known_marketplaces.json rather than nuking the cache" {
+  seed_plugin_tree \
+    "axiom-marketplace/axiom/3.5.0" \
+    -- \
+    "axiom-marketplace"
+
+  printf '%s\n' '{"version":2,"plugins":{"axiom@axiom-marketplace":[{}]}}' > "$TEMP_CLAUDE_PLUGINS/installed_plugins.json"
+  printf '%s\n' '<<<corrupt>>>' > "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json"
+
+  run run_uninstall_orphan_plugins
+
+  [ "$status" -ne 0 ]
+  [ -d "$TEMP_CLAUDE_PLUGINS/cache/axiom-marketplace/axiom/3.5.0" ]
+  [ -d "$TEMP_CLAUDE_PLUGINS/marketplaces/axiom-marketplace" ]
+}

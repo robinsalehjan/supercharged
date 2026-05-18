@@ -105,3 +105,82 @@ run_install_skills() {
   [[ "$output" == *"fork.git @ dev"* ]]
   [[ "$output" != *"original.git @ main"* ]]
 }
+
+@test "missing ref defaults to main" {
+  local skills='{"version":1,"skills":{"no-ref-skill":{"repo":"https://example.com/no-ref.git"}}}'
+
+  run run_install_skills "$skills" "" --dry-run
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"no-ref-skill (https://example.com/no-ref.git @ main)"* ]]
+}
+
+@test "degenerate installed_skills.json is a clean no-op" {
+  # Missing .skills key — must not crash, must not iterate.
+  local skills='{"version":1}'
+
+  run run_install_skills "$skills" "" --dry-run
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Skill installation complete"* ]]
+  [[ "$output" != *"Would clone"* ]]
+  [[ "$output" != *"Would update"* ]]
+}
+
+@test "empty skills object is a clean no-op" {
+  local skills='{"version":1,"skills":{}}'
+
+  run run_install_skills "$skills" "" --dry-run
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Skill installation complete"* ]]
+  [[ "$output" != *"Would clone"* ]]
+}
+
+@test "skips a target that exists but is not a git checkout" {
+  # Pre-create a plain directory at the target path. Production behavior is to
+  # log a warning and continue — must not rm-rf or attempt a clone over it.
+  local skills='{"version":1,"skills":{"squatted":{"repo":"https://example.com/squatted.git","ref":"main"}}}'
+
+  mkdir -p "$HOME/.claude/skills/squatted"
+  echo "user data" > "$HOME/.claude/skills/squatted/important.txt"
+
+  run run_install_skills "$skills" ""
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Skipping squatted"* ]]
+  [[ "$output" == *"is not a git checkout"* ]]
+  # Critical: user content must survive untouched.
+  [ -f "$HOME/.claude/skills/squatted/important.txt" ]
+  [ "$(cat "$HOME/.claude/skills/squatted/important.txt")" = "user data" ]
+}
+
+@test "failed clone surfaces git stderr and continues to the next skill" {
+  # Bogus URL forces a clone failure; the WARN line must include git's actual
+  # error rather than the silent "(continuing)" we used to print. The second
+  # skill should still be processed.
+  local skills='{"version":1,"skills":{"bad-repo":{"repo":"file:///nonexistent/path.git","ref":"main"},"second":{"repo":"file:///also-nonexistent.git","ref":"main"}}}'
+
+  run run_install_skills "$skills" ""
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Failed to clone skill: bad-repo"* ]]
+  # git's actual error should appear after the dash separator.
+  [[ "$output" == *"Failed to clone skill: bad-repo (continuing) — "* ]]
+  # Second skill is still attempted even after the first failed.
+  [[ "$output" == *"Cloning skill: second"* ]]
+  [[ "$output" == *"Skill installation complete"* ]]
+}
+
+@test "malformed installed_skills.local.json surfaces a warning and falls back to the base file" {
+  local skills='{"version":1,"skills":{"only-base":{"repo":"https://example.com/base.git","ref":"main"}}}'
+  local bad_local='{not valid json'
+
+  run run_install_skills "$skills" "$bad_local" --dry-run
+
+  [ "$status" -eq 0 ]
+  # The merge failure should be visible (not silently dropped as it was before).
+  [[ "$output" == *"Failed to merge skills JSON"* ]]
+  # Base file still drives the install.
+  [[ "$output" == *"only-base"* ]]
+}

@@ -47,6 +47,8 @@ npm run restore:claude -- --force # Force restore Claude Code config (see Post-R
 npm run restore:all               # Restore Claude config + dotfiles in one step
 npm run install:plugins           # Install all marketplaces and plugins via claude CLI
 npm run install:plugins -- --dry-run # Preview what would be installed
+npm run install:skills            # Clone/update git-based skills into ~/.claude/skills
+npm run install:skills -- --dry-run # Preview what would be installed/updated
 
 # Versioning and Releases
 npm run version:show              # Print version, commit SHA, tag, branch, host

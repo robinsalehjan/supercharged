@@ -9,12 +9,14 @@
 # `|| true` keeps `set -e` callers happy when the aliases don't exist.
 unalias cp mv mkdir 2>/dev/null || true
 
-# Compute paths once at script load time
-# When sourced, use bash's BASH_SOURCE or zsh's special handling
-if [[ -n "${BASH_SOURCE[0]}" ]]; then
+# Compute paths once at script load time.
+# When sourced, use bash's BASH_SOURCE or zsh's special handling. Guard the
+# array access with :- so callers running under `set -u` (which leaves
+# BASH_SOURCE unset under zsh) don't trip on the parameter check itself.
+if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
     # bash: use BASH_SOURCE
     UTILS_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)"
-elif [[ -n "${ZSH_VERSION}" ]]; then
+elif [[ -n "${ZSH_VERSION:-}" ]]; then
     # zsh: use %x parameter expansion
     UTILS_SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" 2>/dev/null && pwd)"
 else

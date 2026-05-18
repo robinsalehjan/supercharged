@@ -17,6 +17,7 @@
 # of installed_skills.json, local wins on conflict).
 
 set -e
+set -u
 set -o pipefail
 
 source "$(dirname "$0")/utils.sh"
@@ -60,14 +61,22 @@ fi
 log_with_level "INFO" "Installing skills into $SKILLS_DIR..."
 mkdir -p "$SKILLS_DIR"
 
-# Merge repo + local (local wins on conflict)
-SKILLS_JSON=$(jq -s '{ version: .[0].version, skills: (.[0].skills * ((.[1] // {}).skills // {})) }' \
-    "$SKILLS_FILE" \
-    "$([ -f "$SKILLS_LOCAL_FILE" ] && echo "$SKILLS_LOCAL_FILE" || echo "/dev/null")" \
-    2>/dev/null || cat "$SKILLS_FILE")
+# Merge repo + local (local wins on conflict). Surface jq parse errors instead
+# of silently dropping local overrides — a typo in installed_skills.local.json
+# should be visible, not invisible.
+local_source="/dev/null"
+[ -f "$SKILLS_LOCAL_FILE" ] && local_source="$SKILLS_LOCAL_FILE"
+if ! SKILLS_JSON=$(jq -s '{ version: .[0].version, skills: (.[0].skills * ((.[1] // {}).skills // {})) }' \
+    "$SKILLS_FILE" "$local_source" 2>&1); then
+    log_with_level "WARN" "Failed to merge skills JSON ($SKILLS_JSON) — falling back to $SKILLS_FILE"
+    SKILLS_JSON=$(cat "$SKILLS_FILE")
+fi
 
 if [ -f "$SKILLS_LOCAL_FILE" ]; then
-    local_count=$(jq '.skills | length' "$SKILLS_LOCAL_FILE" 2>/dev/null || echo 0)
+    if ! local_count=$(jq '.skills | length' "$SKILLS_LOCAL_FILE" 2>&1); then
+        log_with_level "WARN" "Could not count local skills ($local_count)"
+        local_count=0
+    fi
     log_with_level "INFO" "Merged $local_count local skill(s) from installed_skills.local.json"
 fi
 
@@ -88,25 +97,28 @@ while IFS=$'\t' read -r name repo ref; do
 
     if [ -d "$target/.git" ]; then
         log_with_level "INFO" "Updating skill: $name"
-        if git -C "$target" fetch --quiet origin "$ref" 2>/dev/null \
-           && git -C "$target" checkout --quiet "$ref" 2>/dev/null \
-           && git -C "$target" pull --ff-only --quiet origin "$ref" 2>/dev/null; then
+        if git_err=$(git -C "$target" fetch origin "$ref" 2>&1 \
+                  && git -C "$target" checkout "$ref" 2>&1 \
+                  && git -C "$target" pull --ff-only origin "$ref" 2>&1); then
             log_with_level "SUCCESS" "Updated skill: $name"
         else
-            log_with_level "WARN" "Failed to update skill: $name (continuing)"
+            log_with_level "WARN" "Failed to update skill: $name (continuing) — $git_err"
         fi
     elif [ -e "$target" ]; then
         log_with_level "WARN" "Skipping $name — $target exists but is not a git checkout"
     else
         log_with_level "INFO" "Cloning skill: $name from $repo"
-        if git clone --quiet --branch "$ref" "$repo" "$target" 2>/dev/null \
-           || git clone --quiet "$repo" "$target" 2>/dev/null; then
+        # Try branch-specific clone first; fall back to default branch. Capture
+        # stderr from the final attempt so users see the actual git error.
+        if git clone --quiet --branch "$ref" "$repo" "$target" 2>/dev/null; then
             log_with_level "SUCCESS" "Installed skill: $name"
+        elif git_err=$(git clone "$repo" "$target" 2>&1); then
+            log_with_level "SUCCESS" "Installed skill: $name (default branch)"
         else
-            log_with_level "WARN" "Failed to clone skill: $name (continuing)"
+            log_with_level "WARN" "Failed to clone skill: $name (continuing) — $git_err"
         fi
     fi
-done < <(echo "$SKILLS_JSON" | jq -r '.skills | to_entries[] | [.key, .value.repo, (.value.ref // "main")] | @tsv')
+done < <(echo "$SKILLS_JSON" | jq -r '.skills // {} | to_entries[] | [.key, .value.repo, (.value.ref // "main")] | @tsv')
 
 log_with_level "SUCCESS" "Skill installation complete"
 if [ "$DRY_RUN" = false ]; then
