@@ -459,7 +459,6 @@ validate_installation() {
         validate_claude_component "Statusline" "$HOME/.claude/statusline/statusline.sh" || ((warned++))
         validate_tool "plannotator" "" || ((warned++))
         validate_tool "obscura" "" || ((warned++))
-        validate_tool "zeroshot" "" || true  # Optional AI workflow tool
 
         # Check for code-review-graph watcher
         # Note: grep -q can cause SIGPIPE with pipefail, so use redirect instead

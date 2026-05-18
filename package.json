@@ -17,6 +17,7 @@
     "restore:claude": "./scripts/restore-claude.sh",
     "restore:all": "npm run restore:claude && npm run restore:dotfiles",
     "install:plugins": "./scripts/install-plugins.sh",
+    "install:skills": "./scripts/install-skills.sh",
     "lint": "shellcheck --shell=bash --exclude=SC1071,SC2296,SC1091,SC2001 scripts/*.sh scripts/utils/*.sh",
     "test": "bats tests/**/*.bats",
     "test:watch": "nodemon --watch tests --watch scripts --ext sh,bats --exec 'npm test'",

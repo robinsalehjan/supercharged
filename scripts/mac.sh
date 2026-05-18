@@ -317,14 +317,6 @@ main() {
         }
         echo "$install_script" | bash
 
-        # Install zeroshot CLI for autonomous AI coding workflows
-        if ! command -v zeroshot >/dev/null 2>&1; then
-            log_with_level "INFO" "Installing zeroshot CLI..."
-            npm install -g @covibes/zeroshot || log_with_level "WARN" "Failed to install zeroshot"
-        else
-            log_with_level "INFO" "zeroshot already installed"
-        fi
-
         # Setup RTK for token optimization
         setup_rtk
 

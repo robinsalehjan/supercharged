@@ -357,6 +357,113 @@ merge_marketplace_config() {
     fi
 }
 
+# Function to remove plugin caches and marketplaces that are no longer tracked
+# in the restored registry. Anything on disk under ~/.claude/plugins/cache or
+# ~/.claude/plugins/marketplaces that isn't listed in installed_plugins.json /
+# known_marketplaces.json (or whitelisted via PRESERVE_MARKETPLACES) gets
+# nuked. Safe to run repeatedly — no-op when there's nothing orphaned.
+uninstall_orphan_plugins() {
+    local plugins_file="$CLAUDE_HOME/plugins/installed_plugins.json"
+    local marketplaces_file="$CLAUDE_HOME/plugins/known_marketplaces.json"
+    local cache_dir="$CLAUDE_HOME/plugins/cache"
+    local marketplaces_dir="$CLAUDE_HOME/plugins/marketplaces"
+
+    if [ ! -f "$plugins_file" ] || [ ! -f "$marketplaces_file" ]; then
+        return 0
+    fi
+
+    if ! command -v jq &> /dev/null; then
+        log_with_level "WARN" "jq not available — skipping orphan plugin cleanup"
+        return 0
+    fi
+
+    # Desired set: marketplace names + plugin-keys ("plugin@marketplace") from
+    # the restored registry, augmented by any marketplaces we always preserve.
+    # Bail on jq parse errors — falling back to an empty set would mark every
+    # cached plugin as orphaned and rm -rf the whole cache.
+    local desired_marketplaces desired_plugin_keys jq_err
+    if ! desired_marketplaces=$(jq -r 'keys[]' "$marketplaces_file" 2>&1); then
+        jq_err="$desired_marketplaces"
+        log_with_level "ERROR" "Failed to parse $marketplaces_file — skipping orphan plugin cleanup ($jq_err)"
+        return 1
+    fi
+    if ! desired_plugin_keys=$(jq -r '.plugins // {} | keys[]' "$plugins_file" 2>&1); then
+        jq_err="$desired_plugin_keys"
+        log_with_level "ERROR" "Failed to parse $plugins_file — skipping orphan plugin cleanup ($jq_err)"
+        return 1
+    fi
+
+    local keep_marketplaces="$desired_marketplaces"
+    local mp
+    for mp in "${PRESERVE_MARKETPLACES[@]}"; do
+        keep_marketplaces+=$'\n'"$mp"
+    done
+
+    local removed_count=0
+    local mp_path mp_name plugin_path plugin_name is_preserved
+
+    # Walk cache: ~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/
+    if [ -d "$cache_dir" ]; then
+        for mp_path in "$cache_dir"/*/; do
+            [ -d "$mp_path" ] || continue
+            mp_name="${mp_path%/}"
+            mp_name="${mp_name##*/}"
+
+            # Marketplace fully gone — nuke its entire cache subtree.
+            if ! grep -Fxq -- "$mp_name" <<<"$keep_marketplaces"; then
+                rm -rf -- "$mp_path"
+                log_with_level "INFO" "Removed orphan plugin cache: $mp_name"
+                removed_count=$((removed_count + 1))
+                continue
+            fi
+
+            # Preserved marketplaces keep every plugin under them, untouched.
+            is_preserved=false
+            for mp in "${PRESERVE_MARKETPLACES[@]}"; do
+                [ "$mp_name" = "$mp" ] && is_preserved=true && break
+            done
+            if [ "$is_preserved" = true ]; then
+                continue
+            fi
+
+            # Otherwise drop any plugin-dir not in the desired set.
+            for plugin_path in "$mp_path"*/; do
+                [ -d "$plugin_path" ] || continue
+                plugin_name="${plugin_path%/}"
+                plugin_name="${plugin_name##*/}"
+                if ! grep -Fxq -- "${plugin_name}@${mp_name}" <<<"$desired_plugin_keys"; then
+                    rm -rf -- "$plugin_path"
+                    log_with_level "INFO" "Removed orphan plugin cache: ${plugin_name}@${mp_name}"
+                    removed_count=$((removed_count + 1))
+                fi
+            done
+
+            # Tidy up an empty marketplace cache dir.
+            if [ -z "$(ls -A -- "$mp_path" 2>/dev/null)" ]; then
+                rmdir -- "$mp_path" 2>/dev/null || true
+            fi
+        done
+    fi
+
+    # Walk marketplace registry dirs.
+    if [ -d "$marketplaces_dir" ]; then
+        for mp_path in "$marketplaces_dir"/*/; do
+            [ -d "$mp_path" ] || continue
+            mp_name="${mp_path%/}"
+            mp_name="${mp_name##*/}"
+            if ! grep -Fxq -- "$mp_name" <<<"$keep_marketplaces"; then
+                rm -rf -- "$mp_path"
+                log_with_level "INFO" "Removed orphan marketplace: $mp_name"
+                removed_count=$((removed_count + 1))
+            fi
+        done
+    fi
+
+    if [ "$removed_count" -gt 0 ]; then
+        log_with_level "SUCCESS" "Cleaned up $removed_count orphan plugin/marketplace entry(ies)"
+    fi
+}
+
 # Load ~/.secrets once; sets SECRETS_LOADED=true on success.
 # Accepts either a single file at ~/.secrets or a directory of *.sh files
 # under ~/.secrets/ (non-shell files like GCP JSON are ignored by the loader
@@ -586,6 +693,20 @@ if "$PROJECT_ROOT/scripts/install-plugins.sh"; then
     log_with_level "SUCCESS" "Plugins installed"
 else
     log_with_level "WARN" "Plugin installation failed — run 'npm run install:plugins' manually"
+fi
+
+# Prune caches/marketplaces no longer in the newly-restored registry — must
+# run after install-plugins.sh so freshly-installed entries aren't pruned.
+uninstall_orphan_plugins
+
+# Install git-cloned skills from the restored configuration
+if [ -f "$CLAUDE_CONFIG_DIR/installed_skills.json" ]; then
+    log_with_level "INFO" "Installing skills..."
+    if "$PROJECT_ROOT/scripts/install-skills.sh"; then
+        log_with_level "SUCCESS" "Skills installed"
+    else
+        log_with_level "WARN" "Skill installation failed — run 'npm run install:skills' manually"
+    fi
 fi
 
 echo ""

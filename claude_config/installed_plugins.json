@@ -13,10 +13,10 @@
     "superpowers@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7",
-        "version": "5.0.7",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0",
+        "version": "5.1.0",
         "installedAt": "2026-04-30T08:48:06.054Z",
-        "lastUpdated": "2026-04-30T08:48:06.054Z",
+        "lastUpdated": "2026-05-16T09:26:19.828Z",
         "gitCommitSha": "6efe32c9e2dd002d0c394e861e0529675d1ab32e"
       }
     ],
@@ -138,24 +138,14 @@
         "lastUpdated": "2026-04-30T08:47:52.705Z"
       }
     ],
-    "modularity@vladikk-modularity": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/vladikk-modularity/modularity/1.5.0",
-        "version": "1.5.0",
-        "installedAt": "2026-04-30T08:48:00.441Z",
-        "lastUpdated": "2026-04-30T08:48:00.441Z",
-        "gitCommitSha": "bcdca9a595764b9aa88d5d8d6020f52e7f5f1f52"
-      }
-    ],
     "axiom@axiom-marketplace": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/axiom-marketplace/axiom/3.1.1",
-        "version": "3.1.1",
-        "installedAt": "2026-04-30T08:47:51.329Z",
-        "lastUpdated": "2026-04-30T08:47:51.329Z",
-        "gitCommitSha": "d938278280a56bb96ad25c0f1bd48f9d40379fa5"
+        "installPath": "$HOME/.claude/plugins/cache/axiom-marketplace/axiom/3.5.0",
+        "version": "3.5.0",
+        "installedAt": "2026-05-14T18:31:37.717Z",
+        "lastUpdated": "2026-05-18T16:05:36.239Z",
+        "gitCommitSha": "f917a352bf41b019a4d8625b54c0eac889deaf4e"
       }
     ],
     "codex@openai-codex": [
@@ -168,14 +158,13 @@
         "gitCommitSha": "807e03ac9d5aa23bc395fdec8c3767500a86b3cf"
       }
     ],
-    "visual-explainer@visual-explainer-marketplace": [
+    "playground@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/visual-explainer-marketplace/visual-explainer/0.7.1",
-        "version": "0.7.1",
-        "installedAt": "2026-04-30T08:48:11.662Z",
-        "lastUpdated": "2026-04-30T08:48:11.662Z",
-        "gitCommitSha": "8f1d0e38ab0f265632a31d2fd032f7b730c98c15"
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/playground/unknown",
+        "version": "unknown",
+        "installedAt": "2026-05-18T08:51:49.633Z",
+        "lastUpdated": "2026-05-18T08:51:49.633Z"
       }
     ]
   }

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "prd-taskmaster": {
+      "repo": "https://github.com/anombyte93/prd-taskmaster.git",
+      "ref": "main",
+      "description": "Generates engineer-focused PRDs for AI-assisted development (Taskmaster integration)."
+    }
+  }
+}

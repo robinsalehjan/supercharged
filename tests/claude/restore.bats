@@ -702,3 +702,222 @@ EOF
     return 1
   }
 }
+
+# =============================================================================
+# uninstall_orphan_plugins tests
+# =============================================================================
+#
+# Runs the real production function from restore-claude.sh against an isolated
+# $TEMP_CLAUDE tree, then asserts which cache/marketplace dirs survived.
+# Uses bash to source the function (matches other tests in this file); the
+# function only relies on POSIX parameter expansion + bash herestrings, so
+# behavior matches the zsh shebang in production.
+
+# Stage a fake plugin install tree under $TEMP_CLAUDE/plugins.
+# Usage: seed_plugin_tree <cache-spec...> -- <marketplace-spec...>
+#   cache-spec:        "<marketplace>/<plugin>/<version>"
+#   marketplace-spec:  "<marketplace>"  (may contain trailing spaces)
+seed_plugin_tree() {
+  local mode="cache"
+  for spec in "$@"; do
+    if [ "$spec" = "--" ]; then
+      mode="marketplaces"
+      continue
+    fi
+    if [ "$mode" = "cache" ]; then
+      mkdir -p "$TEMP_CLAUDE_PLUGINS/cache/$spec"
+    else
+      mkdir -p "$TEMP_CLAUDE_PLUGINS/marketplaces/$spec"
+    fi
+  done
+}
+
+# Write a minimal installed_plugins.json + known_marketplaces.json that lists
+# the desired (kept) plugins/marketplaces.
+write_registry() {
+  local plugins_json="$1"
+  local marketplaces_json="$2"
+  printf '%s\n' "$plugins_json" > "$TEMP_CLAUDE_PLUGINS/installed_plugins.json"
+  printf '%s\n' "$marketplaces_json" > "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json"
+}
+
+# Source uninstall_orphan_plugins from restore-claude.sh and invoke it against
+# the test $TEMP_CLAUDE. Preserves "vend-plugins" to match production config.
+run_uninstall_orphan_plugins() {
+  local func
+  func=$(sed -n '/^uninstall_orphan_plugins() {/,/^}$/p' "$PROJECT_ROOT/scripts/restore-claude.sh")
+  [ -n "$func" ] || {
+    echo "Failed to extract uninstall_orphan_plugins from restore-claude.sh" >&2
+    return 1
+  }
+
+  PRESERVE_MARKETPLACES=("vend-plugins")
+  CLAUDE_HOME="$TEMP_CLAUDE"
+  log_with_level() { :; }
+
+  eval "$func"
+  uninstall_orphan_plugins
+}
+
+@test "uninstall_orphan_plugins removes marketplace cache that is no longer tracked" {
+  seed_plugin_tree \
+    "axiom-marketplace/axiom/3.5.0" \
+    "visual-explainer-marketplace/visual-explainer/0.7.1" \
+    -- \
+    "axiom-marketplace" \
+    "nicobailon-visual-explainer"
+
+  write_registry \
+    '{"version":2,"plugins":{"axiom@axiom-marketplace":[{}]}}' \
+    '{"axiom-marketplace":{}}'
+
+  run_uninstall_orphan_plugins
+
+  [ -d "$TEMP_CLAUDE_PLUGINS/cache/axiom-marketplace/axiom" ]
+  [ ! -d "$TEMP_CLAUDE_PLUGINS/cache/visual-explainer-marketplace" ]
+  [ -d "$TEMP_CLAUDE_PLUGINS/marketplaces/axiom-marketplace" ]
+  [ ! -d "$TEMP_CLAUDE_PLUGINS/marketplaces/nicobailon-visual-explainer" ]
+}
+
+@test "uninstall_orphan_plugins keeps PRESERVE_MARKETPLACES even when absent from registry" {
+  seed_plugin_tree \
+    "vend-plugins/work-thing/1.0.0" \
+    -- \
+    "vend-plugins"
+
+  # Registry has no vend-plugins entry — preserve list must protect it anyway.
+  write_registry \
+    '{"version":2,"plugins":{}}' \
+    '{}'
+
+  run_uninstall_orphan_plugins
+
+  [ -d "$TEMP_CLAUDE_PLUGINS/cache/vend-plugins/work-thing/1.0.0" ]
+  [ -d "$TEMP_CLAUDE_PLUGINS/marketplaces/vend-plugins" ]
+}
+
+@test "uninstall_orphan_plugins removes orphan plugins under a kept marketplace" {
+  seed_plugin_tree \
+    "claude-plugins-official/superpowers/5.1.0" \
+    "claude-plugins-official/orphaned-plugin/1.0.0" \
+    -- \
+    "claude-plugins-official"
+
+  write_registry \
+    '{"version":2,"plugins":{"superpowers@claude-plugins-official":[{}]}}' \
+    '{"claude-plugins-official":{}}'
+
+  run_uninstall_orphan_plugins
+
+  [ -d "$TEMP_CLAUDE_PLUGINS/cache/claude-plugins-official/superpowers" ]
+  [ ! -d "$TEMP_CLAUDE_PLUGINS/cache/claude-plugins-official/orphaned-plugin" ]
+}
+
+@test "uninstall_orphan_plugins handles marketplace dirs with trailing whitespace" {
+  # Real-world quirk: Claude Code has shipped marketplace dirs with trailing
+  # spaces (e.g. "nicobailon-visual-explainer "). They must be cleaned too.
+  seed_plugin_tree \
+    -- \
+    "axiom-marketplace" \
+    "vladikk-modularity "
+
+  write_registry \
+    '{"version":2,"plugins":{"axiom@axiom-marketplace":[{}]}}' \
+    '{"axiom-marketplace":{}}'
+
+  run_uninstall_orphan_plugins
+
+  [ -d "$TEMP_CLAUDE_PLUGINS/marketplaces/axiom-marketplace" ]
+  [ ! -d "$TEMP_CLAUDE_PLUGINS/marketplaces/vladikk-modularity " ]
+}
+
+@test "uninstall_orphan_plugins is a no-op when nothing is orphaned" {
+  seed_plugin_tree \
+    "axiom-marketplace/axiom/3.5.0" \
+    -- \
+    "axiom-marketplace"
+
+  write_registry \
+    '{"version":2,"plugins":{"axiom@axiom-marketplace":[{}]}}' \
+    '{"axiom-marketplace":{}}'
+
+  run_uninstall_orphan_plugins
+
+  [ -d "$TEMP_CLAUDE_PLUGINS/cache/axiom-marketplace/axiom/3.5.0" ]
+  [ -d "$TEMP_CLAUDE_PLUGINS/marketplaces/axiom-marketplace" ]
+}
+
+@test "uninstall_orphan_plugins returns success when registry files are missing" {
+  # Don't write a registry. Function should bail silently rather than nuking
+  # everything (which would be catastrophic on a partially-restored machine).
+  seed_plugin_tree \
+    "axiom-marketplace/axiom/3.5.0" \
+    -- \
+    "axiom-marketplace"
+
+  run run_uninstall_orphan_plugins
+
+  [ "$status" -eq 0 ]
+  [ -d "$TEMP_CLAUDE_PLUGINS/cache/axiom-marketplace/axiom/3.5.0" ]
+  [ -d "$TEMP_CLAUDE_PLUGINS/marketplaces/axiom-marketplace" ]
+}
+
+@test "uninstall_orphan_plugins is idempotent — second invocation is a no-op" {
+  seed_plugin_tree \
+    "axiom-marketplace/axiom/3.5.0" \
+    "visual-explainer-marketplace/visual-explainer/0.7.1" \
+    -- \
+    "axiom-marketplace" \
+    "nicobailon-visual-explainer"
+
+  write_registry \
+    '{"version":2,"plugins":{"axiom@axiom-marketplace":[{}]}}' \
+    '{"axiom-marketplace":{}}'
+
+  run_uninstall_orphan_plugins
+  # Second invocation against the now-pruned tree must succeed and leave the
+  # kept entries intact — guards against rmdir/grep regressions.
+  run run_uninstall_orphan_plugins
+
+  [ "$status" -eq 0 ]
+  [ -d "$TEMP_CLAUDE_PLUGINS/cache/axiom-marketplace/axiom/3.5.0" ]
+  [ -d "$TEMP_CLAUDE_PLUGINS/marketplaces/axiom-marketplace" ]
+  [ ! -d "$TEMP_CLAUDE_PLUGINS/cache/visual-explainer-marketplace" ]
+  [ ! -d "$TEMP_CLAUDE_PLUGINS/marketplaces/nicobailon-visual-explainer" ]
+}
+
+@test "uninstall_orphan_plugins bails on malformed installed_plugins.json rather than nuking the cache" {
+  # Regression guard: malformed JSON used to silently produce an empty desired
+  # set, which made grep -Fxq match nothing and rm -rf the whole cache.
+  seed_plugin_tree \
+    "axiom-marketplace/axiom/3.5.0" \
+    -- \
+    "axiom-marketplace"
+
+  # Valid marketplaces file, malformed plugins file.
+  printf '%s\n' '{"axiom-marketplace":{}}' > "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json"
+  printf '%s\n' '{not valid json' > "$TEMP_CLAUDE_PLUGINS/installed_plugins.json"
+
+  run run_uninstall_orphan_plugins
+
+  [ "$status" -ne 0 ]
+  # Cache must survive — the whole point of the regression guard.
+  [ -d "$TEMP_CLAUDE_PLUGINS/cache/axiom-marketplace/axiom/3.5.0" ]
+  [ -d "$TEMP_CLAUDE_PLUGINS/marketplaces/axiom-marketplace" ]
+}
+
+@test "uninstall_orphan_plugins bails on malformed known_marketplaces.json rather than nuking the cache" {
+  seed_plugin_tree \
+    "axiom-marketplace/axiom/3.5.0" \
+    -- \
+    "axiom-marketplace"
+
+  printf '%s\n' '{"version":2,"plugins":{"axiom@axiom-marketplace":[{}]}}' > "$TEMP_CLAUDE_PLUGINS/installed_plugins.json"
+  printf '%s\n' '<<<corrupt>>>' > "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json"
+
+  run run_uninstall_orphan_plugins
+
+  [ "$status" -ne 0 ]
+  [ -d "$TEMP_CLAUDE_PLUGINS/cache/axiom-marketplace/axiom/3.5.0" ]
+  [ -d "$TEMP_CLAUDE_PLUGINS/marketplaces/axiom-marketplace" ]
+}
