@@ -28,6 +28,15 @@
             "command": "$HOME/.claude/hooks/rtk-rewrite.sh"
           }
         ]
+      },
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/block-ask-user-question.py"
+          }
+        ]
       }
     ]
   },
@@ -50,23 +59,16 @@
     "skill-creator@claude-plugins-official": true,
     "plannotator@plannotator": true,
     "code-review@claude-plugins-official": true,
-    "modularity@vladikk-modularity": true,
     "axiom@axiom-marketplace": true,
     "frontend-design@claude-plugins-official": true,
     "codex@openai-codex": true,
-    "visual-explainer@visual-explainer-marketplace": true
+    "playground@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "plannotator": {
       "source": {
         "source": "github",
         "repo": "backnotprop/plannotator"
-      }
-    },
-    "vladikk-modularity": {
-      "source": {
-        "source": "github",
-        "repo": "vladikk/modularity"
       }
     },
     "axiom-marketplace": {
@@ -86,12 +88,6 @@
         "source": "github",
         "repo": "openai/codex-plugin-cc"
       }
-    },
-    "visual-explainer-marketplace": {
-      "source": {
-        "source": "github",
-        "repo": "nicobailon/visual-explainer"
-      }
     }
   },
   "alwaysThinkingEnabled": true,
@@ -101,6 +97,7 @@
   "tui": "fullscreen",
   "showThinkingSummaries": true,
   "skipDangerousModePermissionPrompt": true,
+  "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
   "mcpServers": {
     "XcodeBuildMCP": {
