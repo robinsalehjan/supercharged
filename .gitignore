@@ -22,6 +22,11 @@ node_modules/
 # Task tracker (agent working document)
 .task-tracker.md
 
+# MCP config — auto-generated per-machine by crg-here (code-review-graph
+# registration). Untracked since 30ed611 ("chore: untrack dead and
+# machine-specific files"). Do NOT remove this rule.
+.mcp.json
+
 # Husky (replaced by hookify rules)
 .husky/
 
