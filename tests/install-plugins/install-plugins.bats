@@ -50,10 +50,9 @@ teardown() {
   run "$SCRIPT" --dry-run
   [ "$status" -eq 0 ]
 
-  # claude.calls should be empty — dry-run must not invoke the CLI
-  if [ -f "$MOCK_BIN_DIR/claude.calls" ]; then
-    [ ! -s "$MOCK_BIN_DIR/claude.calls" ]
-  fi
+  # claude.calls is created empty by mock_claude — dry-run must not append.
+  # Use -s directly: returns false for both missing files AND empty files.
+  [ ! -s "$MOCK_BIN_DIR/claude.calls" ]
 }
 
 @test "install-plugins.sh --dry-run lists known marketplaces" {

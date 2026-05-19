@@ -36,6 +36,7 @@ jobs:
 
     - name: Install test dependencies
       run: |
+        set -euo pipefail
         # Only install what isn't already present on the runner image
         for pkg in bats-core jq shellcheck; do
           if ! brew list --formula --versions "$pkg" >/dev/null 2>&1; then

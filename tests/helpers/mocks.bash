@@ -316,13 +316,18 @@ unmock_gh_release_obscura() {
 
 # Mock claude CLI — records every invocation to $MOCK_BIN_DIR/claude.calls
 # so smoke tests can assert what install-plugins.sh / restore-claude.sh would run.
+#
+# NOTE: the heredoc is UNQUOTED so MOCK_BIN_DIR expands at stub-write time and
+# the absolute path bakes into the generated shim. $* is escaped so it expands
+# at invocation time. Required because the stub runs as its own sh process and
+# wouldn't see MOCK_BIN_DIR from the test environment otherwise.
 mock_claude() {
     _ensure_mock_bin_dir
     if [ -n "${MOCK_BIN_DIR:-}" ]; then
         : > "$MOCK_BIN_DIR/claude.calls"
-        cat > "$MOCK_BIN_DIR/claude" << 'CLAUDEEOF'
+        cat > "$MOCK_BIN_DIR/claude" << CLAUDEEOF
 #!/bin/sh
-printf '%s\n' "$*" >> "$MOCK_BIN_DIR/claude.calls"
+printf '%s\n' "\$*" >> "$MOCK_BIN_DIR/claude.calls"
 exit 0
 CLAUDEEOF
         chmod +x "$MOCK_BIN_DIR/claude"

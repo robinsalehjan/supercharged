@@ -3,9 +3,9 @@
 # Load test helpers
 load '../helpers/setup'
 
-# Shellcheck disable rules (must match .shellcheckrc — moved from package.json
-# in chore/config-improvements so the rules live next to the code they describe).
-SHELLCHECK_EXCLUDE='SC1071,SC2296,SC1091'
+# Shellcheck disable rules — must match .shellcheckrc exactly so the drift
+# check below catches any divergence between this guard and the rc file.
+SHELLCHECK_EXCLUDE='SC1071,SC2296,SC1091,SC2001'
 
 setup() {
   setup_test_env
