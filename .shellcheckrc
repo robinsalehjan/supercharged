@@ -1,0 +1,7 @@
+# Scripts are zsh, but shellcheck only supports bash/dash/ksh/sh.
+# We invoke with --shell=bash, so the following codes are noise:
+#   SC1071 - ShellCheck only supports sh/bash/dash/ksh scripts
+#   SC2296 - Parameter expansions can't start with (% — zsh prompt syntax ${(%):-%x}
+#   SC1091 - Not following sourced file (intentional dynamic sources)
+#   SC2001 - See if you can use ${variable//search/replace} instead (sed is clearer here)
+disable=SC1071,SC2296,SC1091,SC2001

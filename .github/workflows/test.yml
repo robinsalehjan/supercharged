@@ -6,22 +6,43 @@ on:
   pull_request:
     branches: [ main ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: macos-latest
+    timeout-minutes: 15
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
+      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.0
       with:
-        node-version: '20'
+        persist-credentials: false
 
-    - name: Install dependencies
+    - name: Cache Homebrew downloads
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: |
+          ~/Library/Caches/Homebrew/downloads
+          ~/Library/Caches/Homebrew/api
+        key: ${{ runner.os }}-brew-${{ hashFiles('.github/workflows/test.yml') }}
+        restore-keys: |
+          ${{ runner.os }}-brew-
+
+    - name: Install test dependencies
       run: |
-        brew install bats-core jq shellcheck
+        set -euo pipefail
+        # Only install what isn't already present on the runner image
+        for pkg in bats-core jq shellcheck; do
+          if ! brew list --formula --versions "$pkg" >/dev/null 2>&1; then
+            brew install "$pkg"
+          fi
+        done
 
     - name: Run shellcheck
       run: npm run lint
@@ -31,7 +52,7 @@ jobs:
 
     - name: Upload test results
       if: failure()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: test-logs
         path: |

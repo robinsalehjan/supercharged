@@ -68,7 +68,9 @@ npm run help                      # Display all available commands
 ## ShellCheck Notes
 
 **Safe warnings** (zsh scripts run through `--shell=bash`):
-SC1071 (zsh unsupported), SC2296 (zsh `${(%):-%x}`), SC1091 (sourced file), SC2001 (sed vs expansion — excluded in lint). Also safe but not excluded: SC2155 (declare+assign), SC2012 (ls vs find).
+SC1071 (zsh unsupported), SC2296 (zsh `${(%):-%x}`), SC1091 (sourced file), SC2001 (sed vs expansion). These are disabled centrally in `.shellcheckrc` so the rule list lives next to the code rather than buried in `package.json`. Also safe but not disabled: SC2155 (declare+assign), SC2012 (ls vs find).
+
+`npm run lint` runs with `--severity=warning` to keep `info`/`style` notes from cluttering output without changing what the rule set considers failing.
 
 **Zsh-specific syntax** used in scripts:
 `${(%):-%x}`, `${(%):-%n}`, `&!` (disown), `path=(...)`, `setopt`.
@@ -99,9 +101,11 @@ npm test -- --filter "pattern"    # Run specific tests
 - `tests/mac/install.bats` - Smoke tests for mac.sh (validate_system, build_brewfile, install_homebrew, parse_tool_versions)
 - `tests/setup/profile.bats` - Smoke tests for setup-profile.sh (dotfile copying, restoration points, version_gte)
 - `tests/update/update.bats` - Smoke tests for update.sh (argument parsing, help, dry-run, unknown flags)
-- `tests/meta/help.bats` - Tests for help.sh output
-- `tests/meta/lint.bats` - Tests for ShellCheck lint script
+- `tests/meta/help.bats` - Tests for help.sh output (includes drift check against `package.json` scripts)
+- `tests/meta/lint.bats` - Tests for ShellCheck lint script (validates `.shellcheckrc` rule set)
 - `tests/restore/restore.bats` - Tests for restore.sh (system backup restoration)
+- `tests/install-plugins/install-plugins.bats` - Smoke tests for `install-plugins.sh` (dry-run, prerequisites, arg parsing)
+- `tests/restore-claude/restore-claude.bats` - Smoke tests for `restore-claude.sh` helpers (`get_file_mtime`, `get_newest_mtime`)
 - `tests/helpers/setup.bash` - Test environment setup and teardown utilities
 - `tests/helpers/assertions.bash` - jq-based JSON assertion utilities
 - `tests/helpers/mocks.bash` - Command mocking utilities
