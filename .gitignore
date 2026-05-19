@@ -1,7 +1,3 @@
-# Prevent accidentally committing home directory expansions
-~
-~/*
-
 # macOS
 .DS_Store
 .AppleDouble
@@ -25,9 +21,6 @@ node_modules/
 
 # Task tracker (agent working document)
 .task-tracker.md
-
-# MCP config (machine-specific)
-.mcp.json
 
 # Husky (replaced by hookify rules)
 .husky/

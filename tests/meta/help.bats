@@ -86,3 +86,38 @@ teardown() {
   [ "$status" -eq 0 ]
   [[ "$output" == *"━━━"* ]]
 }
+
+# Hidden internal scripts (pretest is an npm lifecycle hook, not user-facing)
+HELP_IGNORED_SCRIPTS=("pretest")
+
+@test "help.sh stays in sync with package.json scripts" {
+  # Skip if jq isn't available (only available in CI / dev machines)
+  command -v jq >/dev/null || skip "jq not installed"
+
+  # Act
+  run "$PROJECT_ROOT/scripts/help.sh"
+  [ "$status" -eq 0 ]
+  help_output="$output"
+
+  # Build list of every script from package.json
+  scripts=$(jq -r '.scripts | keys[]' "$PROJECT_ROOT/package.json")
+
+  missing=()
+  while IFS= read -r script; do
+    # Skip ignored scripts (pretest, help itself is the script)
+    [ "$script" = "help" ] && continue
+    case " ${HELP_IGNORED_SCRIPTS[*]} " in
+      *" $script "*) continue ;;
+    esac
+
+    if [[ "$help_output" != *"npm run $script"* ]] && [[ "$help_output" != *"npm $script"* ]]; then
+      missing+=("$script")
+    fi
+  done <<< "$scripts"
+
+  # Assert: every package.json script appears in help output
+  if [ ${#missing[@]} -gt 0 ]; then
+    printf 'Scripts missing from help.sh: %s\n' "${missing[*]}"
+    return 1
+  fi
+}

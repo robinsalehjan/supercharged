@@ -293,7 +293,7 @@ run_zsh_func() {
     echo \"ruby=\${TOOL_VERSIONS[ruby]}\"
   "
   [ "$status" -eq 0 ]
-  [[ "$output" == *"python=3.14.3"* ]]
+  [[ "$output" == *"python=3.14.5"* ]]
   [[ "$output" == *"nodejs=24.14.1"* ]]
   [[ "$output" == *"ruby=3.4.9"* ]]
 }

@@ -13,6 +13,8 @@ echo "  npm run restore:claude         - Restore Claude Code config (only if rep
 echo "  npm run restore:claude -- --force - Force restore Claude Code config"
 echo "  npm run restore:dotfiles       - Copy dotfiles to \$HOME"
 echo "  npm run backup:claude          - Backup Claude Code config to repository"
+echo "  npm run install:plugins        - Install Claude Code marketplaces and plugins"
+echo "  npm run install:skills         - Clone/update git-based skills into ~/.claude/skills"
 echo ""
 echo "Update Commands:"
 echo "  npm run update                 - Update all dependencies (includes Claude backup)"

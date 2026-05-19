@@ -3,7 +3,8 @@
 # Load test helpers
 load '../helpers/setup'
 
-# Shellcheck exclusion rules (must match package.json lint command)
+# Shellcheck disable rules (must match .shellcheckrc — moved from package.json
+# in chore/config-improvements so the rules live next to the code they describe).
 SHELLCHECK_EXCLUDE='SC1071,SC2296,SC1091'
 
 setup() {
@@ -77,7 +78,7 @@ teardown() {
   [ "$script_count" -gt 0 ]
 }
 
-@test "lint command uses bash shell mode and excludes known warnings" {
+@test "lint command uses bash shell mode" {
   # Skip if shellcheck not installed
   if ! command -v shellcheck >/dev/null 2>&1; then
     skip "shellcheck not installed"
@@ -86,7 +87,24 @@ teardown() {
   # Arrange - get the lint command from package.json
   lint_cmd=$(grep '"lint"' "$PROJECT_ROOT/package.json" | grep "shellcheck")
 
-  # Assert - should specify --shell=bash and --exclude
+  # Assert - should specify --shell=bash
   [[ "$lint_cmd" == *"--shell=bash"* ]]
-  [[ "$lint_cmd" == *"--exclude=$SHELLCHECK_EXCLUDE"* ]]
+}
+
+@test ".shellcheckrc disables expected zsh-noise codes" {
+  # Arrange - .shellcheckrc lives at project root and holds the disable list
+  rc_file="$PROJECT_ROOT/.shellcheckrc"
+  [ -f "$rc_file" ]
+
+  # Act - read the disable directive
+  disable_line=$(grep -E '^disable=' "$rc_file")
+
+  # Assert - every code in $SHELLCHECK_EXCLUDE must appear
+  IFS=',' read -ra codes <<< "$SHELLCHECK_EXCLUDE"
+  for code in "${codes[@]}"; do
+    [[ "$disable_line" == *"$code"* ]] || {
+      echo "Missing $code in .shellcheckrc: $disable_line"
+      return 1
+    }
+  done
 }
