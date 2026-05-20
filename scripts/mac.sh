@@ -146,7 +146,6 @@ cask \"visual-studio-code\"
 cask \"slack\"
 cask \"raycast\"
 cask \"font-jetbrains-mono-nerd-font\"
-cask \"ollama-app\"
 cask \"reveal\"
 cask \"mullvad-vpn\""
 

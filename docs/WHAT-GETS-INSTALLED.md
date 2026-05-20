@@ -13,7 +13,7 @@ bats-core (Bash Automated Testing System)
 mas (Mac App Store CLI)
 pipx (install Python CLI tools in isolated environments)
 uv (fast Python package installer and resolver)
-ollama (run large language models locally)
+ollama (CLI to run large language models locally)
 rtk (Rust Token Killer - CLI proxy for 60-90% token savings in Claude Code)
 worktrunk (Git worktree manager designed for parallel AI agents - `wt switch`, `wt merge`, `wt remove`)
 plannotator (Visual annotation tool for AI coding agents - plan review, code diff annotation)
@@ -81,7 +81,6 @@ visual-studio-code  # Code editor with shell integration
 slack              # Team communication
 reveal             # Runtime view debugging for iOS apps
 raycast            # macOS productivity launcher
-ollama-app         # Desktop app for running local LLMs
 
 # Utilities
 spotify      # Music streaming
