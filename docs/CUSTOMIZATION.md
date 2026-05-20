@@ -72,5 +72,5 @@ firebase 14.3.1
 
 # Apps always installed:
 # VS Code, Slack, Raycast, Wireshark, Spotify,
-# Proxyman, mitmproxy, Reveal, Ollama, Mullvad VPN
+# Proxyman, mitmproxy, Reveal, Mullvad VPN
 ```
