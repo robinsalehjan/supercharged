@@ -337,7 +337,6 @@ validate_installation() {
     validate_tool "tree" "" || ((warned++))
     validate_tool "rg" "" || ((warned++))  # ripgrep command is 'rg'
     validate_tool "tmux" "" || ((warned++))
-    validate_tool "htop" "" || true  # Optional, don't count if missing
     validate_tool "btop" "" || true  # Optional, don't count if missing
     validate_tool "nmap" "" || ((warned++))
     validate_tool "aria2c" "" || ((warned++))
@@ -358,7 +357,7 @@ validate_installation() {
     validate_tool "python3" "$python_version" || ((failed++))
     validate_tool "node" "$node_version" || ((failed++))
     validate_tool "ruby" "$ruby_version" || ((failed++))
-    validate_tool "bundler" "$bundler_version" || ((failed++))
+    validate_tool "bundler" "$bundler_version" || ((warned++))
 
     # Check for optional categories if preference file indicates they should be installed
     if [ -f "$HOME/.supercharged_preferences" ]; then
@@ -368,7 +367,7 @@ validate_installation() {
         if [[ "${INSTALL_CLOUD_TOOLS:-Y}" =~ ^[Yy] ]]; then
             echo ""
             echo "Cloud & DevOps:"
-            validate_tool "gcloud" "$gcloud_version" || ((failed++))
+            validate_tool "gcloud" "$gcloud_version" || ((warned++))
             validate_tool "firebase" "$firebase_version" || ((failed++))
         fi
 
@@ -531,7 +530,6 @@ validate_installation() {
 
     # Suggest optional tools if user might want them
     local optional_missing=()
-    command_exists htop || optional_missing+=("htop")
     command_exists btop || optional_missing+=("btop")
     command_exists ollama || optional_missing+=("ollama")
 
