@@ -241,6 +241,10 @@ alias kx='kubectx'
 alias py='python3'
 alias pip='pip3'
 
+# Claude Code token usage (ccusage)
+alias cct='ccusage'
+alias cclive='ccusage blocks --live'
+
 # Git shortcuts
 alias gst='git status'
 alias gd='git diff'
