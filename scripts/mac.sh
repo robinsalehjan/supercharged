@@ -319,6 +319,9 @@ main() {
         # Setup RTK for token optimization
         setup_rtk
 
+        # Setup ccusage for token usage measurement (complements RTK)
+        setup_ccusage
+
         # Setup Worktrunk shell integration for git worktree management
         setup_worktrunk
 

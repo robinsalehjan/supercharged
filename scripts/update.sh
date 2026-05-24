@@ -254,6 +254,11 @@ main() {
         setup_rtk
     fi
 
+    # Ensure ccusage is installed (if Claude Code is present)
+    if command -v npm >/dev/null 2>&1 && [ -d "$HOME/.claude" ]; then
+        setup_ccusage
+    fi
+
     # Ensure Worktrunk shell integration is configured (if installed)
     if command -v wt >/dev/null 2>&1; then
         setup_worktrunk
