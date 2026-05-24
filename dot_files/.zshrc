@@ -243,7 +243,15 @@ alias pip='pip3'
 
 # Claude Code token usage (ccusage)
 alias cct='ccusage'
-alias cclive='ccusage blocks --live'
+# Real-time monitor: poll the active 5-hour billing block every 5s.
+# ccusage dropped `blocks --live` in 20.x; this restores the live view via a portable loop.
+cclive() {
+    while true; do
+        clear
+        ccusage blocks --active || break
+        sleep 5
+    done
+}
 
 # Git shortcuts
 alias gst='git status'

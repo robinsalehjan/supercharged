@@ -20,7 +20,7 @@
 - **Integration**: Installed globally via npm by `setup_ccusage` in `scripts/utils/tools.sh`
 - **Aliases** (in `dot_files/.zshrc`):
   - `cct` — daily summary
-  - `cclive` — real-time monitor (5-hour block view)
+  - `cclive` — real-time monitor (polls active 5-hour block every 5s; `Ctrl+C` to exit)
 
 ## Verify Setup
 ```bash
