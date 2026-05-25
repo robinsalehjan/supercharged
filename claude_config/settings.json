@@ -1,9 +1,6 @@
 {
   "respectGitignore": true,
   "cleanupPeriodDays": 30,
-  "additionalDirectories": [
-    "~/Repositories"
-  ],
   "env": {
     "ANTHROPIC_MODEL": "claude-opus-4-7",
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
@@ -129,5 +126,18 @@
   "showThinkingSummaries": true,
   "skipDangerousModePermissionPrompt": true,
   "agentPushNotifEnabled": true,
-  "skipAutoPermissionPrompt": true
+  "skipAutoPermissionPrompt": true,
+  "additionalDirectories": [
+    "~/Repositories"
+  ],
+  "mcpServers": {
+    "XcodeBuildMCP": {
+      "type": "stdio",
+      "command": "xcodebuildmcp",
+      "args": [
+        "mcp"
+      ],
+      "env": {}
+    }
+  }
 }
