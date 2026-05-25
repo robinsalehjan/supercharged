@@ -111,7 +111,8 @@ brew "pipx"
 brew "uv"
 brew "rtk"
 brew "worktrunk"
-brew "hey"'
+brew "hey"
+brew "watch"'
 
     if [[ "${INSTALL_IOS_TOOLS:-Y}" =~ ^[Yy] ]]; then
         content="$content
