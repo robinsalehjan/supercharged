@@ -122,8 +122,10 @@ run_zsh_func() {
   [[ "$output" == *'brew "bash"'* ]]
   [[ "$output" == *'brew "git"'* ]]
   [[ "$output" == *'brew "shellcheck"'* ]]
+  [[ "$output" == *'brew "actionlint"'* ]]
   [[ "$output" == *'brew "jq"'* ]]
   [[ "$output" == *'brew "ripgrep"'* ]]
+  [[ "$output" == *'cask "codex"'* ]]
 }
 
 @test "build_brewfile includes iOS tools when INSTALL_IOS_TOOLS=Y" {

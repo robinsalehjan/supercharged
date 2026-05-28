@@ -329,6 +329,7 @@ validate_installation() {
     validate_tool "git" "" || ((failed++))
     validate_tool "asdf" "" || ((failed++))
     validate_tool "shellcheck" "" || ((failed++))
+    validate_tool "actionlint" "" || ((warned++))  # GitHub Actions workflow linter
     validate_tool "gh" "" || ((warned++))  # GitHub CLI (optional but useful)
 
     echo ""
@@ -349,6 +350,7 @@ validate_installation() {
     validate_tool "wt" "" || ((warned++))
     validate_tool "code-review-graph" "" || ((warned++))
     validate_tool "ollama" "" || true  # Optional local AI runtime
+    validate_tool "codex" "" || ((warned++))  # OpenAI Codex CLI
     validate_tool "pipx" "" || ((warned++))
     validate_tool "uv" "" || ((warned++))
 
