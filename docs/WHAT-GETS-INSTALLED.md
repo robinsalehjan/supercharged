@@ -105,6 +105,8 @@ google-chrome   # Chromium-based browser
 
 ## AI Coding Tools (Installed with Claude Code)
 ```bash
+ccusage      # Claude Code token usage measurement (installed globally via npm)
+             # Aliases: cct (daily summary), cclive (real-time monitor)
 obscura      # Rust-based headless browser for AI agents / web scraping
              # (h4ckf0r0day/obscura — GitHub release binary to ~/.local/bin)
 ```
@@ -147,10 +149,11 @@ git, asdf, zsh-autosuggestions, zsh-syntax-highlighting, gcloud, docker, tmux
 .p10k.zsh           # Powerlevel10k theme configuration
 
 # Claude Code configuration (backed up to claude_config/)
-settings.json              # Claude Code plugin settings
+settings.json              # Claude Code settings (permissions, env, hooks, plugins)
 installed_plugins.json     # List of installed plugins with versions
 known_marketplaces.json    # Plugin marketplace configurations
-keybindings.json           # Custom keyboard shortcuts
+mcp_servers.json           # MCP server definitions (XcodeBuildMCP, etc.)
+statusline/Config.toml     # Statusline theme and display configuration
 CLAUDE.md                  # Global personal instructions
 CRG.md, RTK.md, ...        # @-referenced from CLAUDE.md (auto-detected)
 ```
