@@ -30,6 +30,8 @@ npm run restore:all        # Restore Claude Code config and dotfiles
 npm run restore:claude     # Restore Claude Code config
 npm run restore:dotfiles   # Copy dotfiles to $HOME
 npm run backup:claude      # Backup Claude Code config
+npm run install:plugins    # Install all Claude Code plugins
+npm run install:skills     # Install git-based Claude Code skills
 npm run restore            # Restore from last backup
 npm run version:show       # Print current version, commit, tag, branch
 npm run release -- patch   # Cut a release (patch|minor|major|x.y.z)

@@ -4,7 +4,6 @@
     "command": "xcodebuildmcp",
     "args": [
       "mcp"
-    ],
-    "env": {}
+    ]
   }
 }

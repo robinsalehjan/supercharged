@@ -1,59 +1,39 @@
 {
-  "respectGitignore": true,
   "cleanupPeriodDays": 30,
   "env": {
-    "ANTHROPIC_MODEL": "claude-opus-4-7",
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "ANTHROPIC_MODEL": "claude-opus-4-6",
     "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet",
     "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
     "CLAUDE_CODE_ENABLE_TELEMETRY": "0",
+    "CLAUDE_CODE_ENABLE_AUTO_MODE": "1",
     "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32000",
     "MAX_THINKING_TOKENS": "64000"
   },
   "permissions": {
-    "allow": [
-      "Bash(git status:*)",
-      "Bash(git diff:*)",
-      "Bash(git log:*)",
-      "Bash(git show:*)",
-      "Bash(git branch:*)",
-      "Bash(gb)",
-      "Bash(ls:*)",
-      "Bash(pwd)",
-      "Bash(cat:*)",
-      "Bash(head:*)",
-      "Bash(tail:*)",
-      "Bash(wc:*)",
-      "Bash(npm test:*)",
-      "Bash(npm run lint:*)",
-      "Bash(npm run validate:*)",
-      "Bash(npm run help:*)",
-      "Bash(npm run version:show:*)",
-      "Bash(rtk proxy:*)",
-      "Bash(bats:*)",
-      "Bash(shellcheck:*)",
-      "Bash(wt list)",
-      "Bash(gh pr view:*)",
-      "Bash(gh pr list:*)",
-      "Bash(gh pr checks:*)"
-    ],
     "deny": [
       "Bash(rm -rf :*)",
       "Bash(sudo :*)",
       "Bash(git commit *--no-verify*)",
       "Bash(git push *--no-verify*)",
+      "Bash(git push *--force*)",
+      "Bash(git reset --hard*)",
+      "Bash(git clean -f*)",
       "Bash(curl * | sh)",
       "Bash(curl * | bash)",
+      "Bash(curl * | zsh)",
       "Bash(wget * | sh)",
       "Bash(wget * | bash)",
+      "Bash(wget * | zsh)",
       "Read(.env*)",
       "Read(**/.secrets)",
       "Read(**/.secrets/**)",
+      "Edit(.env*)",
+      "Edit(**/.secrets)",
+      "Edit(**/.secrets/**)",
       "Write(.env*)",
       "Write(**/.secrets)",
       "Write(**/.secrets/**)"
-    ],
-    "defaultMode": "acceptEdits"
+    ]
   },
   "hooks": {
     "PreToolUse": [
@@ -120,8 +100,6 @@
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "high",
-  "awaySummaryEnabled": false,
-  "autoUpdatesChannel": "stable",
   "tui": "fullscreen",
   "showThinkingSummaries": true,
   "skipDangerousModePermissionPrompt": true,
@@ -136,8 +114,7 @@
       "command": "xcodebuildmcp",
       "args": [
         "mcp"
-      ],
-      "env": {}
+      ]
     }
   }
 }
