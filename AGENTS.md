@@ -10,6 +10,8 @@ See [README.md](./README.md) for detailed project structure. Key directories:
 - `scripts/` - Shell scripts (mac.sh, update.sh, utils.sh, restore.sh, setup-profile.sh, help.sh, install-plugins.sh; backup-claude.sh/restore-claude.sh for Claude config)
 - `dot_files/` - Dotfiles copied to `$HOME`
 - `claude_config/` - Claude Code config backup
+- `agent_config/` - Shared global agent instructions restored to both Claude and Codex
+- `codex_config/` - Codex CLI/IDE config backup
 
 ## Code Conventions
 
@@ -44,7 +46,11 @@ npm run restore               # Restore from latest backup
 npm run backup:claude             # Backup Claude Code config to repo
 npm run restore:claude            # Restore Claude Code config (only if repo is newer)
 npm run restore:claude -- --force # Force restore Claude Code config (see Post-Restore Steps below)
-npm run restore:all               # Restore Claude config + dotfiles in one step
+npm run backup:all                # Backup Claude Code config + Codex config in one step
+npm run backup:codex              # Backup Codex config to repo
+npm run restore:codex             # Restore Codex config (only if repo is newer)
+npm run restore:codex -- --force  # Force restore Codex config
+npm run restore:all               # Restore Claude config + Codex config + dotfiles in one step
 npm run install:plugins           # Install all marketplaces and plugins via claude CLI
 npm run install:plugins -- --dry-run # Preview what would be installed
 npm run install:skills            # Clone/update git-based skills into ~/.claude/skills
@@ -167,6 +173,13 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 - **Local-only configs**: Work plugins/marketplaces are saved to `.local.json` files (gitignored) during backup, and merged back during install
 - **Post-restore**: Plugins are auto-installed at the end of `restore:claude`. If auto-install fails, run `npm run install:plugins` manually.
 
+**Codex backup/restore** (`scripts/backup-codex.sh`, `scripts/restore-codex.sh`):
+- Shared instructions: `agent_config/AGENTS.md` is restored to both `~/.codex/AGENTS.md` and `~/.claude/AGENTS.md`
+- Codex settings: `codex_config/config.toml` restores durable defaults such as model, personality, web search, feature flags, MCP settings, and instruction discovery
+- Local-only state excluded: `auth.json`, history, logs, sessions, memories, SQLite databases, shell snapshots, and model caches
+- Machine-local tables preserved on restore: `[projects.*]`, `[tui.model_availability_nux]`, and `[notice.model_migrations]`
+- Project guidance: keep repo-specific behavior in `AGENTS.md`; keep cross-agent global preferences in `agent_config/AGENTS.md`
+
 **Post-Restore Steps** (after `npm run restore:claude` or `npm run restore:claude -- --force`):
 1. Enable work plugins (@vend-plugins) manually if on work machine — these are sanitized from backups for security
 2. Run `/reload-plugins` in Claude Code to force registry rescan if plugins don't appear
@@ -202,6 +215,8 @@ Plugins are auto-installed during restore. `install:plugins` merges repo configs
 | Add backup file | `create_restoration_point()` in `scripts/utils/backup.sh` |
 | Update Claude sanitization | `SANITIZE_MARKETPLACES` in `backup-claude.sh`, `PRESERVE_MARKETPLACES` in `restore-claude.sh`; sanitized entries auto-saved to `.local.json` files |
 | Add Claude backup file | Add backup/restore logic in `backup-claude.sh` and `restore-claude.sh` (follow `keybindings.json` pattern) |
+| Update shared agent instructions | Edit `agent_config/AGENTS.md`, then run `npm run restore:codex` and `npm run restore:claude` |
+| Update Codex defaults | Edit `codex_config/config.toml`, then run `npm run restore:codex` |
 | Add/disable hookify rule | Create/edit `.claude/hookify.{name}.local.md` or set `enabled: false` |
 | Test security hooks | `git add . && git commit -m "test"` - hooks run automatically |
 | List hookify rules | `ls .claude/hookify.*.local.md` |

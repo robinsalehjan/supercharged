@@ -101,6 +101,12 @@ main() {
         "$SCRIPT_DIR/restore-claude.sh" --force
     fi
 
+    # Restore Codex configuration using dedicated script
+    if [ -x "$SCRIPT_DIR/restore-codex.sh" ]; then
+        echo ""
+        "$SCRIPT_DIR/restore-codex.sh" --force
+    fi
+
     # Re-apply Worktrunk shell integration — restoring dotfiles overwrites
     # ~/.zshrc, which strips any line `wt config shell install` previously
     # added. setup_worktrunk is internally idempotent (skips when wt is

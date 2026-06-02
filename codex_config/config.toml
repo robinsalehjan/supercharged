@@ -1,0 +1,20 @@
+model = "gpt-5.5"
+model_reasoning_effort = "high"
+personality = "pragmatic"
+web_search = "cached"
+project_doc_fallback_filenames = ["CLAUDE.md"]
+project_doc_max_bytes = 65536
+
+[features]
+shell_snapshot = true
+
+[mcp_servers.code-review-graph]
+command = "code-review-graph"
+args = ["serve"]
+
+[mcp_servers.XcodeBuildMCP]
+command = "xcodebuildmcp"
+args = ["mcp"]
+
+[mcp_servers.openaiDeveloperDocs]
+url = "https://developers.openai.com/mcp"

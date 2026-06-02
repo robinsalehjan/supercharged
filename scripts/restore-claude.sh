@@ -18,6 +18,7 @@ source "$(dirname "$0")/utils.sh"
 # Get the directory where this script is located
 PROJECT_ROOT="$UTILS_PROJECT_ROOT"
 CLAUDE_CONFIG_DIR="$PROJECT_ROOT/claude_config"
+AGENT_CONFIG_DIR="$PROJECT_ROOT/agent_config"
 CLAUDE_HOME="$HOME/.claude"
 
 # List of marketplaces to preserve locally (not overwritten during restore)
@@ -56,7 +57,8 @@ if [ ! -f "$CLAUDE_CONFIG_DIR/settings.json" ] && \
    [ ! -f "$CLAUDE_CONFIG_DIR/installed_plugins.json" ] && \
    [ ! -f "$CLAUDE_CONFIG_DIR/known_marketplaces.json" ] && \
    [ ! -f "$CLAUDE_CONFIG_DIR/keybindings.json" ] && \
-   [ ! -f "$CLAUDE_CONFIG_DIR/CLAUDE.md" ]; then
+   [ ! -f "$CLAUDE_CONFIG_DIR/CLAUDE.md" ] && \
+   [ ! -f "$AGENT_CONFIG_DIR/AGENTS.md" ]; then
     log_with_level "INFO" "No Claude configuration files found in repository"
     exit 0
 fi
@@ -665,9 +667,14 @@ restore_config_file \
 claude_md_refs_restored=()
 if [ -f "$CLAUDE_CONFIG_DIR/CLAUDE.md" ]; then
     while IFS= read -r ref_file; do
-        if [ -f "$CLAUDE_CONFIG_DIR/$ref_file" ]; then
+        ref_src="$CLAUDE_CONFIG_DIR/$ref_file"
+        if [ "$ref_file" = "AGENTS.md" ]; then
+            ref_src="$AGENT_CONFIG_DIR/AGENTS.md"
+        fi
+
+        if [ -f "$ref_src" ]; then
             restore_config_file \
-                "$CLAUDE_CONFIG_DIR/$ref_file" \
+                "$ref_src" \
                 "$CLAUDE_HOME/$ref_file" \
                 "$ref_file"
             claude_md_refs_restored+=("$ref_file")
