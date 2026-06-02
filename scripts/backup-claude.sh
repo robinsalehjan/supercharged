@@ -14,6 +14,7 @@ source "$(dirname "$0")/utils.sh"
 # Get the directory where this script is located (use pre-computed from utils.sh)
 PROJECT_ROOT="$UTILS_PROJECT_ROOT"
 CLAUDE_CONFIG_DIR="$PROJECT_ROOT/claude_config"
+AGENT_CONFIG_DIR="$PROJECT_ROOT/agent_config"
 CLAUDE_HOME="$HOME/.claude"
 
 # List of marketplaces to exclude from backup (work-related or sensitive plugins)
@@ -38,8 +39,8 @@ fi
 
 log_with_level "INFO" "Backing up Claude Code configuration..."
 
-# Create claude_config directory if it doesn't exist
-mkdir -p "$CLAUDE_CONFIG_DIR"
+# Create config directories if they don't exist
+mkdir -p "$CLAUDE_CONFIG_DIR" "$AGENT_CONFIG_DIR"
 
 # Backup settings.json (sanitize enabledPlugins from work-related marketplaces)
 if [ -f "$CLAUDE_HOME/settings.json" ]; then
@@ -171,12 +172,17 @@ claude_md_refs_backed_up=()
 if [ -f "$CLAUDE_HOME/CLAUDE.md" ]; then
     while IFS= read -r ref_file; do
         if [ -f "$CLAUDE_HOME/$ref_file" ]; then
-            if ! make_path_portable < "$CLAUDE_HOME/$ref_file" > "$CLAUDE_CONFIG_DIR/$ref_file.tmp"; then
-                rm -f "$CLAUDE_CONFIG_DIR/$ref_file.tmp"
+            ref_dest_dir="$CLAUDE_CONFIG_DIR"
+            if [ "$ref_file" = "AGENTS.md" ]; then
+                ref_dest_dir="$AGENT_CONFIG_DIR"
+            fi
+
+            if ! make_path_portable < "$CLAUDE_HOME/$ref_file" > "$ref_dest_dir/$ref_file.tmp"; then
+                rm -f "$ref_dest_dir/$ref_file.tmp"
                 log_with_level "ERROR" "Failed to process $ref_file - backup aborted"
                 exit 1
             fi
-            mv "$CLAUDE_CONFIG_DIR/$ref_file.tmp" "$CLAUDE_CONFIG_DIR/$ref_file"
+            mv "$ref_dest_dir/$ref_file.tmp" "$ref_dest_dir/$ref_file"
             claude_md_refs_backed_up+=("$ref_file")
             log_with_level "SUCCESS" "Backed up $ref_file (CLAUDE.md @-reference, paths made portable)"
         else

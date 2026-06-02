@@ -32,9 +32,22 @@ teardown() {
   # Assert
   [ "$status" -eq 0 ]
   [[ "$output" == *"Backup & Restore Commands:"* ]]
+  [[ "$output" == *"npm run backup:all"* ]]
   [[ "$output" == *"npm run backup:claude"* ]]
+  [[ "$output" == *"npm run backup:codex"* ]]
   [[ "$output" == *"npm run restore:claude"* ]]
+  [[ "$output" == *"npm run restore:codex"* ]]
   [[ "$output" == *"-- --force"* ]]
+}
+
+@test "backup:all includes Claude and Codex backups" {
+  command -v jq >/dev/null || skip "jq not installed"
+
+  run jq -r '.scripts["backup:all"]' "$PROJECT_ROOT/package.json"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"backup:claude"* ]]
+  [[ "$output" == *"backup:codex"* ]]
 }
 
 @test "help.sh displays update commands" {
