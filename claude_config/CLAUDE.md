@@ -19,6 +19,7 @@ Statusline theme config (`statusline/Config.toml`) is backed up and restored wit
 
 ## References
 
+@AGENTS.md
 @CRG.md
 @RTK.md
 @PLANNOTATOR.md
