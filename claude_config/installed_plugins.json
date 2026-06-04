@@ -104,10 +104,10 @@
     "security-guidance@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/security-guidance/unknown",
-        "version": "unknown",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/security-guidance/2.0.3",
+        "version": "2.0.3",
         "installedAt": "2026-04-30T08:48:03.523Z",
-        "lastUpdated": "2026-04-30T08:48:03.523Z"
+        "lastUpdated": "2026-06-03T10:24:32.296Z"
       }
     ],
     "skill-creator@claude-plugins-official": [
@@ -141,11 +141,11 @@
     "axiom@axiom-marketplace": [
       {
         "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/axiom-marketplace/axiom/3.5.0",
-        "version": "3.5.0",
-        "installedAt": "2026-05-14T18:31:37.717Z",
-        "lastUpdated": "2026-05-18T16:05:36.239Z",
-        "gitCommitSha": "f917a352bf41b019a4d8625b54c0eac889deaf4e"
+        "installPath": "$HOME/.claude/plugins/cache/axiom-marketplace/axiom/3.5.1",
+        "version": "3.5.1",
+        "installedAt": "2026-06-03T10:08:08.110Z",
+        "lastUpdated": "2026-06-03T10:08:08.110Z",
+        "gitCommitSha": "4f31d536918dd28a7342549967799596b7fd2d07"
       }
     ],
     "codex@openai-codex": [
@@ -165,6 +165,15 @@
         "version": "unknown",
         "installedAt": "2026-05-18T08:51:49.633Z",
         "lastUpdated": "2026-05-18T08:51:49.633Z"
+      }
+    ],
+    "commit-commands@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/commit-commands/unknown",
+        "version": "unknown",
+        "installedAt": "2026-06-04T10:46:15.685Z",
+        "lastUpdated": "2026-06-04T10:46:15.685Z"
       }
     ]
   }

@@ -70,7 +70,8 @@
     "axiom@axiom-marketplace": true,
     "frontend-design@claude-plugins-official": true,
     "codex@openai-codex": true,
-    "playground@claude-plugins-official": true
+    "playground@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "plannotator": {
@@ -114,7 +115,8 @@
       "command": "xcodebuildmcp",
       "args": [
         "mcp"
-      ]
+      ],
+      "env": {}
     }
   }
 }
