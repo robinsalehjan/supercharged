@@ -81,6 +81,7 @@ build_brewfile() {
     # so they no longer need to be tapped explicitly. Tapping them produces
     # deprecation warnings on brew 5.1.11+.
     local content='tap "thoughtbot/formulae"
+tap "replicate/tap"
 
 brew "bash"
 brew "coreutils"
@@ -98,6 +99,7 @@ brew "tree"
 brew "ripgrep"
 brew "tmux"
 brew "gh"
+brew "replicate/tap/replicate"
 brew "shellcheck"
 brew "actionlint"
 brew "jq"
