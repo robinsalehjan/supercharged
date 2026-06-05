@@ -351,6 +351,7 @@ validate_installation() {
     validate_tool "code-review-graph" "" || ((warned++))
     validate_tool "ollama" "" || true  # Optional local AI runtime
     validate_tool "codex" "" || ((warned++))  # OpenAI Codex CLI
+    validate_tool "replicate" "" || ((warned++))  # Replicate CLI
     validate_tool "pipx" "" || ((warned++))
     validate_tool "uv" "" || ((warned++))
 

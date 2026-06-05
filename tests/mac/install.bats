@@ -127,6 +127,8 @@ run_zsh_func() {
   [[ "$output" == *'brew "ripgrep"'* ]]
   [[ "$output" == *'cask "codex"'* ]]
   [[ "$output" == *'cask "codexbar"'* ]]
+  [[ "$output" == *'tap "replicate/tap"'* ]]
+  [[ "$output" == *'brew "replicate/tap/replicate"'* ]]
 }
 
 @test "build_brewfile includes iOS tools when INSTALL_IOS_TOOLS=Y" {
