@@ -7,10 +7,23 @@ project_doc_max_bytes = 65536
 
 [features]
 shell_snapshot = true
+hooks = true
 
 [mcp_servers.code-review-graph]
 command = "code-review-graph"
 args = ["serve"]
+
+[mcp_servers.code-review-graph.tools.semantic_search_nodes_tool]
+approval_mode = "approve"
+
+[mcp_servers.code-review-graph.tools.list_repos_tool]
+approval_mode = "approve"
+
+[mcp_servers.code-review-graph.tools.query_graph_tool]
+approval_mode = "approve"
+
+[mcp_servers.code-review-graph.tools.refactor_tool]
+approval_mode = "approve"
 
 [mcp_servers.XcodeBuildMCP]
 command = "xcodebuildmcp"

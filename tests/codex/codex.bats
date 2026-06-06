@@ -74,6 +74,9 @@ url = "https://developers.openai.com/mcp"
 
 [notice.model_migrations]
 "gpt-5.3-codex" = "gpt-5.4"
+
+[hooks.state."/Users/rsj/.codex/hooks.json:stop:0:0"]
+trusted_hash = "sha256:abc123"
 EOF
 
   run zsh -c "
@@ -84,8 +87,52 @@ EOF
   [ "$status" -eq 0 ]
   [[ "$output" == *"[projects."* ]]
   [[ "$output" == *"[notice.model_migrations]"* ]]
+  [[ "$output" == *"[hooks.state."* ]]
   [[ "$output" != *"[mcp_servers.docs]"* ]]
   [[ "$output" != *'model = "gpt-5.5"'* ]]
+}
+
+@test "filter_shared_codex_config removes hook trust state" {
+  config_file="$TEST_TEMP_DIR/config.toml"
+  cat > "$config_file" <<'EOF'
+model = "gpt-5.5"
+
+[features]
+hooks = true
+
+[hooks.state."/Users/rsj/.codex/hooks.json:stop:0:0"]
+trusted_hash = "sha256:abc123"
+EOF
+
+  run zsh -c "
+    source '$BACKUP_SCRIPT'
+    filter_shared_codex_config < '$config_file'
+  "
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'hooks = true'* ]]
+  [[ "$output" != *"[hooks.state."* ]]
+  [[ "$output" != *"trusted_hash"* ]]
+}
+
+@test "filter_shared_codex_agents removes Codex-only RTK include" {
+  agents_file="$TEST_TEMP_DIR/AGENTS.md"
+  cat > "$agents_file" <<EOF
+# Shared Agent Instructions
+
+- Prefer RTK wrappers.
+
+@$HOME/.codex/RTK.md
+EOF
+
+  run zsh -c "
+    source '$BACKUP_SCRIPT'
+    filter_shared_codex_agents < '$agents_file'
+  "
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Prefer RTK wrappers"* ]]
+  [[ "$output" != *"RTK.md"* ]]
 }
 
 @test "restore-codex.sh accepts --force argument" {
@@ -101,7 +148,13 @@ EOF
 @test "codex_config includes shared MCP servers" {
   config="$PROJECT_ROOT/codex_config/config.toml"
 
+  run grep -F 'hooks = true' "$config"
+  [ "$status" -eq 0 ]
+
   run grep -F '[mcp_servers.code-review-graph]' "$config"
+  [ "$status" -eq 0 ]
+
+  run grep -F '[mcp_servers.code-review-graph.tools.query_graph_tool]' "$config"
   [ "$status" -eq 0 ]
 
   run grep -F '[mcp_servers.XcodeBuildMCP]' "$config"
@@ -122,4 +175,19 @@ EOF
 
   run grep -F 'XcodeBuildMCP tools' "$instructions"
   [ "$status" -eq 0 ]
+}
+
+@test "restore-codex.sh restores Codex hooks RTK include and Plannotator skills" {
+  run "$RESTORE_SCRIPT" --force
+
+  [ "$status" -eq 0 ]
+  [ -f "$HOME/.codex/config.toml" ]
+  [ -f "$HOME/.codex/hooks.json" ]
+  [ -f "$HOME/.codex/RTK.md" ]
+  [ -f "$HOME/.codex/AGENTS.md" ]
+  [ -f "$HOME/.codex/skills/plannotator-review/SKILL.md" ]
+
+  grep -F 'hooks = true' "$HOME/.codex/config.toml"
+  grep -F "\"command\": \"$HOME/.local/bin/plannotator\"" "$HOME/.codex/hooks.json"
+  grep -Fx "@$HOME/.codex/RTK.md" "$HOME/.codex/AGENTS.md"
 }

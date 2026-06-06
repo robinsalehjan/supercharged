@@ -477,6 +477,32 @@ validate_installation() {
         fi
     fi
 
+    # Check Codex components (all optional)
+    if command_exists codex; then
+        echo ""
+        echo "Codex Components:"
+        if [ -f "$HOME/.codex/hooks.json" ]; then
+            echo "✅ Codex: hooks.json"
+        else
+            echo "⚠️  Codex: hooks.json not configured"
+            ((warned++))
+        fi
+
+        if [ -f "$HOME/.codex/RTK.md" ] && grep -F "@$HOME/.codex/RTK.md" "$HOME/.codex/AGENTS.md" >/dev/null 2>&1; then
+            echo "✅ Codex: RTK instructions"
+        else
+            echo "⚠️  Codex: RTK instructions not configured"
+            ((warned++))
+        fi
+
+        if [ -f "$HOME/.codex/skills/plannotator-review/SKILL.md" ]; then
+            echo "✅ Codex: Plannotator skills"
+        else
+            echo "⚠️  Codex: Plannotator skills not configured"
+            ((warned++))
+        fi
+    fi
+
     echo ""
     echo "Configuration Files:"
     if [ -f "$HOME/.gitconfig" ]; then
