@@ -50,6 +50,11 @@ teardown() {
   [ "$status" -eq 0 ]
 }
 
+@test "restore-claude.sh guards CLAUDE.md @ references" {
+  run grep -F 'is_safe_markdown_ref "$ref_file"' "$SCRIPT"
+  [ "$status" -eq 0 ]
+}
+
 @test "get_file_mtime returns mtime for existing file" {
   # Create a test file with known content
   test_file="$TEST_TEMP_DIR/sample.txt"

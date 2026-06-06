@@ -171,6 +171,11 @@ fi
 claude_md_refs_backed_up=()
 if [ -f "$CLAUDE_HOME/CLAUDE.md" ]; then
     while IFS= read -r ref_file; do
+        if ! is_safe_markdown_ref "$ref_file"; then
+            log_with_level "WARN" "Skipping unsafe CLAUDE.md @-reference: $ref_file"
+            continue
+        fi
+
         if [ -f "$CLAUDE_HOME/$ref_file" ]; then
             ref_dest_dir="$CLAUDE_CONFIG_DIR"
             if [ "$ref_file" = "AGENTS.md" ]; then
