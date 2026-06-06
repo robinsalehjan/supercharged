@@ -38,7 +38,7 @@ jobs:
       run: |
         set -euo pipefail
         # Only install what isn't already present on the runner image
-        for pkg in bats-core jq shellcheck; do
+        for pkg in bats-core jq ripgrep shellcheck; do
           if ! brew list --formula --versions "$pkg" >/dev/null 2>&1; then
             brew install "$pkg"
           fi

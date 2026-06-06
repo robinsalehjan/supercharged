@@ -16,6 +16,13 @@ teardown() {
   [ -x "$SCAN_SCRIPT" ]
 }
 
+@test "CI installs ripgrep for secret scan" {
+  workflow_file="$PROJECT_ROOT/.github/workflows/test.yml"
+
+  [ -f "$workflow_file" ]
+  grep -Eq 'for pkg in .*ripgrep' "$workflow_file"
+}
+
 @test "scan-secrets.sh passes clean files" {
   mkdir -p "$TEST_TEMP_DIR/clean"
   printf '%s\n' 'TOKEN_PLACEHOLDER="YOUR_TOKEN_HERE"' > "$TEST_TEMP_DIR/clean/example.env"
