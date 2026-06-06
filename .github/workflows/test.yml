@@ -47,6 +47,9 @@ jobs:
     - name: Run shellcheck
       run: npm run lint
 
+    - name: Run secret scan
+      run: npm run scan:secrets
+
     - name: Run BATS tests
       run: npm test
 

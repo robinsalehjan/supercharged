@@ -28,6 +28,7 @@ echo "  npm run update:only -- <comp>  - Update only one component (brew, asdf, 
 echo ""
 echo "Development Commands:"
 echo "  npm run lint                   - Run ShellCheck on all scripts"
+echo "  npm run scan:secrets           - Scan repository paths for likely secrets"
 echo "  npm test                       - Run all BATS tests"
 echo "  bats tests/<suite>/*.bats      - Run a specific test suite (claude, utils, mac, update, setup)"
 echo "  npm run test:watch             - Run tests continuously (uses nodemon)"

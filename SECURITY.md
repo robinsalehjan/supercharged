@@ -35,8 +35,9 @@ This repository is designed to run safely on both personal and work machines wit
 # 1. Make changes
 vim scripts/mac.sh
 
-# 2. Run shellcheck before committing
+# 2. Run shellcheck and secret scanning before committing
 npm run lint
+npm run scan:secrets
 
 # 3. Stage and commit
 git add scripts/mac.sh
@@ -65,6 +66,7 @@ git commit -m "feat: add feature"  # ✅ Passes
 - Use `$HOME/path` instead of `/Users/name/path`
 - Use placeholders in templates (`YOUR_API_KEY_HERE`)
 - Run `npm run lint` before committing
+- Run `npm run scan:secrets` before committing
 - Follow conventional commits (`feat(scope): message`)
 - Never commit real credentials or large files
 - Never bypass hooks with `--no-verify` (blocked by hookify)
