@@ -28,11 +28,11 @@ npm run update             # Update all components
 npm run validate           # Verify tools installed correctly
 npm run restore:all        # Restore Claude Code, Codex, and dotfiles
 npm run restore:claude     # Restore Claude Code config
-npm run restore:codex      # Restore Codex config
+npm run restore:codex      # Restore Codex config, MCPs, hooks, RTK, and skills
 npm run restore:dotfiles   # Copy dotfiles to $HOME
 npm run backup:all         # Backup Claude Code and Codex config
 npm run backup:claude      # Backup Claude Code config
-npm run backup:codex       # Backup Codex config
+npm run backup:codex       # Backup Codex config, hooks, RTK, and skills
 npm run install:plugins    # Install all Claude Code plugins
 npm run install:skills     # Install git-based Claude Code skills
 npm run restore            # Restore from last backup
