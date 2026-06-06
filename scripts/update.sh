@@ -264,8 +264,8 @@ main() {
         setup_worktrunk
     fi
 
-    # Ensure code-review-graph is configured for Claude Code (if both are installed)
-    if command -v code-review-graph >/dev/null 2>&1 && [ -d "$HOME/.claude" ]; then
+    # Ensure code-review-graph watcher is configured for Claude Code and Codex.
+    if command -v code-review-graph >/dev/null 2>&1; then
         setup_code_review_graph
         setup_crg_watcher
     fi

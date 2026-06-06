@@ -23,7 +23,9 @@ filter_shared_codex_config() {
             skip=false
             if [[ "$line" == "[projects."* ]] || \
                [[ "$line" == "[tui.model_availability_nux]" ]] || \
-               [[ "$line" == "[notice.model_migrations]" ]]; then
+               [[ "$line" == "[notice.model_migrations]" ]] || \
+               [[ "$line" == "[hooks.state]" ]] || \
+               [[ "$line" == "[hooks.state."* ]]; then
                 skip=true
             fi
         fi
@@ -32,6 +34,41 @@ filter_shared_codex_config() {
             printf '%s\n' "$line"
         fi
     done
+}
+
+filter_shared_codex_agents() {
+    while IFS= read -r line || [ -n "$line" ]; do
+        case "$line" in
+            "@$CODEX_HOME/RTK.md"|"@\$HOME/.codex/RTK.md"|"@RTK.md")
+                continue
+                ;;
+        esac
+
+        printf '%s\n' "$line"
+    done
+}
+
+backup_codex_skills() {
+    local src_dir="$CODEX_HOME/skills"
+    local dest_dir="$CODEX_CONFIG_DIR/skills"
+    local skill name copied=0
+
+    if [ ! -d "$src_dir" ]; then
+        return 0
+    fi
+
+    mkdir -p "$dest_dir"
+    for skill in "$src_dir"/plannotator-*(N/); do
+        name=$(basename "$skill")
+        rm -rf "${dest_dir:?}/${name:?}"
+        mkdir -p "$dest_dir/$name"
+        cp -R "$skill/." "$dest_dir/$name/"
+        copied=$((copied + 1))
+    done
+
+    if [ "$copied" -gt 0 ]; then
+        log_with_level "SUCCESS" "Backed up $copied Codex Plannotator skill(s)"
+    fi
 }
 
 main() {
@@ -59,7 +96,8 @@ main() {
     fi
 
     if [ -f "$CODEX_HOME/AGENTS.md" ]; then
-        if ! make_path_portable < "$CODEX_HOME/AGENTS.md" > "$AGENT_CONFIG_DIR/AGENTS.md.tmp"; then
+        if ! filter_shared_codex_agents < "$CODEX_HOME/AGENTS.md" | \
+            make_path_portable > "$AGENT_CONFIG_DIR/AGENTS.md.tmp"; then
             rm -f "$AGENT_CONFIG_DIR/AGENTS.md.tmp"
             log_with_level "ERROR" "Failed to process AGENTS.md - backup aborted"
             exit 1
@@ -70,10 +108,39 @@ main() {
         log_with_level "WARN" "AGENTS.md not found; keeping existing shared agent_config/AGENTS.md"
     fi
 
+    if [ -f "$CODEX_HOME/hooks.json" ]; then
+        if ! make_path_portable < "$CODEX_HOME/hooks.json" > "$CODEX_CONFIG_DIR/hooks.json.tmp"; then
+            rm -f "$CODEX_CONFIG_DIR/hooks.json.tmp"
+            log_with_level "ERROR" "Failed to process hooks.json - backup aborted"
+            exit 1
+        fi
+        mv "$CODEX_CONFIG_DIR/hooks.json.tmp" "$CODEX_CONFIG_DIR/hooks.json"
+        log_with_level "SUCCESS" "Backed up hooks.json (paths made portable)"
+    else
+        log_with_level "WARN" "hooks.json not found"
+    fi
+
+    if [ -f "$CODEX_HOME/RTK.md" ]; then
+        if ! make_path_portable < "$CODEX_HOME/RTK.md" > "$CODEX_CONFIG_DIR/RTK.md.tmp"; then
+            rm -f "$CODEX_CONFIG_DIR/RTK.md.tmp"
+            log_with_level "ERROR" "Failed to process RTK.md - backup aborted"
+            exit 1
+        fi
+        mv "$CODEX_CONFIG_DIR/RTK.md.tmp" "$CODEX_CONFIG_DIR/RTK.md"
+        log_with_level "SUCCESS" "Backed up RTK.md"
+    else
+        log_with_level "WARN" "RTK.md not found; keeping existing codex_config/RTK.md"
+    fi
+
+    backup_codex_skills
+
     log_with_level "SUCCESS" "Codex configuration backup completed!"
     echo ""
     echo "📦 Backed up files:"
     echo "   - codex_config/config.toml"
+    echo "   - codex_config/hooks.json"
+    echo "   - codex_config/RTK.md"
+    echo "   - codex_config/skills/plannotator-*"
     echo "   - agent_config/AGENTS.md"
     echo ""
     echo "💡 Runtime files such as auth.json, history, logs, sessions, and SQLite databases are intentionally not backed up"

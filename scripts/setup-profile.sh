@@ -113,8 +113,8 @@ main() {
     # missing or the integration is already present).
     setup_worktrunk
 
-    # Set up code-review-graph watcher (if both code-review-graph and Claude Code are installed)
-    if command -v code-review-graph >/dev/null 2>&1 && [ -d "$HOME/.claude" ]; then
+    # Set up code-review-graph watcher for Claude Code and Codex sessions.
+    if command -v code-review-graph >/dev/null 2>&1; then
         echo ""
         echo "🔍 Setting up code-review-graph infrastructure..."
         setup_code_review_graph

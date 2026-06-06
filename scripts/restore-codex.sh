@@ -45,6 +45,24 @@ get_file_mtime() {
     return 1
 }
 
+get_newest_mtime_in_dir() {
+    local dir="$1"
+    local newest=0
+    local file mtime
+
+    if [ ! -d "$dir" ]; then
+        echo "0"
+        return 0
+    fi
+
+    for file in "$dir"/**/*(.N); do
+        mtime=$(get_file_mtime "$file")
+        [ "$mtime" -gt "$newest" ] && newest="$mtime"
+    done
+
+    echo "$newest"
+}
+
 extract_local_codex_tables() {
     local keep=false
 
@@ -53,7 +71,9 @@ extract_local_codex_tables() {
             keep=false
             if [[ "$line" == "[projects."* ]] || \
                [[ "$line" == "[tui.model_availability_nux]" ]] || \
-               [[ "$line" == "[notice.model_migrations]" ]]; then
+               [[ "$line" == "[notice.model_migrations]" ]] || \
+               [[ "$line" == "[hooks.state]" ]] || \
+               [[ "$line" == "[hooks.state."* ]]; then
                 keep=true
             fi
         fi
@@ -73,6 +93,52 @@ restore_config_file() {
         mkdir -p "$(dirname "$dest")"
         expand_portable_path < "$src" > "$dest"
         log_with_level "SUCCESS" "Restored $name"
+    fi
+}
+
+restore_codex_agents() {
+    local src="$AGENT_CONFIG_DIR/AGENTS.md"
+    local dest="$CODEX_HOME/AGENTS.md"
+    local rtk_ref="@$CODEX_HOME/RTK.md"
+
+    if [ ! -f "$src" ]; then
+        return 0
+    fi
+
+    mkdir -p "$(dirname "$dest")"
+    expand_portable_path < "$src" > "$dest"
+
+    if [ -f "$CODEX_CONFIG_DIR/RTK.md" ] && ! grep -Fx "$rtk_ref" "$dest" >/dev/null 2>&1; then
+        {
+            printf '\n'
+            printf '%s\n' "$rtk_ref"
+        } >> "$dest"
+        log_with_level "INFO" "Added Codex RTK instruction include"
+    fi
+
+    log_with_level "SUCCESS" "Restored AGENTS.md"
+}
+
+restore_codex_skills() {
+    local src_dir="$CODEX_CONFIG_DIR/skills"
+    local dest_dir="$CODEX_HOME/skills"
+    local skill name copied=0
+
+    if [ ! -d "$src_dir" ]; then
+        return 0
+    fi
+
+    mkdir -p "$dest_dir"
+    for skill in "$src_dir"/*(N/); do
+        name=$(basename "$skill")
+        rm -rf "${dest_dir:?}/${name:?}"
+        mkdir -p "$dest_dir/$name"
+        cp -R "$skill/." "$dest_dir/$name/"
+        copied=$((copied + 1))
+    done
+
+    if [ "$copied" -gt 0 ]; then
+        log_with_level "SUCCESS" "Restored $copied Codex skill(s)"
     fi
 }
 
@@ -117,6 +183,16 @@ is_repo_newer() {
         mtime=$(get_file_mtime "$AGENT_CONFIG_DIR/AGENTS.md")
         [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
     fi
+    if [ -f "$CODEX_CONFIG_DIR/hooks.json" ]; then
+        mtime=$(get_file_mtime "$CODEX_CONFIG_DIR/hooks.json")
+        [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
+    fi
+    if [ -f "$CODEX_CONFIG_DIR/RTK.md" ]; then
+        mtime=$(get_file_mtime "$CODEX_CONFIG_DIR/RTK.md")
+        [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
+    fi
+    mtime=$(get_newest_mtime_in_dir "$CODEX_CONFIG_DIR/skills")
+    [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
 
     if [ -f "$CODEX_HOME/config.toml" ]; then
         home_mtime=$(get_file_mtime "$CODEX_HOME/config.toml")
@@ -125,6 +201,16 @@ is_repo_newer() {
         mtime=$(get_file_mtime "$CODEX_HOME/AGENTS.md")
         [ "$mtime" -gt "$home_mtime" ] && home_mtime="$mtime"
     fi
+    if [ -f "$CODEX_HOME/hooks.json" ]; then
+        mtime=$(get_file_mtime "$CODEX_HOME/hooks.json")
+        [ "$mtime" -gt "$home_mtime" ] && home_mtime="$mtime"
+    fi
+    if [ -f "$CODEX_HOME/RTK.md" ]; then
+        mtime=$(get_file_mtime "$CODEX_HOME/RTK.md")
+        [ "$mtime" -gt "$home_mtime" ] && home_mtime="$mtime"
+    fi
+    mtime=$(get_newest_mtime_in_dir "$CODEX_HOME/skills")
+    [ "$mtime" -gt "$home_mtime" ] && home_mtime="$mtime"
 
     if [ "$home_mtime" -eq 0 ]; then
         return 0
@@ -151,7 +237,11 @@ main() {
         esac
     done
 
-    if [ ! -f "$CODEX_CONFIG_DIR/config.toml" ] && [ ! -f "$AGENT_CONFIG_DIR/AGENTS.md" ]; then
+    if [ ! -f "$CODEX_CONFIG_DIR/config.toml" ] && \
+       [ ! -f "$AGENT_CONFIG_DIR/AGENTS.md" ] && \
+       [ ! -f "$CODEX_CONFIG_DIR/hooks.json" ] && \
+       [ ! -f "$CODEX_CONFIG_DIR/RTK.md" ] && \
+       [ ! -d "$CODEX_CONFIG_DIR/skills" ]; then
         log_with_level "INFO" "No Codex configuration found in repository"
         exit 0
     fi
@@ -169,15 +259,24 @@ main() {
 
     restore_codex_config
     restore_config_file \
-        "$AGENT_CONFIG_DIR/AGENTS.md" \
-        "$CODEX_HOME/AGENTS.md" \
-        "AGENTS.md"
+        "$CODEX_CONFIG_DIR/hooks.json" \
+        "$CODEX_HOME/hooks.json" \
+        "hooks.json"
+    restore_config_file \
+        "$CODEX_CONFIG_DIR/RTK.md" \
+        "$CODEX_HOME/RTK.md" \
+        "RTK.md"
+    restore_codex_agents
+    restore_codex_skills
 
     log_with_level "SUCCESS" "Codex configuration restored!"
     echo ""
     echo "📥 Restored files to ~/.codex:"
     echo "   - config.toml"
+    echo "   - hooks.json"
+    echo "   - RTK.md"
     echo "   - AGENTS.md"
+    echo "   - skills/plannotator-*"
     echo ""
     echo "💡 Restart Codex for changes to take effect"
 }
