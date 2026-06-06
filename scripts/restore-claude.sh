@@ -667,6 +667,11 @@ restore_config_file \
 claude_md_refs_restored=()
 if [ -f "$CLAUDE_CONFIG_DIR/CLAUDE.md" ]; then
     while IFS= read -r ref_file; do
+        if ! is_safe_markdown_ref "$ref_file"; then
+            log_with_level "WARN" "Skipping unsafe CLAUDE.md @-reference: $ref_file"
+            continue
+        fi
+
         ref_src="$CLAUDE_CONFIG_DIR/$ref_file"
         if [ "$ref_file" = "AGENTS.md" ]; then
             ref_src="$AGENT_CONFIG_DIR/AGENTS.md"

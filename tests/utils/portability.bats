@@ -18,6 +18,31 @@ teardown() {
   teardown_test_env
 }
 
+@test "is_safe_markdown_ref accepts basename markdown references" {
+  run is_safe_markdown_ref "RTK.md"
+  [ "$status" -eq 0 ]
+
+  run is_safe_markdown_ref "CLAUDE-TOKEN-EFFICIENT.md"
+  [ "$status" -eq 0 ]
+
+  run is_safe_markdown_ref "notes_v2.1.md"
+  [ "$status" -eq 0 ]
+}
+
+@test "is_safe_markdown_ref rejects path traversal and nested paths" {
+  run is_safe_markdown_ref "../outside.md"
+  [ "$status" -ne 0 ]
+
+  run is_safe_markdown_ref "nested/file.md"
+  [ "$status" -ne 0 ]
+
+  run is_safe_markdown_ref ".hidden.md"
+  [ "$status" -ne 0 ]
+
+  run is_safe_markdown_ref "README.txt"
+  [ "$status" -ne 0 ]
+}
+
 @test "make_path_portable replaces home directory with \$HOME" {
   # Arrange: Create JSON with absolute home paths
   cat > "$TEST_TEMP_DIR/input.json" <<EOF

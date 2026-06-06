@@ -22,6 +22,7 @@
     "install:plugins": "./scripts/install-plugins.sh",
     "install:skills": "./scripts/install-skills.sh",
     "lint": "shellcheck --shell=bash --severity=warning scripts/*.sh scripts/utils/*.sh tests/helpers/*.bash",
+    "scan:secrets": "./scripts/scan-secrets.sh",
     "test": "bats -r tests",
     "test:watch": "nodemon --watch tests --watch scripts --ext sh,bats --exec 'npm test'",
     "pretest": "command -v bats >/dev/null || (echo '❌ bats not found. Install with: brew install bats-core' && exit 1)"

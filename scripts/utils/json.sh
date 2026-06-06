@@ -21,6 +21,17 @@ expand_portable_path() {
     fi
 }
 
+is_safe_markdown_ref() {
+    local ref="$1"
+
+    [[ "$ref" == *.md ]] || return 1
+    [[ "$ref" != .* ]] || return 1
+    [[ "$ref" != *"/"* ]] || return 1
+    [[ "$ref" != *"\\"* ]] || return 1
+    [[ "$ref" != *".."* ]] || return 1
+    [[ "$ref" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*\.md$ ]]
+}
+
 # Filter JSON entries by marketplace suffix
 # Usage: filter_json_by_marketplace INPUT_JSON JQ_PATH MARKETPLACE1 MARKETPLACE2...
 # Returns: JSON with entries matching @MARKETPLACE suffixes filtered out

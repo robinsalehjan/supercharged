@@ -40,6 +40,7 @@ npm run version:show       # Print current version, commit, tag, branch
 npm run release -- patch   # Cut a release (patch|minor|major|x.y.z)
 npm test                   # Run all BATS tests
 npm run lint               # ShellCheck all scripts
+npm run scan:secrets       # Scan repository paths for likely secrets
 npm run help               # Show all commands
 ```
 

@@ -137,6 +137,11 @@ sanitize_settings() {
   assert_plugin_exists "$TEMP_REPO_CONFIG/installed_plugins.json" "hookify@claude-plugins-official"
 }
 
+@test "backup-claude.sh guards CLAUDE.md @ references" {
+  run grep -F 'is_safe_markdown_ref "$ref_file"' "$PROJECT_ROOT/scripts/backup-claude.sh"
+  [ "$status" -eq 0 ]
+}
+
 @test "removes vend-plugins marketplace from known_marketplaces.json" {
   # Arrange: Load fixture
   load_fixture "claude-backup/marketplaces-full.json" "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json"

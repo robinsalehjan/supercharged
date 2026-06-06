@@ -65,6 +65,7 @@ npm run release -- --dry-run patch # Preview without making changes
 
 # Development
 npm run lint                      # ShellCheck all scripts (including utils/)
+npm run scan:secrets              # Scan repository paths for likely secrets
 npm test                          # Run all BATS tests
 npm run test:watch                # Re-run tests on change (requires nodemon)
 bats tests/<suite>/*.bats        # Run a specific suite (claude, utils, mac, update, setup, restore, meta)
@@ -129,14 +130,15 @@ npm test -- --filter "pattern"    # Run specific tests
 - PATH-based mocking with `MOCK_BIN_DIR` for zsh subprocesses (bash `export -f` doesn't propagate to zsh)
 
 **CI integration:**
-Tests run on push to main and pull requests via `.github/workflows/test.yml`.
+ShellCheck, secret scanning, and BATS tests run on push to main and pull requests via `.github/workflows/test.yml`.
 
 ### Manual Testing Workflows
 
 **Pre-commit**:
 1. `shellcheck --shell=bash scripts/*.sh`
-2. Test script functions in isolation
-3. Verify logging matches existing patterns
+2. `npm run scan:secrets`
+3. Test script functions in isolation
+4. Verify logging matches existing patterns
 
 **Manual workflow**:
 1. `npm run restore:dotfiles` to copy dotfiles
@@ -243,6 +245,7 @@ Plugins are auto-installed during restore. `install:plugins` merges repo configs
 - [ ] Logging follows `log_with_level` pattern
 - [ ] No hardcoded paths (use `$HOME`)
 - [ ] Shellcheck passed (`npm run lint`)
+- [ ] Secret scan passed (`npm run scan:secrets`)
 
 See [SECURITY.md](./SECURITY.md) for security details and [CLAUDE.md](./CLAUDE.md) for commit conventions.
 
