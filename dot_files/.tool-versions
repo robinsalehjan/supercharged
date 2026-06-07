@@ -25,9 +25,9 @@ firebase 15.18.0
 
 # JVM toolchain (java, kotlin) is opt-in via INSTALL_JVM_TOOLS=Y.
 # By default setup resolves `asdf latest java openjdk` and `asdf latest kotlin`.
-# To pin a specific version on a work machine, add lines like:
-#   java openjdk-25.0.2
-#   kotlin 2.3.20
+# Java is pinned because the Firebase emulator suite (Firestore rules tests)
+# requires a JDK 11+ runtime.
+java openjdk-26.0.1
 
 # Additional tools can be added here
 # Example:
