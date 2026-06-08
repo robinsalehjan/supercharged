@@ -177,6 +177,27 @@ EOF
   [ "$status" -eq 0 ]
 }
 
+@test "restore_claude_project_skills_for_codex converts Claude skill markdown to Codex skills" {
+  mkdir -p "$TEST_TEMP_DIR/.claude/skills" "$TEST_TEMP_DIR/.codex/skills"
+  cat > "$TEST_TEMP_DIR/.claude/skills/review-changes.md" <<'EOF'
+---
+name: Review Changes
+description: Perform a structured code review
+---
+
+# Review Changes
+EOF
+
+  run zsh -c "
+    source '$RESTORE_SCRIPT'
+    restore_claude_project_skills_for_codex '$TEST_TEMP_DIR/.claude/skills' '$TEST_TEMP_DIR/.codex/skills'
+  "
+
+  [ "$status" -eq 0 ]
+  [ -f "$TEST_TEMP_DIR/.codex/skills/review-changes/SKILL.md" ]
+  grep -F "Perform a structured code review" "$TEST_TEMP_DIR/.codex/skills/review-changes/SKILL.md"
+}
+
 @test "restore-codex.sh restores Codex hooks RTK include and Plannotator skills" {
   run "$RESTORE_SCRIPT" --force
 

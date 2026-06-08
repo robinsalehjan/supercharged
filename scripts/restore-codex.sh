@@ -13,6 +13,7 @@ source "$(dirname "$0")/utils.sh"
 PROJECT_ROOT="$UTILS_PROJECT_ROOT"
 CODEX_CONFIG_DIR="$PROJECT_ROOT/codex_config"
 AGENT_CONFIG_DIR="$PROJECT_ROOT/agent_config"
+CLAUDE_PROJECT_SKILLS_DIR="$PROJECT_ROOT/.claude/skills"
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
 
 FORCE_RESTORE=false
@@ -142,6 +143,29 @@ restore_codex_skills() {
     fi
 }
 
+restore_claude_project_skills_for_codex() {
+    local src_dir="${1:-$CLAUDE_PROJECT_SKILLS_DIR}"
+    local dest_dir="${2:-$CODEX_HOME/skills}"
+    local skill name copied=0
+
+    if [ ! -d "$src_dir" ]; then
+        return 0
+    fi
+
+    mkdir -p "$dest_dir"
+    while IFS= read -r skill; do
+        name=$(basename "$skill" .md)
+        rm -rf "${dest_dir:?}/${name:?}"
+        mkdir -p "$dest_dir/$name"
+        cp "$skill" "$dest_dir/$name/SKILL.md"
+        copied=$((copied + 1))
+    done < <(find "$src_dir" -maxdepth 1 -type f -name '*.md' | sort)
+
+    if [ "$copied" -gt 0 ]; then
+        log_with_level "SUCCESS" "Restored $copied Claude project skill(s) for Codex"
+    fi
+}
+
 restore_codex_config() {
     local src="$CODEX_CONFIG_DIR/config.toml"
     local dest="$CODEX_HOME/config.toml"
@@ -192,6 +216,8 @@ is_repo_newer() {
         [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
     fi
     mtime=$(get_newest_mtime_in_dir "$CODEX_CONFIG_DIR/skills")
+    [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
+    mtime=$(get_newest_mtime_in_dir "$CLAUDE_PROJECT_SKILLS_DIR")
     [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
 
     if [ -f "$CODEX_HOME/config.toml" ]; then
@@ -268,6 +294,7 @@ main() {
         "RTK.md"
     restore_codex_agents
     restore_codex_skills
+    restore_claude_project_skills_for_codex
 
     log_with_level "SUCCESS" "Codex configuration restored!"
     echo ""
@@ -277,6 +304,7 @@ main() {
     echo "   - RTK.md"
     echo "   - AGENTS.md"
     echo "   - skills/plannotator-*"
+    echo "   - skills copied from project .claude/skills/*.md when present"
     echo ""
     echo "💡 Restart Codex for changes to take effect"
 }
