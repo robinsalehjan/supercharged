@@ -175,6 +175,12 @@ EOF
 
   run grep -F 'XcodeBuildMCP tools' "$instructions"
   [ "$status" -eq 0 ]
+
+  run grep -F 'Use Worktrunk (`wt`) for isolated feature/fix work' "$instructions"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'small atomic commits with conventional commit messages' "$instructions"
+  [ "$status" -eq 0 ]
 }
 
 @test "restore_claude_project_skills_for_codex converts Claude skill markdown to Codex skills" {
