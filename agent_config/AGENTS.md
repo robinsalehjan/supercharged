@@ -11,6 +11,8 @@ Keep tool-specific behavior in the tool-specific config files; keep cross-agent 
 - Keep changes focused on the requested task and avoid unrelated refactors.
 - Do not use destructive git commands unless explicitly requested.
 - Preserve user changes in a dirty worktree.
+- Use Worktrunk (`wt`) for isolated feature/fix work when the task is more than a trivial single-file edit or when a separate branch/worktree is requested.
+- Do not commit unless explicitly requested. When asked to commit, create small atomic commits with conventional commit messages; do not bundle unrelated changes.
 - Run the narrowest useful validation after code or script changes.
 - Never commit secrets, tokens, machine-specific paths, or work-only configuration.
 
@@ -20,7 +22,7 @@ Keep tool-specific behavior in the tool-specific config files; keep cross-agent 
 - Use `rg`/`rg --files` as the fallback when code-review-graph is unavailable, stale, or does not cover the needed detail.
 - Prefer RTK wrappers for noisy shell output when practical, such as `rtk git`, `rtk test`, `rtk npm`, `rtk pytest`, and `rtk tsc`.
 - Use `rtk proxy <cmd>` or the raw command when full unfiltered output is required for correctness.
-- Use Worktrunk (`wt`) for deliberate multi-branch or multi-worktree workflows; clean up completed worktrees with `wt remove` or `wt merge`.
+- Clean up completed Worktrunk worktrees with `wt remove` or `wt merge`.
 - Use XcodeBuildMCP tools for iOS, macOS, simulator, Swift package, and Xcode project work when available.
 - Use OpenAI Docs MCP for current OpenAI API, Codex, model, and platform documentation when available.
 

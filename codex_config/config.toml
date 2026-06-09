@@ -4,10 +4,19 @@ personality = "pragmatic"
 web_search = "cached"
 project_doc_fallback_filenames = ["CLAUDE.md"]
 project_doc_max_bytes = 65536
+default_permissions = "supercharged"
 
 [features]
 shell_snapshot = true
 hooks = true
+
+[permissions.supercharged]
+extends = ":workspace"
+
+[permissions.supercharged.filesystem.":workspace_roots"]
+"**/.env*" = "deny"
+"**/.secrets" = "deny"
+"**/.secrets/**" = "deny"
 
 [mcp_servers.code-review-graph]
 command = "code-review-graph"

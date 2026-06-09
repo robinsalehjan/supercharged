@@ -13,6 +13,9 @@ source "$(dirname "$0")/utils.sh"
 PROJECT_ROOT="$UTILS_PROJECT_ROOT"
 CODEX_CONFIG_DIR="$PROJECT_ROOT/codex_config"
 AGENT_CONFIG_DIR="$PROJECT_ROOT/agent_config"
+CLAUDE_HOME="${CLAUDE_HOME:-$HOME/.claude}"
+CLAUDE_USER_SKILLS_DIR="$CLAUDE_HOME/skills"
+CLAUDE_PROJECT_SKILLS_DIR="$PROJECT_ROOT/.claude/skills"
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
 
 FORCE_RESTORE=false
@@ -142,6 +145,95 @@ restore_codex_skills() {
     fi
 }
 
+restore_codex_rules() {
+    local src_dir="${1:-$CODEX_CONFIG_DIR/rules}"
+    local dest_dir="${2:-$CODEX_HOME/rules}"
+    local rule name copied=0
+
+    if [ ! -d "$src_dir" ]; then
+        return 0
+    fi
+
+    mkdir -p "$dest_dir"
+    while IFS= read -r rule; do
+        name=$(basename "$rule")
+        cp "$rule" "$dest_dir/$name"
+        copied=$((copied + 1))
+    done < <(find "$src_dir" -maxdepth 1 -type f -name '*.rules' | sort)
+
+    if [ "$copied" -gt 0 ]; then
+        log_with_level "SUCCESS" "Restored $copied Codex rule file(s)"
+    fi
+}
+
+restore_codex_hook_scripts() {
+    local src_dir="${1:-$CODEX_CONFIG_DIR/hooks}"
+    local dest_dir="${2:-$CODEX_HOME/hooks}"
+    local hook name copied=0
+
+    if [ ! -d "$src_dir" ]; then
+        return 0
+    fi
+
+    mkdir -p "$dest_dir"
+    while IFS= read -r hook; do
+        name=$(basename "$hook")
+        cp "$hook" "$dest_dir/$name"
+        chmod +x "$dest_dir/$name"
+        copied=$((copied + 1))
+    done < <(find "$src_dir" -maxdepth 1 -type f | sort)
+
+    if [ "$copied" -gt 0 ]; then
+        log_with_level "SUCCESS" "Restored $copied Codex hook script(s)"
+    fi
+}
+
+restore_claude_user_skills_for_codex() {
+    local src_dir="${1:-$CLAUDE_USER_SKILLS_DIR}"
+    local dest_dir="${2:-$CODEX_HOME/skills}"
+    local skill name copied=0
+
+    if [ ! -d "$src_dir" ]; then
+        return 0
+    fi
+
+    mkdir -p "$dest_dir"
+    while IFS= read -r skill; do
+        name=$(basename "$(dirname "$skill")")
+        rm -rf "${dest_dir:?}/${name:?}"
+        mkdir -p "$dest_dir/$name"
+        cp -R "$(dirname "$skill")/." "$dest_dir/$name/"
+        copied=$((copied + 1))
+    done < <(find "$src_dir" -mindepth 2 -maxdepth 2 -type f -name 'SKILL.md' | sort)
+
+    if [ "$copied" -gt 0 ]; then
+        log_with_level "SUCCESS" "Restored $copied Claude user skill(s) for Codex"
+    fi
+}
+
+restore_claude_project_skills_for_codex() {
+    local src_dir="${1:-$CLAUDE_PROJECT_SKILLS_DIR}"
+    local dest_dir="${2:-$CODEX_HOME/skills}"
+    local skill name copied=0
+
+    if [ ! -d "$src_dir" ]; then
+        return 0
+    fi
+
+    mkdir -p "$dest_dir"
+    while IFS= read -r skill; do
+        name=$(basename "$skill" .md)
+        rm -rf "${dest_dir:?}/${name:?}"
+        mkdir -p "$dest_dir/$name"
+        cp "$skill" "$dest_dir/$name/SKILL.md"
+        copied=$((copied + 1))
+    done < <(find "$src_dir" -maxdepth 1 -type f -name '*.md' | sort)
+
+    if [ "$copied" -gt 0 ]; then
+        log_with_level "SUCCESS" "Restored $copied Claude project skill(s) for Codex"
+    fi
+}
+
 restore_codex_config() {
     local src="$CODEX_CONFIG_DIR/config.toml"
     local dest="$CODEX_HOME/config.toml"
@@ -193,6 +285,14 @@ is_repo_newer() {
     fi
     mtime=$(get_newest_mtime_in_dir "$CODEX_CONFIG_DIR/skills")
     [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
+    mtime=$(get_newest_mtime_in_dir "$CODEX_CONFIG_DIR/rules")
+    [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
+    mtime=$(get_newest_mtime_in_dir "$CODEX_CONFIG_DIR/hooks")
+    [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
+    mtime=$(get_newest_mtime_in_dir "$CLAUDE_USER_SKILLS_DIR")
+    [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
+    mtime=$(get_newest_mtime_in_dir "$CLAUDE_PROJECT_SKILLS_DIR")
+    [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
 
     if [ -f "$CODEX_HOME/config.toml" ]; then
         home_mtime=$(get_file_mtime "$CODEX_HOME/config.toml")
@@ -210,6 +310,10 @@ is_repo_newer() {
         [ "$mtime" -gt "$home_mtime" ] && home_mtime="$mtime"
     fi
     mtime=$(get_newest_mtime_in_dir "$CODEX_HOME/skills")
+    [ "$mtime" -gt "$home_mtime" ] && home_mtime="$mtime"
+    mtime=$(get_newest_mtime_in_dir "$CODEX_HOME/rules")
+    [ "$mtime" -gt "$home_mtime" ] && home_mtime="$mtime"
+    mtime=$(get_newest_mtime_in_dir "$CODEX_HOME/hooks")
     [ "$mtime" -gt "$home_mtime" ] && home_mtime="$mtime"
 
     if [ "$home_mtime" -eq 0 ]; then
@@ -241,7 +345,9 @@ main() {
        [ ! -f "$AGENT_CONFIG_DIR/AGENTS.md" ] && \
        [ ! -f "$CODEX_CONFIG_DIR/hooks.json" ] && \
        [ ! -f "$CODEX_CONFIG_DIR/RTK.md" ] && \
-       [ ! -d "$CODEX_CONFIG_DIR/skills" ]; then
+       [ ! -d "$CODEX_CONFIG_DIR/skills" ] && \
+       [ ! -d "$CODEX_CONFIG_DIR/rules" ] && \
+       [ ! -d "$CODEX_CONFIG_DIR/hooks" ]; then
         log_with_level "INFO" "No Codex configuration found in repository"
         exit 0
     fi
@@ -268,6 +374,10 @@ main() {
         "RTK.md"
     restore_codex_agents
     restore_codex_skills
+    restore_codex_rules
+    restore_codex_hook_scripts
+    restore_claude_user_skills_for_codex
+    restore_claude_project_skills_for_codex
 
     log_with_level "SUCCESS" "Codex configuration restored!"
     echo ""
@@ -277,6 +387,10 @@ main() {
     echo "   - RTK.md"
     echo "   - AGENTS.md"
     echo "   - skills/plannotator-*"
+    echo "   - skills copied from ~/.claude/skills/* when present"
+    echo "   - skills copied from project .claude/skills/*.md when present"
+    echo "   - rules/*.rules"
+    echo "   - hooks/*"
     echo ""
     echo "💡 Restart Codex for changes to take effect"
 }
