@@ -177,8 +177,10 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 
 **Codex backup/restore** (`scripts/backup-codex.sh`, `scripts/restore-codex.sh`):
 - Shared instructions: `agent_config/AGENTS.md` is restored to both `~/.codex/AGENTS.md` and `~/.claude/AGENTS.md`
-- Codex settings: `codex_config/config.toml` restores durable defaults such as model, personality, web search, feature flags, MCP settings, hook enablement, and instruction discovery
+- Codex settings: `codex_config/config.toml` restores durable defaults such as model, personality, web search, feature flags, MCP settings, hook enablement, instruction discovery, and a permission profile that denies `.env*`/`.secrets` paths
 - Codex hooks and skills: `codex_config/hooks.json`, `codex_config/RTK.md`, and `codex_config/skills/plannotator-*` restore code-review-graph hooks, Plannotator Stop-hook review, Plannotator skills, and the Codex-only RTK instruction include
+- Codex rules: `codex_config/rules/*.rules` restores repo-managed command deny rules that mirror the Claude hard-deny list where Codex prefix rules can express it; local approval rules in `~/.codex/rules/default.rules` remain local
+- Claude user skills: `restore:codex` mirrors existing `~/.claude/skills/*/SKILL.md` directories into `~/.codex/skills/*` without committing their contents to this repo
 - Claude project skills: `.claude/skills/*.md` is the project-level source of truth for reusable agent rules; `restore:codex` mirrors them into `~/.codex/skills/<name>/SKILL.md`
 - Local-only state excluded: `auth.json`, history, logs, sessions, memories, SQLite databases, shell snapshots, and model caches
 - Machine-local tables preserved on restore: `[projects.*]`, `[tui.model_availability_nux]`, `[notice.model_migrations]`, and `[hooks.state*]`
@@ -221,6 +223,7 @@ Plugins are auto-installed during restore. `install:plugins` merges repo configs
 | Add Claude backup file | Add backup/restore logic in `backup-claude.sh` and `restore-claude.sh` (follow `keybindings.json` pattern) |
 | Update shared agent instructions | Edit `agent_config/AGENTS.md`, then run `npm run restore:codex` and `npm run restore:claude` |
 | Update Codex defaults | Edit `codex_config/config.toml`, then run `npm run restore:codex` |
+| Update Codex command deny rules | Edit `codex_config/rules/*.rules`, then run `npm run restore:codex` |
 | Add shared project skill rule | Create/edit `.claude/skills/<name>.md`, then run `npm run restore:codex` |
 | Add/disable hookify rule | Create/edit `.claude/hookify.{name}.local.md` or set `enabled: false` |
 | Test security hooks | `git add . && git commit -m "test"` - hooks run automatically |
