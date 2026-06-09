@@ -1,0 +1,53 @@
+# Mirrors the Claude Code hard-deny rules that Codex prefix rules can express.
+# Keep broader policy in agent_config/AGENTS.md; keep local allow approvals in
+# ~/.codex/rules/default.rules.
+
+prefix_rule(
+    pattern = ["rm", "-rf"],
+    decision = "forbidden",
+    justification = "Do not run destructive recursive removals.",
+    match = ["rm -rf build"],
+    not_match = ["rm -r build"],
+)
+
+prefix_rule(
+    pattern = ["sudo"],
+    decision = "forbidden",
+    justification = "Do not run privileged commands from agent sessions.",
+    match = ["sudo make install"],
+)
+
+prefix_rule(
+    pattern = ["git", "reset", "--hard"],
+    decision = "forbidden",
+    justification = "Do not discard worktree changes destructively.",
+    match = ["git reset --hard"],
+)
+
+prefix_rule(
+    pattern = ["git", "clean", "-f"],
+    decision = "forbidden",
+    justification = "Do not delete untracked files destructively.",
+    match = ["git clean -f"],
+)
+
+prefix_rule(
+    pattern = ["git", "commit", "--no-verify"],
+    decision = "forbidden",
+    justification = "Do not bypass commit hooks.",
+    match = ["git commit --no-verify -m test"],
+)
+
+prefix_rule(
+    pattern = ["git", "push", "--no-verify"],
+    decision = "forbidden",
+    justification = "Do not bypass push hooks.",
+    match = ["git push --no-verify"],
+)
+
+prefix_rule(
+    pattern = ["git", "push", "--force"],
+    decision = "forbidden",
+    justification = "Do not force-push from agent sessions.",
+    match = ["git push --force"],
+)
