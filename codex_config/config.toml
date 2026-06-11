@@ -40,3 +40,7 @@ args = ["mcp"]
 
 [mcp_servers.openaiDeveloperDocs]
 url = "https://developers.openai.com/mcp"
+
+[tui]
+status_line = ["model-with-reasoning", "current-dir", "git-branch", "branch-changes", "context-remaining"]
+status_line_use_colors = true
