@@ -121,6 +121,18 @@ setup_git_config() {
 }
 
 # Interactive user preferences setup
+normalize_yes_no_preference() {
+    local response="${1:-}"
+    local default="${2:-N}"
+
+    response="${response:-$default}"
+    if [[ "$response" =~ ^[Yy] ]]; then
+        printf 'Y'
+    else
+        printf 'N'
+    fi
+}
+
 setup_user_preferences() {
     echo ""
     echo "🎯 Configure your development environment preferences:"
@@ -132,42 +144,42 @@ setup_user_preferences() {
     # Ask about iOS development
     printf "Install iOS development tools (xcodes, ios-deploy, swift tools)? [Y/n]: "
     read -r install_ios
-    install_ios=${install_ios:-Y}
+    install_ios=$(normalize_yes_no_preference "$install_ios" "Y")
 
     # Ask about data science tools
     printf "Install data science tools (jupyter, pandas, numpy)? [y/N]: "
     read -r install_datascience
-    install_datascience=${install_datascience:-N}
+    install_datascience=$(normalize_yes_no_preference "$install_datascience" "N")
 
     # Ask about additional development tools
     printf "Install additional development tools (docker, kubernetes tools)? [Y/n]: "
     read -r install_devtools
-    install_devtools=${install_devtools:-Y}
+    install_devtools=$(normalize_yes_no_preference "$install_devtools" "Y")
 
     # Ask about Claude Code
     printf "Install Claude Code (AI coding assistant)? [Y/n]: "
     read -r install_claude
-    install_claude=${install_claude:-Y}
+    install_claude=$(normalize_yes_no_preference "$install_claude" "Y")
 
     # Ask about JVM tooling (Java + Kotlin via asdf)
     printf "Install JVM tooling (java, kotlin)? [y/N]: "
     read -r install_jvm
-    install_jvm=${install_jvm:-N}
+    install_jvm=$(normalize_yes_no_preference "$install_jvm" "N")
 
     # Ask about extra GUI apps (Postman + Google Chrome)
     printf "Install extra GUI apps (postman, google-chrome)? [y/N]: "
     read -r install_extras
-    install_extras=${install_extras:-N}
+    install_extras=$(normalize_yes_no_preference "$install_extras" "N")
 
     # Ask about cloud SDKs (gcloud + firebase via asdf)
     printf "Install cloud SDKs (gcloud, firebase)? [Y/n]: "
     read -r install_cloud
-    install_cloud=${install_cloud:-Y}
+    install_cloud=$(normalize_yes_no_preference "$install_cloud" "Y")
 
     # Ask about network/HTTP debugging tools (Wireshark, mitmproxy, Proxyman)
     printf "Install network tools (wireshark, mitmproxy, proxyman)? [Y/n]: "
     read -r install_network
-    install_network=${install_network:-Y}
+    install_network=$(normalize_yes_no_preference "$install_network" "Y")
 
     # Re-enable strict mode
     set -u

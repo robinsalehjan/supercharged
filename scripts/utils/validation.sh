@@ -116,6 +116,33 @@ parse_tool_versions() {
     done < "$tool_versions_file"
 }
 
+load_supercharged_preferences() {
+    local prefs_file="${1:-$HOME/.supercharged_preferences}"
+    local line key value
+
+    [ -f "$prefs_file" ] || return 1
+
+    while IFS= read -r line || [ -n "$line" ]; do
+        case "$line" in
+            ""|\#*) continue ;;
+        esac
+
+        key="${line%%=*}"
+        value="${line#*=}"
+
+        case "$key" in
+            INSTALL_IOS_TOOLS|INSTALL_DATA_SCIENCE|INSTALL_DEV_TOOLS|INSTALL_CLAUDE_CODE|INSTALL_JVM_TOOLS|INSTALL_EXTRA_APPS|INSTALL_CLOUD_TOOLS|INSTALL_NETWORK_TOOLS)
+                case "$value" in
+                    [Yy]*) value="Y" ;;
+                    [Nn]*) value="N" ;;
+                    *) continue ;;
+                esac
+                export "$key=$value"
+                ;;
+        esac
+    done < "$prefs_file"
+}
+
 # Check internet connectivity
 require_internet() {
     if ! ping -c 1 -W 5 google.com >/dev/null 2>&1; then
@@ -364,8 +391,7 @@ validate_installation() {
 
     # Check for optional categories if preference file indicates they should be installed
     if [ -f "$HOME/.supercharged_preferences" ]; then
-        # shellcheck disable=SC1091
-        source "$HOME/.supercharged_preferences"
+        load_supercharged_preferences "$HOME/.supercharged_preferences"
 
         if [[ "${INSTALL_CLOUD_TOOLS:-Y}" =~ ^[Yy] ]]; then
             echo ""
