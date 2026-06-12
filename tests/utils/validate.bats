@@ -75,6 +75,29 @@ teardown() {
   [ "$status" -eq 0 ]
 }
 
+@test "load_supercharged_preferences parses without executing shell content" {
+  local marker="$HOME/preference-pwned"
+  cat > "$HOME/.supercharged_preferences" <<EOF
+# Supercharged Setup Preferences
+INSTALL_CLOUD_TOOLS=\$(touch "$marker")
+INSTALL_NETWORK_TOOLS=n
+SETUP_DATE=\$(touch "$marker")
+EOF
+
+  run bash -c "
+    source '$PROJECT_ROOT/scripts/utils.sh'
+    load_supercharged_preferences '$HOME/.supercharged_preferences'
+    printf 'cloud=%s\n' \"\${INSTALL_CLOUD_TOOLS:-unset}\"
+    printf 'network=%s\n' \"\${INSTALL_NETWORK_TOOLS:-unset}\"
+    [ ! -e '$marker' ]
+  "
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"cloud=unset"* ]]
+  [[ "$output" == *"network=N"* ]]
+  [ ! -e "$marker" ]
+}
+
 @test "validate_font passes when matching font exists in HOME/Library/Fonts" {
   # Arrange — HOME is the isolated test temp dir, so we control the font dir
   source "$PROJECT_ROOT/scripts/utils.sh"

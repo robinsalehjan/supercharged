@@ -54,6 +54,14 @@ teardown() {
   [ "${#MANAGED_DOTFILES[@]}" -gt 0 ]
 }
 
+@test "normalize_yes_no_preference constrains shell-like input" {
+  run normalize_yes_no_preference '$(touch "$HOME/pwned")' "Y"
+
+  [ "$status" -eq 0 ]
+  [ "$output" = "N" ]
+  [ ! -e "$HOME/pwned" ]
+}
+
 # =============================================================================
 # Dotfile portability tests
 # =============================================================================
