@@ -12,6 +12,7 @@ See [README.md](./README.md) for detailed project structure. Key directories:
 - `claude_config/` - Claude Code config backup
 - `agent_config/` - Shared global agent instructions restored to both Claude and Codex
 - `codex_config/` - Codex CLI/IDE config backup
+- `.claude/skills/` - Tracked project skills used by Claude and mirrored to Codex when supported
 
 ## Code Conventions
 
@@ -24,6 +25,25 @@ See [README.md](./README.md) for detailed project structure. Key directories:
   - Examples: `feat(backup): add new feature`, `fix(restore): handle edge case`, `chore(deps): bump versions`
 - **Shell scripts**: Written for zsh; ShellCheck `--shell=bash` flags (SC1071, SC2296) are safe to ignore
 - **Dotfiles**: Use env vars, no hardcoded paths
+
+## Shared Agent Capabilities
+
+**Skills**:
+- Project skills live in `.claude/skills/*.md` because Claude can consume that format directly.
+- `npm run restore:codex` mirrors those Markdown skills into `~/.codex/skills/<name>/SKILL.md`.
+- Keep shared project skills plain Markdown with `name` and `description` frontmatter so both tools can use them.
+- Tool-specific or unsupported skills stay in the tool-specific config (`claude_config/` or `codex_config/skills/`) instead of being forced into the shared path.
+
+**MCP servers**:
+- Keep shared project MCP support in `.mcp.json` for Claude/project clients and in `codex_config/config.toml` for Codex.
+- When adding an MCP server that both tools support, add the equivalent entry to both places and document any command differences.
+- If Codex does not support a Claude MCP server, leave it in the Claude-specific config and do not add a stub Codex entry.
+
+**Token optimization**:
+- RTK reduces shell-output tokens through PreToolUse hooks and command wrappers (`rtk git`, `rtk npm`, `rtk proxy <cmd>`).
+- Claude output guidance is restored through `claude_config/CLAUDE-TOKEN-EFFICIENT.md`, referenced by `claude_config/CLAUDE.md`.
+- `ccusage` is installed by `setup_ccusage` in `scripts/utils/tools.sh`; aliases in `dot_files/.zshrc` include `cct` and `cclive`.
+- Useful checks: `rtk gain`, `rtk gain --history`, `rtk discover`, `cct`, `cct monthly`, and `ccusage session`.
 
 ## npm Commands Reference
 
@@ -181,7 +201,7 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 - Codex hooks and skills: `codex_config/hooks.json`, `codex_config/RTK.md`, and `codex_config/skills/plannotator-*` restore code-review-graph hooks, Plannotator Stop-hook review, Plannotator skills, and the Codex-only RTK instruction include
 - Codex rules: `codex_config/rules/*.rules` restores repo-managed command deny rules that mirror the Claude hard-deny list where Codex prefix rules can express it; local approval rules in `~/.codex/rules/default.rules` remain local
 - Claude user skills: `restore:codex` mirrors existing `~/.claude/skills/*/SKILL.md` directories into `~/.codex/skills/*` without committing their contents to this repo
-- Claude project skills: `.claude/skills/*.md` is the project-level source of truth for reusable agent rules; `restore:codex` mirrors them into `~/.codex/skills/<name>/SKILL.md`
+- Claude project skills: tracked `.claude/skills/*.md` files are the project-level source of truth for reusable shared skills; `restore:codex` mirrors supported Markdown skills into `~/.codex/skills/<name>/SKILL.md`
 - Local-only state excluded: `auth.json`, history, logs, sessions, memories, SQLite databases, shell snapshots, and model caches
 - Machine-local tables preserved on restore: `[projects.*]`, `[tui.model_availability_nux]`, `[notice.model_migrations]`, and `[hooks.state*]`
 - Project guidance: keep repo-specific behavior in `AGENTS.md`; keep cross-agent global preferences in `agent_config/AGENTS.md`
@@ -225,6 +245,7 @@ Plugins are auto-installed during restore. `install:plugins` merges repo configs
 | Update Codex defaults | Edit `codex_config/config.toml`, then run `npm run restore:codex` |
 | Update Codex command deny rules | Edit `codex_config/rules/*.rules`, then run `npm run restore:codex` |
 | Add shared project skill rule | Create/edit `.claude/skills/<name>.md`, then run `npm run restore:codex` |
+| Add shared MCP server | Add compatible entries to `.mcp.json` and `codex_config/config.toml`; skip Codex if unsupported |
 | Add/disable hookify rule | Create/edit `.claude/hookify.{name}.local.md` or set `enabled: false` |
 | Test security hooks | `git add . && git commit -m "test"` - hooks run automatically |
 | List hookify rules | `ls .claude/hookify.*.local.md` |
@@ -252,7 +273,7 @@ Plugins are auto-installed during restore. `install:plugins` merges repo configs
 - [ ] Shellcheck passed (`npm run lint`)
 - [ ] Secret scan passed (`npm run scan:secrets`)
 
-See [SECURITY.md](./SECURITY.md) for security details and [CLAUDE.md](./CLAUDE.md) for commit conventions.
+See [SECURITY.md](./SECURITY.md) for security details; commit conventions are documented above.
 
 ## Releases
 

@@ -9,7 +9,7 @@ Prerequisites: Oh My Zsh, macOS 12.0+, 10GB free space.
 
 ```bash
 # Clone the latest release (recommended)
-git clone --branch v1.2.1 --depth 1 git@github.com:robinsalehjan/supercharged.git
+git clone --branch v1.3.0 --depth 1 git@github.com:robinsalehjan/supercharged.git
 cd supercharged && npm run setup
 ```
 
@@ -67,6 +67,5 @@ See [GitHub Releases](https://github.com/robinsalehjan/supercharged/releases) fo
 |----------|---------|
 | [What Gets Installed](./docs/WHAT-GETS-INSTALLED.md) | Tools, languages, apps, config files |
 | [Customization](./docs/CUSTOMIZATION.md) | Interactive options, manual configuration |
-| [Token Optimization](./docs/TOKEN-OPTIMIZATION.md) | RTK + claude-token-efficient (significant savings) |
 | [Troubleshooting](./docs/TROUBLESHOOTING.md) | Common issues and solutions |
 | [Security](./SECURITY.md) | Security enforcement details |
