@@ -10,6 +10,7 @@ echo "  npm run setup          - Install dependencies, configure profiles, and v
 echo ""
 echo "Backup & Restore Commands:"
 echo "  npm run restore:all            - Restore Claude Code, Codex, and dotfiles"
+echo "  npm run restore:agents         - Restore Claude Code and Codex agent config"
 echo "  npm run restore:claude         - Restore Claude Code config (only if repo is newer)"
 echo "  npm run restore:claude -- --force - Force restore Claude Code config"
 echo "  npm run restore:codex          - Restore Codex config (only if repo is newer)"
