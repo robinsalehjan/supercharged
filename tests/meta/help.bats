@@ -35,9 +35,20 @@ teardown() {
   [[ "$output" == *"npm run backup:all"* ]]
   [[ "$output" == *"npm run backup:claude"* ]]
   [[ "$output" == *"npm run backup:codex"* ]]
+  [[ "$output" == *"npm run restore:agents"* ]]
   [[ "$output" == *"npm run restore:claude"* ]]
   [[ "$output" == *"npm run restore:codex"* ]]
   [[ "$output" == *"-- --force"* ]]
+}
+
+@test "restore:agents includes Claude and Codex restores" {
+  command -v jq >/dev/null || skip "jq not installed"
+
+  run jq -r '.scripts["restore:agents"]' "$PROJECT_ROOT/package.json"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"restore:claude"* ]]
+  [[ "$output" == *"restore:codex"* ]]
 }
 
 @test "backup:all includes Claude and Codex backups" {

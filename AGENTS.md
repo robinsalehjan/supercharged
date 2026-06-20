@@ -70,6 +70,7 @@ npm run backup:all                # Backup Claude Code config + Codex config in 
 npm run backup:codex              # Backup Codex config to repo
 npm run restore:codex             # Restore Codex config (only if repo is newer)
 npm run restore:codex -- --force  # Force restore Codex config
+npm run restore:agents            # Restore Claude config + Codex config in one step
 npm run restore:all               # Restore Claude config + Codex config + dotfiles in one step
 npm run install:plugins           # Install all marketplaces and plugins via claude CLI
 npm run install:plugins -- --dry-run # Preview what would be installed
@@ -241,7 +242,7 @@ Plugins are auto-installed during restore. `install:plugins` merges repo configs
 | Add backup file | `create_restoration_point()` in `scripts/utils/backup.sh` |
 | Update Claude sanitization | `SANITIZE_MARKETPLACES` in `backup-claude.sh`, `PRESERVE_MARKETPLACES` in `restore-claude.sh`; sanitized entries auto-saved to `.local.json` files |
 | Add Claude backup file | Add backup/restore logic in `backup-claude.sh` and `restore-claude.sh` (follow `keybindings.json` pattern) |
-| Update shared agent instructions | Edit `agent_config/AGENTS.md`, then run `npm run restore:codex` and `npm run restore:claude` |
+| Update shared agent instructions | Edit `agent_config/AGENTS.md`, then run `npm run restore:agents` |
 | Update Codex defaults | Edit `codex_config/config.toml`, then run `npm run restore:codex` |
 | Update Codex command deny rules | Edit `codex_config/rules/*.rules`, then run `npm run restore:codex` |
 | Add shared project skill rule | Create/edit `.claude/skills/<name>.md`, then run `npm run restore:codex` |

@@ -27,6 +27,7 @@ npm run setup              # Fresh install (interactive)
 npm run update             # Update all components
 npm run validate           # Verify tools installed correctly
 npm run restore:all        # Restore Claude Code, Codex, and dotfiles
+npm run restore:agents     # Restore Claude Code and Codex agent config
 npm run restore:claude     # Restore Claude Code config
 npm run restore:codex      # Restore Codex config, rules, and mirrored .claude skills
 npm run restore:dotfiles   # Copy dotfiles to $HOME
