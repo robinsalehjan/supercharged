@@ -13,8 +13,10 @@
 # Node.js dependencies
 node_modules/
 
-# Claude Code project-specific settings
-.claude/
+# Claude Code project-specific settings. Project skills are shared with Codex.
+.claude/*
+!.claude/skills/
+!.claude/skills/*.md
 
 # Git worktrees for isolated development
 .worktrees/
