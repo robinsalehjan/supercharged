@@ -104,30 +104,6 @@ setup_rtk() {
     fi
 }
 
-# Setup ccusage (Claude Code token usage measurement)
-# Installs the `ccusage` npm package globally so `cct` / `cclive` aliases work.
-# Idempotent: skipped if already present.
-setup_ccusage() {
-    if ! command_exists npm; then
-        log_with_level "WARN" "npm not installed, skipping ccusage"
-        return 0
-    fi
-
-    if command_exists ccusage; then
-        log_with_level "INFO" "ccusage already installed, skipping"
-        return 0
-    fi
-
-    log_with_level "INFO" "Installing ccusage (Claude Code token usage analytics)..."
-
-    if npm install -g ccusage >/dev/null 2>&1; then
-        log_with_level "SUCCESS" "ccusage installed successfully"
-        log_with_level "INFO" "Run 'cct' for daily summary or 'cclive' for real-time monitoring"
-    else
-        log_with_level "WARN" "ccusage install failed (non-fatal); install manually with: npm i -g ccusage"
-    fi
-}
-
 # Setup Worktrunk (Git worktree manager for parallel AI agents)
 setup_worktrunk() {
     if ! command_exists wt; then
