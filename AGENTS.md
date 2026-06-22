@@ -42,8 +42,7 @@ See [README.md](./README.md) for detailed project structure. Key directories:
 **Token optimization**:
 - RTK reduces shell-output tokens through PreToolUse hooks and command wrappers (`rtk git`, `rtk npm`, `rtk proxy <cmd>`).
 - Claude output guidance is restored through `claude_config/CLAUDE-TOKEN-EFFICIENT.md`, referenced by `claude_config/CLAUDE.md`.
-- `ccusage` is installed by `setup_ccusage` in `scripts/utils/tools.sh`; aliases in `dot_files/.zshrc` include `cct` and `cclive`.
-- Useful checks: `rtk gain`, `rtk gain --history`, `rtk discover`, `cct`, `cct monthly`, and `ccusage session`.
+- Useful checks: `rtk gain`, `rtk gain --history`, and `rtk discover`.
 
 ## npm Commands Reference
 
