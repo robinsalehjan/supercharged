@@ -22,7 +22,7 @@ worktrunk (Git worktree manager designed for parallel AI agents - `wt switch`, `
 plannotator (Visual annotation tool for AI coding agents - plan review, code diff annotation)
 code-review-graph (AI-optimized code knowledge graph - installed via pipx with embeddings + communities extras)
 hey (HTTP load generator for benchmarking web endpoints)
-watch (re-run a command periodically and display its output - e.g. `watch -n 2 'ccusage blocks --active'`)
+watch (re-run a command periodically and display its output - e.g. `watch -n 2 uptime`)
 
 # Development languages (via asdf)
 nodejs   22.9.0       # LTS version, minimum 20.0.0 for modern features
@@ -107,8 +107,6 @@ google-chrome   # Chromium-based browser
 
 ## AI Coding Tools (Installed with Claude Code)
 ```bash
-ccusage      # Claude Code token usage measurement (installed globally via npm)
-             # Aliases: cct (daily summary), cclive (real-time monitor)
 obscura      # Rust-based headless browser for AI agents / web scraping
              # (h4ckf0r0day/obscura — GitHub release binary to ~/.local/bin)
 ```
