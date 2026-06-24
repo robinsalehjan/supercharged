@@ -1,54 +1,45 @@
 # Security
 
-This repository is designed to run safely on both personal and work machines with comprehensive security checks to prevent credential leaks, hardcoded paths, and other security issues.
+This repository is designed to run safely on both personal and work machines. Security checks focus on preventing credential leaks, hardcoded machine paths, and destructive agent commands.
 
 ## Automated Security Layers
 
-### 1. Claude Code Hookify Rules (8 rules)
+| Layer | Where | Purpose |
+| --- | --- | --- |
+| Secret scanner | `scripts/scan-secrets.sh` | Flags likely secrets in tracked repository paths. |
+| Shell linting | `npm run lint` | Runs ShellCheck over scripts and test helpers. |
+| BATS tests | `npm test` | Exercises backup, restore, install, validation, and safety behavior. |
+| GitHub Actions | `.github/workflows/test.yml` | Runs lint, secret scan, and BATS on pushes and pull requests. |
+| Codex command rules | `codex_config/rules/*.rules` | Blocks destructive or policy-violating commands in Codex sessions. |
+| Codex hooks | `codex_config/hooks/` and `codex_config/hooks.json` | Restores managed Codex hook behavior, including RTK command rewriting. |
+| Claude plugin config | `claude_config/installed_plugins.json` and `claude_config/settings.json` | Restores Claude Code plugin settings, including Hookify when installed. |
 
-**Active for AI-assisted development:**
-
-| Rule | Event | Action | Purpose |
-|------|-------|--------|---------|
-| dangerous-rm | bash | **BLOCK** | Prevents `rm -rf /`, `rm -rf ~`, etc. |
-| no-bypass-hooks | bash | **BLOCK** | Blocks `git commit --no-verify` |
-| git-conventions | bash | warn | Conventional commits + security check reminders |
-| hardcoded-paths | file | warn | Warns when editing dotfiles with hardcoded paths |
-| code-quality | file | warn | Logging patterns + no sudo in scripts |
-| secrets-template | file | warn | Warns when editing the `.secrets` template — match `dot_files/.secrets` (legacy file) **and** `dot_files/.secrets/**` (directory layout, including non-`*.sh` blob files like service-account JSON) |
-| claude-config-edit | Edit,Write | warn | Warns when modifying Claude backups |
-| session-end-checks | stop | warn | Shellcheck + documentation sync reminders |
-
-**Key Features:**
-- 🔒 **2 blocking rules** prevent catastrophic operations
-- 📝 **6 warning rules** guide development best practices
-- 🤖 Runs within Claude Code sessions
-- 🚫 Cannot be committed (`.claude/` is gitignored)
+Claude Code Hookify may be installed as part of the backed-up Claude configuration, but this repository does not track local Hookify rule files.
 
 ## Security Workflow
 
 ### Normal Development
 
-> **Note:** Security checks run within Claude Code sessions via hookify rules, not as git commit hooks.
+> **Note:** Security checks are a mix of explicit validation commands, CI, Codex rules/hooks, and restored Claude plugin configuration. They are not a substitute for reviewing staged changes before committing.
 
 ```bash
 # 1. Make changes
 vim scripts/mac.sh
 
-# 2. Run shellcheck and secret scanning before committing
+# 2. Run validation before committing
 npm run lint
 npm run scan:secrets
+npm test
 
 # 3. Stage and commit
 git add scripts/mac.sh
 git commit -m "feat(scripts): add new feature"
 ```
 
-### If Hooks Fail
+### If Secret Scan Fails
 
 ```bash
 # Example: Secret detected
-git commit -m "feat: add feature"
 # ❌ Potential secrets detected in staged files!
 #    api_key="sk-1234567890abcdef" in file.txt
 #    Use placeholders like: YOUR_API_KEY_HERE
@@ -56,9 +47,9 @@ git commit -m "feat: add feature"
 # Fix the issue
 vim file.txt  # Change to: api_key="YOUR_API_KEY_HERE"
 
-# Commit again
+# Run the scan again
 git add file.txt
-git commit -m "feat: add feature"  # ✅ Passes
+npm run scan:secrets
 ```
 
 ## Best Practices
@@ -67,13 +58,14 @@ git commit -m "feat: add feature"  # ✅ Passes
 - Use placeholders in templates (`YOUR_API_KEY_HERE`)
 - Run `npm run lint` before committing
 - Run `npm run scan:secrets` before committing
+- Run `npm test` for script or restore-flow changes
 - Follow conventional commits (`feat(scope): message`)
 - Never commit real credentials or large files
-- Never bypass hooks with `--no-verify` (blocked by hookify)
+- Do not bypass hooks or policy checks with `--no-verify`
 
 ## Setup
 
-Security is configured automatically by `npm run setup` (installs shellcheck, configures hookify rules). See [README.md](./README.md) for installation instructions.
+Security tooling is configured by `npm run setup` and restore commands. See [README.md](./README.md) and [docs/REFERENCE.md](./docs/REFERENCE.md) for setup details.
 
 ## Troubleshooting
 
@@ -88,4 +80,8 @@ brew install shellcheck
 
 | File | Purpose | Committed |
 |------|---------|-----------|
-| `.claude/hookify.*.local.md` | Claude Code behavior rules (8 files) | No (gitignored) |
+| `scripts/scan-secrets.sh` | Repository secret scanner | Yes |
+| `codex_config/rules/*.rules` | Managed Codex command deny rules | Yes |
+| `codex_config/hooks/` | Managed Codex hook scripts | Yes |
+| `claude_config/*.json` | Sanitized Claude plugin/settings backup | Yes |
+| `claude_config/*.local.json` | Machine-local Claude plugin/settings overlays | No |
