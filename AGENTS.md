@@ -2,11 +2,11 @@
 
 macOS environment setup automation — installs dev tools (Homebrew, ASDF), manages dotfiles, and backs up Claude Code configuration.
 
-This file is the canonical reference for AI agents and contributors. See [README.md](./README.md) for user-facing documentation and [SECURITY.md](./SECURITY.md) for security policy.
+This file is the canonical reference for AI agents and contributors. See [README.md](./README.md) for quick start, [docs/REFERENCE.md](./docs/REFERENCE.md) for user-facing setup details, and [SECURITY.md](./SECURITY.md) for security policy.
 
 ## Project Structure
 
-See [README.md](./README.md) for detailed project structure. Key directories:
+See [README.md](./README.md) and [docs/REFERENCE.md](./docs/REFERENCE.md) for user-facing setup details. Key directories:
 - `scripts/` - Shell scripts (mac.sh, update.sh, utils.sh, restore.sh, setup-profile.sh, help.sh, install-plugins.sh; backup-claude.sh/restore-claude.sh for Claude config)
 - `dot_files/` - Dotfiles copied to `$HOME`
 - `claude_config/` - Claude Code config backup
@@ -221,11 +221,11 @@ Plugins are auto-installed during restore. `install:plugins` merges repo configs
 
 ## Adding New Tools
 
-**Homebrew package**: Edit `BREWFILE_CONTENT` in `scripts/mac.sh`, add `brew "name"` or `cask "name"` to the appropriate conditional section. Update README.md.
+**Homebrew package**: Edit `BREWFILE_CONTENT` in `scripts/mac.sh`, add `brew "name"` or `cask "name"` to the appropriate conditional section. Update `docs/REFERENCE.md` if the user-facing installed-tool set changes.
 
-**ASDF tool**: Add `toolname version` to `dot_files/.tool-versions`. Add `install_asdf_plugin` and `install_asdf_version` calls in `scripts/mac.sh`. Update README.md.
+**ASDF tool**: Add `toolname version` to `dot_files/.tool-versions`. Add `install_asdf_plugin` and `install_asdf_version` calls in `scripts/mac.sh`. Keep docs pointed at `.tool-versions` instead of duplicating pinned versions.
 
-**Optional category**: Follow `INSTALL_IOS_TOOLS` pattern — add prompt in `utils.sh:setup_user_preferences()`, save to `~/.supercharged_preferences`, use conditional in `mac.sh`. Update README.md.
+**Optional category**: Follow `INSTALL_IOS_TOOLS` pattern — add prompt in `utils.sh:setup_user_preferences()`, save to `~/.supercharged_preferences`, use conditional in `mac.sh`. Update `docs/REFERENCE.md`.
 
 **Update tool version**: Edit `dot_files/.tool-versions`, check changelog for breaking changes, test with `asdf install <tool> <version>`, run `asdf reshim`, validate with `npm run validate`.
 
@@ -246,28 +246,27 @@ Plugins are auto-installed during restore. `install:plugins` merges repo configs
 | Update Codex command deny rules | Edit `codex_config/rules/*.rules`, then run `npm run restore:codex` |
 | Add shared project skill rule | Create/edit `.claude/skills/<name>.md`, then run `npm run restore:codex` |
 | Add shared MCP server | Add compatible entries to `.mcp.json` and `codex_config/config.toml`; skip Codex if unsupported |
-| Add/disable hookify rule | Create/edit `.claude/hookify.{name}.local.md` or set `enabled: false` |
-| Test security hooks | `git add . && git commit -m "test"` - hooks run automatically |
-| List hookify rules | `ls .claude/hookify.*.local.md` |
+| Update security policy | Edit `SECURITY.md`, `scripts/scan-secrets.sh`, `codex_config/rules/*.rules`, or `codex_config/hooks/` as appropriate |
+| Test security checks | Run `npm run lint`, `npm run scan:secrets`, and `npm test` |
 
 ## PR Checklist
 
 **This repository is used on personal AND work machines** — comprehensive security enforced.
 
-**Automated checks**: Hookify rules enforce security during Claude Code sessions. See [SECURITY.md](./SECURITY.md) for full details and `.claude/hookify.*.local.md` for rules.
+**Automated checks**: CI runs lint, secret scan, and BATS. Codex command rules and hooks are tracked under `codex_config/`. Claude plugin configuration is restored from `claude_config/`. See [SECURITY.md](./SECURITY.md) for details.
 
 **Key rules**:
-- Never commit secrets (`.secrets` is template only, in `.gitignore`)
+- Never commit real secrets; only templates under `dot_files/.secrets/` belong in the repo
 - No hardcoded paths in dotfiles (use `$HOME`, not `/Users/username/`)
 - Shellcheck is required for `npm run lint` (`brew install shellcheck`)
 - Claude backups sanitized (work marketplaces excluded)
-- No bypassing hooks with `--no-verify` (blocked by hookify)
+- Do not bypass hooks or policy checks with `--no-verify`
 
 **Conventional commits** (preferred, not enforced): `feat(scripts):`, `fix(zsh):`, `docs(readme):`, `chore(deps):`.
 
 **PR checklist**:
-- [ ] Hooks passed (required - can't commit otherwise)
-- [ ] README.md updated if user-facing changes
+- [ ] Validation passed (`npm run lint`, `npm run scan:secrets`, and relevant BATS tests)
+- [ ] README.md or `docs/REFERENCE.md` updated if user-facing behavior changed
 - [ ] Logging follows `log_with_level` pattern
 - [ ] No hardcoded paths (use `$HOME`)
 - [ ] Shellcheck passed (`npm run lint`)
@@ -307,4 +306,3 @@ The release script (`scripts/release.sh`) refuses to run on a dirty tree, requir
 - "Plugin not found" → ensure ASDF plugin installed before version
 - "Backup failed" → check disk space in `~/.supercharged_backups/`
 - "Shellcheck not found" → install with `brew install shellcheck` (REQUIRED)
-- "Hookify rule not triggering" → check YAML frontmatter, verify pattern regex, ensure `enabled: true`

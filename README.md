@@ -66,7 +66,5 @@ See [GitHub Releases](https://github.com/robinsalehjan/supercharged/releases) fo
 
 | Document | Content |
 |----------|---------|
-| [What Gets Installed](./docs/WHAT-GETS-INSTALLED.md) | Tools, languages, apps, config files |
-| [Customization](./docs/CUSTOMIZATION.md) | Interactive options, manual configuration |
-| [Troubleshooting](./docs/TROUBLESHOOTING.md) | Common issues and solutions |
+| [Reference](./docs/REFERENCE.md) | Installed tools, setup options, customization, troubleshooting |
 | [Security](./SECURITY.md) | Security enforcement details |
