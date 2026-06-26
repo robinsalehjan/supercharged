@@ -161,6 +161,11 @@ setup_user_preferences() {
     read -r install_claude
     install_claude=$(normalize_yes_no_preference "$install_claude" "Y")
 
+    # Ask about Codex desktop app
+    printf "Install Codex desktop app for remote access? [Y/n]: "
+    read -r install_codex_app
+    install_codex_app=$(normalize_yes_no_preference "$install_codex_app" "Y")
+
     # Ask about JVM tooling (Java + Kotlin via asdf)
     printf "Install JVM tooling (java, kotlin)? [y/N]: "
     read -r install_jvm
@@ -192,6 +197,7 @@ INSTALL_IOS_TOOLS=${install_ios}
 INSTALL_DATA_SCIENCE=${install_datascience}
 INSTALL_DEV_TOOLS=${install_devtools}
 INSTALL_CLAUDE_CODE=${install_claude}
+INSTALL_CODEX_APP=${install_codex_app}
 INSTALL_JVM_TOOLS=${install_jvm}
 INSTALL_EXTRA_APPS=${install_extras}
 INSTALL_CLOUD_TOOLS=${install_cloud}
@@ -206,6 +212,7 @@ EOF
     export INSTALL_DATA_SCIENCE="$install_datascience"
     export INSTALL_DEV_TOOLS="$install_devtools"
     export INSTALL_CLAUDE_CODE="$install_claude"
+    export INSTALL_CODEX_APP="$install_codex_app"
     export INSTALL_JVM_TOOLS="$install_jvm"
     export INSTALL_EXTRA_APPS="$install_extras"
     export INSTALL_CLOUD_TOOLS="$install_cloud"

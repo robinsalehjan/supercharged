@@ -126,9 +126,35 @@ run_zsh_func() {
   [[ "$output" == *'brew "jq"'* ]]
   [[ "$output" == *'brew "ripgrep"'* ]]
   [[ "$output" == *'cask "codex"'* ]]
+  [[ "$output" == *'cask "codex-app"'* ]]
   [[ "$output" == *'cask "codexbar"'* ]]
   [[ "$output" == *'tap "replicate/tap"'* ]]
   [[ "$output" == *'brew "replicate/tap/replicate"'* ]]
+}
+
+@test "build_brewfile includes Codex desktop app by default" {
+  run zsh -c "
+    unset INSTALL_CODEX_APP
+    source '$PROJECT_ROOT/scripts/utils.sh'
+    source '$PROJECT_ROOT/scripts/mac.sh'
+    build_brewfile
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'cask "codex-app"'* ]]
+  [[ "$output" == *'cask "codexbar"'* ]]
+}
+
+@test "build_brewfile excludes Codex desktop app when INSTALL_CODEX_APP=n" {
+  run zsh -c "
+    export INSTALL_CODEX_APP=n
+    source '$PROJECT_ROOT/scripts/utils.sh'
+    source '$PROJECT_ROOT/scripts/mac.sh'
+    build_brewfile
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'cask "codex"'* ]]
+  [[ "$output" != *'cask "codex-app"'* ]]
+  [[ "$output" != *'cask "codexbar"'* ]]
 }
 
 @test "build_brewfile includes iOS tools when INSTALL_IOS_TOOLS=Y" {
