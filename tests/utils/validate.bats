@@ -80,6 +80,7 @@ teardown() {
   cat > "$HOME/.supercharged_preferences" <<EOF
 # Supercharged Setup Preferences
 INSTALL_CLOUD_TOOLS=\$(touch "$marker")
+INSTALL_CODEX_APP=y
 INSTALL_NETWORK_TOOLS=n
 SETUP_DATE=\$(touch "$marker")
 EOF
@@ -88,14 +89,29 @@ EOF
     source '$PROJECT_ROOT/scripts/utils.sh'
     load_supercharged_preferences '$HOME/.supercharged_preferences'
     printf 'cloud=%s\n' \"\${INSTALL_CLOUD_TOOLS:-unset}\"
+    printf 'codex_app=%s\n' \"\${INSTALL_CODEX_APP:-unset}\"
     printf 'network=%s\n' \"\${INSTALL_NETWORK_TOOLS:-unset}\"
     [ ! -e '$marker' ]
   "
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"cloud=unset"* ]]
+  [[ "$output" == *"codex_app=Y"* ]]
   [[ "$output" == *"network=N"* ]]
   [ ! -e "$marker" ]
+}
+
+@test "validate_application checks app bundle paths" {
+  source "$PROJECT_ROOT/scripts/utils.sh"
+  mkdir -p "$TEST_TEMP_DIR/Codex.app"
+
+  run validate_application "Codex desktop app" "$TEST_TEMP_DIR/Codex.app"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Codex desktop app installed"* ]]
+
+  run validate_application "Codex desktop app" "$TEST_TEMP_DIR/Missing.app"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Codex desktop app not installed"* ]]
 }
 
 @test "validate_font passes when matching font exists in HOME/Library/Fonts" {

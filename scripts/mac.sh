@@ -111,13 +111,18 @@ brew "mas"
 brew "htop"
 brew "ollama"
 cask "codex"
-cask "codexbar"
 brew "pipx"
 brew "uv"
 brew "rtk"
 brew "worktrunk"
 brew "hey"
 brew "watch"'
+
+    if [[ "${INSTALL_CODEX_APP:-Y}" =~ ^[Yy] ]]; then
+        content="$content
+cask \"codex-app\"
+cask \"codexbar\""
+    fi
 
     if [[ "${INSTALL_IOS_TOOLS:-Y}" =~ ^[Yy] ]]; then
         content="$content

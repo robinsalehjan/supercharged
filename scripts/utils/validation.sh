@@ -131,7 +131,7 @@ load_supercharged_preferences() {
         value="${line#*=}"
 
         case "$key" in
-            INSTALL_IOS_TOOLS|INSTALL_DATA_SCIENCE|INSTALL_DEV_TOOLS|INSTALL_CLAUDE_CODE|INSTALL_JVM_TOOLS|INSTALL_EXTRA_APPS|INSTALL_CLOUD_TOOLS|INSTALL_NETWORK_TOOLS)
+            INSTALL_IOS_TOOLS|INSTALL_DATA_SCIENCE|INSTALL_DEV_TOOLS|INSTALL_CLAUDE_CODE|INSTALL_CODEX_APP|INSTALL_JVM_TOOLS|INSTALL_EXTRA_APPS|INSTALL_CLOUD_TOOLS|INSTALL_NETWORK_TOOLS)
                 case "$value" in
                     [Yy]*) value="Y" ;;
                     [Nn]*) value="N" ;;
@@ -325,6 +325,19 @@ validate_claude_component() {
         return 0
     else
         echo "⚠️  Claude Code: $component not configured"
+        return 1
+    fi
+}
+
+validate_application() {
+    local app_name=$1
+    local app_path=$2
+
+    if [ -d "$app_path" ]; then
+        echo "✅ $app_name installed"
+        return 0
+    else
+        echo "⚠️  $app_name not installed"
         return 1
     fi
 }
@@ -526,6 +539,10 @@ validate_installation() {
         else
             echo "⚠️  Codex: Plannotator skills not configured"
             ((warned++))
+        fi
+
+        if [[ "${INSTALL_CODEX_APP:-Y}" =~ ^[Yy] ]]; then
+            validate_application "Codex desktop app" "/Applications/Codex.app" || ((warned++))
         fi
     fi
 
