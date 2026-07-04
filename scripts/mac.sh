@@ -82,6 +82,7 @@ build_brewfile() {
     # deprecation warnings on brew 5.1.11+.
     local content='tap "thoughtbot/formulae"
 tap "replicate/tap"
+tap "cupertinohq/tap", "https://codeberg.org/CupertinoHQ/homebrew-tap.git"
 
 brew "bash"
 brew "coreutils"
@@ -100,6 +101,7 @@ brew "ripgrep"
 brew "tmux"
 brew "gh"
 brew "replicate/tap/replicate"
+brew "cupertinohq/tap/cupertino"
 brew "shellcheck"
 brew "actionlint"
 brew "jq"
@@ -181,6 +183,21 @@ mas \"DaisyDisk\", id: 411643860"
     echo "$content"
 }
 
+setup_cupertino() {
+    if ! command_exists cupertino; then
+        log_with_level "ERROR" "Cupertino was not installed or is not on PATH"
+        return 1
+    fi
+
+    log_with_level "INFO" "Running Cupertino setup..."
+    if cupertino setup; then
+        log_with_level "SUCCESS" "Cupertino setup completed"
+    else
+        log_with_level "ERROR" "Cupertino setup failed"
+        return 1
+    fi
+}
+
 main() {
     trap cleanup EXIT
 
@@ -228,6 +245,7 @@ main() {
     fi
 
     echo "$BREWFILE_CONTENT" | brew bundle --file=-
+    setup_cupertino
 
     # Some setups end up with the font cask installed but the .ttf files never
     # copied into ~/Library/Fonts, leaving Nerd Font glyphs broken in tmux.

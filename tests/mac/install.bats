@@ -130,6 +130,8 @@ run_zsh_func() {
   [[ "$output" == *'cask "codexbar"'* ]]
   [[ "$output" == *'tap "replicate/tap"'* ]]
   [[ "$output" == *'brew "replicate/tap/replicate"'* ]]
+  [[ "$output" == *'tap "cupertinohq/tap", "https://codeberg.org/CupertinoHQ/homebrew-tap.git"'* ]]
+  [[ "$output" == *'brew "cupertinohq/tap/cupertino"'* ]]
 }
 
 @test "build_brewfile includes Codex desktop app by default" {
@@ -275,6 +277,26 @@ run_zsh_func() {
   [[ "$output" != *'wireshark'* ]]
   [[ "$output" != *'mitmproxy'* ]]
   [[ "$output" != *'proxyman'* ]]
+}
+
+# =============================================================================
+# setup_cupertino tests
+# =============================================================================
+
+@test "setup_cupertino runs cupertino setup" {
+  create_mock_bin "cupertino" 'echo "cupertino $*"'
+
+  run_zsh_func "setup_cupertino"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Running Cupertino setup"* ]]
+  [[ "$output" == *"cupertino setup"* ]]
+  [[ "$output" == *"Cupertino setup completed"* ]]
+}
+
+@test "setup_cupertino fails when cupertino is missing" {
+  run_zsh_func "setup_cupertino"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Cupertino was not installed or is not on PATH"* ]]
 }
 
 # =============================================================================
