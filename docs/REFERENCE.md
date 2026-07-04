@@ -42,7 +42,7 @@ Always-installed Homebrew formulae and casks are defined in `build_brewfile` in 
 
 - Package and shell tooling: `bash`, `coreutils`, `git`, `curl`, `asdf`, `keychain`, `tmux`, `ripgrep`, `tree`, `aria2`.
 - Development utilities: `gh`, `jq`, `shellcheck`, `actionlint`, `bats-core`, `duckdb`, `sqlite`, `btop`, `htop`, `mas`, `pipx`, `uv`, `hey`, `watch`.
-- AI and agent tools: `codex`, `codex-app`, `codexbar`, `ollama`, `replicate`, `rtk`, `worktrunk`, `plannotator`, `code-review-graph`.
+- AI and agent tools: `codex`, `codex-app`, `codexbar`, `ollama`, `replicate`, `cupertino`, `rtk`, `worktrunk`, `plannotator`, `code-review-graph`.
 - Applications: Visual Studio Code, Slack, Raycast, Reveal, Spotify, Mullvad VPN.
 - Fonts: JetBrainsMono Nerd Font.
 - Mac App Store apps: AdBlock and DaisyDisk.
