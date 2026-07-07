@@ -73,7 +73,7 @@ npm run restore:agents            # Restore Claude config + Codex config in one 
 npm run restore:all               # Restore Claude config + Codex config + dotfiles in one step
 npm run install:plugins           # Install all marketplaces and plugins via claude CLI
 npm run install:plugins -- --dry-run # Preview what would be installed
-npm run install:skills            # Clone/update git-based skills into ~/.claude/skills
+npm run install:skills            # Clone/update git-based skills into Claude Code and Codex
 npm run install:skills -- --dry-run # Preview what would be installed/updated
 
 # Versioning and Releases
@@ -200,7 +200,7 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 - Codex settings: `codex_config/config.toml` restores durable defaults such as model, personality, web search, feature flags, MCP settings, hook enablement, instruction discovery, and a permission profile that denies `.env*`/`.secrets` paths
 - Codex hooks and skills: `codex_config/hooks.json`, `codex_config/RTK.md`, and `codex_config/skills/plannotator-*` restore code-review-graph hooks, Plannotator Stop-hook review, Plannotator skills, and the Codex-only RTK instruction include
 - Codex rules: `codex_config/rules/*.rules` restores repo-managed command deny rules that mirror the Claude hard-deny list where Codex prefix rules can express it; local approval rules in `~/.codex/rules/default.rules` remain local
-- Claude user skills: `restore:codex` mirrors existing `~/.claude/skills/*/SKILL.md` directories into `~/.codex/skills/*` without committing their contents to this repo
+- Shared git skills: `agent_config/installed_skills.json` is installed into both `~/.claude/skills/*` and `~/.codex/skills/*` by `npm run install:skills`
 - Claude project skills: tracked `.claude/skills/*.md` files are the project-level source of truth for reusable shared skills; `restore:codex` mirrors supported Markdown skills into `~/.codex/skills/<name>/SKILL.md`
 - Local-only state excluded: `auth.json`, history, logs, sessions, memories, SQLite databases, shell snapshots, and model caches
 - Machine-local tables preserved on restore: `[projects.*]`, `[tui.model_availability_nux]`, `[notice.model_migrations]`, and `[hooks.state*]`

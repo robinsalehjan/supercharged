@@ -58,6 +58,7 @@ if [ ! -f "$CLAUDE_CONFIG_DIR/settings.json" ] && \
    [ ! -f "$CLAUDE_CONFIG_DIR/known_marketplaces.json" ] && \
    [ ! -f "$CLAUDE_CONFIG_DIR/keybindings.json" ] && \
    [ ! -f "$CLAUDE_CONFIG_DIR/CLAUDE.md" ] && \
+   [ ! -f "$AGENT_CONFIG_DIR/installed_skills.json" ] && \
    [ ! -f "$AGENT_CONFIG_DIR/AGENTS.md" ]; then
     log_with_level "INFO" "No Claude configuration files found in repository"
     exit 0
@@ -111,6 +112,14 @@ get_newest_mtime() {
 is_repo_newer() {
     local repo_mtime
     repo_mtime=$(get_newest_mtime "$CLAUDE_CONFIG_DIR")
+    local mtime
+
+    if [ -f "$AGENT_CONFIG_DIR/installed_skills.json" ]; then
+        mtime=$(get_file_mtime "$AGENT_CONFIG_DIR/installed_skills.json")
+        if [ "$mtime" -gt "$repo_mtime" ]; then
+            repo_mtime=$mtime
+        fi
+    fi
 
     # If Claude home doesn't exist, repo is considered newer
     if [ ! -d "$CLAUDE_HOME" ]; then
@@ -118,7 +127,6 @@ is_repo_newer() {
     fi
 
     local home_mtime=0
-    local mtime
 
     # Check settings.json
     if [ -f "$CLAUDE_HOME/settings.json" ]; then
@@ -711,11 +719,11 @@ fi
 # run after install-plugins.sh so freshly-installed entries aren't pruned.
 uninstall_orphan_plugins
 
-# Install git-cloned skills from the restored configuration
-if [ -f "$CLAUDE_CONFIG_DIR/installed_skills.json" ]; then
-    log_with_level "INFO" "Installing skills..."
+# Install git-cloned skills from the shared agent registry
+if [ -f "$AGENT_CONFIG_DIR/installed_skills.json" ]; then
+    log_with_level "INFO" "Installing shared agent skills..."
     if "$PROJECT_ROOT/scripts/install-skills.sh"; then
-        log_with_level "SUCCESS" "Skills installed"
+        log_with_level "SUCCESS" "Shared agent skills installed"
     else
         log_with_level "WARN" "Skill installation failed — run 'npm run install:skills' manually"
     fi

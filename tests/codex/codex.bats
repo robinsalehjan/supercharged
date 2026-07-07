@@ -278,41 +278,17 @@ EOF
   grep -F "Perform a structured code review" "$TEST_TEMP_DIR/.codex/skills/review-changes/SKILL.md"
 }
 
-@test "restore_claude_user_skills_for_codex copies Claude skill directories to Codex" {
-  mkdir -p "$TEST_TEMP_DIR/.claude/skills/pr-workflow/assets" "$TEST_TEMP_DIR/.codex/skills"
-  cat > "$TEST_TEMP_DIR/.claude/skills/pr-workflow/SKILL.md" <<'EOF'
----
-name: pr-workflow
-description: Full PR workflow
----
+@test "project Claude skills override existing Codex skill directories" {
+  mkdir -p "$TEST_TEMP_DIR/project/.claude/skills" \
+    "$TEST_TEMP_DIR/.codex/skills/shared-rule"
 
-# PR Workflow
-EOF
-  touch "$TEST_TEMP_DIR/.claude/skills/pr-workflow/assets/example.txt"
-
-  run zsh -c "
-    source '$RESTORE_SCRIPT'
-    restore_claude_user_skills_for_codex '$TEST_TEMP_DIR/.claude/skills' '$TEST_TEMP_DIR/.codex/skills'
-  "
-
-  [ "$status" -eq 0 ]
-  [ -f "$TEST_TEMP_DIR/.codex/skills/pr-workflow/SKILL.md" ]
-  [ -f "$TEST_TEMP_DIR/.codex/skills/pr-workflow/assets/example.txt" ]
-  grep -F "Full PR workflow" "$TEST_TEMP_DIR/.codex/skills/pr-workflow/SKILL.md"
-}
-
-@test "project Claude skills override user Claude skills for Codex" {
-  mkdir -p "$TEST_TEMP_DIR/.claude/skills/shared-rule" \
-    "$TEST_TEMP_DIR/project/.claude/skills" \
-    "$TEST_TEMP_DIR/.codex/skills"
-
-  cat > "$TEST_TEMP_DIR/.claude/skills/shared-rule/SKILL.md" <<'EOF'
+  cat > "$TEST_TEMP_DIR/.codex/skills/shared-rule/SKILL.md" <<'EOF'
 ---
 name: shared-rule
-description: User-level version
+description: Existing Codex version
 ---
 
-# User Version
+# Existing Version
 EOF
 
   cat > "$TEST_TEMP_DIR/project/.claude/skills/shared-rule.md" <<'EOF'
@@ -326,14 +302,13 @@ EOF
 
   run zsh -c "
     source '$RESTORE_SCRIPT'
-    restore_claude_user_skills_for_codex '$TEST_TEMP_DIR/.claude/skills' '$TEST_TEMP_DIR/.codex/skills'
     restore_claude_project_skills_for_codex '$TEST_TEMP_DIR/project/.claude/skills' '$TEST_TEMP_DIR/.codex/skills'
   "
 
   [ "$status" -eq 0 ]
   [ -f "$TEST_TEMP_DIR/.codex/skills/shared-rule/SKILL.md" ]
   grep -F "Project-level version" "$TEST_TEMP_DIR/.codex/skills/shared-rule/SKILL.md"
-  ! grep -F "User-level version" "$TEST_TEMP_DIR/.codex/skills/shared-rule/SKILL.md"
+  ! grep -F "Existing Codex version" "$TEST_TEMP_DIR/.codex/skills/shared-rule/SKILL.md"
 }
 
 @test "restore_codex_rules copies managed rules without deleting local rules" {

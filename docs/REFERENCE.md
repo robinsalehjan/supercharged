@@ -13,6 +13,7 @@ npm run validate              # Verify installed tools and configuration
 npm run restore               # Restore from latest backup
 npm run restore:all           # Restore Claude, Codex, and dotfiles
 npm run backup:all            # Backup Claude and Codex config
+npm run install:skills        # Install git-based skills for Claude Code and Codex
 npm test                      # Run BATS tests
 npm run lint                  # ShellCheck scripts
 npm run scan:secrets          # Scan repository paths for likely secrets
