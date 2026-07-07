@@ -294,7 +294,12 @@ run_zsh_func() {
 }
 
 @test "setup_cupertino fails when cupertino is missing" {
-  run_zsh_func "setup_cupertino"
+  run zsh -c "
+    export PATH='$MOCK_BIN_DIR:/usr/bin:/bin'
+    source '$PROJECT_ROOT/scripts/utils.sh'
+    source '$PROJECT_ROOT/scripts/mac.sh'
+    setup_cupertino
+  "
   [ "$status" -ne 0 ]
   [[ "$output" == *"Cupertino was not installed or is not on PATH"* ]]
 }

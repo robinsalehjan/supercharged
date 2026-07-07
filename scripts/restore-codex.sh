@@ -14,7 +14,6 @@ PROJECT_ROOT="$UTILS_PROJECT_ROOT"
 CODEX_CONFIG_DIR="$PROJECT_ROOT/codex_config"
 AGENT_CONFIG_DIR="$PROJECT_ROOT/agent_config"
 CLAUDE_HOME="${CLAUDE_HOME:-$HOME/.claude}"
-CLAUDE_USER_SKILLS_DIR="$CLAUDE_HOME/skills"
 CLAUDE_PROJECT_SKILLS_DIR="$PROJECT_ROOT/.claude/skills"
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
 
@@ -188,29 +187,6 @@ restore_codex_hook_scripts() {
     fi
 }
 
-restore_claude_user_skills_for_codex() {
-    local src_dir="${1:-$CLAUDE_USER_SKILLS_DIR}"
-    local dest_dir="${2:-$CODEX_HOME/skills}"
-    local skill name copied=0
-
-    if [ ! -d "$src_dir" ]; then
-        return 0
-    fi
-
-    mkdir -p "$dest_dir"
-    while IFS= read -r skill; do
-        name=$(basename "$(dirname "$skill")")
-        rm -rf "${dest_dir:?}/${name:?}"
-        mkdir -p "$dest_dir/$name"
-        cp -R "$(dirname "$skill")/." "$dest_dir/$name/"
-        copied=$((copied + 1))
-    done < <(find "$src_dir" -mindepth 2 -maxdepth 2 -type f -name 'SKILL.md' | sort)
-
-    if [ "$copied" -gt 0 ]; then
-        log_with_level "SUCCESS" "Restored $copied Claude user skill(s) for Codex"
-    fi
-}
-
 restore_claude_project_skills_for_codex() {
     local src_dir="${1:-$CLAUDE_PROJECT_SKILLS_DIR}"
     local dest_dir="${2:-$CODEX_HOME/skills}"
@@ -283,13 +259,15 @@ is_repo_newer() {
         mtime=$(get_file_mtime "$CODEX_CONFIG_DIR/RTK.md")
         [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
     fi
+    if [ -f "$AGENT_CONFIG_DIR/installed_skills.json" ]; then
+        mtime=$(get_file_mtime "$AGENT_CONFIG_DIR/installed_skills.json")
+        [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
+    fi
     mtime=$(get_newest_mtime_in_dir "$CODEX_CONFIG_DIR/skills")
     [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
     mtime=$(get_newest_mtime_in_dir "$CODEX_CONFIG_DIR/rules")
     [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
     mtime=$(get_newest_mtime_in_dir "$CODEX_CONFIG_DIR/hooks")
-    [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
-    mtime=$(get_newest_mtime_in_dir "$CLAUDE_USER_SKILLS_DIR")
     [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
     mtime=$(get_newest_mtime_in_dir "$CLAUDE_PROJECT_SKILLS_DIR")
     [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
@@ -345,6 +323,7 @@ main() {
        [ ! -f "$AGENT_CONFIG_DIR/AGENTS.md" ] && \
        [ ! -f "$CODEX_CONFIG_DIR/hooks.json" ] && \
        [ ! -f "$CODEX_CONFIG_DIR/RTK.md" ] && \
+       [ ! -f "$AGENT_CONFIG_DIR/installed_skills.json" ] && \
        [ ! -d "$CODEX_CONFIG_DIR/skills" ] && \
        [ ! -d "$CODEX_CONFIG_DIR/rules" ] && \
        [ ! -d "$CODEX_CONFIG_DIR/hooks" ]; then
@@ -376,8 +355,16 @@ main() {
     restore_codex_skills
     restore_codex_rules
     restore_codex_hook_scripts
-    restore_claude_user_skills_for_codex
     restore_claude_project_skills_for_codex
+
+    if [ -f "$AGENT_CONFIG_DIR/installed_skills.json" ]; then
+        log_with_level "INFO" "Installing shared agent skills..."
+        if "$PROJECT_ROOT/scripts/install-skills.sh"; then
+            log_with_level "SUCCESS" "Shared agent skills installed"
+        else
+            log_with_level "WARN" "Skill installation failed — run 'npm run install:skills' manually"
+        fi
+    fi
 
     log_with_level "SUCCESS" "Codex configuration restored!"
     echo ""
@@ -387,7 +374,7 @@ main() {
     echo "   - RTK.md"
     echo "   - AGENTS.md"
     echo "   - skills/plannotator-*"
-    echo "   - skills copied from ~/.claude/skills/* when present"
+    echo "   - shared git skills from agent_config/installed_skills.json"
     echo "   - skills copied from project .claude/skills/*.md when present"
     echo "   - rules/*.rules"
     echo "   - hooks/*"

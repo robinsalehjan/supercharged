@@ -10,11 +10,9 @@ setup() {
   PROJECT_ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
   INSTALL_SKILLS="$PROJECT_ROOT/scripts/install-skills.sh"
 
-  # Point the script at an isolated claude_config under $TEST_TEMP_DIR by
-  # symlinking it in. install-skills.sh uses $UTILS_PROJECT_ROOT/claude_config
-  # (derived from its own location), so the easiest isolation is to override
-  # $HOME — skills land in $HOME/.claude/skills regardless.
-  TEST_CLAUDE_CONFIG="$PROJECT_ROOT/claude_config"
+  # install-skills.sh uses $UTILS_PROJECT_ROOT/agent_config (derived from its
+  # own location). The helper below builds an isolated project root and HOME so
+  # skills land in test-local Claude and Codex homes.
 }
 
 teardown() {
@@ -22,7 +20,7 @@ teardown() {
   unmock_jq 2>/dev/null || true
 }
 
-# Helper: write installed_skills.json into a temp claude_config dir and run
+# Helper: write installed_skills.json into a temp agent_config dir and run
 # the installer against it via a wrapper script that overrides UTILS_PROJECT_ROOT.
 run_install_skills() {
   local skills_json="$1"
@@ -31,16 +29,16 @@ run_install_skills() {
 
   # Build a sandboxed project root mirroring the real layout the script expects.
   local sandbox_root="$TEST_TEMP_DIR/project"
-  mkdir -p "$sandbox_root/scripts/utils" "$sandbox_root/claude_config"
+  mkdir -p "$sandbox_root/scripts/utils" "$sandbox_root/agent_config"
 
   # Copy the script and its deps (utils.sh + utils/* submodules).
   cp "$PROJECT_ROOT/scripts/install-skills.sh" "$sandbox_root/scripts/"
   cp "$PROJECT_ROOT/scripts/utils.sh" "$sandbox_root/scripts/"
   cp -R "$PROJECT_ROOT/scripts/utils/." "$sandbox_root/scripts/utils/"
 
-  printf '%s\n' "$skills_json" > "$sandbox_root/claude_config/installed_skills.json"
+  printf '%s\n' "$skills_json" > "$sandbox_root/agent_config/installed_skills.json"
   if [ -n "$local_json" ]; then
-    printf '%s\n' "$local_json" > "$sandbox_root/claude_config/installed_skills.local.json"
+    printf '%s\n' "$local_json" > "$sandbox_root/agent_config/installed_skills.local.json"
   fi
 
   "$sandbox_root/scripts/install-skills.sh" "$@"
@@ -48,7 +46,7 @@ run_install_skills() {
 
 @test "exits successfully when installed_skills.json is missing" {
   local sandbox_root="$TEST_TEMP_DIR/project"
-  mkdir -p "$sandbox_root/scripts/utils" "$sandbox_root/claude_config"
+  mkdir -p "$sandbox_root/scripts/utils" "$sandbox_root/agent_config"
   cp "$PROJECT_ROOT/scripts/install-skills.sh" "$sandbox_root/scripts/"
   cp "$PROJECT_ROOT/scripts/utils.sh" "$sandbox_root/scripts/"
   cp -R "$PROJECT_ROOT/scripts/utils/." "$sandbox_root/scripts/utils/"
@@ -65,9 +63,11 @@ run_install_skills() {
   run run_install_skills "$skills" "" --dry-run
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"[dry-run] Would clone skill: my-skill"* ]]
+  [[ "$output" == *"[dry-run] Would clone skill for Claude Code: my-skill"* ]]
+  [[ "$output" == *"[dry-run] Would clone skill for Codex: my-skill"* ]]
   # Crucial: dry-run must not create the target directory.
   [ ! -d "$HOME/.claude/skills/my-skill" ]
+  [ ! -d "$HOME/.codex/skills/my-skill" ]
 }
 
 @test "--dry-run reports update for an existing git checkout" {
@@ -78,7 +78,8 @@ run_install_skills() {
   run run_install_skills "$skills" "" --dry-run
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"[dry-run] Would update skill: existing-skill"* ]]
+  [[ "$output" == *"[dry-run] Would update skill for Claude Code: existing-skill"* ]]
+  [[ "$output" == *"[dry-run] Would clone skill for Codex: existing-skill"* ]]
 }
 
 @test "merges installed_skills.local.json on top of the tracked set" {
@@ -164,11 +165,13 @@ run_install_skills() {
   run run_install_skills "$skills" ""
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Failed to clone skill: bad-repo"* ]]
+  [[ "$output" == *"Failed to clone skill for Claude Code: bad-repo"* ]]
+  [[ "$output" == *"Failed to clone skill for Codex: bad-repo"* ]]
   # git's actual error should appear after the dash separator.
-  [[ "$output" == *"Failed to clone skill: bad-repo (continuing) — "* ]]
+  [[ "$output" == *"Failed to clone skill for Claude Code: bad-repo (continuing) — "* ]]
   # Second skill is still attempted even after the first failed.
-  [[ "$output" == *"Cloning skill: second"* ]]
+  [[ "$output" == *"Cloning skill for Claude Code: second"* ]]
+  [[ "$output" == *"Cloning skill for Codex: second"* ]]
   [[ "$output" == *"Skill installation complete"* ]]
 }
 
