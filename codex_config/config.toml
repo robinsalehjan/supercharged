@@ -38,6 +38,10 @@ approval_mode = "approve"
 command = "xcodebuildmcp"
 args = ["mcp"]
 
+[mcp_servers.cupertino]
+command = "/opt/homebrew/bin/cupertino"
+args = ["serve", "--no-reap"]
+
 [mcp_servers.openaiDeveloperDocs]
 url = "https://developers.openai.com/mcp"
 
