@@ -65,17 +65,65 @@ get_newest_mtime_in_dir() {
     echo "$newest"
 }
 
+is_local_codex_config_table() {
+    local line="$1"
+
+    case "$line" in
+        "[projects."*|\
+        "[tui.model_availability_nux]"|\
+        "[notice]"|\
+        "[notice."*|\
+        "[hooks.state]"|\
+        "[hooks.state."*|\
+        "[desktop]"|\
+        "[marketplaces."*|\
+        "[plugins."*|\
+        "[apps.connector_"*|\
+        "[mcp_servers.node_repl]"|\
+        "[mcp_servers.node_repl."*)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+is_local_codex_config_key() {
+    local line="$1"
+
+    case "$line" in
+        "notify = "*|\
+        "service_tier = "*)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+extract_local_codex_top_level() {
+    local in_top_level=true
+
+    while IFS= read -r line || [ -n "$line" ]; do
+        if [[ "$line" == \[* ]]; then
+            in_top_level=false
+        fi
+
+        if [ "$in_top_level" = true ] && is_local_codex_config_key "$line"; then
+            printf '%s\n' "$line"
+        fi
+    done
+}
+
 extract_local_codex_tables() {
     local keep=false
 
     while IFS= read -r line || [ -n "$line" ]; do
         if [[ "$line" == \[* ]]; then
             keep=false
-            if [[ "$line" == "[projects."* ]] || \
-               [[ "$line" == "[tui.model_availability_nux]" ]] || \
-               [[ "$line" == "[notice.model_migrations]" ]] || \
-               [[ "$line" == "[hooks.state]" ]] || \
-               [[ "$line" == "[hooks.state."* ]]; then
+            if is_local_codex_config_table "$line"; then
                 keep=true
             fi
         fi
@@ -213,6 +261,7 @@ restore_claude_project_skills_for_codex() {
 restore_codex_config() {
     local src="$CODEX_CONFIG_DIR/config.toml"
     local dest="$CODEX_HOME/config.toml"
+    local local_top_level=""
     local local_tables=""
 
     if [ ! -f "$src" ]; then
@@ -223,16 +272,24 @@ restore_codex_config() {
     mkdir -p "$CODEX_HOME"
 
     if [ -f "$dest" ]; then
+        local_top_level=$(extract_local_codex_top_level < "$dest")
         local_tables=$(extract_local_codex_tables < "$dest")
     fi
 
-    expand_portable_path < "$src" > "$dest.tmp"
+    {
+        if [ -n "$local_top_level" ]; then
+            printf '%s\n\n' "$local_top_level"
+        fi
+
+        expand_portable_path < "$src"
+    } > "$dest.tmp"
+
     if [ -n "$local_tables" ]; then
         {
             printf '\n'
             printf '%s\n' "$local_tables"
         } >> "$dest.tmp"
-        log_with_level "INFO" "Preserved local Codex project trust and UI notices"
+        log_with_level "INFO" "Preserved local Codex runtime state"
     fi
 
     mv "$dest.tmp" "$dest"
