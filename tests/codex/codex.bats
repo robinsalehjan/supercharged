@@ -38,15 +38,39 @@ teardown() {
   config_file="$TEST_TEMP_DIR/config.toml"
   cat > "$config_file" <<'EOF'
 model = "gpt-5.5"
+notify = ["/Applications/Codex.app/Contents/MacOS/helper", "turn-ended"]
+service_tier = "priority"
 
 [projects."/Users/rsj/Repositories/supercharged"]
 trust_level = "trusted"
 
+[features]
+hooks = true
+js_repl = false
+
 [mcp_servers.docs]
 url = "https://developers.openai.com/mcp"
 
+[mcp_servers.node_repl]
+command = "/Applications/Codex.app/Contents/Resources/cua_node/bin/node_repl"
+
 [tui.model_availability_nux]
 "gpt-5.5" = 4
+
+[notice]
+hide_rate_limit_model_nudge = true
+
+[desktop]
+conversationDetailMode = "STEPS_COMMANDS"
+
+[marketplaces.openai-bundled]
+last_updated = "2026-07-07T17:07:06Z"
+
+[plugins."browser@openai-bundled"]
+enabled = true
+
+[apps.connector_abc123.tools."github.create_branch"]
+approval_mode = "approve"
 EOF
 
   run zsh -c "
@@ -56,12 +80,45 @@ EOF
 
   [ "$status" -eq 0 ]
   [[ "$output" == *'model = "gpt-5.5"'* ]]
+  [[ "$output" == *'hooks = true'* ]]
   [[ "$output" == *"[mcp_servers.docs]"* ]]
+  [[ "$output" != *'notify = '* ]]
+  [[ "$output" != *'service_tier = '* ]]
+  [[ "$output" != *'js_repl = '* ]]
   [[ "$output" != *"[projects."* ]]
+  [[ "$output" != *"[mcp_servers.node_repl]"* ]]
   [[ "$output" != *"[tui.model_availability_nux]"* ]]
+  [[ "$output" != *"[notice]"* ]]
+  [[ "$output" != *"[desktop]"* ]]
+  [[ "$output" != *"[marketplaces."* ]]
+  [[ "$output" != *"[plugins."* ]]
+  [[ "$output" != *"[apps.connector_"* ]]
 }
 
-@test "extract_local_codex_tables keeps project trust and notices only" {
+@test "extract_local_codex_top_level keeps local runtime keys only" {
+  config_file="$TEST_TEMP_DIR/config.toml"
+  cat > "$config_file" <<'EOF'
+model = "gpt-5.5"
+notify = ["/Applications/Codex.app/Contents/MacOS/helper", "turn-ended"]
+service_tier = "priority"
+
+[mcp_servers.docs]
+url = "https://developers.openai.com/mcp"
+EOF
+
+  run zsh -c "
+    source '$RESTORE_SCRIPT'
+    extract_local_codex_top_level < '$config_file'
+  "
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'notify = '* ]]
+  [[ "$output" == *'service_tier = "priority"'* ]]
+  [[ "$output" != *'model = "gpt-5.5"'* ]]
+  [[ "$output" != *"[mcp_servers.docs]"* ]]
+}
+
+@test "extract_local_codex_tables keeps local runtime tables only" {
   config_file="$TEST_TEMP_DIR/config.toml"
   cat > "$config_file" <<'EOF'
 model = "gpt-5.5"
@@ -77,6 +134,21 @@ url = "https://developers.openai.com/mcp"
 
 [hooks.state."/Users/rsj/.codex/hooks.json:stop:0:0"]
 trusted_hash = "sha256:abc123"
+
+[desktop]
+conversationDetailMode = "STEPS_COMMANDS"
+
+[marketplaces.openai-bundled]
+last_updated = "2026-07-07T17:07:06Z"
+
+[plugins."browser@openai-bundled"]
+enabled = true
+
+[mcp_servers.node_repl]
+command = "/Applications/Codex.app/Contents/Resources/cua_node/bin/node_repl"
+
+[apps.connector_abc123.tools."github.create_branch"]
+approval_mode = "approve"
 EOF
 
   run zsh -c "
@@ -88,6 +160,11 @@ EOF
   [[ "$output" == *"[projects."* ]]
   [[ "$output" == *"[notice.model_migrations]"* ]]
   [[ "$output" == *"[hooks.state."* ]]
+  [[ "$output" == *"[desktop]"* ]]
+  [[ "$output" == *"[marketplaces.openai-bundled]"* ]]
+  [[ "$output" == *"[plugins.\"browser@openai-bundled\"]"* ]]
+  [[ "$output" == *"[mcp_servers.node_repl]"* ]]
+  [[ "$output" == *"[apps.connector_abc123.tools.\"github.create_branch\"]"* ]]
   [[ "$output" != *"[mcp_servers.docs]"* ]]
   [[ "$output" != *'model = "gpt-5.5"'* ]]
 }

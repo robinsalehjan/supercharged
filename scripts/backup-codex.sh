@@ -15,22 +15,57 @@ CODEX_CONFIG_DIR="$PROJECT_ROOT/codex_config"
 AGENT_CONFIG_DIR="$PROJECT_ROOT/agent_config"
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
 
+is_local_codex_config_table() {
+    local line="$1"
+
+    case "$line" in
+        "[projects."*|\
+        "[tui.model_availability_nux]"|\
+        "[notice]"|\
+        "[notice."*|\
+        "[hooks.state]"|\
+        "[hooks.state."*|\
+        "[desktop]"|\
+        "[marketplaces."*|\
+        "[plugins."*|\
+        "[apps.connector_"*|\
+        "[mcp_servers.node_repl]"|\
+        "[mcp_servers.node_repl."*)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+is_local_codex_config_key() {
+    local line="$1"
+
+    case "$line" in
+        "notify = "*|\
+        "service_tier = "*|\
+        "js_repl = "*)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
 filter_shared_codex_config() {
     local skip=false
 
     while IFS= read -r line || [ -n "$line" ]; do
         if [[ "$line" == \[* ]]; then
             skip=false
-            if [[ "$line" == "[projects."* ]] || \
-               [[ "$line" == "[tui.model_availability_nux]" ]] || \
-               [[ "$line" == "[notice.model_migrations]" ]] || \
-               [[ "$line" == "[hooks.state]" ]] || \
-               [[ "$line" == "[hooks.state."* ]]; then
+            if is_local_codex_config_table "$line"; then
                 skip=true
             fi
         fi
 
-        if [ "$skip" = false ]; then
+        if [ "$skip" = false ] && ! is_local_codex_config_key "$line"; then
             printf '%s\n' "$line"
         fi
     done
@@ -90,7 +125,7 @@ main() {
             exit 1
         fi
         mv "$CODEX_CONFIG_DIR/config.toml.tmp" "$CODEX_CONFIG_DIR/config.toml"
-        log_with_level "SUCCESS" "Backed up config.toml (local project trust and UI notices excluded)"
+        log_with_level "SUCCESS" "Backed up config.toml (local runtime state excluded)"
     else
         log_with_level "WARN" "config.toml not found"
     fi
