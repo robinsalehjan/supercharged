@@ -99,9 +99,11 @@ vadimcn.vscode-lldb
 vscode-icons-team.vscode-icons
 ```
 
-The current Codex baseline selects `gpt-5.6-sol`, high reasoning effort, the pragmatic personality, cached web search, the `supercharged` permission profile, and the configured status line. Its MCP inventory includes code-review-graph, XcodeBuildMCP, Cupertino, OpenAI developer docs, a portable Firebase project entry, and a disabled computer-use entry. Inspect `codex_config/config.toml` for the exact settings; use `$HOME` in any tracked path so the configuration remains portable.
+The current Codex baseline selects `gpt-5.6-sol`, high reasoning effort, the pragmatic personality, cached web search, the `supercharged` permission profile, and the configured status line. Its shared MCP inventory includes code-review-graph, XcodeBuildMCP, Cupertino, OpenAI developer docs, and a disabled computer-use entry. Inspect `codex_config/config.toml` for the exact settings; use `$HOME` in any tracked path so the configuration remains portable.
 
-The audit intentionally does not copy credentials or runtime state. Codex authentication, histories, logs, sessions, memories, databases, caches, project trust, connector state, desktop state, local approval rules, and selected local MCP state remain machine-local. Claude work-only marketplaces and plugins are kept in ignored `.local.json` overlays. Files under `dot_files/.secrets/` are templates only, including the `REPLICATE_API_TOKEN` placeholder.
+The audit intentionally does not copy credentials or runtime state. Codex authentication, histories, logs, sessions, memories, databases, caches, project trust, connector state, desktop state, local approval rules, and project-specific MCP servers such as the personal Firebase entry remain machine-local. Backup and restore preserve those Firebase and runtime tables without writing them to `codex_config/config.toml`. Claude work-only marketplaces and plugins are kept in ignored `.local.json` overlays. Files under `dot_files/.secrets/` are templates only, including the `REPLICATE_API_TOKEN` placeholder.
+
+VS Code extensions are reproduced, but VS Code user `settings.json`, `keybindings.json`, and `tasks.json` are not tracked because they can contain machine-, account-, or project-specific state. Use VS Code Settings Sync or manage sanitized copies separately when identical editor preferences are required.
 
 To refresh the tracked agent configuration after intentionally changing the personal machine, run:
 

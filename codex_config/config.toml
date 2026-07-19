@@ -54,10 +54,6 @@ args = ["mcp"]
 cwd = "."
 enabled = false
 
-[mcp_servers.plugin_firebase_firebase]
-command = "firebase"
-args = ["mcp", "--dir", "$HOME/Repositories/kinetic/firebase"]
-
 [tui]
 status_line = ["model-with-reasoning", "current-dir", "git-branch", "branch-changes", "context-remaining"]
 status_line_use_colors = true

@@ -55,6 +55,10 @@ url = "https://developers.openai.com/mcp"
 [mcp_servers.node_repl]
 command = "/Applications/Codex.app/Contents/Resources/cua_node/bin/node_repl"
 
+[mcp_servers.plugin_firebase_firebase]
+command = "firebase"
+args = ["mcp", "--dir", "/Users/example/Repositories/project/firebase"]
+
 [tui.model_availability_nux]
 "gpt-5.5" = 4
 
@@ -89,6 +93,7 @@ EOF
   [[ "$output" != *'js_repl = '* ]]
   [[ "$output" != *"[projects."* ]]
   [[ "$output" != *"[mcp_servers.node_repl]"* ]]
+  [[ "$output" != *"[mcp_servers.plugin_firebase_firebase]"* ]]
   [[ "$output" != *"[tui.model_availability_nux]"* ]]
   [[ "$output" != *"[notice]"* ]]
   [[ "$output" != *"[desktop]"* ]]
@@ -149,6 +154,10 @@ enabled = true
 [mcp_servers.node_repl]
 command = "/Applications/Codex.app/Contents/Resources/cua_node/bin/node_repl"
 
+[mcp_servers.plugin_firebase_firebase]
+command = "firebase"
+args = ["mcp", "--dir", "/Users/example/Repositories/project/firebase"]
+
 [apps.connector_abc123.tools."github.create_branch"]
 approval_mode = "approve"
 EOF
@@ -166,6 +175,7 @@ EOF
   [[ "$output" == *"[marketplaces.openai-bundled]"* ]]
   [[ "$output" == *"[plugins.\"browser@openai-bundled\"]"* ]]
   [[ "$output" == *"[mcp_servers.node_repl]"* ]]
+  [[ "$output" == *"[mcp_servers.plugin_firebase_firebase]"* ]]
   [[ "$output" == *"[apps.connector_abc123.tools.\"github.create_branch\"]"* ]]
   [[ "$output" != *"[mcp_servers.docs]"* ]]
   [[ "$output" != *'model = "gpt-5.5"'* ]]
