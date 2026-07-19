@@ -138,6 +138,83 @@ run_install_skills() {
   [[ "$output" != *"Would clone"* ]]
 }
 
+@test "removed skills are deleted from both managed destinations" {
+  local repo="https://example.com/retired.git"
+  local skills="{\"version\":2,\"skills\":{},\"removed_skills\":{\"retired\":{\"repo\":\"$repo\"}}}"
+
+  mkdir -p "$HOME/.claude/skills/retired" "$HOME/.codex/skills/retired"
+  git -C "$HOME/.claude/skills/retired" init -q
+  git -C "$HOME/.claude/skills/retired" remote add origin "$repo"
+  git -C "$HOME/.codex/skills/retired" init -q
+  git -C "$HOME/.codex/skills/retired" remote add origin "$repo"
+
+  run run_install_skills "$skills" ""
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Removed retired skill for Claude Code: retired"* ]]
+  [[ "$output" == *"Removed retired skill for Codex: retired"* ]]
+  [ ! -e "$HOME/.claude/skills/retired" ]
+  [ ! -e "$HOME/.codex/skills/retired" ]
+}
+
+@test "removed skill dry-run preserves both managed destinations" {
+  local repo="https://example.com/retired.git"
+  local skills="{\"version\":2,\"skills\":{},\"removed_skills\":{\"retired\":{\"repo\":\"$repo\"}}}"
+
+  mkdir -p "$HOME/.claude/skills/retired" "$HOME/.codex/skills/retired"
+  git -C "$HOME/.claude/skills/retired" init -q
+  git -C "$HOME/.claude/skills/retired" remote add origin "$repo"
+  git -C "$HOME/.codex/skills/retired" init -q
+  git -C "$HOME/.codex/skills/retired" remote add origin "$repo"
+
+  run run_install_skills "$skills" "" --dry-run
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"[dry-run] Would remove retired skill for Claude Code: retired"* ]]
+  [[ "$output" == *"[dry-run] Would remove retired skill for Codex: retired"* ]]
+  [ -d "$HOME/.claude/skills/retired" ]
+  [ -d "$HOME/.codex/skills/retired" ]
+}
+
+@test "removed skill preserves a checkout from a different origin" {
+  local skills='{"version":2,"skills":{},"removed_skills":{"retired":{"repo":"https://example.com/managed.git"}}}'
+
+  mkdir -p "$HOME/.claude/skills/retired"
+  git -C "$HOME/.claude/skills/retired" init -q
+  git -C "$HOME/.claude/skills/retired" remote add origin "https://example.com/personal.git"
+
+  run run_install_skills "$skills" ""
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"origin does not match the retired managed skill"* ]]
+  [ -d "$HOME/.claude/skills/retired" ]
+}
+
+@test "removed skill without a managed origin is preserved" {
+  local skills='{"version":2,"skills":{},"removed_skills":{"retired":{"reason":"retired"}}}'
+
+  mkdir -p "$HOME/.claude/skills/retired"
+  git -C "$HOME/.claude/skills/retired" init -q
+  git -C "$HOME/.claude/skills/retired" remote add origin "https://example.com/personal.git"
+
+  run run_install_skills "$skills" ""
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"retired skill has no managed origin"* ]]
+  [ -d "$HOME/.claude/skills/retired" ]
+}
+
+@test "removed skill tombstone wins over a local active override" {
+  local skills='{"version":2,"skills":{},"removed_skills":{"retired":{"repo":"https://example.com/retired.git"}}}'
+  local local_skills='{"version":1,"skills":{"retired":{"repo":"https://example.com/fork.git","ref":"main"}}}'
+
+  run run_install_skills "$skills" "$local_skills" --dry-run
+
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"Would clone skill for Claude Code: retired"* ]]
+  [[ "$output" != *"Would clone skill for Codex: retired"* ]]
+}
+
 @test "skips a target that exists but is not a git checkout" {
   # Pre-create a plain directory at the target path. Production behavior is to
   # log a warning and continue — must not rm-rf or attempt a clone over it.
