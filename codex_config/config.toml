@@ -42,7 +42,7 @@ command = "xcodebuildmcp"
 args = ["mcp"]
 
 [mcp_servers.cupertino]
-command = "/opt/homebrew/bin/cupertino"
+command = "cupertino"
 args = ["serve", "--no-reap"]
 
 [mcp_servers.openaiDeveloperDocs]

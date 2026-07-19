@@ -5,5 +5,13 @@
     "args": [
       "mcp"
     ]
+  },
+  "cupertino": {
+    "type": "stdio",
+    "command": "cupertino",
+    "args": [
+      "serve",
+      "--no-reap"
+    ]
   }
 }

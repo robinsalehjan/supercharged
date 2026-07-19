@@ -114,7 +114,7 @@ sanitize_settings() {
 
   set -o pipefail
   jq "${jq_args[@]}" \
-    "(. + {enabledPlugins: (.enabledPlugins | $plugin_filter)}) | del(.env[\"GITHUB_PERSONAL_ACCESS_TOKEN\"]) | del(.mcpServers[]?.env[\"GITHUB_PERSONAL_ACCESS_TOKEN\"])" \
+    "(. + {enabledPlugins: (.enabledPlugins | $plugin_filter)}) | del(.mcpServers) | del(.env[\"GITHUB_PERSONAL_ACCESS_TOKEN\"])" \
     "$input_file" | sed "s|$ORIGINAL_HOME|\$HOME|g" > "$output_file"
   local result=$?
   set +o pipefail
@@ -203,6 +203,58 @@ sanitize_settings() {
   # Assert: Token removed
   assert_json_field "$TEMP_REPO_CONFIG/settings.json" \
     '.env | has("GITHUB_PERSONAL_ACCESS_TOKEN")' "false"
+}
+
+@test "removes legacy MCP servers from settings.json" {
+  load_fixture "claude-backup/settings-full.json" "$TEMP_CLAUDE/settings.json"
+
+  sanitize_settings "$TEMP_CLAUDE/settings.json" "$TEMP_REPO_CONFIG/settings.json" "${TEST_SANITIZE_MARKETPLACES[@]}"
+
+  assert_json_field "$TEMP_REPO_CONFIG/settings.json" 'has("mcpServers")' "false"
+}
+
+@test "backup_user_mcp_servers refreshes managed servers and excludes local-only entries" {
+  user_config="$TEST_TEMP_DIR/.claude.json"
+  mkdir -p "$TEMP_REPO_CONFIG"
+  printf '%s\n' '{"mcpServers":{"managed":{"type":"stdio","command":"new-command","env":{"GITHUB_PERSONAL_ACCESS_TOKEN":"sensitive-value","SAFE":"kept"}},"work-only":{"type":"stdio","command":"private"}}}' > "$user_config"
+  printf '%s\n' '{"managed":{"type":"stdio","command":"old-command"},"missing":{"type":"stdio","command":"repo-default"}}' > "$TEMP_REPO_CONFIG/mcp_servers.json"
+
+  run zsh -c "
+    CLAUDE_USER_CONFIG='$user_config'
+    CLAUDE_CONFIG_DIR='$TEMP_REPO_CONFIG'
+    SANITIZE_ENV_VARS=(GITHUB_PERSONAL_ACCESS_TOKEN)
+    make_path_portable() { command cat; }
+    log_with_level() { :; }
+    $(sed -n '/^backup_user_mcp_servers()/,/^}/p' "$PROJECT_ROOT/scripts/backup-claude.sh")
+    backup_user_mcp_servers
+  "
+
+  [ "$status" -eq 0 ]
+  [ "$(jq -r '.managed.command' "$TEMP_REPO_CONFIG/mcp_servers.json")" = "new-command" ]
+  [ "$(jq -r '.managed.env.GITHUB_PERSONAL_ACCESS_TOKEN' "$TEMP_REPO_CONFIG/mcp_servers.json")" = '$GITHUB_PERSONAL_ACCESS_TOKEN' ]
+  [ "$(jq -r '.managed.env.SAFE' "$TEMP_REPO_CONFIG/mcp_servers.json")" = "kept" ]
+  [ "$(jq -r '.missing.command' "$TEMP_REPO_CONFIG/mcp_servers.json")" = "repo-default" ]
+  [ "$(jq 'has("work-only")' "$TEMP_REPO_CONFIG/mcp_servers.json")" = "false" ]
+}
+
+@test "backup_user_mcp_servers preserves repo registry before user-scope migration" {
+  user_config="$TEST_TEMP_DIR/.claude.json"
+  mkdir -p "$TEMP_REPO_CONFIG"
+  printf '%s\n' '{"projects":{"/tmp/project":{}}}' > "$user_config"
+  printf '%s\n' '{"managed":{"type":"stdio","command":"managed"}}' > "$TEMP_REPO_CONFIG/mcp_servers.json"
+
+  run zsh -c "
+    CLAUDE_USER_CONFIG='$user_config'
+    CLAUDE_CONFIG_DIR='$TEMP_REPO_CONFIG'
+    SANITIZE_ENV_VARS=(GITHUB_PERSONAL_ACCESS_TOKEN)
+    make_path_portable() { command cat; }
+    log_with_level() { :; }
+    $(sed -n '/^backup_user_mcp_servers()/,/^}/p' "$PROJECT_ROOT/scripts/backup-claude.sh")
+    backup_user_mcp_servers
+  "
+
+  [ "$status" -eq 0 ]
+  [ "$(jq -r '.managed.command' "$TEMP_REPO_CONFIG/mcp_servers.json")" = "managed" ]
 }
 
 @test "preserves non-sensitive env vars in settings.json" {

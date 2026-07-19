@@ -20,6 +20,7 @@ PROJECT_ROOT="$UTILS_PROJECT_ROOT"
 CLAUDE_CONFIG_DIR="$PROJECT_ROOT/claude_config"
 AGENT_CONFIG_DIR="$PROJECT_ROOT/agent_config"
 CLAUDE_HOME="$HOME/.claude"
+CLAUDE_USER_CONFIG="${CLAUDE_USER_CONFIG:-$HOME/.claude.json}"
 
 # List of marketplaces to preserve locally (not overwritten during restore)
 # These are work-related and should remain untouched
@@ -565,33 +566,27 @@ restore_settings_env() {
     fi
 }
 
-# Function to restore global MCP server configs into ~/.claude/settings.json
-# Sources ~/.secrets to substitute $VAR_NAME placeholders with actual env values
-# MCPs are injected globally so they work across all projects
+# Restore user-scoped MCP server configs into ~/.claude.json. Environment
+# placeholders are resolved from the current process (including ~/.secrets).
+# Servers with unresolved placeholders are skipped as a unit.
 restore_mcp_servers() {
     local src="$CLAUDE_CONFIG_DIR/mcp_servers.json"
-    local settings_json="$CLAUDE_HOME/settings.json"
+    local user_config="$CLAUDE_USER_CONFIG"
 
     if [ ! -f "$src" ]; then
         log_with_level "INFO" "No MCP server configuration found in repository"
         return
     fi
 
-    if [ ! -f "$settings_json" ]; then
-        log_with_level "WARN" "settings.json not found, skipping MCP server restore"
-        return
-    fi
-
-    if [ "$SECRETS_LOADED" = false ]; then
-        log_with_level "WARN" "Skipping MCP server restore - API key placeholders would remain unsubstituted"
-        return 1
+    if [ ! -f "$user_config" ]; then
+        printf '{}\n' > "$user_config"
     fi
 
     # Expand $HOME placeholders and substitute $VAR_NAME env placeholders via jq env object
     local mcp_with_secrets
     if ! mcp_with_secrets=$(expand_portable_path < "$src" | jq -a 'to_entries | map(
         .value.env = (.value.env // {} | to_entries | map(
-            if (.value | type == "string") and (.value | startswith("$")) then
+            if (.value | type == "string") and (.value | test("^\\$[A-Za-z_][A-Za-z0-9_]*$")) then
                 .value = (env[.value[1:]] // .value)
             else . end
         ) | from_entries)
@@ -600,23 +595,42 @@ restore_mcp_servers() {
         return 1
     fi
 
-    # Merge MCP servers into settings.json (repo servers take precedence, local extras preserved)
+    local unresolved_servers
+    unresolved_servers=$(jq -r '
+        to_entries[] |
+        select([
+            .value.env[]? |
+            select(type == "string" and test("^\\$[A-Za-z_][A-Za-z0-9_]*$"))
+        ] | length > 0) |
+        .key
+    ' <<< "$mcp_with_secrets")
+
+    if [ -n "$unresolved_servers" ]; then
+        while IFS= read -r server; do
+            log_with_level "WARN" "Skipping MCP server '$server' because an environment placeholder is unresolved"
+        done <<< "$unresolved_servers"
+        mcp_with_secrets=$(jq --argjson unresolved "$(printf '%s\n' "$unresolved_servers" | jq -R . | jq -s .)" \
+            'with_entries(select(.key as $key | $unresolved | index($key) | not))' <<< "$mcp_with_secrets")
+    fi
+
+    # Merge repo servers into the user-scoped registry. Repo servers take
+    # precedence while unrelated local entries and all other user state remain.
     local updated
     if ! updated=$(jq -a --argjson mcp "$mcp_with_secrets" '
         .mcpServers = ((.mcpServers // {}) + $mcp)
-    ' "$settings_json" 2>/dev/null); then
-        log_with_level "ERROR" "Failed to merge MCP servers into settings.json"
+    ' "$user_config" 2>/dev/null); then
+        log_with_level "ERROR" "Failed to merge MCP servers into $user_config"
         return 1
     fi
 
-    local tmp="${settings_json}.tmp.$$"
-    if printf '%s\n' "$updated" > "$tmp" && mv "$tmp" "$settings_json"; then
+    local tmp="${user_config}.tmp.$$"
+    if printf '%s\n' "$updated" > "$tmp" && mv "$tmp" "$user_config"; then
         local server_count
         server_count=$(echo "$mcp_with_secrets" | jq 'keys | length' 2>/dev/null || echo "?")
-        log_with_level "SUCCESS" "Restored $server_count global MCP server(s) to settings.json"
+        log_with_level "SUCCESS" "Restored $server_count user-scoped MCP server(s) to $user_config"
     else
         rm -f "$tmp"
-        log_with_level "ERROR" "Failed to write settings.json"
+        log_with_level "ERROR" "Failed to write $user_config"
         return 1
     fi
 }
@@ -645,7 +659,11 @@ restore_config_file \
 load_secrets || true
 
 # Re-inject sensitive env vars stripped at backup time (sourced from ~/.secrets)
-restore_settings_env
+if [ "$SECRETS_LOADED" = true ]; then
+    restore_settings_env
+else
+    log_with_level "INFO" "Skipping settings env injection because no shell secrets were loaded"
+fi
 
 # Restore installed_plugins.json (merge to preserve local work plugins)
 merge_plugin_config \
@@ -740,6 +758,6 @@ for ref_file in "${claude_md_refs_restored[@]}"; do
     echo "   - $ref_file"
 done
 echo "   - statusline/Config.toml"
-echo "   - settings.json MCP servers (global, env vars from ~/.secrets)"
+echo "   - ~/.claude.json MCP servers (user scope, env vars from ~/.secrets)"
 echo ""
 echo "💡 Restart Claude Code for changes to take effect"

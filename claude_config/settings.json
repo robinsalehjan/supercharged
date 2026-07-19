@@ -109,15 +109,5 @@
   "skipAutoPermissionPrompt": true,
   "additionalDirectories": [
     "~/Repositories"
-  ],
-  "mcpServers": {
-    "XcodeBuildMCP": {
-      "type": "stdio",
-      "command": "xcodebuildmcp",
-      "args": [
-        "mcp"
-      ],
-      "env": {}
-    }
-  }
+  ]
 }
