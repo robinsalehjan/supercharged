@@ -5,7 +5,7 @@
 
 ## Quick Start
 
-Prerequisites: Oh My Zsh, macOS 12.0+, 10GB free space.
+Prerequisites: macOS 12.0+, Xcode Command Line Tools, Oh My Zsh, Node.js 20+ with npm, and 10GB free space.
 
 ```bash
 # Clone the latest release (recommended)
@@ -24,32 +24,32 @@ cd supercharged && npm run setup
 
 ```bash
 npm run setup              # Fresh install (interactive)
-npm run update             # Update all components
+npm run update             # Backup agents, restore dotfiles, then update all components
 npm run update:dry-run     # Read-only report of outdated brew/npm packages
-npm run update:only -- brew  # Update one component (brew|asdf|zsh|npm|pip)
+npm run update:only -- brew  # Restore dotfiles, then update one component
 npm run validate           # Verify tools installed correctly
 npm run restore:all        # Restore Claude Code, Codex, and dotfiles
 npm run restore:agents     # Restore Claude Code and Codex agent config
 npm run restore:claude     # Restore Claude Code config
 npm run restore:codex      # Restore Codex config, rules, and shared skills
-npm run restore:dotfiles   # Copy dotfiles to $HOME
+npm run restore:dotfiles   # Copy dotfiles and reapply Worktrunk shell integration
 npm run backup:all         # Backup Claude Code and Codex config
 npm run backup:claude      # Backup Claude Code config
 npm run backup:codex       # Backup Codex config, hooks, RTK, and skills
 npm run install:plugins    # Install all Claude Code plugins
-npm run install:skills     # Install git-based skills for Claude Code and Codex
+npm run install:skills     # Install, update, or safely prune shared git skills
 npm run restore            # Restore from last backup
 npm run version:show       # Print current version, commit, tag, branch
 npm run release -- patch   # Cut a release (patch|minor|major|x.y.z)
 npm test                   # Run all BATS tests
-npm run lint               # ShellCheck all scripts
+npm run lint               # ShellCheck setup scripts, utilities, and test helpers
 npm run scan:secrets       # Scan repository paths for likely secrets
 npm run help               # Show all commands
 ```
 
 ## Reproduced environment
 
-The repository is the portable source of truth for the audited personal-machine setup: Homebrew formulae and applications, Mac App Store applications, VS Code extensions, asdf runtime pins, dotfiles, and sanitized Claude Code and Codex configuration. Run `npm run setup` on a new Mac, or `npm run restore:all` on an existing installation, to apply that baseline.
+The repository is the portable source of truth for the audited personal-machine setup: Homebrew formulae and applications, Mac App Store applications, VS Code extensions, asdf runtime pins, dotfiles, and sanitized Claude Code and Codex configuration. Run `npm run setup` on a new Mac to install the full dependency baseline. On an existing installation, `npm run restore:all` restores agent configuration and dotfiles only; it does not install or update packages.
 
 Credentials, authentication state, histories, logs, sessions, caches, and other machine-local runtime data are intentionally excluded. Secret files contain variable-name templates only; populate the corresponding values locally. See the [reference guide](./docs/REFERENCE.md#personal-machine-baseline) for the tracked inventory and synchronization boundaries.
 
