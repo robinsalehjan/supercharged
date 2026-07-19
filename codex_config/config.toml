@@ -1,4 +1,4 @@
-model = "gpt-5.5"
+model = "gpt-5.6-sol"
 model_reasoning_effort = "high"
 personality = "pragmatic"
 web_search = "cached"
@@ -22,7 +22,7 @@ extends = ":workspace"
 command = "code-review-graph"
 args = ["serve"]
 
-[mcp_servers.code-review-graph.tools.semantic_search_nodes_tool]
+[mcp_servers.code-review-graph.tools.get_review_context_tool]
 approval_mode = "approve"
 
 [mcp_servers.code-review-graph.tools.list_repos_tool]
@@ -32,6 +32,9 @@ approval_mode = "approve"
 approval_mode = "approve"
 
 [mcp_servers.code-review-graph.tools.refactor_tool]
+approval_mode = "approve"
+
+[mcp_servers.code-review-graph.tools.semantic_search_nodes_tool]
 approval_mode = "approve"
 
 [mcp_servers.XcodeBuildMCP]
@@ -44,6 +47,16 @@ args = ["serve", "--no-reap"]
 
 [mcp_servers.openaiDeveloperDocs]
 url = "https://developers.openai.com/mcp"
+
+[mcp_servers.computer-use]
+command = "./Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient"
+args = ["mcp"]
+cwd = "."
+enabled = false
+
+[mcp_servers.plugin_firebase_firebase]
+command = "firebase"
+args = ["mcp", "--dir", "$HOME/Repositories/kinetic/firebase"]
 
 [tui]
 status_line = ["model-with-reasoning", "current-dir", "git-branch", "branch-changes", "context-remaining"]

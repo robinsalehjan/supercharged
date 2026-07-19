@@ -43,3 +43,13 @@ teardown() {
   [[ "$output" == *"Potential secrets found"* ]]
   [[ "$output" == *"config.txt"* ]]
 }
+
+@test "scan-secrets.sh ignores code identifiers assigned to token-related options" {
+  mkdir -p "$TEST_TEMP_DIR/clean-code"
+  printf '%s\n' 'max_output_tokens_per_file=args.max_output_tokens_per_file,' > "$TEST_TEMP_DIR/clean-code/example.py"
+
+  run "$SCAN_SCRIPT" "$TEST_TEMP_DIR/clean-code"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"No likely secrets found"* ]]
+}

@@ -103,15 +103,26 @@ EOF
 
 @test "validate_application checks app bundle paths" {
   source "$PROJECT_ROOT/scripts/utils.sh"
-  mkdir -p "$TEST_TEMP_DIR/Codex.app"
+  mkdir -p "$TEST_TEMP_DIR/ChatGPT.app"
 
-  run validate_application "Codex desktop app" "$TEST_TEMP_DIR/Codex.app"
+  run validate_application "ChatGPT desktop app" "$TEST_TEMP_DIR/ChatGPT.app"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Codex desktop app installed"* ]]
+  [[ "$output" == *"ChatGPT desktop app installed"* ]]
 
-  run validate_application "Codex desktop app" "$TEST_TEMP_DIR/Missing.app"
+  run validate_application "ChatGPT desktop app" "$TEST_TEMP_DIR/Missing.app"
   [ "$status" -eq 1 ]
-  [[ "$output" == *"Codex desktop app not installed"* ]]
+  [[ "$output" == *"ChatGPT desktop app not installed"* ]]
+}
+
+@test "prepend_asdf_shims_to_path enables non-interactive runtime validation" {
+  source "$PROJECT_ROOT/scripts/utils.sh"
+  mkdir -p "$HOME/.asdf/shims"
+  unset ASDF_DATA_DIR
+  PATH="/usr/bin:/bin:$HOME/.asdf/shims"
+
+  prepend_asdf_shims_to_path
+
+  [ "${PATH%%:*}" = "$HOME/.asdf/shims" ]
 }
 
 @test "validate_font passes when matching font exists in HOME/Library/Fonts" {

@@ -84,7 +84,9 @@ standard_cleanup() {
         fi
     fi
 
-    command -v brew >/dev/null 2>&1 && brew cleanup 2>/dev/null || true
+    if [ "${DRY_RUN:-false}" != true ]; then
+        command -v brew >/dev/null 2>&1 && brew cleanup 2>/dev/null || true
+    fi
     exit $exit_code
 }
 
@@ -161,8 +163,9 @@ setup_user_preferences() {
     read -r install_claude
     install_claude=$(normalize_yes_no_preference "$install_claude" "Y")
 
-    # Ask about Codex desktop app
-    printf "Install Codex desktop app for remote access? [Y/n]: "
+    # Ask about the ChatGPT desktop surface used for Codex access. Keep the
+    # preference name for compatibility with existing preference files.
+    printf "Install ChatGPT desktop app for Codex access? [Y/n]: "
     read -r install_codex_app
     install_codex_app=$(normalize_yes_no_preference "$install_codex_app" "Y")
 

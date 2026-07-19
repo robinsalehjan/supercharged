@@ -120,6 +120,7 @@ main() {
 
     if $DRY_RUN; then
         log_with_level "INFO" "=== DRY RUN MODE - No changes will be made ==="
+        export HOMEBREW_NO_AUTO_UPDATE=1
     fi
 
     log_with_level "INFO" "Starting update process..."
@@ -133,7 +134,9 @@ main() {
 
     if ! $SKIP_BREW; then
         log_with_level "INFO" "📦 Outdated Homebrew formulae:"
-        brew update --quiet
+        if ! $DRY_RUN; then
+            brew update --quiet
+        fi
         outdated_brew=$(brew outdated --formula)
         if [ -n "$outdated_brew" ]; then
             # shellcheck disable=SC2001

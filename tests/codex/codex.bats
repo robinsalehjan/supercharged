@@ -37,9 +37,10 @@ teardown() {
 @test "filter_shared_codex_config removes machine-local tables" {
   config_file="$TEST_TEMP_DIR/config.toml"
   cat > "$config_file" <<'EOF'
-model = "gpt-5.5"
 notify = ["/Applications/Codex.app/Contents/MacOS/helper", "turn-ended"]
 service_tier = "priority"
+
+model = "gpt-5.5"
 
 [projects."/Users/rsj/Repositories/supercharged"]
 trust_level = "trusted"
@@ -79,6 +80,7 @@ EOF
   "
 
   [ "$status" -eq 0 ]
+  [ "${lines[0]}" = 'model = "gpt-5.5"' ]
   [[ "$output" == *'model = "gpt-5.5"'* ]]
   [[ "$output" == *'hooks = true'* ]]
   [[ "$output" == *"[mcp_servers.docs]"* ]]

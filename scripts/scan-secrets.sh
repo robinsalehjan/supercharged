@@ -23,6 +23,11 @@ patterns=(
     "(?i)(api[_-]?key|secret|token|password)[A-Za-z0-9_ -]{0,20}[:=][[:space:]]*[\"']?[A-Za-z0-9_./+=-]{24,}"
 )
 
+# Avoid flagging ordinary code references such as
+# `max_output_tokens_per_file=args.max_output_tokens_per_file` while retaining
+# matches for literal credential-shaped values.
+code_reference_assignment="(?i)(api[_-]?key|secret|token|password)[A-Za-z0-9_ -]{0,20}[:=][[:space:]]*(args|self|config|options|env)\.[A-Za-z_][A-Za-z0-9_.]*[,;)]?['\"]?.*\$"
+
 findings=""
 for pattern in "${patterns[@]}"; do
     matches=$(rg \
@@ -38,7 +43,9 @@ for pattern in "${patterns[@]}"; do
         --glob '!SECURITY.md' \
         --glob '!scripts/scan-secrets.sh' \
         "$pattern" \
-        "${scan_paths[@]}" 2>/dev/null || true)
+        "${scan_paths[@]}" 2>/dev/null \
+        | rg --invert-match "$code_reference_assignment" \
+        || true)
 
     if [ -n "$matches" ]; then
         findings+="$matches"$'\n'

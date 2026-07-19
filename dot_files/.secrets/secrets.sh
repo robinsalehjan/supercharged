@@ -32,6 +32,7 @@
 # API Keys
 # export OPENAI_API_KEY=""
 # export ANTHROPIC_API_KEY=""
+# export REPLICATE_API_TOKEN=""
 
 # Database Credentials
 # export DATABASE_URL=""

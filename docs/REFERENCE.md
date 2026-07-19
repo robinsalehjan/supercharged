@@ -31,7 +31,7 @@ Setup stores interactive choices in `~/.supercharged_preferences`.
 | `INSTALL_DATA_SCIENCE` | `N` | Jupyter, pandas, numpy, matplotlib, scikit-learn |
 | `INSTALL_DEV_TOOLS` | `Y` | Docker CLI, Docker Compose, Colima, kubectl |
 | `INSTALL_CLAUDE_CODE` | `Y` | Claude Code and related agent tooling |
-| `INSTALL_CODEX_APP` | `Y` | Codex desktop app and CodexBar for remote/mobile Codex access |
+| `INSTALL_CODEX_APP` | `Y` | ChatGPT desktop app and CodexBar for desktop/mobile Codex access |
 | `INSTALL_JVM_TOOLS` | `N` | Java and Kotlin via asdf |
 | `INSTALL_EXTRA_APPS` | `N` | Postman and Google Chrome |
 | `INSTALL_CLOUD_TOOLS` | `Y` | gcloud and Firebase CLI via asdf |
@@ -42,19 +42,20 @@ Setup stores interactive choices in `~/.supercharged_preferences`.
 Always-installed Homebrew formulae and casks are defined in `build_brewfile` in `scripts/mac.sh`. Core categories include:
 
 - Package and shell tooling: `bash`, `coreutils`, `git`, `curl`, `asdf`, `keychain`, `tmux`, `ripgrep`, `tree`, `aria2`.
-- Development utilities: `gh`, `jq`, `shellcheck`, `actionlint`, `bats-core`, `duckdb`, `sqlite`, `btop`, `htop`, `mas`, `pipx`, `uv`, `hey`, `watch`.
-- AI and agent tools: `codex`, `codex-app`, `codexbar`, `ollama`, `replicate`, `cupertino`, `rtk`, `worktrunk`, `plannotator`, `code-review-graph`.
+- Development utilities: `gh`, `jq`, `shellcheck`, `actionlint`, `bats-core`, `duckdb`, `sqlite`, `btop`, `htop`, `mas`, `pipx`, `uv`, `hey`, `watch`, build libraries, and database client libraries mirrored from the personal machine.
+- AI and agent tools: `codex`, `chatgpt`, `codexbar`, `ollama`, `replicate`, `cupertino`, `rtk`, `worktrunk`, `plannotator`, `code-review-graph`.
 - Applications: Visual Studio Code, Slack, Raycast, Reveal, Spotify, Mullvad VPN.
 - Fonts: JetBrainsMono Nerd Font.
-- Mac App Store apps: AdBlock and DaisyDisk.
+- Mac App Store apps: AdBlock, DaisyDisk, and Numbers.
+- Visual Studio Code extensions: the personal machine's AI, Apple-platform, Python, Rust, TypeScript, container, debugger, and editor-utility extensions declared in `build_brewfile`.
 
 asdf-managed tools are listed in `dot_files/.tool-versions`, including Node.js, Python, Ruby, Bundler, gcloud, Firebase CLI, and optional JVM pins.
 
 Claude Code configuration is backed up under `claude_config/`. Codex configuration is backed up under `codex_config/`. Shared cross-agent instructions live in `agent_config/AGENTS.md`.
 
-## Codex Remote Access
+## Codex Desktop Access
 
-When `INSTALL_CODEX_APP=Y`, setup installs the Codex desktop app with Homebrew cask `codex-app`. After setup, open Codex, sign in with the ChatGPT account or workspace that has Codex access, then use **Set up Codex mobile** in the sidebar or **Settings > Connections** to pair a phone or another supported Codex App device.
+When `INSTALL_CODEX_APP=Y`, setup installs the current ChatGPT desktop app with Homebrew cask `chatgpt`, plus CodexBar. The preference name is retained for compatibility with existing `~/.supercharged_preferences` files. Sign in with the ChatGPT account or workspace that has Codex access.
 
 Remote access uses the host Mac's projects, credentials, plugins, MCP servers, browser setup, and local tools. Keep the host awake and online while you want remote Codex access available.
 

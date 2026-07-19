@@ -125,13 +125,16 @@ run_zsh_func() {
   [[ "$output" == *'brew "actionlint"'* ]]
   [[ "$output" == *'brew "jq"'* ]]
   [[ "$output" == *'brew "ripgrep"'* ]]
+  [[ "$output" == *'brew "cliclick"'* ]]
   [[ "$output" == *'cask "codex"'* ]]
-  [[ "$output" == *'cask "codex-app"'* ]]
+  [[ "$output" == *'cask "chatgpt"'* ]]
   [[ "$output" == *'cask "codexbar"'* ]]
   [[ "$output" == *'tap "replicate/tap"'* ]]
   [[ "$output" == *'brew "replicate/tap/replicate"'* ]]
   [[ "$output" == *'tap "cupertinohq/tap", "https://codeberg.org/CupertinoHQ/homebrew-tap.git"'* ]]
   [[ "$output" == *'brew "cupertinohq/tap/cupertino"'* ]]
+  [[ "$output" == *'mas "Numbers", id: 361304891'* ]]
+  [[ "$output" == *'vscode "openai.chatgpt"'* ]]
 }
 
 @test "build_brewfile includes Codex desktop app by default" {
@@ -142,7 +145,7 @@ run_zsh_func() {
     build_brewfile
   "
   [ "$status" -eq 0 ]
-  [[ "$output" == *'cask "codex-app"'* ]]
+  [[ "$output" == *'cask "chatgpt"'* ]]
   [[ "$output" == *'cask "codexbar"'* ]]
 }
 
@@ -155,7 +158,7 @@ run_zsh_func() {
   "
   [ "$status" -eq 0 ]
   [[ "$output" == *'cask "codex"'* ]]
-  [[ "$output" != *'cask "codex-app"'* ]]
+  [[ "$output" != *'cask "chatgpt"'* ]]
   [[ "$output" != *'cask "codexbar"'* ]]
 }
 
