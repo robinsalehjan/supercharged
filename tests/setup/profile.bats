@@ -54,6 +54,13 @@ teardown() {
   [ "${#MANAGED_DOTFILES[@]}" -gt 0 ]
 }
 
+@test "restore:dotfiles does not restore agent config or initialize code-review-graph" {
+  script="$PROJECT_ROOT/scripts/setup-profile.sh"
+
+  run grep -E 'restore-(claude|codex)\.sh|setup_code_review_graph|setup_crg_watcher' "$script"
+  [ "$status" -eq 1 ]
+}
+
 @test "normalize_yes_no_preference constrains shell-like input" {
   run normalize_yes_no_preference '$(touch "$HOME/pwned")' "Y"
 

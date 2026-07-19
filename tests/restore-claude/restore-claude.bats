@@ -127,3 +127,50 @@ teardown() {
   [ "$status" -eq 0 ]
   [ "$output" = "0" ]
 }
+
+@test "restore_mcp_servers writes user scope and preserves unrelated Claude state" {
+  config_dir="$TEST_TEMP_DIR/repo-config"
+  user_config="$TEST_TEMP_DIR/.claude.json"
+  mkdir -p "$config_dir"
+  printf '%s\n' '{"managed":{"type":"stdio","command":"managed","env":{"TOKEN":"$MCP_TEST_TOKEN"}}}' > "$config_dir/mcp_servers.json"
+  printf '%s\n' '{"projects":{"/tmp/project":{"allowedTools":[]}},"mcpServers":{"local":{"type":"stdio","command":"local"}}}' > "$user_config"
+
+  run zsh -c "
+    CLAUDE_CONFIG_DIR='$config_dir'
+    CLAUDE_USER_CONFIG='$user_config'
+    export MCP_TEST_TOKEN='resolved-value'
+    expand_portable_path() { command cat; }
+    log_with_level() { :; }
+    $(sed -n '/^restore_mcp_servers()/,/^}/p' "$SCRIPT")
+    restore_mcp_servers
+  "
+
+  [ "$status" -eq 0 ]
+  [ "$(jq -r '.mcpServers.managed.env.TOKEN' "$user_config")" = "resolved-value" ]
+  [ "$(jq -r '.mcpServers.local.command' "$user_config")" = "local" ]
+  [ "$(jq -r '.projects["/tmp/project"].allowedTools | type' "$user_config")" = "array" ]
+  [ "$(jq 'has("mcpServers")' "$TEMP_CLAUDE/settings.json" 2>/dev/null || echo false)" = "false" ]
+}
+
+@test "restore_mcp_servers skips only servers with unresolved secrets" {
+  config_dir="$TEST_TEMP_DIR/repo-config"
+  user_config="$TEST_TEMP_DIR/.claude.json"
+  mkdir -p "$config_dir"
+  printf '%s\n' '{"ready":{"type":"stdio","command":"ready"},"blocked":{"type":"stdio","command":"blocked","env":{"TOKEN":"$MISSING_MCP_TOKEN"}}}' > "$config_dir/mcp_servers.json"
+  printf '%s\n' '{"mcpServers":{"blocked":{"type":"stdio","command":"stale","env":{"TOKEN":"stale-secret"}},"local":{"type":"stdio","command":"local"}}}' > "$user_config"
+
+  run zsh -c "
+    CLAUDE_CONFIG_DIR='$config_dir'
+    CLAUDE_USER_CONFIG='$user_config'
+    unset MISSING_MCP_TOKEN
+    expand_portable_path() { command cat; }
+    log_with_level() { :; }
+    $(sed -n '/^restore_mcp_servers()/,/^}/p' "$SCRIPT")
+    restore_mcp_servers
+  "
+
+  [ "$status" -eq 0 ]
+  [ "$(jq -r '.mcpServers.ready.command' "$user_config")" = "ready" ]
+  [ "$(jq '.mcpServers | has("blocked")' "$user_config")" = "false" ]
+  [ "$(jq -r '.mcpServers.local.command' "$user_config")" = "local" ]
+}

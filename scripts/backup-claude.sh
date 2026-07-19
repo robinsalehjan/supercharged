@@ -20,7 +20,7 @@ CLAUDE_HOME="$HOME/.claude"
 # List of marketplaces to exclude from backup (work-related or sensitive plugins)
 SANITIZE_MARKETPLACES=("vend-plugins")
 
-# List of env var keys to exclude from backup (sensitive credentials)
+# List of settings env var keys to exclude from backup (sensitive credentials)
 SANITIZE_ENV_VARS=("GITHUB_PERSONAL_ACCESS_TOKEN")
 
 # Validate that ~/.claude exists
@@ -54,17 +54,17 @@ if [ -f "$CLAUDE_HOME/settings.json" ]; then
         marketplace_del_filter="${marketplace_del_filter} | del(.extraKnownMarketplaces[\"${mp}\"])"
     done
 
-    # Build jq filter to remove sensitive env vars
+    # Build jq filter to remove sensitive settings env vars. MCP servers are
+    # user-scoped in ~/.claude.json and are backed up separately below.
     env_del_filter=""
     for env_var in "${SANITIZE_ENV_VARS[@]}"; do
         env_del_filter="${env_del_filter} | del(.env[\"${env_var}\"])"
-        env_del_filter="${env_del_filter} | del(.mcpServers[]?.env[\"${env_var}\"])"
     done
 
     # Preserve all fields except enabledPlugins, then apply sanitized enabledPlugins,
     # strip sanitized marketplaces from pluginMarketplaces, and remove sensitive env vars
     # Write to temp file first to avoid corrupting output on pipeline failure
-    if ! jq -a --argjson plugins "$filtered_plugins" "(. + {enabledPlugins: \$plugins})${marketplace_del_filter}${env_del_filter}" <<< "$settings_json" | \
+    if ! jq -a --argjson plugins "$filtered_plugins" "(. + {enabledPlugins: \$plugins}) | del(.mcpServers)${marketplace_del_filter}${env_del_filter}" <<< "$settings_json" | \
         make_path_portable > "$CLAUDE_CONFIG_DIR/settings.json.tmp"; then
         rm -f "$CLAUDE_CONFIG_DIR/settings.json.tmp"
         log_with_level "ERROR" "Failed to sanitize settings.json - backup aborted"

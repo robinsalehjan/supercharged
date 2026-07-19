@@ -416,6 +416,12 @@ main() {
         fi
     fi
 
+    # Restore Codex configuration independently of the Claude preference.
+    if [ -x "$UTILS_SCRIPT_DIR/restore-codex.sh" ]; then
+        log_with_level "INFO" "Restoring Codex configuration from repository..."
+        "$UTILS_SCRIPT_DIR/restore-codex.sh" --force || log_with_level "WARN" "Codex config restore skipped or failed"
+    fi
+
     # Setup code-review-graph (independent of Claude Code — useful for `crg-here`
     # + watcher even without Claude installed; the MCP register step inside
     # short-circuits when ~/.claude is absent).

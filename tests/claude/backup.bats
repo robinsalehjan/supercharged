@@ -114,7 +114,7 @@ sanitize_settings() {
 
   set -o pipefail
   jq "${jq_args[@]}" \
-    "(. + {enabledPlugins: (.enabledPlugins | $plugin_filter)}) | del(.env[\"GITHUB_PERSONAL_ACCESS_TOKEN\"]) | del(.mcpServers[]?.env[\"GITHUB_PERSONAL_ACCESS_TOKEN\"])" \
+    "(. + {enabledPlugins: (.enabledPlugins | $plugin_filter)}) | del(.mcpServers) | del(.env[\"GITHUB_PERSONAL_ACCESS_TOKEN\"])" \
     "$input_file" | sed "s|$ORIGINAL_HOME|\$HOME|g" > "$output_file"
   local result=$?
   set +o pipefail
@@ -203,6 +203,19 @@ sanitize_settings() {
   # Assert: Token removed
   assert_json_field "$TEMP_REPO_CONFIG/settings.json" \
     '.env | has("GITHUB_PERSONAL_ACCESS_TOKEN")' "false"
+}
+
+@test "removes legacy MCP servers from settings.json" {
+  load_fixture "claude-backup/settings-full.json" "$TEMP_CLAUDE/settings.json"
+
+  sanitize_settings "$TEMP_CLAUDE/settings.json" "$TEMP_REPO_CONFIG/settings.json" "${TEST_SANITIZE_MARKETPLACES[@]}"
+
+  assert_json_field "$TEMP_REPO_CONFIG/settings.json" 'has("mcpServers")' "false"
+}
+
+@test "backup does not import live user-scoped MCP definitions" {
+  run grep -E 'CLAUDE_USER_CONFIG|HOME/\.claude\.json|HOME/.claude.json' "$PROJECT_ROOT/scripts/backup-claude.sh"
+  [ "$status" -eq 1 ]
 }
 
 @test "preserves non-sensitive env vars in settings.json" {

@@ -25,7 +25,7 @@ DRY_RUN=false
 show_help() {
     echo "Usage: $(basename "$0") [OPTIONS]"
     echo ""
-    echo "Copy dotfiles and Claude Code configuration to \$HOME"
+    echo "Copy managed dotfiles to \$HOME"
     echo ""
     echo "Options:"
     echo "  --dry-run      Preview what would be copied without making changes"
@@ -95,31 +95,11 @@ main() {
 
     echo "✅ Dotfiles copied to \$HOME"
 
-    # Restore Claude Code configuration using dedicated script
-    if [ -x "$SCRIPT_DIR/restore-claude.sh" ]; then
-        echo ""
-        "$SCRIPT_DIR/restore-claude.sh" --force
-    fi
-
-    # Restore Codex configuration using dedicated script
-    if [ -x "$SCRIPT_DIR/restore-codex.sh" ]; then
-        echo ""
-        "$SCRIPT_DIR/restore-codex.sh" --force
-    fi
-
     # Re-apply Worktrunk shell integration — restoring dotfiles overwrites
     # ~/.zshrc, which strips any line `wt config shell install` previously
     # added. setup_worktrunk is internally idempotent (skips when wt is
     # missing or the integration is already present).
     setup_worktrunk
-
-    # Set up code-review-graph watcher for Claude Code and Codex sessions.
-    if command -v code-review-graph >/dev/null 2>&1; then
-        echo ""
-        echo "🔍 Setting up code-review-graph infrastructure..."
-        setup_code_review_graph
-        setup_crg_watcher
-    fi
 
     # Display backup location for user reference
     echo ""

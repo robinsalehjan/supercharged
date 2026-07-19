@@ -1,10 +1,10 @@
 {
-  "version": 1,
-  "skills": {
+  "version": 2,
+  "skills": {},
+  "removed_skills": {
     "prd-taskmaster": {
       "repo": "https://github.com/anombyte93/prd-taskmaster.git",
-      "ref": "main",
-      "description": "Generates engineer-focused PRDs for AI-assisted development (Taskmaster integration)."
+      "reason": "Removed because the PRD Go workflow and bundled MCP server are no longer used."
     }
   }
 }

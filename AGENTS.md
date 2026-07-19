@@ -35,6 +35,7 @@ See [README.md](./README.md) and [docs/REFERENCE.md](./docs/REFERENCE.md) for us
 - Tool-specific or unsupported skills stay in the tool-specific config (`claude_config/` or `codex_config/skills/`) instead of being forced into the shared path.
 
 **MCP servers**:
+- Keep repo-managed user-scoped Claude MCP servers in `claude_config/mcp_servers.json` and compatible Codex entries in `codex_config/config.toml`; backup never imports live user MCP definitions into the tracked registry.
 - Keep shared project MCP support in `.mcp.json` for Claude/project clients and in `codex_config/config.toml` for Codex.
 - When adding an MCP server that both tools support, add the equivalent entry to both places and document any command differences.
 - If Codex does not support a Claude MCP server, leave it in the Claude-specific config and do not add a stub Codex entry.
@@ -49,13 +50,13 @@ See [README.md](./README.md) and [docs/REFERENCE.md](./docs/REFERENCE.md) for us
 ```bash
 # Setup and Installation
 npm run setup                 # Fresh install (interactive)
-npm run restore:dotfiles         # Copy dotfiles + Claude config to $HOME
+npm run restore:dotfiles         # Copy managed dotfiles to $HOME; reapply Worktrunk integration
 
 # Updates
-# npm run update runs: backup:claude → restore:dotfiles → update.sh
+# npm run update runs: backup:claude → backup:codex → restore:dotfiles → install:skills → update.sh
 npm run update                    # Update all components (brew, asdf, zsh, npm, pip)
 npm run update:dry-run            # Preview outdated brew/npm packages (read-only)
-npm run update:only -- <comp>     # Copy dotfiles + update one component (brew, asdf, zsh, npm, pip)
+npm run update:only -- <comp>     # Sync dotfiles/skills + update one component (brew, asdf, zsh, npm, pip)
 
 # Validation and Recovery
 npm run validate              # Verify all tools installed correctly
@@ -73,22 +74,22 @@ npm run restore:agents            # Restore Claude config + Codex config in one 
 npm run restore:all               # Restore Claude config + Codex config + dotfiles in one step
 npm run install:plugins           # Install all marketplaces and plugins via claude CLI
 npm run install:plugins -- --dry-run # Preview what would be installed
-npm run install:skills            # Clone/update git-based skills into Claude Code and Codex
-npm run install:skills -- --dry-run # Preview what would be installed/updated
+npm run install:skills            # Install/update/prune shared git skills for Claude and Codex
+npm run install:skills -- --dry-run # Preview installs, updates, and safe removals
 
 # Versioning and Releases
 npm run version:show              # Print version, commit SHA, tag, branch, host
 npm run release -- patch          # Cut a release: bump, commit, tag vX.Y.Z, push
 npm run release -- minor          # Minor bump
-npm run release -- 1.2.3          # Explicit version
+npm run release -- 1.4.0          # Explicit version
 npm run release -- --dry-run patch # Preview without making changes
 
 # Development
-npm run lint                      # ShellCheck all scripts (including utils/)
+npm run lint                      # ShellCheck setup scripts, utilities, and test helpers
 npm run scan:secrets              # Scan repository paths for likely secrets
 npm test                          # Run all BATS tests
 npm run test:watch                # Re-run tests on change (requires nodemon)
-bats tests/<suite>/*.bats        # Run a specific suite (claude, utils, mac, update, setup, restore, meta)
+bats tests/<suite>/*.bats         # Run a suite (claude, codex, utils, mac, update, setup, restore, meta)
 npm run help                      # Display all available commands
 ```
 
@@ -122,6 +123,8 @@ npm test -- --filter "pattern"    # Run specific tests
 **Test structure:**
 - `tests/claude/backup.bats` - Tests for Claude Code backup sanitization
 - `tests/claude/restore.bats` - Tests for Claude Code restore merging
+- `tests/claude/install-skills.bats` - Tests shared skill install/update and safe retired-skill pruning
+- `tests/codex/codex.bats` - Tests Codex backup/restore filtering, hooks, rules, and skill mirroring
 - `tests/utils/portability.bats` - Tests for portable path handling
 - `tests/utils/tools.bats` - Tests for `setup_*` helpers in `scripts/utils/tools.sh`
 - `tests/utils/validate.bats` - Tests for validation helpers in `scripts/utils/validation.sh`
@@ -130,6 +133,7 @@ npm test -- --filter "pattern"    # Run specific tests
 - `tests/update/update.bats` - Smoke tests for update.sh (argument parsing, help, dry-run, unknown flags)
 - `tests/meta/help.bats` - Tests for help.sh output (includes drift check against `package.json` scripts)
 - `tests/meta/lint.bats` - Tests for ShellCheck lint script (validates `.shellcheckrc` rule set)
+- `tests/meta/secrets.bats` - Tests repository secret-scanner detection and exclusions
 - `tests/restore/restore.bats` - Tests for restore.sh (system backup restoration)
 - `tests/install-plugins/install-plugins.bats` - Smoke tests for `install-plugins.sh` (dry-run, prerequisites, arg parsing)
 - `tests/restore-claude/restore-claude.bats` - Smoke tests for `restore-claude.sh` helpers (`get_file_mtime`, `get_newest_mtime`)
@@ -161,7 +165,7 @@ ShellCheck, secret scanning, and BATS tests run on push to main and pull request
 4. Verify logging matches existing patterns
 
 **Manual workflow**:
-1. `npm run restore:dotfiles` to copy dotfiles
+1. `npm run restore:all` to restore agent configuration and dotfiles
 2. `source ~/.zshrc` — verify no errors
 3. `npm run validate` — check installations
 4. If issues: `npm run restore`
@@ -190,8 +194,9 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 - Sanitization: work-related marketplaces (e.g., `vend-plugins`) excluded
 - Merge logic: restore preserves local work plugins while applying repo settings
 - Timestamp comparison: only restores when repo config is newer (unless `--force`)
-- Secrets: `~/.secrets` is sourced once at restore start (single file, or every `*.sh` in a `~/.secrets/` directory — non-shell files like GCP JSON are ignored by the loader); MCP servers are skipped (not partially written) if no shell exports are loaded
-- **Backed up files**: `settings.json`, `installed_plugins.json`, `known_marketplaces.json`, `mcp_servers.json`, `statusline/Config.toml`, `CLAUDE.md`, plus any `*.md` files referenced from `CLAUDE.md` via `@filename` (e.g. `CRG.md`, `RTK.md`, `WORKTRUNK.md`, `PLANNOTATOR.md`, `CLAUDE-TOKEN-EFFICIENT.md`) — auto-detected
+- Secrets: `~/.secrets` is sourced once at restore start (single file, or every `*.sh` in a `~/.secrets/` directory — non-shell files like GCP JSON are ignored by the loader); an MCP server with an unresolved environment placeholder is skipped as a unit while secret-free servers still restore
+- **Backed up files**: `settings.json`, `installed_plugins.json`, `known_marketplaces.json`, `statusline/Config.toml`, `CLAUDE.md`, plus any `*.md` files referenced from `CLAUDE.md` via `@filename` (e.g. `CRG.md`, `RTK.md`, `WORKTRUNK.md`, `PLANNOTATOR.md`, `CLAUDE-TOKEN-EFFICIENT.md`) — auto-detected
+- **Managed MCP registry**: `claude_config/mcp_servers.json` is restored to user scope but is not populated from live `~/.claude.json`; edit it intentionally so credentials and machine-specific paths cannot enter through backup
 - **Local-only configs**: Work plugins/marketplaces are saved to `.local.json` files (gitignored) during backup, and merged back during install
 - **Post-restore**: Plugins are auto-installed at the end of `restore:claude`. If auto-install fails, run `npm run install:plugins` manually.
 
@@ -203,7 +208,7 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 - Shared git skills: `agent_config/installed_skills.json` is installed into both `~/.claude/skills/*` and `~/.codex/skills/*` by `npm run install:skills`
 - Claude project skills: tracked `.claude/skills/*.md` files are the project-level source of truth for reusable shared skills; `restore:codex` mirrors supported Markdown skills into `~/.codex/skills/<name>/SKILL.md`
 - Local-only state excluded: `auth.json`, history, logs, sessions, memories, SQLite databases, shell snapshots, and model caches
-- Machine-local tables preserved on restore: `[projects.*]`, `[tui.model_availability_nux]`, `[notice.model_migrations]`, and `[hooks.state*]`
+- Machine-local tables preserved on restore include `[projects.*]`, `[tui.model_availability_nux]`, `[notice*]`, `[hooks.state*]`, `[desktop]`, marketplace/plugin/connector tables, plugin-provided MCP tables, and `[mcp_servers.node_repl*]`
 - Project guidance: keep repo-specific behavior in `AGENTS.md`; keep cross-agent global preferences in `agent_config/AGENTS.md`
 
 **Post-Restore Steps** (after `npm run restore:claude` or `npm run restore:claude -- --force`):
@@ -280,10 +285,10 @@ Versioning lives in `package.json` (SemVer). To compare what's installed across 
 
 ```bash
 npm run version:show
-# supercharged v1.2.3
-#   describe : v1.2.3
+# supercharged v1.3.0
+#   describe : v1.3.0
 #   commit   : a1b2c3d
-#   tag      : v1.2.3
+#   tag      : v1.3.0
 #   branch   : main
 #   host     : RSJ-MBP
 ```
@@ -291,7 +296,7 @@ npm run version:show
 To cut a release:
 
 ```bash
-npm run release -- patch       # or: minor | major | 1.2.3
+npm run release -- patch       # or: minor | major | 1.4.0
 ```
 
 The release script (`scripts/release.sh`) refuses to run on a dirty tree, requires the local branch to be in sync with `origin`, bumps `package.json`, commits as `chore(release): vX.Y.Z`, tags `vX.Y.Z`, and pushes both. The `release.yml` workflow then verifies the tag matches `package.json` and publishes a GitHub Release with auto-generated notes from conventional commits.

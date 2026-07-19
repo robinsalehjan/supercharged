@@ -6,16 +6,16 @@ This document covers installed tools, setup options, customization points, and c
 
 ```bash
 npm run setup                 # Fresh install
-npm run update                # Update installed components
+npm run update                # Backup agents, sync dotfiles/skills, then update components
 npm run update:dry-run        # Read-only preview; does not update or clean Homebrew
-npm run update:only -- brew   # Update one component: brew, asdf, zsh, npm, pip
+npm run update:only -- brew   # Sync dotfiles/skills, then update one component
 npm run validate              # Verify installed tools and configuration
 npm run restore               # Restore from latest backup
 npm run restore:all           # Restore Claude, Codex, and dotfiles
 npm run backup:all            # Backup Claude and Codex config
-npm run install:skills        # Install git-based skills for Claude Code and Codex
+npm run install:skills        # Install, update, or safely prune shared git skills
 npm test                      # Run BATS tests
-npm run lint                  # ShellCheck scripts
+npm run lint                  # ShellCheck setup scripts, utilities, and test helpers
 npm run scan:secrets          # Scan repository paths for likely secrets
 ```
 
@@ -39,19 +39,29 @@ Setup stores interactive choices in `~/.supercharged_preferences`.
 
 ## Installed Tools
 
-Always-installed Homebrew formulae and casks are defined in `build_brewfile` in `scripts/mac.sh`. Core categories include:
+The Homebrew Bundle baseline is defined by `build_brewfile` in `scripts/mac.sh`. Its always-installed core includes:
 
 - Package and shell tooling: `bash`, `coreutils`, `git`, `curl`, `asdf`, `keychain`, `tmux`, `ripgrep`, `tree`, `aria2`.
 - Development utilities: `gh`, `jq`, `shellcheck`, `actionlint`, `bats-core`, `duckdb`, `sqlite`, `btop`, `htop`, `mas`, `pipx`, `uv`, `hey`, `watch`, build libraries, and database client libraries mirrored from the personal machine.
-- AI and agent tools: `codex`, `chatgpt`, `codexbar`, `ollama`, `replicate`, `cupertino`, `rtk`, `worktrunk`, `plannotator`, `code-review-graph`.
+- AI and agent tools: `codex`, `ollama`, `replicate`, `cupertino`, `rtk`, and `worktrunk`. ChatGPT and CodexBar are included when `INSTALL_CODEX_APP=Y`.
 - Applications: Visual Studio Code, Slack, Raycast, Reveal, Spotify, Mullvad VPN.
 - Fonts: JetBrainsMono Nerd Font.
 - Mac App Store apps: AdBlock, DaisyDisk, and Numbers.
 - Visual Studio Code extensions: the personal machine's AI, Apple-platform, Python, Rust, TypeScript, container, debugger, and editor-utility extensions declared in `build_brewfile`.
 
+Conditional Brewfile groups add iOS, container, network, and extra application tooling according to the setup preferences above. Dedicated setup helpers install Claude Code, Plannotator, code-review-graph, Obscura, and the Claude statusline; these tools are not Homebrew Bundle entries.
+
 asdf-managed tools are listed in `dot_files/.tool-versions`, including Node.js, Python, Ruby, Bundler, gcloud, Firebase CLI, and optional JVM pins.
 
 Claude Code configuration is backed up under `claude_config/`. Codex configuration is backed up under `codex_config/`. Shared cross-agent instructions live in `agent_config/AGENTS.md`.
+
+Shared git-cloned skills are declared in `agent_config/installed_skills.json`. Its `removed_skills` tombstones safely prune retired managed clones from both agent homes during `npm run install:skills`; removal is limited to git checkouts whose origin matches the retired registry entry, so unrelated local skills are preserved.
+
+### Shared Agent Capabilities
+
+Claude and Codex share the four repository skills in `.claude/skills/`; `restore:codex` mirrors them into Codex's skill layout. Git-cloned skills in `agent_config/installed_skills.json` are also installed into both agent homes. Claude plugins and Codex plugins can contribute additional tool-specific skills, so the complete runtime skill lists are intentionally not identical.
+
+The compatible shared MCP set is code-review-graph, XcodeBuildMCP, and Cupertino. Claude reads code-review-graph from project `.mcp.json` and the other two from the explicit user registry in `claude_config/mcp_servers.json`; Codex has equivalent entries in `codex_config/config.toml`. Codex-only OpenAI documentation and disabled computer-use entries remain Codex-specific. Claude user-local MCP entries are preserved during restore and never imported by backup; edit the tracked registry intentionally when adding a portable server.
 
 ## Personal Machine Baseline
 
@@ -65,7 +75,8 @@ The repository was audited against the personal Mac and records the reproducible
 | Shared Claude/Codex instructions | `agent_config/AGENTS.md` |
 | Sanitized Claude Code state | `claude_config/` |
 | Durable Codex defaults, permissions, MCP servers, hooks, and skills | `codex_config/` |
-| Shared project MCP servers | `.mcp.json` and the corresponding entry in `codex_config/config.toml` |
+| Repo-managed Claude user-scoped MCP servers | `claude_config/mcp_servers.json` |
+| Shared project MCP servers | `.mcp.json` and compatible entries in `codex_config/config.toml` |
 
 The audited VS Code extension inventory is installed through Homebrew Bundle:
 
@@ -121,6 +132,8 @@ When `INSTALL_CODEX_APP=Y`, setup installs the current ChatGPT desktop app with 
 
 Remote access uses the host Mac's projects, credentials, plugins, MCP servers, browser setup, and local tools. Keep the host awake and online while you want remote Codex access available.
 
+In the ChatGPT desktop app, use **Set up Remote** and follow the current [OpenAI remote connections guide](https://learn.chatgpt.com/docs/remote-connections) to make this Mac available from another device.
+
 ## Dotfiles
 
 `npm run restore:dotfiles` copies managed dotfiles from `dot_files/` to `$HOME`:
@@ -134,6 +147,8 @@ Remote access uses the host Mac's projects, credentials, plugins, MCP servers, b
 - `.tmux.conf`
 
 `~/.supercharged_preferences` is generated at setup time, not tracked in `dot_files/`.
+
+Restoring `.zshrc` can remove Worktrunk's generated shell integration, so `restore:dotfiles` reapplies that integration when `wt` is installed. It does not restore Claude/Codex configuration or initialize code-review-graph; use `restore:agents` or `restore:all` for agent configuration.
 
 Secret templates live under `dot_files/.secrets/`, but real secrets are machine-local. Create `~/.secrets` or `~/.secrets/*.sh` locally when Claude restore or shell startup needs sensitive environment variables.
 
@@ -164,7 +179,7 @@ Edit `scripts/mac.sh` to change Homebrew packages. Conditional package groups ar
 
 Edit `dot_files/.zshrc`, `dot_files/.tmux.conf`, and `dot_files/.p10k.zsh` for shell, tmux, and prompt behavior.
 
-Edit `agent_config/AGENTS.md` for shared Claude/Codex instructions. Edit `codex_config/config.toml` and `.mcp.json` together when adding shared MCP server support.
+Edit `agent_config/AGENTS.md` for shared Claude/Codex instructions. Add cross-project Claude servers to `claude_config/mcp_servers.json` and compatible Codex entries to `codex_config/config.toml`. For project-scoped servers, edit `.mcp.json` and add the compatible Codex entry together.
 
 `npm run update:dry-run` is non-mutating: it suppresses Homebrew auto-update, skips `brew update`, and skips cleanup. It reports outdated Homebrew formulae, casks, and global npm packages, then exits before asdf, zsh, npm, or pip updates.
 

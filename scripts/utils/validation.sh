@@ -67,6 +67,12 @@ extract_tool_version() {
             version_output=$(nmap --version 2>&1 | head -1 || true)
             echo "$version_output" | grep -oE '[0-9]+\.[0-9]+' || echo "0.0.0"
             ;;
+        "ollama")
+            # When the daemon is stopped, Ollama prints a connection warning
+            # before the useful "client version is X.Y.Z" line.
+            version_output=$(ollama --version 2>&1 || true)
+            echo "$version_output" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | tail -1 || echo "0.0.0"
+            ;;
         "plannotator")
             # plannotator has no version flag - just check if executable
             echo "installed"

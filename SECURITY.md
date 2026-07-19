@@ -22,7 +22,7 @@ The secret scanner exempts ordinary code-to-code assignments such as `token=args
 
 ### Normal Development
 
-> **Note:** Security checks are a mix of explicit validation commands, CI, Codex rules/hooks, and restored Claude plugin configuration. They are not a substitute for reviewing staged changes before committing.
+> **Note:** Security checks are a mix of explicit validation commands, CI, Codex rules/hooks, and restored Claude plugin configuration. The scanner examines the repository paths passed to it (the whole repository by default); it is not a substitute for reviewing changes before committing.
 
 ```bash
 # 1. Make changes
@@ -42,15 +42,13 @@ git commit -m "feat(scripts): add new feature"
 
 ```bash
 # Example: Secret detected
-# ❌ Potential secrets detected in staged files!
-#    api_key="sk-1234567890abcdef" in file.txt
-#    Use placeholders like: YOUR_API_KEY_HERE
+# Potential secrets found:
+# file.txt:12:api_key="<credential-shaped value of 24+ characters>"
 
 # Fix the issue
 vim file.txt  # Change to: api_key="YOUR_API_KEY_HERE"
 
-# Run the scan again
-git add file.txt
+# Run the scan again; staging is not required
 npm run scan:secrets
 ```
 
