@@ -66,6 +66,20 @@ teardown() {
   [ "$status" -eq 0 ]
 }
 
+@test "extract_tool_version reads Ollama client version when daemon is stopped" {
+  source "$PROJECT_ROOT/scripts/utils.sh"
+  ollama() {
+    printf '%s\n' \
+      'Warning: could not connect to a running Ollama instance' \
+      'Warning: client version is 0.32.1' >&2
+  }
+
+  run extract_tool_version ollama
+
+  [ "$status" -eq 0 ]
+  [ "$output" = "0.32.1" ]
+}
+
 @test "validate_installation function exists in utils.sh" {
   # Arrange
   source "$PROJECT_ROOT/scripts/utils.sh"
