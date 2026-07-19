@@ -25,7 +25,8 @@ patterns=(
 
 # Avoid flagging ordinary code references such as
 # `max_output_tokens_per_file=args.max_output_tokens_per_file` while retaining
-# matches for literal credential-shaped values.
+# matches for literal credential-shaped values. Scan individual matches so a
+# code reference cannot suppress a real secret elsewhere on the same line.
 code_reference_assignment="(?i)(api[_-]?key|secret|token|password)[A-Za-z0-9_ -]{0,20}[:=][[:space:]]*(args|self|config|options|env)\.[A-Za-z_][A-Za-z0-9_.]*[,;)]?['\"]?.*\$"
 
 findings=""
@@ -34,6 +35,7 @@ for pattern in "${patterns[@]}"; do
         --hidden \
         --line-number \
         --no-heading \
+        --only-matching \
         --color never \
         --glob '!.git/**' \
         --glob '!node_modules/**' \
