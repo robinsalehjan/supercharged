@@ -149,6 +149,11 @@ run_zsh_func() {
   [[ "$output" == *'cask "codexbar"'* ]]
 }
 
+@test "fresh setup restores Codex configuration independently" {
+  run grep -F '"$UTILS_SCRIPT_DIR/restore-codex.sh" --force' "$PROJECT_ROOT/scripts/mac.sh"
+  [ "$status" -eq 0 ]
+}
+
 @test "build_brewfile excludes Codex desktop app when INSTALL_CODEX_APP=n" {
   run zsh -c "
     export INSTALL_CODEX_APP=n
