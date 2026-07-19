@@ -3,7 +3,7 @@
     "code-review-graph": {
       "command": "uvx",
       "args": [
-        "code-review-graph@2.3.3",
+        "code-review-graph@2.3.7",
         "serve"
       ],
       "type": "stdio"

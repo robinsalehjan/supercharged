@@ -29,6 +29,7 @@ is_local_codex_config_table() {
         "[marketplaces."*|\
         "[plugins."*|\
         "[apps.connector_"*|\
+        "[mcp_servers.plugin_"*|\
         "[mcp_servers.node_repl]"|\
         "[mcp_servers.node_repl."*)
             return 0
@@ -56,6 +57,7 @@ is_local_codex_config_key() {
 
 filter_shared_codex_config() {
     local skip=false
+    local emitted_content=false
 
     while IFS= read -r line || [ -n "$line" ]; do
         if [[ "$line" == \[* ]]; then
@@ -66,7 +68,12 @@ filter_shared_codex_config() {
         fi
 
         if [ "$skip" = false ] && ! is_local_codex_config_key "$line"; then
+            if [ "$emitted_content" = false ] && [ -z "$line" ]; then
+                continue
+            fi
+
             printf '%s\n' "$line"
+            [ -n "$line" ] && emitted_content=true
         fi
     done
 }

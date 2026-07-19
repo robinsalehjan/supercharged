@@ -16,6 +16,8 @@ This repository is designed to run safely on both personal and work machines. Se
 
 Claude Code Hookify may be installed as part of the backed-up Claude configuration, but this repository does not track local Hookify rule files.
 
+The secret scanner exempts ordinary code-to-code assignments such as `token=args.token`; it continues to flag credential-shaped literal values assigned to API-key, secret, token, and password fields. This keeps generated or vendored implementation code scannable without weakening checks for actual embedded credentials.
+
 ## Security Workflow
 
 ### Normal Development
@@ -61,6 +63,8 @@ npm run scan:secrets
 - Run `npm test` for script or restore-flow changes
 - Follow conventional commits (`feat(scope): message`)
 - Never commit real credentials or large files
+- Keep secret templates empty; `dot_files/.secrets/` records variable names such as `REPLICATE_API_TOKEN`, never values
+- Keep tracked paths portable with `$HOME`; do not commit a personal `/Users/<name>` path
 - Do not bypass hooks or policy checks with `--no-verify`
 
 ## Setup

@@ -342,10 +342,31 @@ validate_application() {
     fi
 }
 
+prepend_asdf_shims_to_path() {
+    local asdf_data_dir="${ASDF_DATA_DIR:-$HOME/.asdf}"
+    local shims_dir="$asdf_data_dir/shims"
+
+    if [ ! -d "$shims_dir" ]; then
+        return 0
+    fi
+
+    # A shim directory that appears after /usr/bin is ineffective. Remove any
+    # existing occurrence, then force it to the front.
+    PATH=":$PATH:"
+    PATH="${PATH//:$shims_dir:/:}"
+    PATH="${PATH#:}"
+    PATH="${PATH%:}"
+    export PATH="$shims_dir:$PATH"
+}
+
 validate_installation() {
     echo "🔍 Validating installation..."
     local failed=0
     local warned=0
+
+    # npm and automation may invoke validation without an interactive/login
+    # shell, so ~/.zshrc has not added asdf's shims to PATH yet.
+    prepend_asdf_shims_to_path
 
     # Read versions from .tool-versions using helper function
     parse_tool_versions
@@ -542,7 +563,7 @@ validate_installation() {
         fi
 
         if [[ "${INSTALL_CODEX_APP:-Y}" =~ ^[Yy] ]]; then
-            validate_application "Codex desktop app" "/Applications/Codex.app" || ((warned++))
+            validate_application "ChatGPT desktop app" "/Applications/ChatGPT.app" || ((warned++))
         fi
     fi
 
@@ -572,7 +593,7 @@ validate_installation() {
         local bundler_current
         bundler_current=$(extract_tool_version "bundler")
         if [ "$bundler_current" != "$bundler_version" ] && [ -n "$bundler_version" ]; then
-            actions+=("Update bundler: asdf install bundler $bundler_version && asdf global bundler $bundler_version")
+            actions+=("Update bundler: asdf install bundler $bundler_version && asdf set --home bundler $bundler_version")
         fi
     fi
 
@@ -581,7 +602,7 @@ validate_installation() {
         local gcloud_current
         gcloud_current=$(extract_tool_version "gcloud")
         if [ "$gcloud_current" != "$gcloud_version" ] && [ -n "$gcloud_version" ]; then
-            actions+=("Update gcloud: asdf install gcloud $gcloud_version && asdf global gcloud $gcloud_version")
+            actions+=("Update gcloud: asdf install gcloud $gcloud_version && asdf set --home gcloud $gcloud_version")
         fi
     fi
 

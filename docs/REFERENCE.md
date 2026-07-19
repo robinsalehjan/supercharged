@@ -7,7 +7,7 @@ This document covers installed tools, setup options, customization points, and c
 ```bash
 npm run setup                 # Fresh install
 npm run update                # Update installed components
-npm run update:dry-run        # Preview outdated packages
+npm run update:dry-run        # Read-only preview; does not update or clean Homebrew
 npm run update:only -- brew   # Update one component: brew, asdf, zsh, npm, pip
 npm run validate              # Verify installed tools and configuration
 npm run restore               # Restore from latest backup
@@ -31,7 +31,7 @@ Setup stores interactive choices in `~/.supercharged_preferences`.
 | `INSTALL_DATA_SCIENCE` | `N` | Jupyter, pandas, numpy, matplotlib, scikit-learn |
 | `INSTALL_DEV_TOOLS` | `Y` | Docker CLI, Docker Compose, Colima, kubectl |
 | `INSTALL_CLAUDE_CODE` | `Y` | Claude Code and related agent tooling |
-| `INSTALL_CODEX_APP` | `Y` | Codex desktop app and CodexBar for remote/mobile Codex access |
+| `INSTALL_CODEX_APP` | `Y` | ChatGPT desktop app and CodexBar for desktop/mobile Codex access |
 | `INSTALL_JVM_TOOLS` | `N` | Java and Kotlin via asdf |
 | `INSTALL_EXTRA_APPS` | `N` | Postman and Google Chrome |
 | `INSTALL_CLOUD_TOOLS` | `Y` | gcloud and Firebase CLI via asdf |
@@ -42,19 +42,82 @@ Setup stores interactive choices in `~/.supercharged_preferences`.
 Always-installed Homebrew formulae and casks are defined in `build_brewfile` in `scripts/mac.sh`. Core categories include:
 
 - Package and shell tooling: `bash`, `coreutils`, `git`, `curl`, `asdf`, `keychain`, `tmux`, `ripgrep`, `tree`, `aria2`.
-- Development utilities: `gh`, `jq`, `shellcheck`, `actionlint`, `bats-core`, `duckdb`, `sqlite`, `btop`, `htop`, `mas`, `pipx`, `uv`, `hey`, `watch`.
-- AI and agent tools: `codex`, `codex-app`, `codexbar`, `ollama`, `replicate`, `cupertino`, `rtk`, `worktrunk`, `plannotator`, `code-review-graph`.
+- Development utilities: `gh`, `jq`, `shellcheck`, `actionlint`, `bats-core`, `duckdb`, `sqlite`, `btop`, `htop`, `mas`, `pipx`, `uv`, `hey`, `watch`, build libraries, and database client libraries mirrored from the personal machine.
+- AI and agent tools: `codex`, `chatgpt`, `codexbar`, `ollama`, `replicate`, `cupertino`, `rtk`, `worktrunk`, `plannotator`, `code-review-graph`.
 - Applications: Visual Studio Code, Slack, Raycast, Reveal, Spotify, Mullvad VPN.
 - Fonts: JetBrainsMono Nerd Font.
-- Mac App Store apps: AdBlock and DaisyDisk.
+- Mac App Store apps: AdBlock, DaisyDisk, and Numbers.
+- Visual Studio Code extensions: the personal machine's AI, Apple-platform, Python, Rust, TypeScript, container, debugger, and editor-utility extensions declared in `build_brewfile`.
 
 asdf-managed tools are listed in `dot_files/.tool-versions`, including Node.js, Python, Ruby, Bundler, gcloud, Firebase CLI, and optional JVM pins.
 
 Claude Code configuration is backed up under `claude_config/`. Codex configuration is backed up under `codex_config/`. Shared cross-agent instructions live in `agent_config/AGENTS.md`.
 
-## Codex Remote Access
+## Personal Machine Baseline
 
-When `INSTALL_CODEX_APP=Y`, setup installs the Codex desktop app with Homebrew cask `codex-app`. After setup, open Codex, sign in with the ChatGPT account or workspace that has Codex access, then use **Set up Codex mobile** in the sidebar or **Settings > Connections** to pair a phone or another supported Codex App device.
+The repository was audited against the personal Mac and records the reproducible portion of that machine's setup. The authoritative locations are:
+
+| Configuration | Source of truth |
+| --- | --- |
+| Homebrew formulae, casks, Mac App Store apps, and VS Code extensions | `build_brewfile` in `scripts/mac.sh` |
+| asdf runtimes | `dot_files/.tool-versions` |
+| Shell and terminal configuration | `dot_files/` |
+| Shared Claude/Codex instructions | `agent_config/AGENTS.md` |
+| Sanitized Claude Code state | `claude_config/` |
+| Durable Codex defaults, permissions, MCP servers, hooks, and skills | `codex_config/` |
+| Shared project MCP servers | `.mcp.json` and the corresponding entry in `codex_config/config.toml` |
+
+The audited VS Code extension inventory is installed through Homebrew Bundle:
+
+```text
+anthropic.claude-code
+creevekcz.idx-xcode
+dustypomerleau.rust-syntax
+formulahendry.code-runner
+ibm.output-colorizer
+llvm-vs-code-extensions.lldb-dap
+mariomatheu.syntax-project-pbxproj
+ms-azuretools.vscode-containers
+ms-azuretools.vscode-docker
+ms-python.debugpy
+ms-python.python
+ms-python.vscode-pylance
+ms-python.vscode-python-envs
+ms-vscode-remote.remote-containers
+ms-vscode.makefile-tools
+ms-vscode.remote-explorer
+ms-vscode.vscode-typescript-next
+openai.chatgpt
+robinsalehjan.xcode-vscode-shortcuts
+rust-lang.rust-analyzer
+sweetpad.sweetpad
+swiftlang.swift-vscode
+tomsmartinez.localhost-browser
+typescriptteam.native-preview
+usernamehw.errorlens
+vadimcn.vscode-lldb
+vscode-icons-team.vscode-icons
+```
+
+The current Codex baseline selects `gpt-5.6-sol`, high reasoning effort, the pragmatic personality, cached web search, the `supercharged` permission profile, and the configured status line. Its shared MCP inventory includes code-review-graph, XcodeBuildMCP, Cupertino, OpenAI developer docs, and a disabled computer-use entry. Inspect `codex_config/config.toml` for the exact settings; use `$HOME` in any tracked path so the configuration remains portable.
+
+The audit intentionally does not copy credentials or runtime state. Codex authentication, histories, logs, sessions, memories, databases, caches, project trust, connector state, desktop state, local approval rules, and project-specific MCP servers such as the personal Firebase entry remain machine-local. Backup and restore preserve those Firebase and runtime tables without writing them to `codex_config/config.toml`. Claude work-only marketplaces and plugins are kept in ignored `.local.json` overlays. Files under `dot_files/.secrets/` are templates only, including the `REPLICATE_API_TOKEN` placeholder.
+
+VS Code extensions are reproduced, but VS Code user `settings.json`, `keybindings.json`, and `tasks.json` are not tracked because they can contain machine-, account-, or project-specific state. Use VS Code Settings Sync or manage sanitized copies separately when identical editor preferences are required.
+
+To refresh the tracked agent configuration after intentionally changing the personal machine, run:
+
+```bash
+npm run backup:all
+npm run scan:secrets
+git diff --check
+```
+
+Review the diff before committing. Package inventory changes must still be made in `scripts/mac.sh`; the backup commands cover agent configuration, not Homebrew, Mac App Store, or VS Code inventories.
+
+## Codex Desktop Access
+
+When `INSTALL_CODEX_APP=Y`, setup installs the current ChatGPT desktop app with Homebrew cask `chatgpt`, plus CodexBar. The preference name is retained for compatibility with existing `~/.supercharged_preferences` files. Sign in with the ChatGPT account or workspace that has Codex access.
 
 Remote access uses the host Mac's projects, credentials, plugins, MCP servers, browser setup, and local tools. Keep the host awake and online while you want remote Codex access available.
 
@@ -103,6 +166,8 @@ Edit `dot_files/.zshrc`, `dot_files/.tmux.conf`, and `dot_files/.p10k.zsh` for s
 
 Edit `agent_config/AGENTS.md` for shared Claude/Codex instructions. Edit `codex_config/config.toml` and `.mcp.json` together when adding shared MCP server support.
 
+`npm run update:dry-run` is non-mutating: it suppresses Homebrew auto-update, skips `brew update`, and skips cleanup. It reports outdated Homebrew formulae, casks, and global npm packages, then exits before asdf, zsh, npm, or pip updates.
+
 ## Terminal Font
 
 Setup installs JetBrainsMono Nerd Font for the tmux/Catppuccin status bar. After install, set your terminal profile font to `JetBrainsMono Nerd Font Mono`.
@@ -148,6 +213,8 @@ asdf install nodejs "$(awk '/^nodejs / {print $2}' dot_files/.tool-versions)"
 asdf set --home nodejs "$(awk '/^nodejs / {print $2}' dot_files/.tool-versions)"
 asdf reshim
 ```
+
+`npm run validate` prepends the active asdf shim directory before checking versions, including when npm invokes it from a non-interactive shell. Suggested remediation uses the current `asdf set --home` command.
 
 For Java/Kotlin environment issues:
 

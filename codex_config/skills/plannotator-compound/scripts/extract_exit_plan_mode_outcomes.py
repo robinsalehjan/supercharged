@@ -117,7 +117,6 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--max-output-tokens-per-file",
-        dest="json_chunk_budget",
         type=int,
         default=50000,
         help=(
@@ -541,7 +540,7 @@ def filter_records(
 
 def build_json_chunks(
     records: List[AttemptRecord],
-    chunk_budget_per_file: int,
+    max_output_tokens_per_file: int,
 ) -> List[List[AttemptRecord]]:
     if not records:
         return [[]]
@@ -555,7 +554,7 @@ def build_json_chunks(
         record_json = json.dumps(record_dict, ensure_ascii=False)
         record_tokens = estimate_tokens(record_json)
 
-        if current_chunk and current_tokens + record_tokens > chunk_budget_per_file:
+        if current_chunk and current_tokens + record_tokens > max_output_tokens_per_file:
             chunks.append(current_chunk)
             current_chunk = []
             current_tokens = 0
@@ -706,11 +705,11 @@ def write_json_report(
     stats: Dict[str, int],
     summary: Dict[str, int],
     records: List[AttemptRecord],
-    chunk_budget_per_file: int,
+    max_output_tokens_per_file: int,
 ) -> List[Path]:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    chunks = build_json_chunks(records, chunk_budget_per_file)
+    chunks = build_json_chunks(records, max_output_tokens_per_file)
     base_name = output_path.stem
     output_dir = output_path.with_suffix("")
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -752,7 +751,7 @@ def write_json_report(
         "summary": summary,
         "records_filter_record_count": len(records),
         "part_count": len(chunks),
-        "max_output_tokens_per_file": chunk_budget_per_file,
+        "max_output_tokens_per_file": max_output_tokens_per_file,
         "parts": part_summaries,
     }
     manifest_path = output_dir / f"{base_name}.manifest.json"
@@ -804,7 +803,7 @@ def main() -> int:
             stats=stats,
             summary=summary,
             records=records,
-            chunk_budget_per_file=args.json_chunk_budget,
+            max_output_tokens_per_file=args.max_output_tokens_per_file,
         )
         part_count = max(len(written_files) - 1, 0)
         print()

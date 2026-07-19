@@ -92,6 +92,24 @@ brew "openssl@3"
 brew "readline"
 brew "libyaml"
 brew "gmp"
+brew "automake"
+brew "cliclick"
+brew "double-conversion"
+brew "fmt"
+brew "gdbm"
+brew "harfbuzz"
+brew "libarchive"
+brew "libidn"
+brew "libpq"
+brew "libsodium"
+brew "libtiff"
+brew "pkgconf"
+brew "python-packaging"
+brew "six"
+brew "snappy"
+brew "uchardet"
+brew "unbound"
+brew "unixodbc"
 brew "keychain"
 brew "nmap"
 brew "asdf"
@@ -100,8 +118,8 @@ brew "tree"
 brew "ripgrep"
 brew "tmux"
 brew "gh"
-brew "replicate/tap/replicate"
-brew "cupertinohq/tap/cupertino"
+brew "replicate/tap/replicate", trusted: true
+brew "cupertinohq/tap/cupertino", trusted: true
 brew "shellcheck"
 brew "actionlint"
 brew "jq"
@@ -122,14 +140,14 @@ brew "watch"'
 
     if [[ "${INSTALL_CODEX_APP:-Y}" =~ ^[Yy] ]]; then
         content="$content
-cask \"codex-app\"
+cask \"chatgpt\"
 cask \"codexbar\""
     fi
 
     if [[ "${INSTALL_IOS_TOOLS:-Y}" =~ ^[Yy] ]]; then
         content="$content
 tap \"xcodesorg/made\"
-brew \"xcodesorg/made/xcodes\"
+brew \"xcodesorg/made/xcodes\", trusted: true
 brew \"xcode-build-server\"
 brew \"xcbeautify\"
 brew \"swiftlint\"
@@ -140,9 +158,9 @@ tap \"peripheryapp/periphery\"
 # Formula only — do NOT also install \`brew install --cask periphery\`. The cask
 # ships an older standalone build and its presence prevents \`brew\` from linking
 # the formula's \`periphery\` binary into /opt/homebrew/bin, breaking PATH lookup.
-brew \"periphery\"
+brew \"periphery\", trusted: true
 tap \"getsentry/xcodebuildmcp\"
-brew \"xcodebuildmcp\""
+brew \"xcodebuildmcp\", trusted: true"
     fi
 
     if [[ "${INSTALL_DEV_TOOLS:-Y}" =~ ^[Yy] ]]; then
@@ -178,7 +196,36 @@ cask \"google-chrome\""
     content="$content
 
 mas \"AdBlock\", id: 1402042596
-mas \"DaisyDisk\", id: 411643860"
+mas \"DaisyDisk\", id: 411643860
+mas \"Numbers\", id: 361304891
+
+vscode \"anthropic.claude-code\"
+vscode \"creevekcz.idx-xcode\"
+vscode \"dustypomerleau.rust-syntax\"
+vscode \"formulahendry.code-runner\"
+vscode \"ibm.output-colorizer\"
+vscode \"llvm-vs-code-extensions.lldb-dap\"
+vscode \"mariomatheu.syntax-project-pbxproj\"
+vscode \"ms-azuretools.vscode-containers\"
+vscode \"ms-azuretools.vscode-docker\"
+vscode \"ms-python.debugpy\"
+vscode \"ms-python.python\"
+vscode \"ms-python.vscode-pylance\"
+vscode \"ms-python.vscode-python-envs\"
+vscode \"ms-vscode-remote.remote-containers\"
+vscode \"ms-vscode.makefile-tools\"
+vscode \"ms-vscode.remote-explorer\"
+vscode \"ms-vscode.vscode-typescript-next\"
+vscode \"openai.chatgpt\"
+vscode \"robinsalehjan.xcode-vscode-shortcuts\"
+vscode \"rust-lang.rust-analyzer\"
+vscode \"sweetpad.sweetpad\"
+vscode \"swiftlang.swift-vscode\"
+vscode \"tomsmartinez.localhost-browser\"
+vscode \"typescriptteam.native-preview\"
+vscode \"usernamehw.errorlens\"
+vscode \"vadimcn.vscode-lldb\"
+vscode \"vscode-icons-team.vscode-icons\""
 
     echo "$content"
 }

@@ -25,6 +25,8 @@ cd supercharged && npm run setup
 ```bash
 npm run setup              # Fresh install (interactive)
 npm run update             # Update all components
+npm run update:dry-run     # Read-only report of outdated brew/npm packages
+npm run update:only -- brew  # Update one component (brew|asdf|zsh|npm|pip)
 npm run validate           # Verify tools installed correctly
 npm run restore:all        # Restore Claude Code, Codex, and dotfiles
 npm run restore:agents     # Restore Claude Code and Codex agent config
@@ -44,6 +46,12 @@ npm run lint               # ShellCheck all scripts
 npm run scan:secrets       # Scan repository paths for likely secrets
 npm run help               # Show all commands
 ```
+
+## Reproduced environment
+
+The repository is the portable source of truth for the audited personal-machine setup: Homebrew formulae and applications, Mac App Store applications, VS Code extensions, asdf runtime pins, dotfiles, and sanitized Claude Code and Codex configuration. Run `npm run setup` on a new Mac, or `npm run restore:all` on an existing installation, to apply that baseline.
+
+Credentials, authentication state, histories, logs, sessions, caches, and other machine-local runtime data are intentionally excluded. Secret files contain variable-name templates only; populate the corresponding values locally. See the [reference guide](./docs/REFERENCE.md#personal-machine-baseline) for the tracked inventory and synchronization boundaries.
 
 ## Terminal font
 

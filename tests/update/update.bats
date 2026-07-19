@@ -63,6 +63,7 @@ teardown() {
 # =============================================================================
 
 @test "update.sh --dry-run exits cleanly" {
+  export MOCK_BREW_CALLS_FILE="$TEST_TEMP_DIR/brew-calls"
   mock_brew
   mock_ping_success
 
@@ -70,6 +71,20 @@ teardown() {
   [ "$status" -eq 0 ]
   [[ "$output" == *"DRY RUN"* ]]
   [[ "$output" == *"No changes were made"* ]]
+  ! grep -Eq '^(update|cleanup)( |$)' "$MOCK_BREW_CALLS_FILE"
+}
+
+@test "standard cleanup does not run brew cleanup during a dry-run" {
+  source "$PROJECT_ROOT/scripts/utils.sh"
+  DRY_RUN=true
+  brew() {
+    [ "$1" = "cleanup" ] && touch "$TEST_TEMP_DIR/brew-cleanup-called"
+  }
+
+  run standard_cleanup "Update"
+
+  [ "$status" -eq 0 ]
+  [ ! -e "$TEST_TEMP_DIR/brew-cleanup-called" ]
 }
 
 # =============================================================================

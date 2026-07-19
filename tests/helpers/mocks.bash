@@ -41,6 +41,7 @@ mock_brew() {
   if [ -n "${MOCK_BIN_DIR:-}" ]; then
     cat > "$MOCK_BIN_DIR/brew" << 'BREWEOF'
 #!/bin/sh
+[ -n "${MOCK_BREW_CALLS_FILE:-}" ] && printf '%s\n' "$*" >> "$MOCK_BREW_CALLS_FILE"
 case "$1" in
   update|upgrade|cleanup|bundle) exit 0 ;;
   list)
