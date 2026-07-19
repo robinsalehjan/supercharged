@@ -102,6 +102,7 @@ remove_skill_for_destination() {
     local skills_dir="$4"
     local target="$skills_dir/$name"
     local actual_repo=""
+    local worktree_status=""
 
     case "$name" in
         ""|.*|*/*|*\\*)
@@ -130,6 +131,16 @@ remove_skill_for_destination() {
         return 0
     fi
 
+    if ! worktree_status=$(git -C "$target" status --porcelain --untracked-files=all 2>/dev/null); then
+        log_with_level "WARN" "Skipping removal of $name for $destination_name — could not verify checkout cleanliness"
+        return 0
+    fi
+
+    if [ -n "$worktree_status" ]; then
+        log_with_level "WARN" "Skipping removal of $name for $destination_name — managed checkout has local changes"
+        return 0
+    fi
+
     if [ "$DRY_RUN" = true ]; then
         log_with_level "INFO" "[dry-run] Would remove retired skill for $destination_name: $name"
         return 0
@@ -146,6 +157,13 @@ install_skill_for_destination() {
     local destination_name="$4"
     local skills_dir="$5"
     local target="$skills_dir/$name"
+
+    case "$name" in
+        ""|.*|*/*|*\\*)
+            log_with_level "WARN" "Skipping unsafe active skill name for $destination_name: $name"
+            return 0
+            ;;
+    esac
 
     if [ "$DRY_RUN" = true ]; then
         if [ -d "$target/.git" ]; then

@@ -6,9 +6,9 @@ This document covers installed tools, setup options, customization points, and c
 
 ```bash
 npm run setup                 # Fresh install
-npm run update                # Backup agents, restore dotfiles, then update components
+npm run update                # Backup agents, sync dotfiles/skills, then update components
 npm run update:dry-run        # Read-only preview; does not update or clean Homebrew
-npm run update:only -- brew   # Restore dotfiles, then update one component
+npm run update:only -- brew   # Sync dotfiles/skills, then update one component
 npm run validate              # Verify installed tools and configuration
 npm run restore               # Restore from latest backup
 npm run restore:all           # Restore Claude, Codex, and dotfiles
@@ -61,7 +61,7 @@ Shared git-cloned skills are declared in `agent_config/installed_skills.json`. I
 
 Claude and Codex share the four repository skills in `.claude/skills/`; `restore:codex` mirrors them into Codex's skill layout. Git-cloned skills in `agent_config/installed_skills.json` are also installed into both agent homes. Claude plugins and Codex plugins can contribute additional tool-specific skills, so the complete runtime skill lists are intentionally not identical.
 
-The compatible shared MCP set is code-review-graph, XcodeBuildMCP, and Cupertino. Claude reads code-review-graph from project `.mcp.json` and the other two from the repo-managed user registry in `claude_config/mcp_servers.json`; Codex has equivalent entries in `codex_config/config.toml`. Codex-only OpenAI documentation and disabled computer-use entries remain Codex-specific. Claude user-local MCP entries are preserved during restore but excluded from backup unless their names already exist in the repo-managed registry.
+The compatible shared MCP set is code-review-graph, XcodeBuildMCP, and Cupertino. Claude reads code-review-graph from project `.mcp.json` and the other two from the explicit user registry in `claude_config/mcp_servers.json`; Codex has equivalent entries in `codex_config/config.toml`. Codex-only OpenAI documentation and disabled computer-use entries remain Codex-specific. Claude user-local MCP entries are preserved during restore and never imported by backup; edit the tracked registry intentionally when adding a portable server.
 
 ## Personal Machine Baseline
 
@@ -132,7 +132,7 @@ When `INSTALL_CODEX_APP=Y`, setup installs the current ChatGPT desktop app with 
 
 Remote access uses the host Mac's projects, credentials, plugins, MCP servers, browser setup, and local tools. Keep the host awake and online while you want remote Codex access available.
 
-In the Codex desktop app, use **Set up Remote** and follow the current [OpenAI remote connections guide](https://learn.chatgpt.com/docs/remote-connections) to make this Mac available from another device.
+In the ChatGPT desktop app, use **Set up Remote** and follow the current [OpenAI remote connections guide](https://learn.chatgpt.com/docs/remote-connections) to make this Mac available from another device.
 
 ## Dotfiles
 

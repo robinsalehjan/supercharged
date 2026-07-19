@@ -16,12 +16,11 @@ PROJECT_ROOT="$UTILS_PROJECT_ROOT"
 CLAUDE_CONFIG_DIR="$PROJECT_ROOT/claude_config"
 AGENT_CONFIG_DIR="$PROJECT_ROOT/agent_config"
 CLAUDE_HOME="$HOME/.claude"
-CLAUDE_USER_CONFIG="${CLAUDE_USER_CONFIG:-$HOME/.claude.json}"
 
 # List of marketplaces to exclude from backup (work-related or sensitive plugins)
 SANITIZE_MARKETPLACES=("vend-plugins")
 
-# List of env var keys to exclude from backup (sensitive credentials)
+# List of settings env var keys to exclude from backup (sensitive credentials)
 SANITIZE_ENV_VARS=("GITHUB_PERSONAL_ACCESS_TOKEN")
 
 # Validate that ~/.claude exists
@@ -76,59 +75,6 @@ if [ -f "$CLAUDE_HOME/settings.json" ]; then
 else
     log_with_level "WARN" "settings.json not found"
 fi
-
-# Refresh repo-managed user-scoped MCP servers from ~/.claude.json. Local-only
-# servers are deliberately excluded so work or project-specific configuration
-# cannot be added to the portable registry by an ordinary backup.
-backup_user_mcp_servers() {
-    if [ ! -f "$CLAUDE_USER_CONFIG" ]; then
-        log_with_level "WARN" "Claude user config not found at $CLAUDE_USER_CONFIG; preserving repository MCP configuration"
-        return
-    fi
-
-    if ! jq -e 'has("mcpServers")' "$CLAUDE_USER_CONFIG" >/dev/null 2>&1; then
-        log_with_level "WARN" "No user-scoped MCP registry found in $CLAUDE_USER_CONFIG; preserving repository MCP configuration"
-        return
-    fi
-
-    if [ ! -f "$CLAUDE_CONFIG_DIR/mcp_servers.json" ]; then
-        log_with_level "WARN" "No managed MCP registry found in repository; skipping user-scoped MCP backup"
-        return
-    fi
-
-    local vars_json
-    vars_json=$(printf '%s\n' "${SANITIZE_ENV_VARS[@]}" | jq -R . | jq -s .)
-    local tracked_mcp
-    tracked_mcp=$(cat "$CLAUDE_CONFIG_DIR/mcp_servers.json")
-
-    if ! jq -a --argjson vars "$vars_json" --argjson tracked "$tracked_mcp" '
-        ($tracked * ((.mcpServers // {}) | with_entries(select(.key as $key | $tracked | has($key))))) |
-        with_entries(
-            if ((.value.env? | type) == "object") then
-                .value.env |= with_entries(
-                    if ((.key as $key | $vars | index($key)) != null) then
-                        .value = ("$" + .key)
-                    else
-                        .
-                    end
-                )
-            else
-                .
-            end
-        )
-    ' "$CLAUDE_USER_CONFIG" | make_path_portable > "$CLAUDE_CONFIG_DIR/mcp_servers.json.tmp"; then
-        rm -f "$CLAUDE_CONFIG_DIR/mcp_servers.json.tmp"
-        log_with_level "ERROR" "Failed to sanitize user-scoped MCP servers - backup aborted"
-        exit 1
-    fi
-
-    mv "$CLAUDE_CONFIG_DIR/mcp_servers.json.tmp" "$CLAUDE_CONFIG_DIR/mcp_servers.json"
-    local server_count
-    server_count=$(jq 'keys | length' "$CLAUDE_CONFIG_DIR/mcp_servers.json")
-    log_with_level "SUCCESS" "Refreshed $server_count managed user-scoped MCP server(s) (local-only servers excluded; sensitive values replaced with environment placeholders)"
-}
-
-backup_user_mcp_servers
 
 # Backup plugin configuration files (strip home directory for portability and remove work-related marketplaces)
 if [ -f "$CLAUDE_HOME/plugins/installed_plugins.json" ]; then

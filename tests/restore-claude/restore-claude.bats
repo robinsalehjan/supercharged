@@ -157,7 +157,7 @@ teardown() {
   user_config="$TEST_TEMP_DIR/.claude.json"
   mkdir -p "$config_dir"
   printf '%s\n' '{"ready":{"type":"stdio","command":"ready"},"blocked":{"type":"stdio","command":"blocked","env":{"TOKEN":"$MISSING_MCP_TOKEN"}}}' > "$config_dir/mcp_servers.json"
-  printf '%s\n' '{}' > "$user_config"
+  printf '%s\n' '{"mcpServers":{"blocked":{"type":"stdio","command":"stale","env":{"TOKEN":"stale-secret"}},"local":{"type":"stdio","command":"local"}}}' > "$user_config"
 
   run zsh -c "
     CLAUDE_CONFIG_DIR='$config_dir'
@@ -172,4 +172,5 @@ teardown() {
   [ "$status" -eq 0 ]
   [ "$(jq -r '.mcpServers.ready.command' "$user_config")" = "ready" ]
   [ "$(jq '.mcpServers | has("blocked")' "$user_config")" = "false" ]
+  [ "$(jq -r '.mcpServers.local.command' "$user_config")" = "local" ]
 }

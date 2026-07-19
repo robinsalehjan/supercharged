@@ -14,6 +14,14 @@ teardown() {
   teardown_test_env
 }
 
+@test "normal update paths reconcile retired shared skills" {
+  update_script=$(jq -r '.scripts.update' "$PROJECT_ROOT/package.json")
+  update_only_script=$(jq -r '.scripts["update:only"]' "$PROJECT_ROOT/package.json")
+
+  [[ "$update_script" == *"npm run install:skills"* ]]
+  [[ "$update_only_script" == *"npm run install:skills"* ]]
+}
+
 # =============================================================================
 # show_help tests
 # =============================================================================

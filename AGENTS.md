@@ -35,7 +35,7 @@ See [README.md](./README.md) and [docs/REFERENCE.md](./docs/REFERENCE.md) for us
 - Tool-specific or unsupported skills stay in the tool-specific config (`claude_config/` or `codex_config/skills/`) instead of being forced into the shared path.
 
 **MCP servers**:
-- Keep repo-managed user-scoped Claude MCP servers in `claude_config/mcp_servers.json` and compatible Codex entries in `codex_config/config.toml`; backup refreshes only names already tracked in the repo registry.
+- Keep repo-managed user-scoped Claude MCP servers in `claude_config/mcp_servers.json` and compatible Codex entries in `codex_config/config.toml`; backup never imports live user MCP definitions into the tracked registry.
 - Keep shared project MCP support in `.mcp.json` for Claude/project clients and in `codex_config/config.toml` for Codex.
 - When adding an MCP server that both tools support, add the equivalent entry to both places and document any command differences.
 - If Codex does not support a Claude MCP server, leave it in the Claude-specific config and do not add a stub Codex entry.
@@ -53,10 +53,10 @@ npm run setup                 # Fresh install (interactive)
 npm run restore:dotfiles         # Copy managed dotfiles to $HOME; reapply Worktrunk integration
 
 # Updates
-# npm run update runs: backup:claude → backup:codex → restore:dotfiles → update.sh
+# npm run update runs: backup:claude → backup:codex → restore:dotfiles → install:skills → update.sh
 npm run update                    # Update all components (brew, asdf, zsh, npm, pip)
 npm run update:dry-run            # Preview outdated brew/npm packages (read-only)
-npm run update:only -- <comp>     # Copy dotfiles + update one component (brew, asdf, zsh, npm, pip)
+npm run update:only -- <comp>     # Sync dotfiles/skills + update one component (brew, asdf, zsh, npm, pip)
 
 # Validation and Recovery
 npm run validate              # Verify all tools installed correctly
@@ -195,7 +195,8 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 - Merge logic: restore preserves local work plugins while applying repo settings
 - Timestamp comparison: only restores when repo config is newer (unless `--force`)
 - Secrets: `~/.secrets` is sourced once at restore start (single file, or every `*.sh` in a `~/.secrets/` directory — non-shell files like GCP JSON are ignored by the loader); an MCP server with an unresolved environment placeholder is skipped as a unit while secret-free servers still restore
-- **Backed up files**: `settings.json`, `installed_plugins.json`, `known_marketplaces.json`, user-scoped MCP servers from `~/.claude.json` as `mcp_servers.json`, `statusline/Config.toml`, `CLAUDE.md`, plus any `*.md` files referenced from `CLAUDE.md` via `@filename` (e.g. `CRG.md`, `RTK.md`, `WORKTRUNK.md`, `PLANNOTATOR.md`, `CLAUDE-TOKEN-EFFICIENT.md`) — auto-detected
+- **Backed up files**: `settings.json`, `installed_plugins.json`, `known_marketplaces.json`, `statusline/Config.toml`, `CLAUDE.md`, plus any `*.md` files referenced from `CLAUDE.md` via `@filename` (e.g. `CRG.md`, `RTK.md`, `WORKTRUNK.md`, `PLANNOTATOR.md`, `CLAUDE-TOKEN-EFFICIENT.md`) — auto-detected
+- **Managed MCP registry**: `claude_config/mcp_servers.json` is restored to user scope but is not populated from live `~/.claude.json`; edit it intentionally so credentials and machine-specific paths cannot enter through backup
 - **Local-only configs**: Work plugins/marketplaces are saved to `.local.json` files (gitignored) during backup, and merged back during install
 - **Post-restore**: Plugins are auto-installed at the end of `restore:claude`. If auto-install fails, run `npm run install:plugins` manually.
 

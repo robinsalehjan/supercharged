@@ -24,9 +24,9 @@ cd supercharged && npm run setup
 
 ```bash
 npm run setup              # Fresh install (interactive)
-npm run update             # Backup agents, restore dotfiles, then update all components
+npm run update             # Backup agents, sync dotfiles/skills, then update all components
 npm run update:dry-run     # Read-only report of outdated brew/npm packages
-npm run update:only -- brew  # Restore dotfiles, then update one component
+npm run update:only -- brew  # Sync dotfiles/skills, then update one component
 npm run validate           # Verify tools installed correctly
 npm run restore:all        # Restore Claude Code, Codex, and dotfiles
 npm run restore:agents     # Restore Claude Code and Codex agent config

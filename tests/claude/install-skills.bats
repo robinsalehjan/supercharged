@@ -204,6 +204,33 @@ run_install_skills() {
   [ -d "$HOME/.claude/skills/retired" ]
 }
 
+@test "removed skill with local changes is preserved" {
+  local repo="https://example.com/retired.git"
+  local skills="{\"version\":2,\"skills\":{},\"removed_skills\":{\"retired\":{\"repo\":\"$repo\"}}}"
+
+  mkdir -p "$HOME/.claude/skills/retired"
+  git -C "$HOME/.claude/skills/retired" init -q
+  git -C "$HOME/.claude/skills/retired" remote add origin "$repo"
+  echo "local work" > "$HOME/.claude/skills/retired/notes.txt"
+
+  run run_install_skills "$skills" ""
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"managed checkout has local changes"* ]]
+  [ -f "$HOME/.claude/skills/retired/notes.txt" ]
+}
+
+@test "unsafe active skill names cannot escape managed skill directories" {
+  local skills='{"version":2,"skills":{"../../escape":{"repo":"https://example.com/escape.git","ref":"main"}}}'
+
+  run run_install_skills "$skills" "" --dry-run
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Skipping unsafe active skill name"* ]]
+  [[ "$output" != *"Would clone"* ]]
+  [ ! -e "$HOME/escape" ]
+}
+
 @test "removed skill tombstone wins over a local active override" {
   local skills='{"version":2,"skills":{},"removed_skills":{"retired":{"repo":"https://example.com/retired.git"}}}'
   local local_skills='{"version":1,"skills":{"retired":{"repo":"https://example.com/fork.git","ref":"main"}}}'

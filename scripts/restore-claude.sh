@@ -572,6 +572,7 @@ restore_settings_env() {
 restore_mcp_servers() {
     local src="$CLAUDE_CONFIG_DIR/mcp_servers.json"
     local user_config="$CLAUDE_USER_CONFIG"
+    local managed_servers
 
     if [ ! -f "$src" ]; then
         log_with_level "INFO" "No MCP server configuration found in repository"
@@ -581,6 +582,11 @@ restore_mcp_servers() {
     if [ ! -f "$user_config" ]; then
         printf '{}\n' > "$user_config"
     fi
+
+    managed_servers=$(jq 'keys' "$src") || {
+        log_with_level "ERROR" "Failed to read managed MCP server names"
+        return 1
+    }
 
     # Expand $HOME placeholders and substitute $VAR_NAME env placeholders via jq env object
     local mcp_with_secrets
@@ -616,8 +622,11 @@ restore_mcp_servers() {
     # Merge repo servers into the user-scoped registry. Repo servers take
     # precedence while unrelated local entries and all other user state remain.
     local updated
-    if ! updated=$(jq -a --argjson mcp "$mcp_with_secrets" '
-        .mcpServers = ((.mcpServers // {}) + $mcp)
+    if ! updated=$(jq -a --argjson mcp "$mcp_with_secrets" --argjson managed "$managed_servers" '
+        .mcpServers = (
+            ((.mcpServers // {}) | with_entries(select(.key as $key | $managed | index($key) | not)))
+            + $mcp
+        )
     ' "$user_config" 2>/dev/null); then
         log_with_level "ERROR" "Failed to merge MCP servers into $user_config"
         return 1

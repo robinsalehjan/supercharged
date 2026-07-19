@@ -213,48 +213,9 @@ sanitize_settings() {
   assert_json_field "$TEMP_REPO_CONFIG/settings.json" 'has("mcpServers")' "false"
 }
 
-@test "backup_user_mcp_servers refreshes managed servers and excludes local-only entries" {
-  user_config="$TEST_TEMP_DIR/.claude.json"
-  mkdir -p "$TEMP_REPO_CONFIG"
-  printf '%s\n' '{"mcpServers":{"managed":{"type":"stdio","command":"new-command","env":{"GITHUB_PERSONAL_ACCESS_TOKEN":"sensitive-value","SAFE":"kept"}},"work-only":{"type":"stdio","command":"private"}}}' > "$user_config"
-  printf '%s\n' '{"managed":{"type":"stdio","command":"old-command"},"missing":{"type":"stdio","command":"repo-default"}}' > "$TEMP_REPO_CONFIG/mcp_servers.json"
-
-  run zsh -c "
-    CLAUDE_USER_CONFIG='$user_config'
-    CLAUDE_CONFIG_DIR='$TEMP_REPO_CONFIG'
-    SANITIZE_ENV_VARS=(GITHUB_PERSONAL_ACCESS_TOKEN)
-    make_path_portable() { command cat; }
-    log_with_level() { :; }
-    $(sed -n '/^backup_user_mcp_servers()/,/^}/p' "$PROJECT_ROOT/scripts/backup-claude.sh")
-    backup_user_mcp_servers
-  "
-
-  [ "$status" -eq 0 ]
-  [ "$(jq -r '.managed.command' "$TEMP_REPO_CONFIG/mcp_servers.json")" = "new-command" ]
-  [ "$(jq -r '.managed.env.GITHUB_PERSONAL_ACCESS_TOKEN' "$TEMP_REPO_CONFIG/mcp_servers.json")" = '$GITHUB_PERSONAL_ACCESS_TOKEN' ]
-  [ "$(jq -r '.managed.env.SAFE' "$TEMP_REPO_CONFIG/mcp_servers.json")" = "kept" ]
-  [ "$(jq -r '.missing.command' "$TEMP_REPO_CONFIG/mcp_servers.json")" = "repo-default" ]
-  [ "$(jq 'has("work-only")' "$TEMP_REPO_CONFIG/mcp_servers.json")" = "false" ]
-}
-
-@test "backup_user_mcp_servers preserves repo registry before user-scope migration" {
-  user_config="$TEST_TEMP_DIR/.claude.json"
-  mkdir -p "$TEMP_REPO_CONFIG"
-  printf '%s\n' '{"projects":{"/tmp/project":{}}}' > "$user_config"
-  printf '%s\n' '{"managed":{"type":"stdio","command":"managed"}}' > "$TEMP_REPO_CONFIG/mcp_servers.json"
-
-  run zsh -c "
-    CLAUDE_USER_CONFIG='$user_config'
-    CLAUDE_CONFIG_DIR='$TEMP_REPO_CONFIG'
-    SANITIZE_ENV_VARS=(GITHUB_PERSONAL_ACCESS_TOKEN)
-    make_path_portable() { command cat; }
-    log_with_level() { :; }
-    $(sed -n '/^backup_user_mcp_servers()/,/^}/p' "$PROJECT_ROOT/scripts/backup-claude.sh")
-    backup_user_mcp_servers
-  "
-
-  [ "$status" -eq 0 ]
-  [ "$(jq -r '.managed.command' "$TEMP_REPO_CONFIG/mcp_servers.json")" = "managed" ]
+@test "backup does not import live user-scoped MCP definitions" {
+  run grep -E 'CLAUDE_USER_CONFIG|HOME/\.claude\.json|HOME/.claude.json' "$PROJECT_ROOT/scripts/backup-claude.sh"
+  [ "$status" -eq 1 ]
 }
 
 @test "preserves non-sensitive env vars in settings.json" {
