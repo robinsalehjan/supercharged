@@ -43,7 +43,7 @@ The Homebrew Bundle baseline is defined by `build_brewfile` in `scripts/mac.sh`.
 
 - Package and shell tooling: `bash`, `coreutils`, `git`, `curl`, `asdf`, `keychain`, `tmux`, `ripgrep`, `tree`, `aria2`.
 - Development utilities: `gh`, `jq`, `shellcheck`, `actionlint`, `bats-core`, `duckdb`, `sqlite`, `btop`, `htop`, `mas`, `pipx`, `uv`, `hey`, `watch`, build libraries, and database client libraries mirrored from the personal machine.
-- AI and agent tools: `codex`, `ollama`, `replicate`, `cupertino`, `rtk`, and `worktrunk`. ChatGPT and CodexBar are included when `INSTALL_CODEX_APP=Y`.
+- AI and agent tools: `codex`, `omlx`, `replicate`, `cupertino`, `rtk`, and `worktrunk`. ChatGPT and CodexBar are included when `INSTALL_CODEX_APP=Y`.
 - Applications: Visual Studio Code, Slack, Raycast, Reveal, Spotify, Mullvad VPN.
 - Fonts: JetBrainsMono Nerd Font.
 - Mac App Store apps: AdBlock, DaisyDisk, and Numbers.
