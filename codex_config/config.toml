@@ -10,9 +10,6 @@ tool_output_token_limit = 32000
 [shell_environment_policy]
 exclude = ["*_KEY", "*_TOKEN", "*_SECRET"]
 
-[agents]
-default_subagent_reasoning_effort = "low"
-
 [analytics]
 enabled = false
 
