@@ -133,6 +133,8 @@ run_zsh_func() {
   [[ "$output" == *'brew "replicate/tap/replicate"'* ]]
   [[ "$output" == *'tap "cupertinohq/tap", "https://codeberg.org/CupertinoHQ/homebrew-tap.git"'* ]]
   [[ "$output" == *'brew "cupertinohq/tap/cupertino"'* ]]
+  [[ "$output" == *'tap "jundot/omlx", "https://github.com/jundot/omlx"'* ]]
+  [[ "$output" == *'brew "jundot/omlx/omlx"'* ]]
   [[ "$output" == *'mas "Numbers", id: 361304891'* ]]
   [[ "$output" == *'vscode "openai.chatgpt"'* ]]
 }

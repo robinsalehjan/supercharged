@@ -83,6 +83,7 @@ build_brewfile() {
     local content='tap "thoughtbot/formulae"
 tap "replicate/tap"
 tap "cupertinohq/tap", "https://codeberg.org/CupertinoHQ/homebrew-tap.git"
+tap "jundot/omlx", "https://github.com/jundot/omlx"
 
 brew "bash"
 brew "coreutils"
@@ -129,7 +130,7 @@ brew "sqlite"
 brew "btop"
 brew "mas"
 brew "htop"
-brew "ollama"
+brew "jundot/omlx/omlx", trusted: true
 cask "codex"
 brew "pipx"
 brew "uv"

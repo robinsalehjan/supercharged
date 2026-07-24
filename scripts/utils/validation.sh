@@ -67,10 +67,8 @@ extract_tool_version() {
             version_output=$(nmap --version 2>&1 | head -1 || true)
             echo "$version_output" | grep -oE '[0-9]+\.[0-9]+' || echo "0.0.0"
             ;;
-        "ollama")
-            # When the daemon is stopped, Ollama prints a connection warning
-            # before the useful "client version is X.Y.Z" line.
-            version_output=$(ollama --version 2>&1 || true)
+        "omlx")
+            version_output=$(omlx --version 2>&1 || true)
             echo "$version_output" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | tail -1 || echo "0.0.0"
             ;;
         "plannotator")
@@ -416,7 +414,7 @@ validate_installation() {
     validate_tool "rtk" "" || ((warned++))
     validate_tool "wt" "" || ((warned++))
     validate_tool "code-review-graph" "" || ((warned++))
-    validate_tool "ollama" "" || true  # Optional local AI runtime
+    validate_tool "omlx" "" || true  # Optional local AI runtime
     validate_tool "codex" "" || ((warned++))  # OpenAI Codex CLI
     validate_tool "replicate" "" || ((warned++))  # Replicate CLI
     validate_tool "pipx" "" || ((warned++))
@@ -630,7 +628,7 @@ validate_installation() {
     # Suggest optional tools if user might want them
     local optional_missing=()
     command_exists btop || optional_missing+=("btop")
-    command_exists ollama || optional_missing+=("ollama")
+    command_exists omlx || optional_missing+=("omlx")
 
     if [ $failed -eq 0 ] && [ $warned -eq 0 ]; then
         echo "🎉 All validations passed!"
