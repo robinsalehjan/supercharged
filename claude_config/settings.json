@@ -1,7 +1,10 @@
 {
   "cleanupPeriodDays": 30,
+  "fallbackModel": ["claude-sonnet-5", "claude-haiku-4-5"],
+  "autoMode": {
+    "classifyAllShell": true
+  },
   "env": {
-    "ANTHROPIC_MODEL": "claude-opus-4-6",
     "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet",
     "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
     "CLAUDE_CODE_ENABLE_TELEMETRY": "0",
@@ -30,10 +33,7 @@
       "Read(**/.secrets/**)",
       "Edit(.env*)",
       "Edit(**/.secrets)",
-      "Edit(**/.secrets/**)",
-      "Write(.env*)",
-      "Write(**/.secrets)",
-      "Write(**/.secrets/**)"
+      "Edit(**/.secrets/**)"
     ]
   },
   "hooks": {
@@ -99,6 +99,9 @@
         "repo": "openai/codex-plugin-cc"
       }
     }
+  },
+  "attribution": {
+    "pr": ""
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "high",

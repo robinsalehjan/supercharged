@@ -5,6 +5,16 @@ web_search = "cached"
 project_doc_fallback_filenames = ["CLAUDE.md"]
 project_doc_max_bytes = 65536
 default_permissions = "supercharged"
+tool_output_token_limit = 32000
+
+[shell_environment_policy]
+exclude = ["*_KEY", "*_TOKEN", "*_SECRET"]
+
+[analytics]
+enabled = false
+
+[history]
+max_bytes = 10000000
 
 [features]
 shell_snapshot = true
