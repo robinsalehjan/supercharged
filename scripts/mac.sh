@@ -130,6 +130,7 @@ brew "sqlite"
 brew "btop"
 brew "mas"
 brew "htop"
+brew "ollama"
 brew "jundot/omlx/omlx", trusted: true
 cask "codex"
 brew "pipx"
