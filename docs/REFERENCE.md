@@ -34,7 +34,7 @@ Setup stores interactive choices in `~/.supercharged_preferences`.
 | `INSTALL_CODEX_APP` | `Y` | ChatGPT desktop app and CodexBar for desktop/mobile Codex access |
 | `INSTALL_JVM_TOOLS` | `N` | Java and Kotlin via asdf |
 | `INSTALL_EXTRA_APPS` | `N` | Postman and Google Chrome |
-| `INSTALL_CLOUD_TOOLS` | `Y` | gcloud and Firebase CLI via asdf |
+| `INSTALL_CLOUD_TOOLS` | `Y` | gcloud and Firebase CLI via asdf, Terraform via Homebrew |
 | `INSTALL_NETWORK_TOOLS` | `Y` | Wireshark, mitmproxy, Proxyman |
 
 ## Installed Tools
@@ -53,7 +53,7 @@ The Homebrew Bundle baseline is defined by `build_brewfile` in `scripts/mac.sh`.
 
 The `omlx` CLI above is scripted via its own tap. Its optional menu bar app (`oMLX.app`) has no Homebrew cask — download the `.dmg` for your macOS version from [github.com/jundot/omlx/releases](https://github.com/jundot/omlx/releases) and drag it into `/Applications` manually. If its installer offers to add a shell PATH entry for its bundled CLI shim, decline it — the Homebrew-installed `omlx` is already on PATH and having two competing binaries just causes ambiguity.
 
-Conditional Brewfile groups add iOS, container, network, and extra application tooling according to the setup preferences above. Dedicated setup helpers install Claude Code, Plannotator, code-review-graph, Obscura, and the Claude statusline; these tools are not Homebrew Bundle entries.
+Conditional Brewfile groups add iOS, container, cloud (`hashicorp/tap/terraform`), network, and extra application tooling according to the setup preferences above. Dedicated setup helpers install Claude Code, Plannotator, code-review-graph, Obscura, and the Claude statusline; these tools are not Homebrew Bundle entries.
 
 asdf-managed tools are listed in `dot_files/.tool-versions`, including Node.js, Python, Ruby, Bundler, gcloud, Firebase CLI, and optional JVM pins.
 

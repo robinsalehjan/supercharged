@@ -225,6 +225,29 @@ run_zsh_func() {
   [[ "$output" != *'colima'* ]]
 }
 
+@test "build_brewfile includes terraform when INSTALL_CLOUD_TOOLS=Y" {
+  run zsh -c "
+    export INSTALL_CLOUD_TOOLS=Y
+    source '$PROJECT_ROOT/scripts/utils.sh'
+    source '$PROJECT_ROOT/scripts/mac.sh'
+    build_brewfile
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'tap "hashicorp/tap"'* ]]
+  [[ "$output" == *'hashicorp/tap/terraform'* ]]
+}
+
+@test "build_brewfile excludes terraform when INSTALL_CLOUD_TOOLS=n" {
+  run zsh -c "
+    export INSTALL_CLOUD_TOOLS=n
+    source '$PROJECT_ROOT/scripts/utils.sh'
+    source '$PROJECT_ROOT/scripts/mac.sh'
+    build_brewfile
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" != *'hashicorp/tap/terraform'* ]]
+}
+
 @test "build_brewfile always includes applications" {
   run zsh -c "
     export INSTALL_IOS_TOOLS=n

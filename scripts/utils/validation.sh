@@ -439,6 +439,7 @@ validate_installation() {
             echo "Cloud & DevOps:"
             validate_tool "gcloud" "$gcloud_version" || ((warned++))
             validate_tool "firebase" "$firebase_version" || ((failed++))
+            validate_tool "terraform" "" || ((warned++))
         fi
 
         if [[ "${INSTALL_NETWORK_TOOLS:-Y}" =~ ^[Yy] ]]; then
