@@ -84,6 +84,7 @@ build_brewfile() {
 tap "replicate/tap"
 tap "cupertinohq/tap", "https://codeberg.org/CupertinoHQ/homebrew-tap.git"
 tap "jundot/omlx", "https://github.com/jundot/omlx"
+tap "hashicorp/tap"
 
 brew "bash"
 brew "coreutils"
@@ -174,6 +175,11 @@ brew \"docker\"
 brew \"docker-compose\"
 brew \"colima\"
 brew \"kubernetes-cli\""
+    fi
+
+    if [[ "${INSTALL_CLOUD_TOOLS:-Y}" =~ ^[Yy] ]]; then
+        content="$content
+brew \"hashicorp/tap/terraform\", trusted: true"
     fi
 
     content="$content
