@@ -130,7 +130,10 @@ brew "sqlite"
 brew "btop"
 brew "mas"
 brew "htop"
-brew "ollama"
+# Cask, not formula — it installs the Ollama.app menu bar GUI and symlinks
+# its bundled CLI onto PATH, so `brew "ollama"` is not needed alongside it
+# (both would try to own the same `ollama` binary symlink).
+cask "ollama"
 brew "jundot/omlx/omlx", trusted: true
 cask "codex"
 brew "pipx"

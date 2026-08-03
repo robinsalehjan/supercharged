@@ -49,6 +49,8 @@ The Homebrew Bundle baseline is defined by `build_brewfile` in `scripts/mac.sh`.
 - Mac App Store apps: AdBlock, DaisyDisk, and Numbers.
 - Visual Studio Code extensions: the personal machine's AI, Apple-platform, Python, Rust, TypeScript, container, debugger, and editor-utility extensions declared in `build_brewfile`.
 
+`ollama` above is installed as `cask "ollama"`, not a formula — it installs the `Ollama.app` menu bar GUI and symlinks its bundled CLI onto PATH, so no separate formula is needed (or wanted: a `brew "ollama"` formula alongside it would fight over the same `ollama` binary symlink).
+
 The `omlx` CLI above is scripted via its own tap. Its optional menu bar app (`oMLX.app`) has no Homebrew cask — download the `.dmg` for your macOS version from [github.com/jundot/omlx/releases](https://github.com/jundot/omlx/releases) and drag it into `/Applications` manually. If its installer offers to add a shell PATH entry for its bundled CLI shim, decline it — the Homebrew-installed `omlx` is already on PATH and having two competing binaries just causes ambiguity.
 
 Conditional Brewfile groups add iOS, container, network, and extra application tooling according to the setup preferences above. Dedicated setup helpers install Claude Code, Plannotator, code-review-graph, Obscura, and the Claude statusline; these tools are not Homebrew Bundle entries.
