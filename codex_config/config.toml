@@ -10,6 +10,11 @@ tool_output_token_limit = 32000
 [shell_environment_policy]
 exclude = ["*_KEY", "*_TOKEN", "*_SECRET"]
 
+[shell_environment_policy.set]
+BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
+NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "461c4ba94b821ec805da79c8e8138fe510b1b3358609fc93da47387a2cf3fbf3,6d25aa7656feac858f3a3bdaea5bcbab0dbfd426c9de8e6931ce90c399ee8e4f"
+NODE_REPL_TRUSTED_CODE_PATHS = "$HOME/.codex"
+
 [analytics]
 enabled = false
 
@@ -29,8 +34,8 @@ extends = ":workspace"
 "**/.secrets/**" = "deny"
 
 [mcp_servers.code-review-graph]
-command = "code-review-graph"
-args = ["serve"]
+command = "uvx"
+args = ["code-review-graph", "serve"]
 
 [mcp_servers.code-review-graph.tools.get_review_context_tool]
 approval_mode = "approve"
@@ -54,6 +59,14 @@ args = ["mcp"]
 [mcp_servers.cupertino]
 command = "cupertino"
 args = ["serve", "--no-reap"]
+
+[mcp_servers.axiom]
+command = "npx"
+args = ["-y", "axiom-mcp"]
+
+[mcp_servers.xcode]
+command = "xcrun"
+args = ["mcpbridge"]
 
 [mcp_servers.openaiDeveloperDocs]
 url = "https://developers.openai.com/mcp"
