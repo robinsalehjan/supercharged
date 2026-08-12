@@ -1,9 +1,5 @@
 {
   "cleanupPeriodDays": 30,
-  "fallbackModel": ["claude-sonnet-5", "claude-haiku-4-5"],
-  "autoMode": {
-    "classifyAllShell": true
-  },
   "env": {
     "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet",
     "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
@@ -36,6 +32,11 @@
       "Edit(**/.secrets/**)"
     ]
   },
+  "model": "opus",
+  "fallbackModel": [
+    "claude-sonnet-5",
+    "claude-haiku-4-5"
+  ],
   "hooks": {
     "PreToolUse": [
       {
@@ -93,7 +94,7 @@
         "repo": "anthropics/claude-plugins-official"
       }
     },
-    "openai-codex": {
+  "openai-codex": {
       "source": {
         "source": "github",
         "repo": "openai/codex-plugin-cc"
@@ -110,6 +111,9 @@
   "skipDangerousModePermissionPrompt": true,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
+  "autoMode": {
+    "classifyAllShell": true
+  },
   "additionalDirectories": [
     "~/Repositories"
   ]
