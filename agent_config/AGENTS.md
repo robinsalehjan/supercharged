@@ -19,6 +19,7 @@ Keep tool-specific behavior in the tool-specific config files; keep cross-agent 
 ## Tooling Preferences
 
 - Use code-review-graph first for source navigation, impact analysis, debugging, and code review when its graph is fresh and covers the code in question.
+- Before graph-dependent work in a Git repository, check that its graph is available and current. If it is missing or stale, tell the user; run `crg-here` to register and build it, or `code-review-graph update` to refresh it, only when that local state change is within the task's authorization.
 - Use `rg`/`rg --files` directly for configuration, Markdown, TOML, generated content, and any source graph that is unavailable, stale, or unsupported.
 - Prefer RTK wrappers for noisy shell output when practical, such as `rtk git`, `rtk test`, `rtk npm`, `rtk pytest`, and `rtk tsc`.
 - Use `rtk proxy <cmd>` or the raw command when full unfiltered output is required for correctness.

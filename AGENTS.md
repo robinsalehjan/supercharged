@@ -244,7 +244,7 @@ Plugins are auto-installed during restore. `install:plugins` merges repo configs
 | Task | Where |
 |---|---|
 | Add ZSH alias | `dot_files/.zshrc` aliases section |
-| Onboard a repo to code-review-graph | `cd <repo> && crg-here` (registers + builds; the launchd watcher picks it up automatically) |
+| Onboard a repo to code-review-graph | `cd <repo> && crg-here` (registers + builds; the launchd watcher picks it up automatically). For opt-in nested-repo discovery, configure `~/.code-review-graph/watcher-config.json`. |
 | Add Homebrew tap | `BREWFILE_CONTENT` in `scripts/mac.sh`: `tap "owner/repo"` before packages |
 | Change log format | `log_with_level()` in `scripts/utils/logging.sh` (preserve timestamp + level) |
 | Add utility function | Appropriate file in `scripts/utils/` (logging, backup, validation, tools, json) |
