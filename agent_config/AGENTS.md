@@ -18,12 +18,12 @@ Keep tool-specific behavior in the tool-specific config files; keep cross-agent 
 
 ## Tooling Preferences
 
-- When code-review-graph MCP tools are available, use them before broad file scans for codebase exploration, impact analysis, and code review context.
-- Use `rg`/`rg --files` as the fallback when code-review-graph is unavailable, stale, or does not cover the needed detail.
+- Use code-review-graph first for source navigation, impact analysis, debugging, and code review when its graph is fresh and covers the code in question.
+- Use `rg`/`rg --files` directly for configuration, Markdown, TOML, generated content, and any source graph that is unavailable, stale, or unsupported.
 - Prefer RTK wrappers for noisy shell output when practical, such as `rtk git`, `rtk test`, `rtk npm`, `rtk pytest`, and `rtk tsc`.
 - Use `rtk proxy <cmd>` or the raw command when full unfiltered output is required for correctness.
 - Clean up completed Worktrunk worktrees with `wt remove` or `wt merge`.
-- Use XcodeBuildMCP tools for iOS, macOS, simulator, Swift package, and Xcode project work when available.
+- Use XcodeBuildMCP tools for iOS, macOS, simulator, Swift package, and Xcode project work when Apple development tools are configured and available. Its build/test structured results are schema version 3; request an explicit configuration when Debug is required.
 - Use OpenAI Docs MCP for current OpenAI API, Codex, model, and platform documentation when available.
 
 ## Communication
