@@ -30,6 +30,48 @@ teardown() {
   [[ "$output" == "#!/bin/zsh" ]]
 }
 
+@test "sourcing restore-claude has no filesystem or argument side effects" {
+  before=$(find "$HOME" -print | sort)
+
+  run zsh -c "export HOME='$HOME'; set -- validate --force --unknown; source '$SCRIPT'; printf '%s\n' sourced"
+
+  [ "$status" -eq 0 ]
+  [ "$output" = "sourced" ]
+  after=$(find "$HOME" -print | sort)
+  [ "$before" = "$after" ]
+  [ ! -e "$HOME/.supercharged_backups" ]
+}
+
+@test "settings merge preserves enabled and disabled work plugins and marketplace" {
+  repo="$TEST_TEMP_DIR/repo-settings.json"
+  local_settings="$TEST_TEMP_DIR/local-settings.json"
+  cat > "$repo" <<'EOF'
+{"model":"repo","enabledPlugins":{"shared@official":true},"extraKnownMarketplaces":{"official":{"source":"repo"}}}
+EOF
+  cat > "$local_settings" <<'EOF'
+{"model":"local","enabledPlugins":{"enabled@vend-plugins":true,"disabled@vend-plugins":false,"stale@official":true},"extraKnownMarketplaces":{"vend-plugins":{"source":"work"},"stale":{"source":"local"}}}
+EOF
+
+  run zsh -c "export HOME='$HOME'; source '$SCRIPT'; merge_settings_config '$repo' '$local_settings' settings.json"
+
+  [ "$status" -eq 0 ]
+  [ "$(jq -r '.model' "$local_settings")" = "repo" ]
+  [ "$(jq -r '.enabledPlugins["enabled@vend-plugins"]' "$local_settings")" = "true" ]
+  [ "$(jq -r '.enabledPlugins["disabled@vend-plugins"]' "$local_settings")" = "false" ]
+  [ "$(jq '.enabledPlugins | has("stale@official")' "$local_settings")" = "false" ]
+  [ "$(jq -r '.extraKnownMarketplaces["vend-plugins"].source' "$local_settings")" = "work" ]
+}
+
+@test "malformed local settings abort a full restore before any changes" {
+  printf '%s\n' '{broken' > "$HOME/.claude/settings.json"
+
+  run env HOME="$HOME" zsh "$SCRIPT" --force
+
+  [ "$status" -ne 0 ]
+  [ "$(<"$HOME/.claude/settings.json")" = "{broken" ]
+  [ ! -e "$HOME/.supercharged_backups" ]
+}
+
 @test "restore-claude.sh references PRESERVE_MARKETPLACES" {
   # Sanitization contract: vend-plugins is the canonical work-only marketplace
   # and must remain in the preserve list (mirrored against SANITIZE_MARKETPLACES

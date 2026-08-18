@@ -5,6 +5,7 @@ source "$(dirname "$0")/utils.sh"
 
 REQUIRED_MACOS_VERSION="12.0"
 REQUIRED_DISK_SPACE_GB=10
+SKIP_BACKUP=false
 
 # System requirements validation
 validate_system() {
@@ -56,13 +57,33 @@ cleanup() {
     standard_cleanup "Installation"
 }
 
-# Homebrew installation with architecture detection
-install_homebrew() {
-    if [[ $(uname -m) == "arm64" ]]; then
-        HOMEBREW_PREFIX="/opt/homebrew"
-    else
-        HOMEBREW_PREFIX="/usr/local"
+resolve_homebrew_prefix() {
+    local detected=""
+
+    if command -v brew >/dev/null 2>&1; then
+        detected=$(brew --prefix 2>/dev/null || true)
+        case "$detected" in
+            /opt/homebrew|/usr/local)
+                printf '%s\n' "$detected"
+                return 0
+                ;;
+        esac
     fi
+
+    if [[ $(uname -m) == "arm64" ]]; then
+        [ -x /opt/homebrew/bin/brew ] && detected="/opt/homebrew"
+        detected="${detected:-/opt/homebrew}"
+    else
+        [ -x /usr/local/bin/brew ] && detected="/usr/local"
+        detected="${detected:-/usr/local}"
+    fi
+
+    printf '%s\n' "$detected"
+}
+
+# Homebrew installation with installed-prefix and architecture detection.
+install_homebrew() {
+    HOMEBREW_PREFIX=$(resolve_homebrew_prefix)
 
     if ! command -v brew >/dev/null; then
         log_with_level "INFO" "Installing Homebrew..."
@@ -257,6 +278,19 @@ setup_cupertino() {
 }
 
 main() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --skip-backup)
+                SKIP_BACKUP=true
+                shift
+                ;;
+            *)
+                log_with_level "ERROR" "Unknown option: $1"
+                return 1
+                ;;
+        esac
+    done
+
     trap cleanup EXIT
 
     # Initialize logging
@@ -266,7 +300,9 @@ main() {
     validate_system
 
     # Create restoration point
-    create_restoration_point
+    if [ "$SKIP_BACKUP" != true ]; then
+        create_restoration_point
+    fi
 
     # Setup user preferences and git config
     setup_user_preferences
@@ -423,14 +459,22 @@ main() {
         # overwrites the default one created by the statusline installer
         if [ -x "$UTILS_SCRIPT_DIR/restore-claude.sh" ]; then
             log_with_level "INFO" "Restoring Claude configuration from repository..."
-            "$UTILS_SCRIPT_DIR/restore-claude.sh" --force || log_with_level "WARN" "Claude config restore skipped or failed"
+            if [ "$SKIP_BACKUP" = true ]; then
+                "$UTILS_SCRIPT_DIR/restore-claude.sh" --force --skip-backup || log_with_level "WARN" "Claude config restore skipped or failed"
+            else
+                "$UTILS_SCRIPT_DIR/restore-claude.sh" --force || log_with_level "WARN" "Claude config restore skipped or failed"
+            fi
         fi
     fi
 
     # Restore Codex configuration independently of the Claude preference.
     if [ -x "$UTILS_SCRIPT_DIR/restore-codex.sh" ]; then
         log_with_level "INFO" "Restoring Codex configuration from repository..."
-        "$UTILS_SCRIPT_DIR/restore-codex.sh" --force || log_with_level "WARN" "Codex config restore skipped or failed"
+        if [ "$SKIP_BACKUP" = true ]; then
+            "$UTILS_SCRIPT_DIR/restore-codex.sh" --force --skip-backup || log_with_level "WARN" "Codex config restore skipped or failed"
+        else
+            "$UTILS_SCRIPT_DIR/restore-codex.sh" --force || log_with_level "WARN" "Codex config restore skipped or failed"
+        fi
     fi
 
     # Setup code-review-graph (independent of Claude Code — useful for `crg-here`

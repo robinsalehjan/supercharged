@@ -21,6 +21,7 @@ DOT_FILES_DIR="$PROJECT_ROOT/dot_files"
 source "$SCRIPT_DIR/utils.sh"
 
 DRY_RUN=false
+SKIP_BACKUP=false
 
 show_help() {
     echo "Usage: $(basename "$0") [OPTIONS]"
@@ -29,6 +30,7 @@ show_help() {
     echo ""
     echo "Options:"
     echo "  --dry-run      Preview what would be copied without making changes"
+    echo "  --skip-backup  Internal: use an orchestrator-created restoration point"
     echo "  -h, --help     Show this help message"
 }
 
@@ -38,6 +40,10 @@ main() {
         case "$1" in
             --dry-run)
                 DRY_RUN=true
+                shift
+                ;;
+            --skip-backup)
+                SKIP_BACKUP=true
                 shift
                 ;;
             -h|--help)
@@ -58,7 +64,7 @@ main() {
     fi
 
     # Create backup before making changes (skip in dry-run)
-    if ! $DRY_RUN; then
+    if ! $DRY_RUN && [ "$SKIP_BACKUP" != true ]; then
         echo "💾 Creating backup of existing configuration..."
         create_restoration_point
         echo ""
@@ -72,6 +78,9 @@ main() {
         if [ -f "$DOT_FILES_DIR/$file" ]; then
             if $DRY_RUN; then
                 echo "  → Would copy: $file"
+            elif [ "$file" = ".gitconfig" ]; then
+                install_managed_git_config
+                echo "  ✓ Copied $file (identity kept in ~/.gitconfig.local)"
             else
                 cp "$DOT_FILES_DIR/$file" "$HOME/" || {
                     log_with_level "ERROR" "Failed to copy $file to $HOME"

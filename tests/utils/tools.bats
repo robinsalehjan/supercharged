@@ -137,6 +137,23 @@ RTKEOF
     [[ "$output" != *"configured for Claude Code"* ]]
 }
 
+@test "code-review-graph setup upgrades an existing pipx installation" {
+    mock_pipx
+    mock_code_review_graph
+    calls="$TEST_TEMP_DIR/pipx-calls"
+    cat > "$MOCK_BIN_DIR/pipx" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >> "$calls"
+exit 0
+EOF
+    chmod +x "$MOCK_BIN_DIR/pipx"
+
+    run zsh -c "export HOME='$HOME' PATH='$PATH'; source '$PROJECT_ROOT/scripts/utils.sh'; setup_code_review_graph"
+
+    [[ "$status" -eq 0 ]]
+    grep -F 'upgrade code-review-graph' "$calls"
+}
+
 # --- setup_crg_watcher tests ---
 
 @test "setup_crg_watcher skips when code-review-graph not installed" {
@@ -161,6 +178,7 @@ RTKEOF
     [[ -x "$HOME/.local/bin/crg-watch-all.sh" ]]
     [[ -f "$HOME/Library/LaunchAgents/com.code-review-graph.watcher.plist" ]]
     plutil -lint "$HOME/Library/LaunchAgents/com.code-review-graph.watcher.plist" >/dev/null
+    grep -F '/opt/homebrew/bin:/usr/local/bin:' "$HOME/Library/LaunchAgents/com.code-review-graph.watcher.plist"
 }
 
 @test "setup_crg_watcher is idempotent and skips reload when unchanged" {

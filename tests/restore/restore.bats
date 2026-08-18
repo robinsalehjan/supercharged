@@ -90,3 +90,66 @@ teardown() {
   [ "$status" -eq 0 ]
   [[ "$output" == "#!/bin/zsh" ]]
 }
+
+@test "restoration point captures complete managed configuration privately" {
+  source "$PROJECT_ROOT/scripts/utils.sh"
+  mkdir -p "$HOME/.codex/hooks" "$HOME/.codex/rules" "$HOME/.codex/skills/example" "$HOME/.claude/statusline" "$HOME/.claude/skills/example"
+  printf '%s\n' 'git identity' > "$HOME/.gitconfig.local"
+  printf '%s\n' '{}' > "$HOME/.claude/settings.json"
+  printf '%s\n' '{}' > "$HOME/.claude.json"
+  printf '%s\n' 'model = "local"' > "$HOME/.codex/config.toml"
+  printf '%s\n' '#!/bin/sh' > "$HOME/.codex/hooks/example.sh"
+  chmod 755 "$HOME/.codex/hooks/example.sh"
+
+  create_restoration_point
+  backup_dir=$(<"$HOME/.supercharged_last_backup")
+
+  [ "$(stat -f %Lp "$backup_dir" 2>/dev/null || stat -c %a "$backup_dir")" = "700" ]
+  [ "$(stat -f %Lp "$backup_dir/files/.claude/settings.json" 2>/dev/null || stat -c %a "$backup_dir/files/.claude/settings.json")" = "600" ]
+  grep -F $'file\t.gitconfig.local' "$backup_dir/presence.tsv"
+  grep -F $'file\t.claude.json' "$backup_dir/presence.tsv"
+  grep -F $'dir\t.claude/skills' "$backup_dir/presence.tsv"
+  grep -F $'dir\t.codex/hooks' "$backup_dir/presence.tsv"
+  [ ! -e "$backup_dir/files/.claude/plugins/cache" ]
+}
+
+@test "manifest rollback removes files that were absent before restore" {
+  source "$PROJECT_ROOT/scripts/utils.sh"
+  rm -f "$HOME/.claude/settings.json"
+  create_restoration_point
+  backup_dir=$(<"$HOME/.supercharged_last_backup")
+  printf '%s\n' '{"created":true}' > "$HOME/.claude/settings.json"
+
+  restore_from_backup "$backup_dir"
+
+  [ ! -e "$HOME/.claude/settings.json" ]
+}
+
+@test "manifest rollback restores directory contents and executable modes" {
+  source "$PROJECT_ROOT/scripts/utils.sh"
+  mkdir -p "$HOME/.codex/hooks"
+  printf '%s\n' '#!/bin/sh' > "$HOME/.codex/hooks/original.sh"
+  chmod 755 "$HOME/.codex/hooks/original.sh"
+  create_restoration_point
+  backup_dir=$(<"$HOME/.supercharged_last_backup")
+  rm -f "$HOME/.codex/hooks/original.sh"
+  printf '%s\n' '#!/bin/sh' > "$HOME/.codex/hooks/created.sh"
+
+  restore_from_backup "$backup_dir"
+
+  [ -x "$HOME/.codex/hooks/original.sh" ]
+  [ ! -e "$HOME/.codex/hooks/created.sh" ]
+}
+
+@test "legacy manifest-less backups remain copy-only restorable" {
+  source "$PROJECT_ROOT/scripts/utils.sh"
+  legacy="$TEST_TEMP_DIR/legacy"
+  mkdir -p "$legacy"
+  printf '%s\n' 'legacy zsh' > "$legacy/.zshrc"
+  printf '%s\n' 'keep me' > "$HOME/.gitconfig.local"
+
+  restore_from_backup "$legacy"
+
+  grep -F 'legacy zsh' "$HOME/.zshrc"
+  grep -F 'keep me' "$HOME/.gitconfig.local"
+}

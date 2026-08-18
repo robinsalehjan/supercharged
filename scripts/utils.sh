@@ -49,6 +49,7 @@ _source_submodule() {
 
 _source_submodule "$UTILS_SCRIPT_DIR/utils/logging.sh" || return 1
 _source_submodule "$UTILS_SCRIPT_DIR/utils/json.sh" || return 1
+_source_submodule "$UTILS_SCRIPT_DIR/utils/codex.sh" || return 1
 _source_submodule "$UTILS_SCRIPT_DIR/utils/validation.sh" || return 1
 _source_submodule "$UTILS_SCRIPT_DIR/utils/backup.sh" || return 1
 _source_submodule "$UTILS_SCRIPT_DIR/utils/tools.sh" || return 1
@@ -90,36 +91,94 @@ standard_cleanup() {
     exit $exit_code
 }
 
-# Interactive git configuration setup
-setup_git_config() {
-    # Use pre-computed paths from top of file
-    local git_source="$UTILS_PROJECT_ROOT/dot_files/.gitconfig"
-    local git_config="$HOME/.gitconfig"
+migrate_git_identity() {
+    local git_config="${1:-$HOME/.gitconfig}"
+    local local_config="${2:-$HOME/.gitconfig.local}"
+    local entries_file key value
 
-    # Check if git config already exists and is identical to source first
-    if [ -f "$git_config" ] && [ -f "$git_source" ] && cmp -s "$git_source" "$git_config"; then
-        log_with_level "INFO" "Git configuration already exists and is up to date"
+    [ -f "$git_config" ] || return 0
+    [ ! -e "$local_config" ] || return 0
+    command -v git >/dev/null 2>&1 || return 0
+
+    entries_file=$(mktemp)
+    if ! git config --file "$git_config" --get-regexp '^user\.' > "$entries_file" 2>/dev/null; then
+        rm -f "$entries_file"
         return 0
     fi
 
-    log_with_level "INFO" "Looking for git config at: $git_source"
+    : > "$local_config"
+    while IFS=' ' read -r key value || [ -n "$key" ]; do
+        [ -n "$key" ] || continue
+        git config --file "$local_config" --add "$key" "$value"
+    done < "$entries_file"
+    rm -f "$entries_file"
+    chmod 600 "$local_config"
+    log_with_level "SUCCESS" "Migrated Git user.* identity to ~/.gitconfig.local"
+}
+
+git_local_identity_complete() {
+    local local_config="${1:-$HOME/.gitconfig.local}"
+    local name email
+
+    [ -f "$local_config" ] || return 1
+    name=$(git config --file "$local_config" --get user.name 2>/dev/null || true)
+    email=$(git config --file "$local_config" --get user.email 2>/dev/null || true)
+    [ -n "$name" ] && [ -n "$email" ]
+}
+
+warn_missing_git_identity() {
+    if ! git_local_identity_complete; then
+        log_with_level "WARN" "Git identity is unset; add user.name and user.email to ~/.gitconfig.local"
+        log_with_level "WARN" "Run: git config --file ~/.gitconfig.local user.name 'Your Name'"
+        log_with_level "WARN" "Run: git config --file ~/.gitconfig.local user.email 'you@example.com'"
+    fi
+}
+
+install_managed_git_config() {
+    local git_source="$UTILS_PROJECT_ROOT/dot_files/.gitconfig"
+    local git_config="$HOME/.gitconfig"
 
     if [ ! -f "$git_source" ]; then
         log_with_level "ERROR" "Git config not found at $git_source"
-        log_with_level "INFO" "Current working directory: $(pwd)"
-        log_with_level "INFO" "Project root: $UTILS_PROJECT_ROOT"
         return 1
     fi
 
-    echo ""
-    echo "🔧 Setting up Git configuration..."
-    echo ""
-
-    # Copy the git config file
+    migrate_git_identity "$git_config" "$HOME/.gitconfig.local"
     cp "$git_source" "$git_config"
-
     log_with_level "SUCCESS" "Git configuration copied successfully"
-    return 0
+    warn_missing_git_identity
+}
+
+# Interactive setup completes the machine-local identity after the managed
+# config has been installed. Restore-only commands deliberately never prompt.
+setup_git_config() {
+    local git_name git_email
+
+    if [ ! -f "$HOME/.gitconfig" ]; then
+        install_managed_git_config
+    fi
+
+    if git_local_identity_complete; then
+        log_with_level "INFO" "Machine-local Git identity already configured"
+        return 0
+    fi
+
+    echo ""
+    echo "🔧 Configure your machine-local Git identity:"
+    while [ -z "${git_name:-}" ]; do
+        printf "Git user name: "
+        read -r git_name
+    done
+    while [ -z "${git_email:-}" ]; do
+        printf "Git user email: "
+        read -r git_email
+    done
+
+    : > "$HOME/.gitconfig.local"
+    git config --file "$HOME/.gitconfig.local" user.name "$git_name"
+    git config --file "$HOME/.gitconfig.local" user.email "$git_email"
+    chmod 600 "$HOME/.gitconfig.local"
+    log_with_level "SUCCESS" "Saved Git identity to ~/.gitconfig.local"
 }
 
 # Interactive user preferences setup
@@ -222,12 +281,23 @@ EOF
     export INSTALL_NETWORK_TOOLS="$install_network"
 }
 
-# Run validation if script is called directly with validation argument
-# Note: In zsh, $0 changes to the sourced file name, so we also check
-# that no other script has sourced us by looking for the validate argument
-if [[ "${1:-}" == "validate" ]]; then
-    # Enable strict undefined variable checking but not -e since we handle
-    # errors explicitly with counters in validate_installation
-    set -uo pipefail
-    validate_installation
+# Run validation only when utils.sh itself is executed. Positional arguments
+# from a script that sources this file must never trigger validation.
+_utils_main() {
+    if [[ "${1:-}" == "validate" ]]; then
+        # Enable strict undefined variable checking but not -e since we handle
+        # errors explicitly with counters in validate_installation.
+        set -uo pipefail
+        validate_installation
+    fi
+}
+
+if [[ -n "${ZSH_EVAL_CONTEXT:-}" ]]; then
+    if [[ "${ZSH_EVAL_CONTEXT}" != *file* ]]; then
+        _utils_main "$@"
+    fi
+else
+    if [[ "${BASH_SOURCE[0]:-$0}" == "${0}" ]]; then
+        _utils_main "$@"
+    fi
 fi

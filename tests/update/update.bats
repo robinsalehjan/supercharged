@@ -22,6 +22,20 @@ teardown() {
   [[ "$update_only_script" == *"npm run install:skills"* ]]
 }
 
+@test "safe update does not capture live agent configuration" {
+  update_script=$(jq -r '.scripts.update' "$PROJECT_ROOT/package.json")
+
+  [[ "$update_script" != *"backup:claude"* ]]
+  [[ "$update_script" != *"backup:codex"* ]]
+  [[ "$update_script" != *"backup:all"* ]]
+}
+
+@test "update with backup is fail-fast capture then safe update" {
+  update_script=$(jq -r '.scripts["update:with-backup"]' "$PROJECT_ROOT/package.json")
+
+  [ "$update_script" = "npm run backup:all && npm run update" ]
+}
+
 # =============================================================================
 # show_help tests
 # =============================================================================

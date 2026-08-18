@@ -91,6 +91,16 @@ teardown() {
   [[ "$lint_cmd" == *"--shell=bash"* ]]
 }
 
+@test "lint covers Codex hooks, zsh syntax, and GitHub Actions" {
+  lint_cmd=$(jq -r '.scripts.lint' "$PROJECT_ROOT/package.json")
+
+  [[ "$lint_cmd" == *"codex_config/hooks/*.sh"* ]]
+  [[ "$lint_cmd" == *"zsh -n"* ]]
+  [[ "$lint_cmd" == *"dot_files/.zshrc"* ]]
+  [[ "$lint_cmd" == *"actionlint"* ]]
+  grep -F 'actionlint bats-core' "$PROJECT_ROOT/.github/workflows/test.yml"
+}
+
 @test ".shellcheckrc disables expected zsh-noise codes" {
   # Arrange - .shellcheckrc lives at project root and holds the disable list
   rc_file="$PROJECT_ROOT/.shellcheckrc"

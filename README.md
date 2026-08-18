@@ -24,11 +24,13 @@ cd supercharged && npm run setup
 
 ```bash
 npm run setup              # Fresh install (interactive)
-npm run update             # Backup agents, sync dotfiles/skills, then update all components
+npm run update             # Sync dotfiles/skills, then update all components
+npm run update:with-backup # Capture live agent config, then update
 npm run update:dry-run     # Read-only report of outdated brew/npm packages
 npm run update:only -- brew  # Sync dotfiles/skills, then update one component
 npm run validate           # Verify tools installed correctly
 npm run restore:all        # Restore Claude Code, Codex, and dotfiles
+npm run restore:all -- --force # Force the all-in-one restore
 npm run restore:agents     # Restore Claude Code and Codex agent config
 npm run restore:claude     # Restore Claude Code config
 npm run restore:codex      # Restore Codex config, rules, and shared skills
@@ -42,7 +44,7 @@ npm run restore            # Restore from last backup
 npm run version:show       # Print current version, commit, tag, branch
 npm run release -- patch   # Cut a release (patch|minor|major|x.y.z)
 npm test                   # Run all BATS tests
-npm run lint               # ShellCheck setup scripts, utilities, and test helpers
+npm run lint               # ShellCheck, zsh syntax checks, and actionlint
 npm run scan:secrets       # Scan repository paths for likely secrets
 npm run help               # Show all commands
 ```
@@ -56,14 +58,16 @@ The repository is the portable source of truth for the audited personal-machine 
 To force the repository versions of Claude Code, Codex, and the managed dotfiles onto an existing machine, regardless of local modification times, run:
 
 ```bash
-npm run restore:claude -- --force &&
-npm run restore:codex -- --force &&
-npm run restore:dotfiles
+npm run restore:all -- --force
 ```
 
-This does not run the setup installer, Homebrew Bundle, or package updates, so it does not install or remove applications. The shorter `npm run restore:all` command performs the same categories of restore but may skip Claude or Codex when the local configuration is newer.
+This creates one configuration-only restoration point before changing Claude Code, Codex, or dotfiles. It does not run the setup installer, Homebrew Bundle, or package updates. Without `--force`, `restore:all` keeps timestamp gating for Claude and Codex while still taking the single pre-restore snapshot.
 
-On a work machine, note that `restore:dotfiles` replaces `~/.gitconfig` with the tracked identity. Restore the appropriate work identity afterward if it differs. Also verify that local-only Claude work plugins remain enabled after the forced restore.
+Git identity is machine-local in `~/.gitconfig.local`. The first restore migrates existing `user.*` values before replacing `~/.gitconfig`; a new interactive setup prompts for name and email. Noninteractive restores leave missing identity unset and print the commands needed to configure it. Claude restore preserves enabled and explicitly disabled `@vend-plugins` entries plus the `vend-plugins` marketplace.
+
+Restoration points cover managed configuration and registries, including absence information so rollback removes files created by a restore. They intentionally exclude auth, secrets, sessions, histories, logs, databases, plugin caches, and installed packages; plugins may need reinstalling after rollback. Older backups without an absence manifest remain copy-only restorable.
+
+The shared MCP baseline is code-review-graph, XcodeBuildMCP, and Cupertino. Codex additionally keeps Axiom, Apple's `xcode` bridge, OpenAI developer docs, and the disabled computer-use bridge. code-review-graph is intentionally unpinned and an existing pipx installation is upgraded during setup/update.
 
 ### New machine: full baseline
 

@@ -19,7 +19,7 @@ source "$(dirname "$0")/utils.sh"
 PROJECT_ROOT="$UTILS_PROJECT_ROOT"
 CLAUDE_CONFIG_DIR="$PROJECT_ROOT/claude_config"
 AGENT_CONFIG_DIR="$PROJECT_ROOT/agent_config"
-CLAUDE_HOME="$HOME/.claude"
+CLAUDE_HOME="${CLAUDE_HOME:-$HOME/.claude}"
 CLAUDE_USER_CONFIG="${CLAUDE_USER_CONFIG:-$HOME/.claude.json}"
 
 # List of marketplaces to preserve locally (not overwritten during restore)
@@ -31,39 +31,19 @@ PRESERVE_MARKETPLACES=("vend-plugins")
 INJECT_SETTINGS_ENV_VARS=("GITHUB_PERSONAL_ACCESS_TOKEN")
 
 FORCE_RESTORE=false
+SKIP_BACKUP=false
 SECRETS_LOADED=false
 
-# Parse arguments
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        --force)
-            FORCE_RESTORE=true
-            shift
-            ;;
-        *)
-            log_with_level "WARN" "Unknown option: $1"
-            shift
-            ;;
-    esac
-done
-
-# Check if repository config exists
-if [ ! -d "$CLAUDE_CONFIG_DIR" ]; then
-    log_with_level "INFO" "No Claude configuration found in repository at $CLAUDE_CONFIG_DIR"
-    exit 0
-fi
-
-# Check if any config files exist in repo
-if [ ! -f "$CLAUDE_CONFIG_DIR/settings.json" ] && \
-   [ ! -f "$CLAUDE_CONFIG_DIR/installed_plugins.json" ] && \
-   [ ! -f "$CLAUDE_CONFIG_DIR/known_marketplaces.json" ] && \
-   [ ! -f "$CLAUDE_CONFIG_DIR/keybindings.json" ] && \
-   [ ! -f "$CLAUDE_CONFIG_DIR/CLAUDE.md" ] && \
-   [ ! -f "$AGENT_CONFIG_DIR/installed_skills.json" ] && \
-   [ ! -f "$AGENT_CONFIG_DIR/AGENTS.md" ]; then
-    log_with_level "INFO" "No Claude configuration files found in repository"
-    exit 0
-fi
+show_help() {
+    echo "Usage: $(basename "$0") [OPTIONS]"
+    echo ""
+    echo "Restore Claude Code configuration from the repository"
+    echo ""
+    echo "Options:"
+    echo "  --force        Force restore regardless of timestamps"
+    echo "  --skip-backup  Internal: use an orchestrator-created restoration point"
+    echo "  -h, --help     Show this help message"
+}
 
 # Cross-platform stat wrapper for modification time
 # Returns mtime in seconds since epoch
@@ -192,9 +172,74 @@ restore_config_file() {
         mkdir -p "$(dirname "$dest")"
 
         # Replace $HOME placeholder with actual home directory
-        expand_portable_path < "$src" > "$dest"
+        expand_portable_path < "$src" > "$dest.tmp"
+        mv "$dest.tmp" "$dest"
         log_with_level "SUCCESS" "Restored $name"
     fi
+}
+
+# Repository settings are authoritative except for work marketplace state,
+# including explicit false values for locally disabled work plugins.
+merge_settings_config() {
+    local src="$1"
+    local dest="$2"
+    local name="$3"
+    local repo_content local_content merged
+
+    [ -f "$src" ] || return 0
+    mkdir -p "$(dirname "$dest")"
+    repo_content=$(expand_portable_path < "$src")
+    local_content='{}'
+    if [ -f "$dest" ]; then
+        local_content=$(<"$dest")
+    fi
+
+    if ! merged=$(jq -a -n \
+        --argjson repo "$repo_content" \
+        --argjson local "$local_content" '
+        ($local.enabledPlugins // {}
+            | to_entries
+            | map(select(.key | endswith("@vend-plugins")))
+            | from_entries) as $work_plugins
+        | (if (($local.extraKnownMarketplaces // {}) | has("vend-plugins"))
+            then {"vend-plugins": $local.extraKnownMarketplaces["vend-plugins"]}
+            else {} end) as $work_marketplace
+        | $repo
+        | .enabledPlugins = ((.enabledPlugins // {}) + $work_plugins)
+        | .extraKnownMarketplaces = ((.extraKnownMarketplaces // {}) + $work_marketplace)
+    ' 2>/dev/null); then
+        log_with_level "ERROR" "Failed to merge $name"
+        return 1
+    fi
+
+    printf '%s\n' "$merged" > "$dest.tmp"
+    mv "$dest.tmp" "$dest"
+    log_with_level "SUCCESS" "Restored $name (preserved local work-plugin state)"
+}
+
+validate_restore_inputs() {
+    local file
+
+    if ! command -v jq >/dev/null 2>&1; then
+        log_with_level "ERROR" "jq is required for restore operations"
+        return 1
+    fi
+
+    for file in \
+        "$CLAUDE_CONFIG_DIR/settings.json" \
+        "$CLAUDE_CONFIG_DIR/installed_plugins.json" \
+        "$CLAUDE_CONFIG_DIR/known_marketplaces.json" \
+        "$CLAUDE_CONFIG_DIR/mcp_servers.json" \
+        "$CLAUDE_HOME/settings.json" \
+        "$CLAUDE_HOME/plugins/installed_plugins.json" \
+        "$CLAUDE_HOME/plugins/known_marketplaces.json" \
+        "$CLAUDE_USER_CONFIG"; do
+        [ -f "$file" ] || continue
+        if ! jq empty "$file" >/dev/null 2>&1; then
+            log_with_level "ERROR" "Malformed JSON; restore aborted before changes: $file"
+            return 1
+        fi
+    done
 }
 
 # Function to merge plugin configs, preserving local plugins from protected marketplaces
@@ -280,7 +325,8 @@ merge_plugin_config() {
     # Build final merged object
     local merged
     merged=$(jq -n --argjson version "$version" --argjson plugins "$merged_plugins" '{version: $version, plugins: $plugins}')
-    printf '%s\n' "$merged" > "$dest"
+    printf '%s\n' "$merged" > "$dest.tmp"
+    mv "$dest.tmp" "$dest"
 
     local preserved_count
     preserved_count=$(echo "$preserved_plugins" | jq 'keys | length' 2>/dev/null || echo "0")
@@ -357,7 +403,8 @@ merge_marketplace_config() {
         return 1
     fi
 
-    printf '%s\n' "$merged" > "$dest"
+    printf '%s\n' "$merged" > "$dest.tmp"
+    mv "$dest.tmp" "$dest"
 
     local preserved_count
     preserved_count=$(echo "$preserved_marketplaces" | jq 'keys | length' 2>/dev/null || echo "0")
@@ -579,10 +626,6 @@ restore_mcp_servers() {
         return
     fi
 
-    if [ ! -f "$user_config" ]; then
-        printf '{}\n' > "$user_config"
-    fi
-
     managed_servers=$(jq 'keys' "$src") || {
         log_with_level "ERROR" "Failed to read managed MCP server names"
         return 1
@@ -621,13 +664,16 @@ restore_mcp_servers() {
 
     # Merge repo servers into the user-scoped registry. Repo servers take
     # precedence while unrelated local entries and all other user state remain.
-    local updated
+    local updated user_content='{}'
+    if [ -f "$user_config" ]; then
+        user_content=$(<"$user_config")
+    fi
     if ! updated=$(jq -a --argjson mcp "$mcp_with_secrets" --argjson managed "$managed_servers" '
         .mcpServers = (
             ((.mcpServers // {}) | with_entries(select(.key as $key | $managed | index($key) | not)))
             + $mcp
         )
-    ' "$user_config" 2>/dev/null); then
+    ' <<< "$user_content" 2>/dev/null); then
         log_with_level "ERROR" "Failed to merge MCP servers into $user_config"
         return 1
     fi
@@ -644,22 +690,64 @@ restore_mcp_servers() {
     fi
 }
 
-# Main restore logic
+main() {
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --force)
+            FORCE_RESTORE=true
+            shift
+            ;;
+        --skip-backup)
+            SKIP_BACKUP=true
+            shift
+            ;;
+        -h|--help)
+            show_help
+            return 0
+            ;;
+        *)
+            log_with_level "ERROR" "Unknown option: $1"
+            return 1
+            ;;
+    esac
+done
+
+if [ ! -d "$CLAUDE_CONFIG_DIR" ]; then
+    log_with_level "INFO" "No Claude configuration found in repository at $CLAUDE_CONFIG_DIR"
+    return 0
+fi
+
+if [ ! -f "$CLAUDE_CONFIG_DIR/settings.json" ] && \
+   [ ! -f "$CLAUDE_CONFIG_DIR/installed_plugins.json" ] && \
+   [ ! -f "$CLAUDE_CONFIG_DIR/known_marketplaces.json" ] && \
+   [ ! -f "$CLAUDE_CONFIG_DIR/keybindings.json" ] && \
+   [ ! -f "$CLAUDE_CONFIG_DIR/CLAUDE.md" ] && \
+   [ ! -f "$AGENT_CONFIG_DIR/installed_skills.json" ] && \
+   [ ! -f "$AGENT_CONFIG_DIR/AGENTS.md" ]; then
+    log_with_level "INFO" "No Claude configuration files found in repository"
+    return 0
+fi
+
 if [ "$FORCE_RESTORE" = true ]; then
     log_with_level "INFO" "Force restoring Claude Code configuration..."
 elif is_repo_newer; then
     log_with_level "INFO" "Repository config is newer, restoring Claude Code configuration..."
 else
     log_with_level "INFO" "Local Claude config is up-to-date, skipping restore"
-    exit 0
+    return 0
+fi
+
+validate_restore_inputs
+if [ "$SKIP_BACKUP" != true ]; then
+    create_restoration_point
 fi
 
 # Create Claude directories if needed
 mkdir -p "$CLAUDE_HOME"
 mkdir -p "$CLAUDE_HOME/plugins"
 
-# Restore settings.json (simple overwrite, no sensitive data)
-restore_config_file \
+# Restore settings.json while retaining local work marketplace state.
+merge_settings_config \
     "$CLAUDE_CONFIG_DIR/settings.json" \
     "$CLAUDE_HOME/settings.json" \
     "settings.json"
@@ -770,3 +858,14 @@ echo "   - statusline/Config.toml"
 echo "   - ~/.claude.json MCP servers (user scope, env vars from ~/.secrets)"
 echo ""
 echo "💡 Restart Claude Code for changes to take effect"
+}
+
+if [[ -n "${ZSH_EVAL_CONTEXT:-}" ]]; then
+    if [[ "${ZSH_EVAL_CONTEXT}" != *file* ]]; then
+        main "$@"
+    fi
+else
+    if [[ "${BASH_SOURCE[0]:-$0}" == "${0}" ]]; then
+        main "$@"
+    fi
+fi
