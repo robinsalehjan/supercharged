@@ -18,6 +18,7 @@ CLAUDE_PROJECT_SKILLS_DIR="$PROJECT_ROOT/.claude/skills"
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
 
 FORCE_RESTORE=false
+SKIP_BACKUP=false
 
 show_help() {
     echo "Usage: $(basename "$0") [OPTIONS]"
@@ -26,6 +27,7 @@ show_help() {
     echo ""
     echo "Options:"
     echo "  --force      Force restore regardless of timestamps"
+    echo "  --skip-backup  Internal: use an orchestrator-created restoration point"
     echo "  -h, --help   Show this help message"
 }
 
@@ -65,76 +67,6 @@ get_newest_mtime_in_dir() {
     echo "$newest"
 }
 
-is_local_codex_config_table() {
-    local line="$1"
-
-    case "$line" in
-        "[projects."*|\
-        "[tui.model_availability_nux]"|\
-        "[notice]"|\
-        "[notice."*|\
-        "[hooks.state]"|\
-        "[hooks.state."*|\
-        "[desktop]"|\
-        "[marketplaces."*|\
-        "[plugins."*|\
-        "[apps.connector_"*|\
-        "[mcp_servers.plugin_"*|\
-        "[mcp_servers.node_repl]"|\
-        "[mcp_servers.node_repl."*)
-            return 0
-            ;;
-        *)
-            return 1
-            ;;
-    esac
-}
-
-is_local_codex_config_key() {
-    local line="$1"
-
-    case "$line" in
-        "notify = "*|\
-        "service_tier = "*)
-            return 0
-            ;;
-        *)
-            return 1
-            ;;
-    esac
-}
-
-extract_local_codex_top_level() {
-    local in_top_level=true
-
-    while IFS= read -r line || [ -n "$line" ]; do
-        if [[ "$line" == \[* ]]; then
-            in_top_level=false
-        fi
-
-        if [ "$in_top_level" = true ] && is_local_codex_config_key "$line"; then
-            printf '%s\n' "$line"
-        fi
-    done
-}
-
-extract_local_codex_tables() {
-    local keep=false
-
-    while IFS= read -r line || [ -n "$line" ]; do
-        if [[ "$line" == \[* ]]; then
-            keep=false
-            if is_local_codex_config_table "$line"; then
-                keep=true
-            fi
-        fi
-
-        if [ "$keep" = true ]; then
-            printf '%s\n' "$line"
-        fi
-    done
-}
-
 restore_config_file() {
     local src="$1"
     local dest="$2"
@@ -142,7 +74,8 @@ restore_config_file() {
 
     if [ -f "$src" ]; then
         mkdir -p "$(dirname "$dest")"
-        expand_portable_path < "$src" > "$dest"
+        expand_portable_path < "$src" > "$dest.tmp"
+        mv "$dest.tmp" "$dest"
         log_with_level "SUCCESS" "Restored $name"
     fi
 }
@@ -264,6 +197,7 @@ restore_codex_config() {
     local dest="$CODEX_HOME/config.toml"
     local local_top_level=""
     local local_tables=""
+    local local_features=""
 
     if [ ! -f "$src" ]; then
         log_with_level "WARN" "codex_config/config.toml not found"
@@ -275,6 +209,7 @@ restore_codex_config() {
     if [ -f "$dest" ]; then
         local_top_level=$(extract_local_codex_top_level < "$dest")
         local_tables=$(extract_local_codex_tables < "$dest")
+        local_features=$(extract_local_codex_features < "$dest")
     fi
 
     {
@@ -282,7 +217,7 @@ restore_codex_config() {
             printf '%s\n\n' "$local_top_level"
         fi
 
-        expand_portable_path < "$src"
+        expand_portable_path < "$src" | merge_local_codex_features "$local_features"
     } > "$dest.tmp"
 
     if [ -n "$local_tables" ]; then
@@ -366,6 +301,10 @@ main() {
                 FORCE_RESTORE=true
                 shift
                 ;;
+            --skip-backup)
+                SKIP_BACKUP=true
+                shift
+                ;;
             -h|--help)
                 show_help
                 exit 0
@@ -396,6 +335,10 @@ main() {
     else
         log_with_level "INFO" "Local Codex config is up-to-date, skipping restore"
         exit 0
+    fi
+
+    if [ "$SKIP_BACKUP" != true ]; then
+        create_restoration_point
     fi
 
     mkdir -p "$CODEX_HOME"

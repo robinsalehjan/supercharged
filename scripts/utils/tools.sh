@@ -136,7 +136,13 @@ setup_code_review_graph() {
     fi
 
     if command_exists code-review-graph; then
-        log_with_level "INFO" "code-review-graph already installed, checking for extras..."
+        log_with_level "INFO" "Upgrading code-review-graph to the latest release..."
+        if pipx upgrade code-review-graph >/dev/null 2>&1; then
+            log_with_level "SUCCESS" "code-review-graph upgraded"
+        else
+            log_with_level "WARN" "code-review-graph upgrade failed; keeping the installed version"
+        fi
+        log_with_level "INFO" "Checking code-review-graph extras..."
 
         # Check if extras are installed in the pipx venv (not system Python)
         local missing_extras=false
@@ -270,7 +276,7 @@ WATCHER_EOF
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
-        <string>/opt/homebrew/bin:${HOME}/.local/bin:/usr/bin:/bin</string>
+        <string>/opt/homebrew/bin:/usr/local/bin:${HOME}/.local/bin:/usr/bin:/bin</string>
     </dict>
     <key>RunAtLoad</key>
     <true/>

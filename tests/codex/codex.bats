@@ -181,6 +181,33 @@ EOF
   [[ "$output" != *'model = "gpt-5.5"'* ]]
 }
 
+@test "extract_local_codex_features keeps js_repl inside features" {
+  config_file="$TEST_TEMP_DIR/config.toml"
+  printf '%s\n' '[features]' 'hooks = true' 'js_repl = false' '' '[tui]' 'status_line_use_colors = true' > "$config_file"
+
+  run zsh -c "source '$RESTORE_SCRIPT'; extract_local_codex_features < '$config_file'"
+
+  [ "$status" -eq 0 ]
+  [ "$output" = 'js_repl = false' ]
+}
+
+@test "merge_local_codex_features restores js_repl without duplicates" {
+  run zsh -c "source '$RESTORE_SCRIPT'; printf '%s\n' '[features]' 'hooks = true' 'js_repl = true' '' '[tui]' 'status_line_use_colors = true' | merge_local_codex_features 'js_repl = false'"
+
+  [ "$status" -eq 0 ]
+  [ "$(printf '%s\n' "$output" | grep -c '^js_repl = ')" -eq 1 ]
+  [[ "$output" == *'js_repl = false'* ]]
+  [[ "$output" != *'js_repl = true'* ]]
+}
+
+@test "merge_local_codex_features creates a missing features table" {
+  run zsh -c "source '$RESTORE_SCRIPT'; printf '%s\n' 'model = \"gpt-5.6-sol\"' '[tui]' 'status_line_use_colors = true' | merge_local_codex_features 'js_repl = true'"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'[features]'* ]]
+  [[ "$output" == *'js_repl = true'* ]]
+}
+
 @test "filter_shared_codex_config removes hook trust state" {
   config_file="$TEST_TEMP_DIR/config.toml"
   cat > "$config_file" <<'EOF'
@@ -251,6 +278,17 @@ EOF
 
   run grep -F '[mcp_servers.openaiDeveloperDocs]' "$config"
   [ "$status" -eq 0 ]
+
+  run grep -F '[mcp_servers.axiom]' "$config"
+  [ "$status" -eq 0 ]
+
+  run grep -F '[mcp_servers.xcode]' "$config"
+  [ "$status" -eq 0 ]
+}
+
+@test "code-review-graph configuration follows latest everywhere" {
+  ! grep -R -E 'code-review-graph@[0-9]' "$PROJECT_ROOT/.mcp.json" "$PROJECT_ROOT/codex_config/config.toml"
+  grep -F 'pipx upgrade code-review-graph' "$PROJECT_ROOT/scripts/utils/tools.sh"
 }
 
 @test "codex hooks include RTK pre-tool enforcement" {

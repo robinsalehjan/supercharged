@@ -6,16 +6,18 @@ This document covers installed tools, setup options, customization points, and c
 
 ```bash
 npm run setup                 # Fresh install
-npm run update                # Backup agents, sync dotfiles/skills, then update components
+npm run update                # Sync dotfiles/skills, then update components
+npm run update:with-backup    # Capture live agent config, then update components
 npm run update:dry-run        # Read-only preview; does not update or clean Homebrew
 npm run update:only -- brew   # Sync dotfiles/skills, then update one component
 npm run validate              # Verify installed tools and configuration
 npm run restore               # Restore from latest backup
 npm run restore:all           # Restore Claude, Codex, and dotfiles
+npm run restore:all -- --force # Force the all-in-one restore
 npm run backup:all            # Backup Claude and Codex config
 npm run install:skills        # Install, update, or safely prune shared git skills
 npm test                      # Run BATS tests
-npm run lint                  # ShellCheck setup scripts, utilities, and test helpers
+npm run lint                  # ShellCheck, zsh syntax checks, and actionlint
 npm run scan:secrets          # Scan repository paths for likely secrets
 ```
 
@@ -23,17 +25,17 @@ Run `npm run help` for the complete command list.
 
 ### Existing Machine: Restore Configuration Only
 
-Use the forced restore sequence when an existing machine should adopt the repository's Claude Code, Codex, and dotfile defaults even if its local agent configuration has newer modification times:
+Use the forced orchestrated restore when an existing machine should adopt the repository's Claude Code, Codex, and dotfile defaults even if its local agent configuration has newer modification times:
 
 ```bash
-npm run restore:claude -- --force &&
-npm run restore:codex -- --force &&
-npm run restore:dotfiles
+npm run restore:all -- --force
 ```
 
-These commands do not run `mac.sh`, Homebrew Bundle, or dependency updates and therefore do not install or remove applications. By comparison, `npm run restore:all` uses timestamp-gated Claude and Codex restores and may skip them when the local configuration is newer.
+The orchestrator creates exactly one configuration-only snapshot, then passes an internal skip flag to each restore stage. It does not run `mac.sh`, Homebrew Bundle, or dependency updates and therefore does not install or remove applications. Without `--force`, Claude and Codex remain timestamp-gated.
 
-On work machines, `restore:dotfiles` replaces `~/.gitconfig` with the tracked personal identity; restore the appropriate work identity afterward when necessary. Local-only Claude work-plugin registries are preserved, but their enabled state should be verified after a forced restore.
+`~/.gitconfig` contains portable shared settings and includes `~/.gitconfig.local` for machine identity. Before the first replacement, existing `user.*` values are migrated when the local file does not yet exist. Interactive setup prompts for non-empty name and email on a new machine; restore-only commands never prompt and warn when identity is unset. Claude restore preserves `@vend-plugins` enabled/disabled values and the matching marketplace entry.
+
+Snapshots cover overwritten dotfiles, Git identity, Claude configuration/registries/instructions/statusline/user MCP state, and Codex configuration/hooks/rules/skills. Presence manifests let rollback remove restore-created files. Auth, secrets, sessions, histories, logs, databases, plugin caches, and packages are excluded; plugin reinstall may be necessary after rollback. Legacy backups without a manifest restore available copies but cannot remove newly created files.
 
 ### New Machine: Install the Full Baseline
 
@@ -83,7 +85,7 @@ Shared git-cloned skills are declared in `agent_config/installed_skills.json`. I
 
 Claude and Codex share the four repository skills in `.claude/skills/`; `restore:codex` mirrors them into Codex's skill layout. Git-cloned skills in `agent_config/installed_skills.json` are also installed into both agent homes. Claude plugins and Codex plugins can contribute additional tool-specific skills, so the complete runtime skill lists are intentionally not identical.
 
-The compatible shared MCP set is code-review-graph, XcodeBuildMCP, and Cupertino. Claude reads code-review-graph from project `.mcp.json` and the other two from the explicit user registry in `claude_config/mcp_servers.json`; Codex has equivalent entries in `codex_config/config.toml`. Codex-only OpenAI documentation and disabled computer-use entries remain Codex-specific. Claude user-local MCP entries are preserved during restore and never imported by backup; edit the tracked registry intentionally when adding a portable server.
+The compatible shared MCP set is code-review-graph, XcodeBuildMCP, and Cupertino. Claude reads unpinned code-review-graph from project `.mcp.json` and the other two from `claude_config/mcp_servers.json`; Codex has equivalent entries in `codex_config/config.toml`. Axiom, Apple's `xcode` bridge, OpenAI developer docs, and the disabled computer-use bridge are Codex-only. Claude user-local MCP entries are preserved during restore and never imported by backup. code-review-graph intentionally follows latest: setup and update upgrade an existing pipx installation.
 
 ## Personal Machine Baseline
 
@@ -132,7 +134,7 @@ vadimcn.vscode-lldb
 vscode-icons-team.vscode-icons
 ```
 
-The current Codex baseline selects `gpt-5.6-sol`, high reasoning effort, the pragmatic personality, cached web search, the `supercharged` permission profile, and the configured status line. Its shared MCP inventory includes code-review-graph, XcodeBuildMCP, Cupertino, OpenAI developer docs, and a disabled computer-use entry. Inspect `codex_config/config.toml` for the exact settings; use `$HOME` in any tracked path so the configuration remains portable.
+The current Codex baseline selects `gpt-5.6-sol`, high reasoning effort, the pragmatic personality, cached web search, the `supercharged` permission profile, and the configured status line. Its MCP inventory includes shared code-review-graph, XcodeBuildMCP, and Cupertino plus Codex-only Axiom, Apple's `xcode` bridge, OpenAI developer docs, and the disabled computer-use bridge. Inspect `codex_config/config.toml` for exact settings; use `$HOME` in tracked paths.
 
 The audit intentionally does not copy credentials or runtime state. Codex authentication, histories, logs, sessions, memories, databases, caches, project trust, connector state, desktop state, local approval rules, and project-specific MCP servers such as the personal Firebase entry remain machine-local. Backup and restore preserve those Firebase and runtime tables without writing them to `codex_config/config.toml`. Claude work-only marketplaces and plugins are kept in ignored `.local.json` overlays. Files under `dot_files/.secrets/` are templates only, including the `REPLICATE_API_TOKEN` placeholder.
 
@@ -163,6 +165,7 @@ In the ChatGPT desktop app, use **Set up Remote** and follow the current [OpenAI
 - `.zshrc`
 - `.zprofile`
 - `.gitconfig`
+- `.gitconfig.local` is not copied from the repository; it stores machine-local identity and is included in rollback snapshots
 - `.gitignore_global`
 - `.p10k.zsh`
 - `.tool-versions`

@@ -52,7 +52,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "/opt/homebrew/bin/bash ~/.claude/statusline/statusline.sh"
+    "command": "bash ~/.claude/statusline/statusline.sh"
   },
   "enabledPlugins": {
     "hookify@claude-plugins-official": true,

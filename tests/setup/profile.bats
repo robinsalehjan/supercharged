@@ -61,6 +61,14 @@ teardown() {
   [ "$status" -eq 1 ]
 }
 
+@test "setup orchestrator creates one snapshot and skips nested backups" {
+  setup_script="$PROJECT_ROOT/scripts/setup.sh"
+
+  [ "$(grep -c '^create_restoration_point$' "$setup_script")" -eq 1 ]
+  grep -F 'setup-profile.sh" --skip-backup' "$setup_script"
+  grep -F 'mac.sh" --skip-backup' "$setup_script"
+}
+
 @test "normalize_yes_no_preference constrains shell-like input" {
   run normalize_yes_no_preference '$(touch "$HOME/pwned")' "Y"
 
@@ -113,8 +121,52 @@ teardown() {
 
   local backup_dir
   backup_dir=$(cat "$HOME/.supercharged_last_backup")
-  [ -f "$backup_dir/.zshrc" ]
-  [ -f "$backup_dir/.gitconfig" ]
+  [ -f "$backup_dir/files/.zshrc" ]
+  [ -f "$backup_dir/files/.gitconfig" ]
+}
+
+@test "managed git config keeps identity in a local include" {
+  grep -F '[include]' "$DOT_FILES_DIR/.gitconfig"
+  grep -F 'path = ~/.gitconfig.local' "$DOT_FILES_DIR/.gitconfig"
+  ! grep -F '[user]' "$DOT_FILES_DIR/.gitconfig"
+}
+
+@test "install_managed_git_config migrates existing user values once" {
+  cat > "$HOME/.gitconfig" <<'EOF'
+[user]
+  name = Existing User
+  email = existing@example.com
+  signingkey = ABC123
+EOF
+
+  run install_managed_git_config
+
+  [ "$status" -eq 0 ]
+  [ "$(git config --file "$HOME/.gitconfig.local" user.name)" = "Existing User" ]
+  [ "$(git config --file "$HOME/.gitconfig.local" user.email)" = "existing@example.com" ]
+  [ "$(git config --file "$HOME/.gitconfig.local" user.signingkey)" = "ABC123" ]
+  grep -F 'path = ~/.gitconfig.local' "$HOME/.gitconfig"
+}
+
+@test "install_managed_git_config preserves an existing local identity" {
+  printf '%s\n' '[user]' '  name = Local User' '  email = local@example.com' > "$HOME/.gitconfig.local"
+  printf '%s\n' '[user]' '  name = Old User' '  email = old@example.com' > "$HOME/.gitconfig"
+
+  install_managed_git_config
+
+  [ "$(git config --file "$HOME/.gitconfig.local" user.name)" = "Local User" ]
+  [ "$(git config --file "$HOME/.gitconfig.local" user.email)" = "local@example.com" ]
+}
+
+@test "interactive setup prompts until Git name and email are non-empty" {
+  install_managed_git_config >/dev/null
+  rm -f "$HOME/.gitconfig.local"
+
+  run bash -c "printf '\nPrompted User\n\nprompted@example.com\n' | zsh -c 'export HOME=\"$HOME\"; source \"$PROJECT_ROOT/scripts/utils.sh\"; setup_git_config'"
+
+  [ "$status" -eq 0 ]
+  [ "$(git config --file "$HOME/.gitconfig.local" user.name)" = "Prompted User" ]
+  [ "$(git config --file "$HOME/.gitconfig.local" user.email)" = "prompted@example.com" ]
 }
 
 # =============================================================================

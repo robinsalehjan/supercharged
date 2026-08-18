@@ -15,56 +15,24 @@ CODEX_CONFIG_DIR="$PROJECT_ROOT/codex_config"
 AGENT_CONFIG_DIR="$PROJECT_ROOT/agent_config"
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
 
-is_local_codex_config_table() {
-    local line="$1"
-
-    case "$line" in
-        "[projects."*|\
-        "[tui.model_availability_nux]"|\
-        "[notice]"|\
-        "[notice."*|\
-        "[hooks.state]"|\
-        "[hooks.state."*|\
-        "[desktop]"|\
-        "[marketplaces."*|\
-        "[plugins."*|\
-        "[apps.connector_"*|\
-        "[mcp_servers.plugin_"*|\
-        "[mcp_servers.node_repl]"|\
-        "[mcp_servers.node_repl."*)
-            return 0
-            ;;
-        *)
-            return 1
-            ;;
-    esac
-}
-
-is_local_codex_config_key() {
-    local line="$1"
-
-    case "$line" in
-        "notify = "*|\
-        "service_tier = "*|\
-        "js_repl = "*)
-            return 0
-            ;;
-        *)
-            return 1
-            ;;
-    esac
-}
-
 filter_shared_codex_config() {
     local skip=false
     local emitted_content=false
+    local in_features=false
 
     while IFS= read -r line || [ -n "$line" ]; do
         if [[ "$line" == \[* ]]; then
             skip=false
+            in_features=false
             if is_local_codex_config_table "$line"; then
                 skip=true
+            elif [ "$line" = "[features]" ]; then
+                in_features=true
             fi
+        fi
+
+        if [ "$in_features" = true ] && is_local_codex_feature_key "$line"; then
+            continue
         fi
 
         if [ "$skip" = false ] && ! is_local_codex_config_key "$line"; then

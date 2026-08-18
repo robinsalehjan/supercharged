@@ -41,14 +41,13 @@ teardown() {
   [[ "$output" == *"-- --force"* ]]
 }
 
-@test "restore:agents includes Claude and Codex restores" {
+@test "restore:agents uses the single-snapshot orchestrator" {
   command -v jq >/dev/null || skip "jq not installed"
 
   run jq -r '.scripts["restore:agents"]' "$PROJECT_ROOT/package.json"
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"restore:claude"* ]]
-  [[ "$output" == *"restore:codex"* ]]
+  [[ "$output" == *"restore-all.sh --agents-only"* ]]
 }
 
 @test "backup:all includes Claude and Codex backups" {
@@ -69,6 +68,7 @@ teardown() {
   [ "$status" -eq 0 ]
   [[ "$output" == *"Update Commands:"* ]]
   [[ "$output" == *"npm run update"* ]]
+  [[ "$output" == *"npm run update:with-backup"* ]]
   [[ "$output" == *"npm run update:dry-run"* ]]
   [[ "$output" == *"npm run update:only"* ]]
 }
