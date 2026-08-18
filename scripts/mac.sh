@@ -186,8 +186,10 @@ tap \"peripheryapp/periphery\"
 # ships an older standalone build and its presence prevents \`brew\` from linking
 # the formula's \`periphery\` binary into /opt/homebrew/bin, breaking PATH lookup.
 brew \"periphery\", trusted: true
+# Official tap and fully qualified formula keep XcodeBuildMCP on the current
+# Homebrew release whenever the normal `brew update` + `brew upgrade` path runs.
 tap \"getsentry/xcodebuildmcp\"
-brew \"xcodebuildmcp\", trusted: true"
+brew \"getsentry/xcodebuildmcp/xcodebuildmcp\", trusted: true"
     fi
 
     if [[ "${INSTALL_DEV_TOOLS:-Y}" =~ ^[Yy] ]]; then

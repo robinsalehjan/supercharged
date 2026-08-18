@@ -1,0 +1,3 @@
+# Review profile. Start Codex with `codex -p review` for more deliberate
+# analysis while retaining the base code-review-graph and developer-doc tools.
+model_reasoning_effort = "xhigh"

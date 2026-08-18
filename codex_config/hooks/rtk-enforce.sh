@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-# Codex PreToolUse hook that mimics Claude's RTK rewrite behavior as closely as
-# Codex currently supports: block noisy commands and tell Codex the RTK command
-# to retry. Codex documents blocking hook decisions, but not input rewriting.
+# Codex PreToolUse hook that rewrites noisy commands through RTK. Codex supports
+# non-blocking rewrites when a hook returns permissionDecision=allow together
+# with hookSpecificOutput.updatedInput.command.
 
 set -u
 
@@ -27,6 +27,12 @@ if [ -z "$command" ]; then
   exit 0
 fi
 
+# An RTK-wrapped command has already passed through this hook. Do not ask RTK
+# to rewrite it again, even if a future RTK release returns a nested wrapper.
+case "$command" in
+  rtk\ *) exit 0 ;;
+esac
+
 rewritten=$(rtk rewrite "$command" 2>/dev/null)
 rewrite_status=$?
 
@@ -42,5 +48,5 @@ if [ -z "$rewritten" ] || [ "$rewritten" = "$command" ]; then
   exit 0
 fi
 
-jq -cn --arg reason "Use RTK for concise output. Retry with: $rewritten" \
-  '{decision:"block", reason:$reason}'
+jq -cn --arg command "$rewritten" \
+  '{hookSpecificOutput:{hookEventName:"PreToolUse", permissionDecision:"allow", updatedInput:{command:$command}}}'

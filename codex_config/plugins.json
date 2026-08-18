@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "marketplaces": [
+    {
+      "name": "axiom-marketplace",
+      "source": "CharlesWiltgen/Axiom"
+    }
+  ],
+  "plugins": [
+    {
+      "id": "axiom@axiom-marketplace",
+      "required": true,
+      "enabled": true
+    }
+  ]
+}

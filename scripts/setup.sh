@@ -8,4 +8,6 @@ source "$SCRIPT_DIR/utils.sh"
 create_restoration_point
 "$SCRIPT_DIR/setup-profile.sh" --skip-backup
 "$SCRIPT_DIR/mac.sh" --skip-backup
+"$SCRIPT_DIR/install-codex-plugins.sh"
 "$SCRIPT_DIR/utils.sh" validate
+"$SCRIPT_DIR/audit-agents.sh"
