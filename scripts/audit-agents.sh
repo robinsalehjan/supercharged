@@ -107,8 +107,10 @@ validate_toml_shape() {
     done < "$file"
 }
 
-base_mcp_names=$(sed -n 's/^\[mcp_servers\.\([^].]*\)\]$/\1/p' "$CODEX_CONFIG_DIR/config.toml" | sort | tr '\n' ' ')
-apple_mcp_names=$(sed -n 's/^\[mcp_servers\.\([^].]*\)\]$/\1/p' "$CODEX_CONFIG_DIR/apple.config.toml" | sort | tr '\n' ' ')
+# A fixed collation keeps the inventory assertion deterministic on developer
+# machines and macOS CI runners with different locale defaults.
+base_mcp_names=$(sed -n 's/^\[mcp_servers\.\([^].]*\)\]$/\1/p' "$CODEX_CONFIG_DIR/config.toml" | LC_ALL=C sort | tr '\n' ' ')
+apple_mcp_names=$(sed -n 's/^\[mcp_servers\.\([^].]*\)\]$/\1/p' "$CODEX_CONFIG_DIR/apple.config.toml" | LC_ALL=C sort | tr '\n' ' ')
 if validate_toml_shape "$CODEX_CONFIG_DIR/config.toml" && \
    validate_toml_shape "$CODEX_CONFIG_DIR/apple.config.toml" && \
    validate_toml_shape "$CODEX_CONFIG_DIR/review.config.toml" && \
