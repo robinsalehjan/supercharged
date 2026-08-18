@@ -21,6 +21,24 @@ npm run scan:secrets          # Scan repository paths for likely secrets
 
 Run `npm run help` for the complete command list.
 
+### Existing Machine: Restore Configuration Only
+
+Use the forced restore sequence when an existing machine should adopt the repository's Claude Code, Codex, and dotfile defaults even if its local agent configuration has newer modification times:
+
+```bash
+npm run restore:claude -- --force &&
+npm run restore:codex -- --force &&
+npm run restore:dotfiles
+```
+
+These commands do not run `mac.sh`, Homebrew Bundle, or dependency updates and therefore do not install or remove applications. By comparison, `npm run restore:all` uses timestamp-gated Claude and Codex restores and may skip them when the local configuration is newer.
+
+On work machines, `restore:dotfiles` replaces `~/.gitconfig` with the tracked personal identity; restore the appropriate work identity afterward when necessary. Local-only Claude work-plugin registries are preserved, but their enabled state should be verified after a forced restore.
+
+### New Machine: Install the Full Baseline
+
+Use `npm run setup` for a new machine when the complete interactive dependency and application baseline is wanted. The baseline includes personal applications such as Spotify, Mullvad VPN, DaisyDisk, and Numbers. Remove unwanted applications after setup or edit `build_brewfile` before running it.
+
 ## Setup Options
 
 Setup stores interactive choices in `~/.supercharged_preferences`.

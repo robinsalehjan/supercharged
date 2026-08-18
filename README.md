@@ -49,7 +49,25 @@ npm run help               # Show all commands
 
 ## Reproduced environment
 
-The repository is the portable source of truth for the audited personal-machine setup: Homebrew formulae and applications, Mac App Store applications, VS Code extensions, asdf runtime pins, dotfiles, and sanitized Claude Code and Codex configuration. Run `npm run setup` on a new Mac to install the full dependency baseline. On an existing installation, `npm run restore:all` restores agent configuration and dotfiles only; it does not install or update packages.
+The repository is the portable source of truth for the audited personal-machine setup: Homebrew formulae and applications, Mac App Store applications, VS Code extensions, asdf runtime pins, dotfiles, and sanitized Claude Code and Codex configuration.
+
+### Existing machine: configuration only
+
+To force the repository versions of Claude Code, Codex, and the managed dotfiles onto an existing machine, regardless of local modification times, run:
+
+```bash
+npm run restore:claude -- --force &&
+npm run restore:codex -- --force &&
+npm run restore:dotfiles
+```
+
+This does not run the setup installer, Homebrew Bundle, or package updates, so it does not install or remove applications. The shorter `npm run restore:all` command performs the same categories of restore but may skip Claude or Codex when the local configuration is newer.
+
+On a work machine, note that `restore:dotfiles` replaces `~/.gitconfig` with the tracked identity. Restore the appropriate work identity afterward if it differs. Also verify that local-only Claude work plugins remain enabled after the forced restore.
+
+### New machine: full baseline
+
+Run `npm run setup` when you want the complete interactive package and application baseline. It includes personal applications such as Spotify, Mullvad VPN, DaisyDisk, and Numbers; remove unwanted applications afterward or adjust `build_brewfile` before setup.
 
 Credentials, authentication state, histories, logs, sessions, caches, and other machine-local runtime data are intentionally excluded. Secret files contain variable-name templates only; populate the corresponding values locally. See the [reference guide](./docs/REFERENCE.md#personal-machine-baseline) for the tracked inventory and synchronization boundaries.
 
