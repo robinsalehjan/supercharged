@@ -50,6 +50,9 @@ jobs:
     - name: Run secret scan
       run: npm run scan:secrets
 
+    - name: Audit tracked agent configuration
+      run: npm run audit:agents -- --repo-only
+
     - name: Run BATS tests
       run: npm test
 

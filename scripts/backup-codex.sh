@@ -18,20 +18,16 @@ CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
 filter_shared_codex_config() {
     local skip=false
     local emitted_content=false
-    local in_features=false
 
     while IFS= read -r line || [ -n "$line" ]; do
         if [[ "$line" == \[* ]]; then
             skip=false
-            in_features=false
-            if is_local_codex_config_table "$line"; then
+            if is_removed_codex_config_table "$line" || is_local_codex_config_table "$line"; then
                 skip=true
-            elif [ "$line" = "[features]" ]; then
-                in_features=true
             fi
         fi
 
-        if [ "$in_features" = true ] && is_local_codex_feature_key "$line"; then
+        if is_removed_codex_feature_key "$line"; then
             continue
         fi
 
@@ -81,6 +77,25 @@ backup_codex_skills() {
     fi
 }
 
+backup_codex_profile() {
+    local name="$1"
+    local src="$CODEX_HOME/${name}.config.toml"
+    local dest="$CODEX_CONFIG_DIR/${name}.config.toml"
+
+    if [ ! -f "$src" ]; then
+        log_with_level "WARN" "${name}.config.toml not found; keeping tracked profile"
+        return 0
+    fi
+
+    if ! make_path_portable < "$src" > "$dest.tmp"; then
+        rm -f "$dest.tmp"
+        log_with_level "ERROR" "Failed to process ${name}.config.toml - backup aborted"
+        exit 1
+    fi
+    mv "$dest.tmp" "$dest"
+    log_with_level "SUCCESS" "Backed up ${name}.config.toml"
+}
+
 main() {
     if [ ! -d "$CODEX_HOME" ]; then
         log_with_level "ERROR" "Codex directory not found at $CODEX_HOME"
@@ -104,6 +119,9 @@ main() {
     else
         log_with_level "WARN" "config.toml not found"
     fi
+
+    backup_codex_profile "apple"
+    backup_codex_profile "review"
 
     if [ -f "$CODEX_HOME/AGENTS.md" ]; then
         if ! filter_shared_codex_agents < "$CODEX_HOME/AGENTS.md" | \
@@ -148,6 +166,8 @@ main() {
     echo ""
     echo "📦 Backed up files:"
     echo "   - codex_config/config.toml"
+    echo "   - codex_config/apple.config.toml"
+    echo "   - codex_config/review.config.toml"
     echo "   - codex_config/hooks.json"
     echo "   - codex_config/RTK.md"
     echo "   - codex_config/skills/plannotator-*"

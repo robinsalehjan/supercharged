@@ -1,12 +1,15 @@
 {
   "mcpServers": {
     "code-review-graph": {
-      "command": "uvx",
+      "command": "code-review-graph",
       "args": [
-        "code-review-graph",
         "serve"
       ],
       "type": "stdio"
+    },
+    "openaiDeveloperDocs": {
+      "type": "http",
+      "url": "https://developers.openai.com/mcp"
     }
   }
 }

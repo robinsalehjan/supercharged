@@ -15,6 +15,8 @@ _configuration_restore_paths() {
         ".claude/skills" \
         ".claude.json" \
         ".codex/config.toml" \
+        ".codex/apple.config.toml" \
+        ".codex/review.config.toml" \
         ".codex/hooks.json" \
         ".codex/RTK.md" \
         ".codex/AGENTS.md" \

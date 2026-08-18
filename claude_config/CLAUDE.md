@@ -11,7 +11,7 @@ Reserve the default (Opus) for tasks requiring deep reasoning, complex architect
 ## MCP Servers
 
 - **code-review-graph**: Project-level (`.mcp.json`) — code knowledge graph for token-efficient exploration
-- **XcodeBuildMCP**: User-level (`settings.json`) — Xcode build integration (iOS projects only)
+- **OpenAI Developer Docs**: Project-level (`.mcp.json`) — current OpenAI platform and Codex documentation
 
 ## Backed-Up Config
 

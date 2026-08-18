@@ -10,9 +10,9 @@ See [README.md](./README.md) and [docs/REFERENCE.md](./docs/REFERENCE.md) for us
 - `scripts/` - Shell scripts (mac.sh, update.sh, utils.sh, restore.sh, setup-profile.sh, help.sh, install-plugins.sh; backup-claude.sh/restore-claude.sh for Claude config)
 - `dot_files/` - Dotfiles copied to `$HOME`
 - `claude_config/` - Claude Code config backup
-- `agent_config/` - Shared global agent instructions restored to both Claude and Codex
+- `agent_config/` - Shared global instructions and canonical graph skill directories restored to Codex
 - `codex_config/` - Codex CLI/IDE config backup
-- `.claude/skills/` - Tracked project skills used by Claude and mirrored to Codex when supported
+- `.claude/skills/` - Generated flat Claude compatibility mirrors for canonical `agent_config/skills/`
 
 ## Code Conventions
 
@@ -29,9 +29,9 @@ See [README.md](./README.md) and [docs/REFERENCE.md](./docs/REFERENCE.md) for us
 ## Shared Agent Capabilities
 
 **Skills**:
-- Project skills live in `.claude/skills/*.md` because Claude can consume that format directly.
-- `npm run restore:codex` mirrors those Markdown skills into `~/.codex/skills/<name>/SKILL.md`.
-- Keep shared project skills plain Markdown with `name` and `description` frontmatter so both tools can use them.
+- Shared graph skills live canonically in `agent_config/skills/<name>/SKILL.md`.
+- `npm run restore:codex` restores those directories directly into `~/.codex/skills/`.
+- Generate the tracked Claude compatibility mirror with `scripts/generate-claude-skill-mirrors.sh`; CI checks it with `--check`.
 - Tool-specific or unsupported skills stay in the tool-specific config (`claude_config/` or `codex_config/skills/`) instead of being forced into the shared path.
 
 **MCP servers**:
@@ -53,7 +53,7 @@ npm run setup                 # Fresh install (interactive)
 npm run restore:dotfiles         # Copy managed dotfiles to $HOME; reapply Worktrunk integration
 
 # Updates
-# npm run update runs: backup:claude → backup:codex → restore:dotfiles → install:skills → update.sh
+# npm run update runs: restore:dotfiles → install:skills → install:codex-plugins → update.sh
 npm run update                    # Update all components (brew, asdf, zsh, npm, pip)
 npm run update:dry-run            # Preview outdated brew/npm packages (read-only)
 npm run update:only -- <comp>     # Sync dotfiles/skills + update one component (brew, asdf, zsh, npm, pip)
@@ -74,6 +74,8 @@ npm run restore:agents            # Restore Claude config + Codex config in one 
 npm run restore:all               # Restore Claude config + Codex config + dotfiles in one step
 npm run install:plugins           # Install all marketplaces and plugins via claude CLI
 npm run install:plugins -- --dry-run # Preview what would be installed
+npm run install:codex-plugins     # Install or refresh Axiom through the Codex plugin marketplace
+npm run install:codex-plugins -- --dry-run # Preview managed Codex plugin work
 npm run install:skills            # Install/update/prune shared git skills for Claude and Codex
 npm run install:skills -- --dry-run # Preview installs, updates, and safe removals
 
@@ -87,6 +89,8 @@ npm run release -- --dry-run patch # Preview without making changes
 # Development
 npm run lint                      # ShellCheck setup scripts, utilities, and test helpers
 npm run scan:secrets              # Scan repository paths for likely secrets
+npm run audit:agents              # Check managed Codex configuration and local agent health
+npm run audit:agents -- --repo-only # Deterministic CI-safe tracked-config audit
 npm test                          # Run all BATS tests
 npm run test:watch                # Re-run tests on change (requires nodemon)
 bats tests/<suite>/*.bats         # Run a suite (claude, codex, utils, mac, update, setup, restore, meta)
@@ -202,13 +206,14 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 
 **Codex backup/restore** (`scripts/backup-codex.sh`, `scripts/restore-codex.sh`):
 - Shared instructions: `agent_config/AGENTS.md` is restored to both `~/.codex/AGENTS.md` and `~/.claude/AGENTS.md`
-- Codex settings: `codex_config/config.toml` restores durable defaults such as model, personality, web search, feature flags, MCP settings, hook enablement, instruction discovery, and a permission profile that denies `.env*`/`.secrets` paths
-- Codex hooks and skills: `codex_config/hooks.json`, `codex_config/RTK.md`, and `codex_config/skills/plannotator-*` restore code-review-graph hooks, Plannotator Stop-hook review, Plannotator skills, and the Codex-only RTK instruction include
+- Codex settings: `codex_config/config.toml` restores lean durable defaults such as model, personality, live web search, disabled memories, base MCP settings, hook enablement, instruction discovery, and a permission profile that denies `.env*`/`.secrets` paths; `apple.config.toml` and `review.config.toml` provide `codex -p apple` and `codex -p review` overlays
+- Codex hooks and skills: `codex_config/hooks.json`, `codex_config/RTK.md`, and `codex_config/skills/plannotator-*` restore the non-blocking RTK rewrite hook, Plannotator Stop-hook review, Plannotator skills, and the Codex-only RTK instruction include; code-review-graph stays current through its launchd watcher and explicit audits
+- Codex plugins: `codex_config/plugins.json` is a sanitized desired-state registry; `npm run install:codex-plugins` uses the Codex CLI to manage Axiom while marketplace snapshots, plugin caches, credentials, and hook trust state stay local
 - Codex rules: `codex_config/rules/*.rules` restores repo-managed command deny rules that mirror the Claude hard-deny list where Codex prefix rules can express it; local approval rules in `~/.codex/rules/default.rules` remain local
 - Shared git skills: `agent_config/installed_skills.json` is installed into both `~/.claude/skills/*` and `~/.codex/skills/*` by `npm run install:skills`
-- Claude project skills: tracked `.claude/skills/*.md` files are the project-level source of truth for reusable shared skills; `restore:codex` mirrors supported Markdown skills into `~/.codex/skills/<name>/SKILL.md`
+- Shared graph skills: `agent_config/skills/<name>/SKILL.md` is the canonical source; `restore:codex` restores those directories directly while `.claude/skills/*.md` is a generated compatibility mirror
 - Local-only state excluded: `auth.json`, history, logs, sessions, memories, SQLite databases, shell snapshots, and model caches
-- Machine-local tables preserved on restore include `[projects.*]`, `[tui.model_availability_nux]`, `[notice*]`, `[hooks.state*]`, `[desktop]`, marketplace/plugin/connector tables, plugin-provided MCP tables, and `[mcp_servers.node_repl*]`
+- Machine-local tables preserved on restore include `[projects.*]`, `[tui.model_availability_nux]`, `[notice*]`, `[hooks.state*]`, `[desktop]`, marketplace/plugin/connector tables, and plugin-provided MCP tables
 - Project guidance: keep repo-specific behavior in `AGENTS.md`; keep cross-agent global preferences in `agent_config/AGENTS.md`
 
 **Post-Restore Steps** (after `npm run restore:claude` or `npm run restore:claude -- --force`):
@@ -249,7 +254,7 @@ Plugins are auto-installed during restore. `install:plugins` merges repo configs
 | Update shared agent instructions | Edit `agent_config/AGENTS.md`, then run `npm run restore:agents` |
 | Update Codex defaults | Edit `codex_config/config.toml`, then run `npm run restore:codex` |
 | Update Codex command deny rules | Edit `codex_config/rules/*.rules`, then run `npm run restore:codex` |
-| Add shared project skill rule | Create/edit `.claude/skills/<name>.md`, then run `npm run restore:codex` |
+| Add shared project skill rule | Create/edit `agent_config/skills/<name>/SKILL.md`, run `scripts/generate-claude-skill-mirrors.sh`, then run `npm run restore:codex` |
 | Add shared MCP server | Add compatible entries to `.mcp.json` and `codex_config/config.toml`; skip Codex if unsupported |
 | Update security policy | Edit `SECURITY.md`, `scripts/scan-secrets.sh`, `codex_config/rules/*.rules`, or `codex_config/hooks/` as appropriate |
 | Test security checks | Run `npm run lint`, `npm run scan:secrets`, and `npm test` |

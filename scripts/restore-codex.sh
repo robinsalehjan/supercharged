@@ -13,8 +13,6 @@ source "$(dirname "$0")/utils.sh"
 PROJECT_ROOT="$UTILS_PROJECT_ROOT"
 CODEX_CONFIG_DIR="$PROJECT_ROOT/codex_config"
 AGENT_CONFIG_DIR="$PROJECT_ROOT/agent_config"
-CLAUDE_HOME="${CLAUDE_HOME:-$HOME/.claude}"
-CLAUDE_PROJECT_SKILLS_DIR="$PROJECT_ROOT/.claude/skills"
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
 
 FORCE_RESTORE=false
@@ -126,6 +124,29 @@ restore_codex_skills() {
     fi
 }
 
+restore_shared_agent_skills() {
+    local src_dir="$AGENT_CONFIG_DIR/skills"
+    local dest_dir="$CODEX_HOME/skills"
+    local skill name copied=0
+
+    if [ ! -d "$src_dir" ]; then
+        return 0
+    fi
+
+    mkdir -p "$dest_dir"
+    while IFS= read -r skill; do
+        name=$(basename "$(dirname "$skill")")
+        rm -rf "${dest_dir:?}/${name:?}"
+        mkdir -p "$dest_dir/$name"
+        cp "$skill" "$dest_dir/$name/SKILL.md"
+        copied=$((copied + 1))
+    done < <(find "$src_dir" -mindepth 2 -maxdepth 2 -type f -name 'SKILL.md' | sort)
+
+    if [ "$copied" -gt 0 ]; then
+        log_with_level "SUCCESS" "Restored $copied canonical shared skill(s) for Codex"
+    fi
+}
+
 restore_codex_rules() {
     local src_dir="${1:-$CODEX_CONFIG_DIR/rules}"
     local dest_dir="${2:-$CODEX_HOME/rules}"
@@ -169,35 +190,11 @@ restore_codex_hook_scripts() {
     fi
 }
 
-restore_claude_project_skills_for_codex() {
-    local src_dir="${1:-$CLAUDE_PROJECT_SKILLS_DIR}"
-    local dest_dir="${2:-$CODEX_HOME/skills}"
-    local skill name copied=0
-
-    if [ ! -d "$src_dir" ]; then
-        return 0
-    fi
-
-    mkdir -p "$dest_dir"
-    while IFS= read -r skill; do
-        name=$(basename "$skill" .md)
-        rm -rf "${dest_dir:?}/${name:?}"
-        mkdir -p "$dest_dir/$name"
-        cp "$skill" "$dest_dir/$name/SKILL.md"
-        copied=$((copied + 1))
-    done < <(find "$src_dir" -maxdepth 1 -type f -name '*.md' | sort)
-
-    if [ "$copied" -gt 0 ]; then
-        log_with_level "SUCCESS" "Restored $copied Claude project skill(s) for Codex"
-    fi
-}
-
 restore_codex_config() {
     local src="$CODEX_CONFIG_DIR/config.toml"
     local dest="$CODEX_HOME/config.toml"
     local local_top_level=""
     local local_tables=""
-    local local_features=""
 
     if [ ! -f "$src" ]; then
         log_with_level "WARN" "codex_config/config.toml not found"
@@ -209,7 +206,6 @@ restore_codex_config() {
     if [ -f "$dest" ]; then
         local_top_level=$(extract_local_codex_top_level < "$dest")
         local_tables=$(extract_local_codex_tables < "$dest")
-        local_features=$(extract_local_codex_features < "$dest")
     fi
 
     {
@@ -217,7 +213,7 @@ restore_codex_config() {
             printf '%s\n\n' "$local_top_level"
         fi
 
-        expand_portable_path < "$src" | merge_local_codex_features "$local_features"
+        expand_portable_path < "$src"
     } > "$dest.tmp"
 
     if [ -n "$local_tables" ]; then
@@ -232,6 +228,15 @@ restore_codex_config() {
     log_with_level "SUCCESS" "Restored config.toml"
 }
 
+restore_codex_profile() {
+    local name="$1"
+
+    restore_config_file \
+        "$CODEX_CONFIG_DIR/${name}.config.toml" \
+        "$CODEX_HOME/${name}.config.toml" \
+        "${name}.config.toml"
+}
+
 is_repo_newer() {
     local repo_mtime=0
     local home_mtime=0
@@ -240,6 +245,12 @@ is_repo_newer() {
     if [ -f "$CODEX_CONFIG_DIR/config.toml" ]; then
         repo_mtime=$(get_file_mtime "$CODEX_CONFIG_DIR/config.toml")
     fi
+    for profile in apple review; do
+        if [ -f "$CODEX_CONFIG_DIR/${profile}.config.toml" ]; then
+            mtime=$(get_file_mtime "$CODEX_CONFIG_DIR/${profile}.config.toml")
+            [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
+        fi
+    done
     if [ -f "$AGENT_CONFIG_DIR/AGENTS.md" ]; then
         mtime=$(get_file_mtime "$AGENT_CONFIG_DIR/AGENTS.md")
         [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
@@ -252,6 +263,10 @@ is_repo_newer() {
         mtime=$(get_file_mtime "$CODEX_CONFIG_DIR/RTK.md")
         [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
     fi
+    if [ -f "$CODEX_CONFIG_DIR/plugins.json" ]; then
+        mtime=$(get_file_mtime "$CODEX_CONFIG_DIR/plugins.json")
+        [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
+    fi
     if [ -f "$AGENT_CONFIG_DIR/installed_skills.json" ]; then
         mtime=$(get_file_mtime "$AGENT_CONFIG_DIR/installed_skills.json")
         [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
@@ -262,12 +277,18 @@ is_repo_newer() {
     [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
     mtime=$(get_newest_mtime_in_dir "$CODEX_CONFIG_DIR/hooks")
     [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
-    mtime=$(get_newest_mtime_in_dir "$CLAUDE_PROJECT_SKILLS_DIR")
+    mtime=$(get_newest_mtime_in_dir "$AGENT_CONFIG_DIR/skills")
     [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
 
     if [ -f "$CODEX_HOME/config.toml" ]; then
         home_mtime=$(get_file_mtime "$CODEX_HOME/config.toml")
     fi
+    for profile in apple review; do
+        if [ -f "$CODEX_HOME/${profile}.config.toml" ]; then
+            mtime=$(get_file_mtime "$CODEX_HOME/${profile}.config.toml")
+            [ "$mtime" -gt "$home_mtime" ] && home_mtime="$mtime"
+        fi
+    done
     if [ -f "$CODEX_HOME/AGENTS.md" ]; then
         mtime=$(get_file_mtime "$CODEX_HOME/AGENTS.md")
         [ "$mtime" -gt "$home_mtime" ] && home_mtime="$mtime"
@@ -320,6 +341,9 @@ main() {
        [ ! -f "$AGENT_CONFIG_DIR/AGENTS.md" ] && \
        [ ! -f "$CODEX_CONFIG_DIR/hooks.json" ] && \
        [ ! -f "$CODEX_CONFIG_DIR/RTK.md" ] && \
+       [ ! -f "$CODEX_CONFIG_DIR/plugins.json" ] && \
+       [ ! -f "$CODEX_CONFIG_DIR/apple.config.toml" ] && \
+       [ ! -f "$CODEX_CONFIG_DIR/review.config.toml" ] && \
        [ ! -f "$AGENT_CONFIG_DIR/installed_skills.json" ] && \
        [ ! -d "$CODEX_CONFIG_DIR/skills" ] && \
        [ ! -d "$CODEX_CONFIG_DIR/rules" ] && \
@@ -344,6 +368,8 @@ main() {
     mkdir -p "$CODEX_HOME"
 
     restore_codex_config
+    restore_codex_profile "apple"
+    restore_codex_profile "review"
     restore_config_file \
         "$CODEX_CONFIG_DIR/hooks.json" \
         "$CODEX_HOME/hooks.json" \
@@ -354,9 +380,9 @@ main() {
         "RTK.md"
     restore_codex_agents
     restore_codex_skills
+    restore_shared_agent_skills
     restore_codex_rules
     restore_codex_hook_scripts
-    restore_claude_project_skills_for_codex
 
     if [ -f "$AGENT_CONFIG_DIR/installed_skills.json" ]; then
         log_with_level "INFO" "Installing shared agent skills..."
@@ -367,19 +393,30 @@ main() {
         fi
     fi
 
+    log_with_level "INFO" "Installing managed Codex plugins..."
+    if "$PROJECT_ROOT/scripts/install-codex-plugins.sh"; then
+        log_with_level "SUCCESS" "Managed Codex plugins installed"
+    else
+        log_with_level "WARN" "Codex plugin installation failed — run 'npm run install:codex-plugins' manually"
+    fi
+
     log_with_level "SUCCESS" "Codex configuration restored!"
     echo ""
     echo "📥 Restored files to ~/.codex:"
     echo "   - config.toml"
+    echo "   - apple.config.toml (use: codex -p apple)"
+    echo "   - review.config.toml (use: codex -p review)"
     echo "   - hooks.json"
     echo "   - RTK.md"
     echo "   - AGENTS.md"
     echo "   - skills/plannotator-*"
     echo "   - shared git skills from agent_config/installed_skills.json"
-    echo "   - skills copied from project .claude/skills/*.md when present"
+    echo "   - canonical shared skills from agent_config/skills"
     echo "   - rules/*.rules"
     echo "   - hooks/*"
+    echo "   - managed plugins from codex_config/plugins.json"
     echo ""
+    echo "💡 Axiom hooks require one-time trust review on the first Codex run"
     echo "💡 Restart Codex for changes to take effect"
 }
 

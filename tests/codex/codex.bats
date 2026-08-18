@@ -174,38 +174,11 @@ EOF
   [[ "$output" == *"[desktop]"* ]]
   [[ "$output" == *"[marketplaces.openai-bundled]"* ]]
   [[ "$output" == *"[plugins.\"browser@openai-bundled\"]"* ]]
-  [[ "$output" == *"[mcp_servers.node_repl]"* ]]
+  [[ "$output" != *"[mcp_servers.node_repl]"* ]]
   [[ "$output" == *"[mcp_servers.plugin_firebase_firebase]"* ]]
   [[ "$output" == *"[apps.connector_abc123.tools.\"github.create_branch\"]"* ]]
   [[ "$output" != *"[mcp_servers.docs]"* ]]
   [[ "$output" != *'model = "gpt-5.5"'* ]]
-}
-
-@test "extract_local_codex_features keeps js_repl inside features" {
-  config_file="$TEST_TEMP_DIR/config.toml"
-  printf '%s\n' '[features]' 'hooks = true' 'js_repl = false' '' '[tui]' 'status_line_use_colors = true' > "$config_file"
-
-  run zsh -c "source '$RESTORE_SCRIPT'; extract_local_codex_features < '$config_file'"
-
-  [ "$status" -eq 0 ]
-  [ "$output" = 'js_repl = false' ]
-}
-
-@test "merge_local_codex_features restores js_repl without duplicates" {
-  run zsh -c "source '$RESTORE_SCRIPT'; printf '%s\n' '[features]' 'hooks = true' 'js_repl = true' '' '[tui]' 'status_line_use_colors = true' | merge_local_codex_features 'js_repl = false'"
-
-  [ "$status" -eq 0 ]
-  [ "$(printf '%s\n' "$output" | grep -c '^js_repl = ')" -eq 1 ]
-  [[ "$output" == *'js_repl = false'* ]]
-  [[ "$output" != *'js_repl = true'* ]]
-}
-
-@test "merge_local_codex_features creates a missing features table" {
-  run zsh -c "source '$RESTORE_SCRIPT'; printf '%s\n' 'model = \"gpt-5.6-sol\"' '[tui]' 'status_line_use_colors = true' | merge_local_codex_features 'js_repl = true'"
-
-  [ "$status" -eq 0 ]
-  [[ "$output" == *'[features]'* ]]
-  [[ "$output" == *'js_repl = true'* ]]
 }
 
 @test "filter_shared_codex_config removes hook trust state" {
@@ -261,8 +234,10 @@ EOF
   [ "$status" -eq 0 ]
 }
 
-@test "codex_config includes shared MCP servers" {
+@test "codex configuration scopes base and Apple-profile MCP servers" {
   config="$PROJECT_ROOT/codex_config/config.toml"
+  apple_config="$PROJECT_ROOT/codex_config/apple.config.toml"
+  review_config="$PROJECT_ROOT/codex_config/review.config.toml"
 
   run grep -F 'hooks = true' "$config"
   [ "$status" -eq 0 ]
@@ -273,21 +248,28 @@ EOF
   run grep -F '[mcp_servers.code-review-graph.tools.query_graph_tool]' "$config"
   [ "$status" -eq 0 ]
 
-  run grep -F '[mcp_servers.XcodeBuildMCP]' "$config"
-  [ "$status" -eq 0 ]
-
   run grep -F '[mcp_servers.openaiDeveloperDocs]' "$config"
   [ "$status" -eq 0 ]
 
-  run grep -F '[mcp_servers.axiom]' "$config"
+  run grep -F '[mcp_servers.XcodeBuildMCP]' "$apple_config"
   [ "$status" -eq 0 ]
 
-  run grep -F '[mcp_servers.xcode]' "$config"
+  run grep -F '[mcp_servers.cupertino]' "$apple_config"
   [ "$status" -eq 0 ]
+
+  run grep -F '[mcp_servers.xcode]' "$apple_config"
+  [ "$status" -eq 0 ]
+
+  ! grep -F '[mcp_servers.axiom]' "$config"
+  ! grep -F '[mcp_servers.XcodeBuildMCP]' "$config"
+  grep -F 'model_reasoning_effort = "xhigh"' "$review_config"
+  grep -F 'memories = false' "$config"
+  grep -F 'web_search = "live"' "$config"
 }
 
 @test "code-review-graph configuration follows latest everywhere" {
-  ! grep -R -E 'code-review-graph@[0-9]' "$PROJECT_ROOT/.mcp.json" "$PROJECT_ROOT/codex_config/config.toml"
+  ! grep -R -E 'code-review-graph@[0-9]|uvx' "$PROJECT_ROOT/.mcp.json" "$PROJECT_ROOT/codex_config/config.toml"
+  grep -F 'command = "code-review-graph"' "$PROJECT_ROOT/codex_config/config.toml"
   grep -F 'pipx upgrade code-review-graph' "$PROJECT_ROOT/scripts/utils/tools.sh"
 }
 
@@ -368,7 +350,7 @@ EOF
 @test "shared AGENTS.md includes Codex tool preferences" {
   instructions="$PROJECT_ROOT/agent_config/AGENTS.md"
 
-  run grep -F 'code-review-graph MCP tools' "$instructions"
+  run grep -F 'code-review-graph first' "$instructions"
   [ "$status" -eq 0 ]
 
   run grep -F 'RTK wrappers' "$instructions"
@@ -384,9 +366,9 @@ EOF
   [ "$status" -eq 0 ]
 }
 
-@test "restore_claude_project_skills_for_codex converts Claude skill markdown to Codex skills" {
-  mkdir -p "$TEST_TEMP_DIR/.claude/skills" "$TEST_TEMP_DIR/.codex/skills"
-  cat > "$TEST_TEMP_DIR/.claude/skills/review-changes.md" <<'EOF'
+@test "restore_shared_agent_skills copies canonical skills into Codex" {
+  mkdir -p "$TEST_TEMP_DIR/agent_config/skills/review-changes" "$TEST_TEMP_DIR/.codex/skills"
+  cat > "$TEST_TEMP_DIR/agent_config/skills/review-changes/SKILL.md" <<'EOF'
 ---
 name: Review Changes
 description: Perform a structured code review
@@ -397,7 +379,9 @@ EOF
 
   run zsh -c "
     source '$RESTORE_SCRIPT'
-    restore_claude_project_skills_for_codex '$TEST_TEMP_DIR/.claude/skills' '$TEST_TEMP_DIR/.codex/skills'
+    AGENT_CONFIG_DIR='$TEST_TEMP_DIR/agent_config'
+    CODEX_HOME='$TEST_TEMP_DIR/.codex'
+    restore_shared_agent_skills
   "
 
   [ "$status" -eq 0 ]
@@ -405,8 +389,8 @@ EOF
   grep -F "Perform a structured code review" "$TEST_TEMP_DIR/.codex/skills/review-changes/SKILL.md"
 }
 
-@test "project Claude skills override existing Codex skill directories" {
-  mkdir -p "$TEST_TEMP_DIR/project/.claude/skills" \
+@test "canonical shared skills override existing Codex skill directories" {
+  mkdir -p "$TEST_TEMP_DIR/agent_config/skills/shared-rule" \
     "$TEST_TEMP_DIR/.codex/skills/shared-rule"
 
   cat > "$TEST_TEMP_DIR/.codex/skills/shared-rule/SKILL.md" <<'EOF'
@@ -418,7 +402,7 @@ description: Existing Codex version
 # Existing Version
 EOF
 
-  cat > "$TEST_TEMP_DIR/project/.claude/skills/shared-rule.md" <<'EOF'
+  cat > "$TEST_TEMP_DIR/agent_config/skills/shared-rule/SKILL.md" <<'EOF'
 ---
 name: shared-rule
 description: Project-level version
@@ -429,7 +413,9 @@ EOF
 
   run zsh -c "
     source '$RESTORE_SCRIPT'
-    restore_claude_project_skills_for_codex '$TEST_TEMP_DIR/project/.claude/skills' '$TEST_TEMP_DIR/.codex/skills'
+    AGENT_CONFIG_DIR='$TEST_TEMP_DIR/agent_config'
+    CODEX_HOME='$TEST_TEMP_DIR/.codex'
+    restore_shared_agent_skills
   "
 
   [ "$status" -eq 0 ]
@@ -473,7 +459,38 @@ EOF
   [ -x "$TEST_TEMP_DIR/.codex/hooks/test-hook.sh" ]
 }
 
-@test "rtk-enforce hook blocks when RTK suggests a rewrite" {
+@test "Codex profiles restore directly and participate in timestamp gating" {
+  repo_config="$TEST_TEMP_DIR/repo-codex-config"
+  codex_home="$TEST_TEMP_DIR/.codex"
+  mkdir -p "$repo_config" "$codex_home"
+  printf '%s\n' '[mcp_servers.xcode]' 'command = "xcrun"' > "$repo_config/apple.config.toml"
+  printf '%s\n' 'model_reasoning_effort = "xhigh"' > "$repo_config/review.config.toml"
+
+  run zsh -c "
+    source '$RESTORE_SCRIPT'
+    CODEX_CONFIG_DIR='$repo_config'
+    CODEX_HOME='$codex_home'
+    restore_codex_profile apple
+    restore_codex_profile review
+  "
+  [ "$status" -eq 0 ]
+  [ -f "$codex_home/apple.config.toml" ]
+  [ -f "$codex_home/review.config.toml" ]
+
+  touch -t 202501010000 "$codex_home/config.toml"
+  touch -t 202501010000 "$codex_home/apple.config.toml"
+  touch -t 209901010000 "$repo_config/apple.config.toml"
+  run zsh -c "
+    source '$RESTORE_SCRIPT'
+    CODEX_CONFIG_DIR='$repo_config'
+    CODEX_HOME='$codex_home'
+    AGENT_CONFIG_DIR='$TEST_TEMP_DIR/missing-agent-config'
+    is_repo_newer
+  "
+  [ "$status" -eq 0 ]
+}
+
+@test "rtk-enforce hook rewrites when RTK suggests a rewrite" {
   hook="$PROJECT_ROOT/codex_config/hooks/rtk-enforce.sh"
   mock_bin="$TEST_TEMP_DIR/bin"
   mkdir -p "$mock_bin"
@@ -492,21 +509,90 @@ EOF
 EOF
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *'"decision":"block"'* ]]
-  [[ "$output" == *"rtk git status"* ]]
+  [[ "$output" == *'"permissionDecision":"allow"'* ]]
+  [[ "$output" == *'"updatedInput":{"command":"rtk git status"}'* ]]
+}
+
+@test "rtk-enforce hook leaves unchanged commands, malformed input, and missing RTK alone" {
+  hook="$PROJECT_ROOT/codex_config/hooks/rtk-enforce.sh"
+  mock_bin="$TEST_TEMP_DIR/bin"
+  mkdir -p "$mock_bin"
+  cat > "$mock_bin/rtk" <<'EOF'
+#!/usr/bin/env bash
+if [ "$1" = "rewrite" ]; then
+  printf '%s\n' "$2"
+  exit 3
+fi
+exit 1
+EOF
+  chmod +x "$mock_bin/rtk"
+
+  run env PATH="$mock_bin:$PATH" bash "$hook" <<'EOF'
+{"tool_input":{"command":"git status"}}
+EOF
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
+
+  run env PATH="$mock_bin:$PATH" bash "$hook" <<'EOF'
+not-json
+EOF
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
+
+  ln -s "$(command -v jq)" "$TEST_TEMP_DIR/jq"
+  run env PATH="$TEST_TEMP_DIR" /bin/bash "$hook" <<'EOF'
+{"tool_input":{"command":"git status"}}
+EOF
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
+}
+
+@test "rtk-enforce hook prevents a rewrite loop for RTK commands" {
+  hook="$PROJECT_ROOT/codex_config/hooks/rtk-enforce.sh"
+  mock_bin="$TEST_TEMP_DIR/bin"
+  marker="$TEST_TEMP_DIR/rtk-called"
+  mkdir -p "$mock_bin"
+  cat > "$mock_bin/rtk" <<EOF
+#!/usr/bin/env bash
+touch "$marker"
+printf '%s\\n' "rtk rtk git status"
+EOF
+  chmod +x "$mock_bin/rtk"
+
+  run env PATH="$mock_bin:$PATH" bash "$hook" <<'EOF'
+{"tool_input":{"command":"rtk git status"}}
+EOF
+
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
+  [ ! -e "$marker" ]
 }
 
 @test "restore-codex.sh restores Codex hooks RTK include and Plannotator skills" {
-  run "$RESTORE_SCRIPT" --force
+  mock_bin="$TEST_TEMP_DIR/bin"
+  mkdir -p "$mock_bin"
+  cat > "$mock_bin/codex" <<'EOF'
+#!/bin/sh
+case "$1 $2 $3" in
+  "plugin marketplace list") printf '%s\n' '{"marketplaces":[]}' ;;
+esac
+exit 0
+EOF
+  chmod +x "$mock_bin/codex"
+
+  run env PATH="$mock_bin:$PATH" "$RESTORE_SCRIPT" --force
 
   [ "$status" -eq 0 ]
   [ -f "$HOME/.codex/config.toml" ]
   [ -f "$HOME/.codex/hooks.json" ]
   [ -f "$HOME/.codex/RTK.md" ]
   [ -f "$HOME/.codex/AGENTS.md" ]
+  [ -f "$HOME/.codex/apple.config.toml" ]
+  [ -f "$HOME/.codex/review.config.toml" ]
   [ -f "$HOME/.codex/rules/supercharged.rules" ]
   [ -x "$HOME/.codex/hooks/rtk-enforce.sh" ]
   [ -f "$HOME/.codex/skills/plannotator-review/SKILL.md" ]
+  [ -f "$HOME/.codex/skills/review-changes/SKILL.md" ]
 
   grep -F 'hooks = true' "$HOME/.codex/config.toml"
   grep -F 'default_permissions = "supercharged"' "$HOME/.codex/config.toml"
@@ -514,4 +600,5 @@ EOF
   grep -F "\"command\": \"$HOME/.local/bin/plannotator\"" "$HOME/.codex/hooks.json"
   grep -Fx "@$HOME/.codex/RTK.md" "$HOME/.codex/AGENTS.md"
   grep -F 'pattern = ["rm", "-rf"]' "$HOME/.codex/rules/supercharged.rules"
+  grep -F 'model_reasoning_effort = "xhigh"' "$HOME/.codex/review.config.toml"
 }
