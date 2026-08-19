@@ -1,12 +1,5 @@
-# Apple development profile. Start Codex with `codex -p apple` to layer these
-# tools on top of the lean, general-development base configuration.
-#
-# XcodeBuildMCP build/test responses use their current structured-result schema;
-# consumers must not assume legacy schema versions or an implicit Debug build.
-
-[mcp_servers.XcodeBuildMCP]
-command = "xcodebuildmcp"
-args = ["mcp"]
+# Native Xcode profile. Start Codex with `codex -p apple` when connecting to an
+# Xcode project through Apple's MCP bridge.
 
 [mcp_servers.xcode]
 command = "xcrun"

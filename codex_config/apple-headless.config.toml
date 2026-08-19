@@ -1,0 +1,9 @@
+# Headless Apple development profile. Start Codex with `codex -p apple-headless`
+# when using XcodeBuildMCP outside an open Xcode project.
+#
+# Build/test responses use the current structured-result schema; consumers must
+# not assume legacy schema versions or an implicit Debug build.
+
+[mcp_servers.XcodeBuildMCP]
+command = "xcodebuildmcp"
+args = ["mcp"]

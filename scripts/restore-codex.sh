@@ -17,6 +17,7 @@ CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
 
 FORCE_RESTORE=false
 SKIP_BACKUP=false
+typeset -a CODEX_PROFILES=(apple apple-headless review)
 
 show_help() {
     echo "Usage: $(basename "$0") [OPTIONS]"
@@ -245,7 +246,7 @@ is_repo_newer() {
     if [ -f "$CODEX_CONFIG_DIR/config.toml" ]; then
         repo_mtime=$(get_file_mtime "$CODEX_CONFIG_DIR/config.toml")
     fi
-    for profile in apple review; do
+    for profile in "${CODEX_PROFILES[@]}"; do
         if [ -f "$CODEX_CONFIG_DIR/${profile}.config.toml" ]; then
             mtime=$(get_file_mtime "$CODEX_CONFIG_DIR/${profile}.config.toml")
             [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
@@ -283,7 +284,7 @@ is_repo_newer() {
     if [ -f "$CODEX_HOME/config.toml" ]; then
         home_mtime=$(get_file_mtime "$CODEX_HOME/config.toml")
     fi
-    for profile in apple review; do
+    for profile in "${CODEX_PROFILES[@]}"; do
         if [ -f "$CODEX_HOME/${profile}.config.toml" ]; then
             mtime=$(get_file_mtime "$CODEX_HOME/${profile}.config.toml")
             [ "$mtime" -gt "$home_mtime" ] && home_mtime="$mtime"
@@ -343,6 +344,7 @@ main() {
        [ ! -f "$CODEX_CONFIG_DIR/RTK.md" ] && \
        [ ! -f "$CODEX_CONFIG_DIR/plugins.json" ] && \
        [ ! -f "$CODEX_CONFIG_DIR/apple.config.toml" ] && \
+       [ ! -f "$CODEX_CONFIG_DIR/apple-headless.config.toml" ] && \
        [ ! -f "$CODEX_CONFIG_DIR/review.config.toml" ] && \
        [ ! -f "$AGENT_CONFIG_DIR/installed_skills.json" ] && \
        [ ! -d "$CODEX_CONFIG_DIR/skills" ] && \
@@ -368,8 +370,9 @@ main() {
     mkdir -p "$CODEX_HOME"
 
     restore_codex_config
-    restore_codex_profile "apple"
-    restore_codex_profile "review"
+    for profile in "${CODEX_PROFILES[@]}"; do
+        restore_codex_profile "$profile"
+    done
     restore_config_file \
         "$CODEX_CONFIG_DIR/hooks.json" \
         "$CODEX_HOME/hooks.json" \
@@ -404,7 +407,8 @@ main() {
     echo ""
     echo "📥 Restored files to ~/.codex:"
     echo "   - config.toml"
-    echo "   - apple.config.toml (use: codex -p apple)"
+    echo "   - apple.config.toml (native Xcode bridge; use: codex -p apple)"
+    echo "   - apple-headless.config.toml (XcodeBuildMCP; use: codex -p apple-headless)"
     echo "   - review.config.toml (use: codex -p review)"
     echo "   - hooks.json"
     echo "   - RTK.md"

@@ -16,6 +16,7 @@ _configuration_restore_paths() {
         ".claude.json" \
         ".codex/config.toml" \
         ".codex/apple.config.toml" \
+        ".codex/apple-headless.config.toml" \
         ".codex/review.config.toml" \
         ".codex/hooks.json" \
         ".codex/RTK.md" \

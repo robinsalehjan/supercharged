@@ -85,7 +85,7 @@ Shared git-cloned skills are declared in `agent_config/installed_skills.json`. I
 
 The four graph skills live canonically in `agent_config/skills/<name>/SKILL.md`. `restore:codex` restores those directories directly into Codex; `.claude/skills/*.md` is a generated one-way Claude compatibility mirror and `scripts/generate-claude-skill-mirrors.sh --check` detects drift. Git-cloned skills in `agent_config/installed_skills.json` are also installed into both agent homes. Claude plugins and Codex plugins can contribute additional tool-specific skills, so the complete runtime skill lists are intentionally not identical.
 
-The canonical MCP inventory is: shared code-review-graph and OpenAI Developer Docs; Codex-native Axiom plugin; Apple-profile-only XcodeBuildMCP and `xcode`; and optional disabled Computer Use. Claude user-local MCP entries are preserved during restore and never imported by backup. code-review-graph intentionally follows latest: setup and update upgrade its pipx installation, while MCP clients invoke the installed `code-review-graph serve` binary directly.
+The canonical MCP inventory is: shared code-review-graph and OpenAI Developer Docs; Codex-native Axiom plugin; the `xcode` bridge in the Apple profile; XcodeBuildMCP in the headless Apple profile; and optional disabled Computer Use. Claude user-local MCP entries are preserved during restore and never imported by backup. code-review-graph intentionally follows latest: setup and update upgrade its pipx installation, while MCP clients invoke the installed `code-review-graph serve` binary directly.
 
 ### Nested repository graph discovery
 
@@ -153,9 +153,9 @@ vadimcn.vscode-lldb
 vscode-icons-team.vscode-icons
 ```
 
-The current Codex baseline selects `gpt-5.6-sol`, high reasoning effort, the pragmatic personality, live web search, disabled memories, the `supercharged` permission profile, and the configured status line. Its lean base MCP inventory contains code-review-graph, OpenAI Developer Docs, and disabled Computer Use. Use `codex -p apple` for XcodeBuildMCP and Apple’s `xcode` bridge, or `codex -p review` for xhigh review reasoning. Axiom is installed only through `npm run install:codex-plugins`, not as a duplicate MCP server. Codex asks for a one-time trust review before Axiom’s bundled hooks can run.
+The current Codex baseline selects `gpt-5.6-sol`, high reasoning effort, the pragmatic personality, live web search, disabled memories, the `supercharged` permission profile, and the configured status line. Its lean base MCP inventory contains code-review-graph, OpenAI Developer Docs, and disabled Computer Use. Use `codex -p apple` for Apple’s native `xcode` bridge, `codex -p apple-headless` for XcodeBuildMCP outside an open Xcode project, or `codex -p review` for xhigh review reasoning. Axiom is installed only through `npm run install:codex-plugins`, not as a duplicate MCP server. Codex asks for a one-time trust review before Axiom’s bundled hooks can run.
 
-Run `npm run audit:agents` for a local health check, `npm run audit:agents -- --json` for machine-readable output, or `npm run audit:agents -- --repo-only` for deterministic tracked-config validation. Apple tools are required only with `npm run audit:agents -- --profile apple`.
+Run `npm run audit:agents` for a local health check, `npm run audit:agents -- --json` for machine-readable output, or `npm run audit:agents -- --repo-only` for deterministic tracked-config validation. Check the native bridge with `npm run audit:agents -- --profile apple`, or XcodeBuildMCP with `npm run audit:agents -- --profile apple-headless`.
 
 The audit intentionally does not copy credentials or runtime state. Codex authentication, histories, logs, sessions, memories, databases, caches, project trust, connector state, desktop state, local approval rules, and project-specific MCP servers such as the personal Firebase entry remain machine-local. Backup and restore preserve those Firebase and runtime tables without writing them to `codex_config/config.toml`. Claude work-only marketplaces and plugins are kept in ignored `.local.json` overlays. Files under `dot_files/.secrets/` are templates only, including the `REPLICATE_API_TOKEN` placeholder.
 
@@ -225,7 +225,7 @@ Edit `scripts/mac.sh` to change Homebrew packages. Conditional package groups ar
 
 Edit `dot_files/.zshrc`, `dot_files/.tmux.conf`, and `dot_files/.p10k.zsh` for shell, tmux, and prompt behavior.
 
-Edit `agent_config/AGENTS.md` for shared Claude/Codex instructions. Keep the tracked Claude user registry empty unless a compatibility requirement warrants a sanitized entry. For shared project servers, edit `.mcp.json` and add the compatible Codex entry together; put Apple-only servers in `codex_config/apple.config.toml`.
+Edit `agent_config/AGENTS.md` for shared Claude/Codex instructions. Keep the tracked Claude user registry empty unless a compatibility requirement warrants a sanitized entry. For shared project servers, edit `.mcp.json` and add the compatible Codex entry together; put Apple-only servers in the appropriate `codex_config/apple*.config.toml` profile.
 
 `npm run update:dry-run` is non-mutating: it suppresses Homebrew auto-update, skips `brew update`, and skips cleanup. It reports outdated Homebrew formulae, casks, and global npm packages, then exits before asdf, zsh, npm, or pip updates.
 
