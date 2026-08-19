@@ -67,7 +67,7 @@ Git identity is machine-local in `~/.gitconfig.local`. The first restore migrate
 
 Restoration points cover managed configuration and registries, including absence information so rollback removes files created by a restore. They intentionally exclude auth, secrets, sessions, histories, logs, databases, plugin caches, and installed packages; plugins may need reinstalling after rollback. Older backups without an absence manifest remain copy-only restorable.
 
-The shared MCP baseline is code-review-graph and OpenAI Developer Docs. Codex provides Axiom through its native plugin (including its skills and optional trusted hooks). Apple development tools—XcodeBuildMCP, Cupertino, and Apple’s `xcode` bridge—are isolated behind `codex -p apple`; the disabled computer-use bridge remains optional. `codex -p review` layers xhigh reasoning over the base review tooling. code-review-graph is intentionally unpinned, runs from its installed binary rather than `uvx`, and an existing pipx installation is upgraded during setup/update.
+The shared MCP baseline is code-review-graph and OpenAI Developer Docs. Codex provides Axiom through its native plugin (including its skills and optional trusted hooks). Apple development tools—XcodeBuildMCP and Apple’s `xcode` bridge—are isolated behind `codex -p apple`; the disabled computer-use bridge remains optional. `codex -p review` layers xhigh reasoning over the base review tooling. code-review-graph is intentionally unpinned, runs from its installed binary rather than `uvx`, and an existing pipx installation is upgraded during setup/update.
 
 ### New machine: full baseline
 

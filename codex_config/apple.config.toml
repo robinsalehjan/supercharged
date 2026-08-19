@@ -8,10 +8,6 @@
 command = "xcodebuildmcp"
 args = ["mcp"]
 
-[mcp_servers.cupertino]
-command = "cupertino"
-args = ["serve", "--no-reap"]
-
 [mcp_servers.xcode]
 command = "xcrun"
 args = ["mcpbridge"]

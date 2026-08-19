@@ -119,7 +119,7 @@ if validate_toml_shape "$CODEX_CONFIG_DIR/config.toml" && \
    rg -q '^hooks = true$' "$CODEX_CONFIG_DIR/config.toml" && \
    rg -q '^memories = false$' "$CODEX_CONFIG_DIR/config.toml" && \
    [ "$base_mcp_names" = "code-review-graph computer-use openaiDeveloperDocs " ] && \
-   [ "$apple_mcp_names" = "XcodeBuildMCP cupertino xcode " ] && \
+   [ "$apple_mcp_names" = "XcodeBuildMCP xcode " ] && \
    rg -q '^model_reasoning_effort = "xhigh"$' "$CODEX_CONFIG_DIR/review.config.toml"; then
     pass "Tracked Codex base, Apple, and review TOML profiles parse with the intended scoped inventory"
 else
@@ -248,7 +248,6 @@ if [ "$REPO_ONLY" = false ]; then
 
     if [ "$PROFILE" = "apple" ]; then
         require_command xcodebuildmcp "Apple profile: XcodeBuildMCP is installed"
-        require_command cupertino "Apple profile: Cupertino is installed"
         require_command xcrun "Apple profile: xcrun MCP bridge is available"
     else
         pass "Apple-only executables are not required without --profile apple"

@@ -131,13 +131,27 @@ run_zsh_func() {
   [[ "$output" == *'cask "codexbar"'* ]]
   [[ "$output" == *'tap "replicate/tap"'* ]]
   [[ "$output" == *'brew "replicate/tap/replicate"'* ]]
-  [[ "$output" == *'tap "cupertinohq/tap", "https://codeberg.org/CupertinoHQ/homebrew-tap.git"'* ]]
-  [[ "$output" == *'brew "cupertinohq/tap/cupertino"'* ]]
+  [[ "$output" != *'cupertino'* ]]
   [[ "$output" == *'tap "jundot/omlx", "https://github.com/jundot/omlx"'* ]]
   [[ "$output" == *'cask "ollama"'* ]]
   [[ "$output" == *'brew "jundot/omlx/omlx"'* ]]
   [[ "$output" == *'mas "Numbers", id: 361304891'* ]]
   [[ "$output" == *'vscode "openai.chatgpt"'* ]]
+}
+
+@test "build_brewfile does not execute commands in its comments" {
+  create_mock_bin "brew" 'echo "unexpected brew invocation: $*" >&2; exit 1'
+
+  run zsh -c "
+    export PATH='$MOCK_BIN_DIR:$REAL_PATH'
+    source '$PROJECT_ROOT/scripts/utils.sh'
+    source '$PROJECT_ROOT/scripts/mac.sh'
+    build_brewfile
+  "
+
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"unexpected brew invocation"* ]]
+  [[ "$output" == *'# Homebrew release whenever the normal `brew update` + `brew upgrade` path runs.'* ]]
 }
 
 @test "build_brewfile includes Codex desktop app by default" {
@@ -311,31 +325,6 @@ run_zsh_func() {
   [[ "$output" != *'wireshark'* ]]
   [[ "$output" != *'mitmproxy'* ]]
   [[ "$output" != *'proxyman'* ]]
-}
-
-# =============================================================================
-# setup_cupertino tests
-# =============================================================================
-
-@test "setup_cupertino runs cupertino setup" {
-  create_mock_bin "cupertino" 'echo "cupertino $*"'
-
-  run_zsh_func "setup_cupertino"
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"Running Cupertino setup"* ]]
-  [[ "$output" == *"cupertino setup"* ]]
-  [[ "$output" == *"Cupertino setup completed"* ]]
-}
-
-@test "setup_cupertino fails when cupertino is missing" {
-  run zsh -c "
-    export PATH='$MOCK_BIN_DIR:/usr/bin:/bin'
-    source '$PROJECT_ROOT/scripts/utils.sh'
-    source '$PROJECT_ROOT/scripts/mac.sh'
-    setup_cupertino
-  "
-  [ "$status" -ne 0 ]
-  [[ "$output" == *"Cupertino was not installed or is not on PATH"* ]]
 }
 
 # =============================================================================

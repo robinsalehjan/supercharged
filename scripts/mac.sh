@@ -103,7 +103,6 @@ build_brewfile() {
     # deprecation warnings on brew 5.1.11+.
     local content='tap "thoughtbot/formulae"
 tap "replicate/tap"
-tap "cupertinohq/tap", "https://codeberg.org/CupertinoHQ/homebrew-tap.git"
 tap "jundot/omlx", "https://github.com/jundot/omlx"
 tap "hashicorp/tap"
 
@@ -142,7 +141,6 @@ brew "ripgrep"
 brew "tmux"
 brew "gh"
 brew "replicate/tap/replicate", trusted: true
-brew "cupertinohq/tap/cupertino", trusted: true
 brew "shellcheck"
 brew "actionlint"
 brew "jq"
@@ -187,7 +185,7 @@ tap \"peripheryapp/periphery\"
 # the formula's \`periphery\` binary into /opt/homebrew/bin, breaking PATH lookup.
 brew \"periphery\", trusted: true
 # Official tap and fully qualified formula keep XcodeBuildMCP on the current
-# Homebrew release whenever the normal `brew update` + `brew upgrade` path runs.
+# Homebrew release whenever the normal \`brew update\` + \`brew upgrade\` path runs.
 tap \"getsentry/xcodebuildmcp\"
 brew \"getsentry/xcodebuildmcp/xcodebuildmcp\", trusted: true"
     fi
@@ -264,21 +262,6 @@ vscode \"vscode-icons-team.vscode-icons\""
     echo "$content"
 }
 
-setup_cupertino() {
-    if ! command_exists cupertino; then
-        log_with_level "ERROR" "Cupertino was not installed or is not on PATH"
-        return 1
-    fi
-
-    log_with_level "INFO" "Running Cupertino setup..."
-    if cupertino setup; then
-        log_with_level "SUCCESS" "Cupertino setup completed"
-    else
-        log_with_level "ERROR" "Cupertino setup failed"
-        return 1
-    fi
-}
-
 main() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -341,7 +324,6 @@ main() {
     fi
 
     echo "$BREWFILE_CONTENT" | brew bundle --file=-
-    setup_cupertino
 
     # Some setups end up with the font cask installed but the .ttf files never
     # copied into ~/Library/Fonts, leaving Nerd Font glyphs broken in tmux.
