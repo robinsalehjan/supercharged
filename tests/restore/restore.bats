@@ -98,6 +98,8 @@ teardown() {
   printf '%s\n' '{}' > "$HOME/.claude/settings.json"
   printf '%s\n' '{}' > "$HOME/.claude.json"
   printf '%s\n' 'model = "local"' > "$HOME/.codex/config.toml"
+  printf '%s\n' 'command = "xcrun"' > "$HOME/.codex/apple.config.toml"
+  printf '%s\n' 'command = "xcodebuildmcp"' > "$HOME/.codex/apple-headless.config.toml"
   printf '%s\n' 'model_reasoning_effort = "xhigh"' > "$HOME/.codex/review.config.toml"
   printf '%s\n' '#!/bin/sh' > "$HOME/.codex/hooks/example.sh"
   chmod 755 "$HOME/.codex/hooks/example.sh"
@@ -111,6 +113,8 @@ teardown() {
   grep -F $'file\t.claude.json' "$backup_dir/presence.tsv"
   grep -F $'dir\t.claude/skills' "$backup_dir/presence.tsv"
   grep -F $'dir\t.codex/hooks' "$backup_dir/presence.tsv"
+  grep -F $'file\t.codex/apple.config.toml' "$backup_dir/presence.tsv"
+  grep -F $'file\t.codex/apple-headless.config.toml' "$backup_dir/presence.tsv"
   grep -F $'file\t.codex/review.config.toml' "$backup_dir/presence.tsv"
   [ ! -e "$backup_dir/files/.claude/plugins/cache" ]
 }
@@ -129,16 +133,18 @@ teardown() {
 
 @test "manifest rollback removes Codex profiles that were absent before restore" {
   source "$PROJECT_ROOT/scripts/utils.sh"
-  rm -f "$HOME/.codex/apple.config.toml" "$HOME/.codex/review.config.toml"
+  rm -f "$HOME/.codex/apple.config.toml" "$HOME/.codex/apple-headless.config.toml" "$HOME/.codex/review.config.toml"
   create_restoration_point
   backup_dir=$(<"$HOME/.supercharged_last_backup")
   mkdir -p "$HOME/.codex"
   printf '%s\n' 'model_reasoning_effort = "xhigh"' > "$HOME/.codex/apple.config.toml"
+  printf '%s\n' 'model_reasoning_effort = "xhigh"' > "$HOME/.codex/apple-headless.config.toml"
   printf '%s\n' 'model_reasoning_effort = "xhigh"' > "$HOME/.codex/review.config.toml"
 
   restore_from_backup "$backup_dir"
 
   [ ! -e "$HOME/.codex/apple.config.toml" ]
+  [ ! -e "$HOME/.codex/apple-headless.config.toml" ]
   [ ! -e "$HOME/.codex/review.config.toml" ]
 }
 

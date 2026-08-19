@@ -21,7 +21,7 @@ cleanup() {
 trap cleanup EXIT
 
 show_help() {
-    echo "Usage: $(basename "$0") [--json] [--repo-only] [--profile apple|review]"
+    echo "Usage: $(basename "$0") [--json] [--repo-only] [--profile apple|apple-headless|review]"
     echo ""
     echo "Audit managed Codex configuration, plugins, MCP intent, skills, RTK, and CRG."
 }
@@ -38,8 +38,8 @@ while [[ $# -gt 0 ]]; do
             ;;
         --profile)
             PROFILE="${2:-}"
-            if [[ "$PROFILE" != "apple" && "$PROFILE" != "review" ]]; then
-                echo "--profile must be apple or review" >&2
+            if [[ "$PROFILE" != "apple" && "$PROFILE" != "apple-headless" && "$PROFILE" != "review" ]]; then
+                echo "--profile must be apple, apple-headless, or review" >&2
                 exit 2
             fi
             shift 2
@@ -111,17 +111,20 @@ validate_toml_shape() {
 # machines and macOS CI runners with different locale defaults.
 base_mcp_names=$(sed -n 's/^\[mcp_servers\.\([^].]*\)\]$/\1/p' "$CODEX_CONFIG_DIR/config.toml" | LC_ALL=C sort | tr '\n' ' ')
 apple_mcp_names=$(sed -n 's/^\[mcp_servers\.\([^].]*\)\]$/\1/p' "$CODEX_CONFIG_DIR/apple.config.toml" | LC_ALL=C sort | tr '\n' ' ')
+apple_headless_mcp_names=$(sed -n 's/^\[mcp_servers\.\([^].]*\)\]$/\1/p' "$CODEX_CONFIG_DIR/apple-headless.config.toml" | LC_ALL=C sort | tr '\n' ' ')
 if validate_toml_shape "$CODEX_CONFIG_DIR/config.toml" && \
    validate_toml_shape "$CODEX_CONFIG_DIR/apple.config.toml" && \
+   validate_toml_shape "$CODEX_CONFIG_DIR/apple-headless.config.toml" && \
    validate_toml_shape "$CODEX_CONFIG_DIR/review.config.toml" && \
    rg -q '^web_search = "live"$' "$CODEX_CONFIG_DIR/config.toml" && \
    rg -q '^model_reasoning_effort = "high"$' "$CODEX_CONFIG_DIR/config.toml" && \
    rg -q '^hooks = true$' "$CODEX_CONFIG_DIR/config.toml" && \
    rg -q '^memories = false$' "$CODEX_CONFIG_DIR/config.toml" && \
    [ "$base_mcp_names" = "code-review-graph computer-use openaiDeveloperDocs " ] && \
-   [ "$apple_mcp_names" = "XcodeBuildMCP xcode " ] && \
+   [ "$apple_mcp_names" = "xcode " ] && \
+   [ "$apple_headless_mcp_names" = "XcodeBuildMCP " ] && \
    rg -q '^model_reasoning_effort = "xhigh"$' "$CODEX_CONFIG_DIR/review.config.toml"; then
-    pass "Tracked Codex base, Apple, and review TOML profiles parse with the intended scoped inventory"
+    pass "Tracked Codex base, Apple, headless Apple, and review TOML profiles parse with the intended scoped inventory"
 else
     fail "Tracked Codex TOML is malformed, deprecated, or has an invalid profile inventory"
 fi
@@ -207,9 +210,10 @@ if [ "$REPO_ONLY" = false ]; then
     if command -v codex >/dev/null 2>&1; then
         audit_codex_home="$AUDIT_TMP_DIR/codex-home"
         mkdir -p "$audit_codex_home"
-        cp "$CODEX_CONFIG_DIR/config.toml" "$CODEX_CONFIG_DIR/apple.config.toml" "$CODEX_CONFIG_DIR/review.config.toml" "$audit_codex_home/"
+        cp "$CODEX_CONFIG_DIR/config.toml" "$CODEX_CONFIG_DIR/apple.config.toml" "$CODEX_CONFIG_DIR/apple-headless.config.toml" "$CODEX_CONFIG_DIR/review.config.toml" "$audit_codex_home/"
         if CODEX_HOME="$audit_codex_home" codex --strict-config --help >/dev/null 2>&1 && \
            CODEX_HOME="$audit_codex_home" codex --strict-config --profile apple --help >/dev/null 2>&1 && \
+           CODEX_HOME="$audit_codex_home" codex --strict-config --profile apple-headless --help >/dev/null 2>&1 && \
            CODEX_HOME="$audit_codex_home" codex --strict-config --profile review --help >/dev/null 2>&1; then
             pass "Codex CLI strictly parses the tracked base and profile configuration"
         else
@@ -224,7 +228,7 @@ if [ "$REPO_ONLY" = false ]; then
         fi
 
         if plugin_state=$(codex plugin list --json 2>&1) && \
-           jq -e '[.installed[]? | if type == "string" then . else (.id // .name // "") end] | index("axiom@axiom-marketplace") != null' \
+           jq -e '[.installed[]? | if type == "string" then . else (.pluginId // .id // .name // "") end] | index("axiom@axiom-marketplace") != null' \
                <<<"$plugin_state" >/dev/null; then
             pass "Required Axiom plugin is installed locally"
         else
@@ -246,12 +250,17 @@ if [ "$REPO_ONLY" = false ]; then
         fi
     fi
 
-    if [ "$PROFILE" = "apple" ]; then
-        require_command xcodebuildmcp "Apple profile: XcodeBuildMCP is installed"
-        require_command xcrun "Apple profile: xcrun MCP bridge is available"
-    else
-        pass "Apple-only executables are not required without --profile apple"
-    fi
+    case "$PROFILE" in
+        apple)
+            require_command xcrun "Apple profile: xcrun MCP bridge is available"
+            ;;
+        apple-headless)
+            require_command xcodebuildmcp "Headless Apple profile: XcodeBuildMCP is installed"
+            ;;
+        *)
+            pass "Apple-profile executables are not required without an Apple profile"
+            ;;
+    esac
 
     if command -v rtk >/dev/null 2>&1; then
         if rtk gain --history >/dev/null 2>&1; then

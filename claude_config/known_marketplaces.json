@@ -6,29 +6,5 @@
     },
     "installLocation": "$HOME/.claude/plugins/marketplaces/claude-plugins-official",
     "lastUpdated": "2026-08-04T09:45:23.934Z"
-  },
-  "plannotator": {
-    "source": {
-      "source": "github",
-      "repo": "backnotprop/plannotator"
-    },
-    "installLocation": "$HOME/.claude/plugins/marketplaces/plannotator",
-    "lastUpdated": "2026-04-14T13:38:22.117Z"
-  },
-  "axiom-marketplace": {
-    "source": {
-      "source": "github",
-      "repo": "CharlesWiltgen/Axiom"
-    },
-    "installLocation": "$HOME/.claude/plugins/marketplaces/axiom-marketplace",
-    "lastUpdated": "2026-05-18T16:05:36.155Z"
-  },
-  "openai-codex": {
-    "source": {
-      "source": "github",
-      "repo": "openai/codex-plugin-cc"
-    },
-    "installLocation": "$HOME/.claude/plugins/marketplaces/openai-codex",
-    "lastUpdated": "2026-04-30T08:47:57.073Z"
   }
 }

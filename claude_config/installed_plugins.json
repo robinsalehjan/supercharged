@@ -1,25 +1,6 @@
 {
   "version": 2,
   "plugins": {
-    "hookify@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/hookify/unknown",
-        "version": "unknown",
-        "installedAt": "2026-04-30T08:47:58.933Z",
-        "lastUpdated": "2026-08-04T09:45:24.020Z"
-      }
-    ],
-    "superpowers@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/superpowers/6.2.0",
-        "version": "6.2.0",
-        "installedAt": "2026-04-30T08:48:06.054Z",
-        "lastUpdated": "2026-08-03T12:29:54.435Z",
-        "gitCommitSha": "6efe32c9e2dd002d0c394e861e0529675d1ab32e"
-      }
-    ],
     "swift-lsp@claude-plugins-official": [
       {
         "scope": "user",
@@ -27,42 +8,6 @@
         "version": "1.0.0",
         "installedAt": "2026-04-30T08:48:06.369Z",
         "lastUpdated": "2026-04-30T08:48:06.369Z"
-      }
-    ],
-    "firebase@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/firebase/unknown",
-        "version": "unknown",
-        "installedAt": "2026-04-30T08:47:57.900Z",
-        "lastUpdated": "2026-08-04T09:45:24.019Z"
-      }
-    ],
-    "claude-md-management@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/claude-md-management/1.0.0",
-        "version": "1.0.0",
-        "installedAt": "2026-04-30T08:47:52.208Z",
-        "lastUpdated": "2026-04-30T08:47:52.208Z"
-      }
-    ],
-    "claude-code-setup@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/claude-code-setup/1.0.0",
-        "version": "1.0.0",
-        "installedAt": "2026-04-30T08:47:51.710Z",
-        "lastUpdated": "2026-04-30T08:47:51.710Z"
-      }
-    ],
-    "plugin-dev@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/plugin-dev/unknown",
-        "version": "unknown",
-        "installedAt": "2026-04-30T08:48:01.989Z",
-        "lastUpdated": "2026-08-04T09:45:24.017Z"
       }
     ],
     "typescript-lsp@claude-plugins-official": [
@@ -74,15 +19,6 @@
         "lastUpdated": "2026-04-30T08:48:06.889Z"
       }
     ],
-    "pr-review-toolkit@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/pr-review-toolkit/unknown",
-        "version": "unknown",
-        "installedAt": "2026-04-30T08:48:02.485Z",
-        "lastUpdated": "2026-08-04T09:45:24.020Z"
-      }
-    ],
     "pyright-lsp@claude-plugins-official": [
       {
         "scope": "user",
@@ -90,90 +26,6 @@
         "version": "1.0.0",
         "installedAt": "2026-04-30T08:48:03.010Z",
         "lastUpdated": "2026-04-30T08:48:03.010Z"
-      }
-    ],
-    "frontend-design@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/frontend-design/unknown",
-        "version": "unknown",
-        "installedAt": "2026-04-30T08:47:58.415Z",
-        "lastUpdated": "2026-08-04T09:45:24.019Z"
-      }
-    ],
-    "security-guidance@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/security-guidance/2.0.6",
-        "version": "2.0.6",
-        "installedAt": "2026-04-30T08:48:03.523Z",
-        "lastUpdated": "2026-06-24T13:25:20.706Z"
-      }
-    ],
-    "skill-creator@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/skill-creator/unknown",
-        "version": "unknown",
-        "installedAt": "2026-04-30T08:48:04.058Z",
-        "lastUpdated": "2026-08-04T09:45:24.019Z"
-      }
-    ],
-    "plannotator@plannotator": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/plannotator/plannotator/0.17.10",
-        "version": "0.17.10",
-        "installedAt": "2026-04-30T08:48:01.453Z",
-        "lastUpdated": "2026-04-30T08:48:01.453Z",
-        "gitCommitSha": "f1d3a880ed384f5779d019d743f52995b3151173"
-      }
-    ],
-    "code-review@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/code-review/unknown",
-        "version": "unknown",
-        "installedAt": "2026-04-30T08:47:52.705Z",
-        "lastUpdated": "2026-08-04T09:45:24.018Z"
-      }
-    ],
-    "axiom@axiom-marketplace": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/axiom-marketplace/axiom/3.5.0",
-        "version": "3.5.0",
-        "installedAt": "2026-06-20T21:09:16.396Z",
-        "lastUpdated": "2026-06-20T21:09:16.396Z",
-        "gitCommitSha": "0cf523d849319dae69f8447774ef528a11dc89e8"
-      }
-    ],
-    "codex@openai-codex": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/openai-codex/codex/1.0.4",
-        "version": "1.0.4",
-        "installedAt": "2026-04-30T08:47:57.099Z",
-        "lastUpdated": "2026-04-30T08:47:57.099Z",
-        "gitCommitSha": "807e03ac9d5aa23bc395fdec8c3767500a86b3cf"
-      }
-    ],
-    "playground@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/playground/unknown",
-        "version": "unknown",
-        "installedAt": "2026-05-18T08:51:49.633Z",
-        "lastUpdated": "2026-08-04T09:45:24.021Z"
-      }
-    ],
-    "commit-commands@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "$HOME/.claude/plugins/cache/claude-plugins-official/commit-commands/unknown",
-        "version": "unknown",
-        "installedAt": "2026-06-04T10:46:15.685Z",
-        "lastUpdated": "2026-08-04T09:45:24.020Z"
       }
     ]
   }

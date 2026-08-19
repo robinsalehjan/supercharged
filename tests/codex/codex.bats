@@ -234,9 +234,10 @@ EOF
   [ "$status" -eq 0 ]
 }
 
-@test "codex configuration scopes base and Apple-profile MCP servers" {
+@test "codex configuration scopes base, native Apple, and headless Apple MCP servers" {
   config="$PROJECT_ROOT/codex_config/config.toml"
   apple_config="$PROJECT_ROOT/codex_config/apple.config.toml"
+  apple_headless_config="$PROJECT_ROOT/codex_config/apple-headless.config.toml"
   review_config="$PROJECT_ROOT/codex_config/review.config.toml"
 
   run grep -F 'hooks = true' "$config"
@@ -251,7 +252,7 @@ EOF
   run grep -F '[mcp_servers.openaiDeveloperDocs]' "$config"
   [ "$status" -eq 0 ]
 
-  run grep -F '[mcp_servers.XcodeBuildMCP]' "$apple_config"
+  run grep -F '[mcp_servers.XcodeBuildMCP]' "$apple_headless_config"
   [ "$status" -eq 0 ]
 
   run grep -F '[mcp_servers.xcode]' "$apple_config"
@@ -259,10 +260,42 @@ EOF
 
   ! grep -F '[mcp_servers.axiom]' "$config"
   ! grep -F '[mcp_servers.XcodeBuildMCP]' "$config"
+  ! grep -F '[mcp_servers.XcodeBuildMCP]' "$apple_config"
+  ! grep -F '[mcp_servers.xcode]' "$apple_headless_config"
   ! grep -F '[mcp_servers.cupertino]' "$apple_config"
   grep -F 'model_reasoning_effort = "xhigh"' "$review_config"
   grep -F 'memories = false' "$config"
   grep -F 'web_search = "live"' "$config"
+}
+
+@test "tracked Claude configuration retains only language-server fallback plugins" {
+  settings="$PROJECT_ROOT/claude_config/settings.json"
+  plugins="$PROJECT_ROOT/claude_config/installed_plugins.json"
+  marketplaces="$PROJECT_ROOT/claude_config/known_marketplaces.json"
+
+  run jq -e '
+    (.enabledPlugins | keys | sort) == [
+      "pyright-lsp@claude-plugins-official",
+      "swift-lsp@claude-plugins-official",
+      "typescript-lsp@claude-plugins-official"
+    ]
+  ' "$settings"
+  [ "$status" -eq 0 ]
+
+  run jq -e '
+    (.plugins | keys | sort) == [
+      "pyright-lsp@claude-plugins-official",
+      "swift-lsp@claude-plugins-official",
+      "typescript-lsp@claude-plugins-official"
+    ]
+  ' "$plugins"
+  [ "$status" -eq 0 ]
+
+  run jq -e '(.extraKnownMarketplaces | keys) == ["claude-plugins-official"]' "$settings"
+  [ "$status" -eq 0 ]
+
+  run jq -e 'keys == ["claude-plugins-official"]' "$marketplaces"
+  [ "$status" -eq 0 ]
 }
 
 @test "code-review-graph configuration follows latest everywhere" {
@@ -462,6 +495,7 @@ EOF
   codex_home="$TEST_TEMP_DIR/.codex"
   mkdir -p "$repo_config" "$codex_home"
   printf '%s\n' '[mcp_servers.xcode]' 'command = "xcrun"' > "$repo_config/apple.config.toml"
+  printf '%s\n' '[mcp_servers.XcodeBuildMCP]' 'command = "xcodebuildmcp"' > "$repo_config/apple-headless.config.toml"
   printf '%s\n' 'model_reasoning_effort = "xhigh"' > "$repo_config/review.config.toml"
 
   run zsh -c "
@@ -469,15 +503,17 @@ EOF
     CODEX_CONFIG_DIR='$repo_config'
     CODEX_HOME='$codex_home'
     restore_codex_profile apple
+    restore_codex_profile apple-headless
     restore_codex_profile review
   "
   [ "$status" -eq 0 ]
   [ -f "$codex_home/apple.config.toml" ]
+  [ -f "$codex_home/apple-headless.config.toml" ]
   [ -f "$codex_home/review.config.toml" ]
 
   touch -t 202501010000 "$codex_home/config.toml"
   touch -t 202501010000 "$codex_home/apple.config.toml"
-  touch -t 209901010000 "$repo_config/apple.config.toml"
+  touch -t 209901010000 "$repo_config/apple-headless.config.toml"
   run zsh -c "
     source '$RESTORE_SCRIPT'
     CODEX_CONFIG_DIR='$repo_config'
@@ -586,6 +622,7 @@ EOF
   [ -f "$HOME/.codex/RTK.md" ]
   [ -f "$HOME/.codex/AGENTS.md" ]
   [ -f "$HOME/.codex/apple.config.toml" ]
+  [ -f "$HOME/.codex/apple-headless.config.toml" ]
   [ -f "$HOME/.codex/review.config.toml" ]
   [ -f "$HOME/.codex/rules/supercharged.rules" ]
   [ -x "$HOME/.codex/hooks/rtk-enforce.sh" ]

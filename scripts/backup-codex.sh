@@ -14,6 +14,7 @@ PROJECT_ROOT="$UTILS_PROJECT_ROOT"
 CODEX_CONFIG_DIR="$PROJECT_ROOT/codex_config"
 AGENT_CONFIG_DIR="$PROJECT_ROOT/agent_config"
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
+typeset -a CODEX_PROFILES=(apple apple-headless review)
 
 filter_shared_codex_config() {
     local skip=false
@@ -120,8 +121,9 @@ main() {
         log_with_level "WARN" "config.toml not found"
     fi
 
-    backup_codex_profile "apple"
-    backup_codex_profile "review"
+    for profile in "${CODEX_PROFILES[@]}"; do
+        backup_codex_profile "$profile"
+    done
 
     if [ -f "$CODEX_HOME/AGENTS.md" ]; then
         if ! filter_shared_codex_agents < "$CODEX_HOME/AGENTS.md" | \
@@ -167,6 +169,7 @@ main() {
     echo "📦 Backed up files:"
     echo "   - codex_config/config.toml"
     echo "   - codex_config/apple.config.toml"
+    echo "   - codex_config/apple-headless.config.toml"
     echo "   - codex_config/review.config.toml"
     echo "   - codex_config/hooks.json"
     echo "   - codex_config/RTK.md"
