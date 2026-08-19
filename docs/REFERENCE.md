@@ -63,7 +63,7 @@ The Homebrew Bundle baseline is defined by `build_brewfile` in `scripts/mac.sh`.
 
 - Package and shell tooling: `bash`, `coreutils`, `git`, `curl`, `asdf`, `keychain`, `tmux`, `ripgrep`, `tree`, `aria2`.
 - Development utilities: `gh`, `jq`, `shellcheck`, `actionlint`, `bats-core`, `duckdb`, `sqlite`, `btop`, `htop`, `mas`, `pipx`, `uv`, `hey`, `watch`, build libraries, and database client libraries mirrored from the personal machine.
-- AI and agent tools: `codex`, `ollama`, `omlx`, `replicate`, `cupertino`, `rtk`, and `worktrunk`. ChatGPT and CodexBar are included when `INSTALL_CODEX_APP=Y`.
+- AI and agent tools: `codex`, `ollama`, `omlx`, `replicate`, `rtk`, and `worktrunk`. ChatGPT and CodexBar are included when `INSTALL_CODEX_APP=Y`.
 - Applications: Visual Studio Code, Slack, Raycast, Reveal, Spotify, Mullvad VPN.
 - Fonts: JetBrainsMono Nerd Font.
 - Mac App Store apps: AdBlock, DaisyDisk, and Numbers.
@@ -85,7 +85,7 @@ Shared git-cloned skills are declared in `agent_config/installed_skills.json`. I
 
 The four graph skills live canonically in `agent_config/skills/<name>/SKILL.md`. `restore:codex` restores those directories directly into Codex; `.claude/skills/*.md` is a generated one-way Claude compatibility mirror and `scripts/generate-claude-skill-mirrors.sh --check` detects drift. Git-cloned skills in `agent_config/installed_skills.json` are also installed into both agent homes. Claude plugins and Codex plugins can contribute additional tool-specific skills, so the complete runtime skill lists are intentionally not identical.
 
-The canonical MCP inventory is: shared code-review-graph and OpenAI Developer Docs; Codex-native Axiom plugin; Apple-profile-only XcodeBuildMCP, Cupertino, and `xcode`; and optional disabled Computer Use. Claude user-local MCP entries are preserved during restore and never imported by backup. code-review-graph intentionally follows latest: setup and update upgrade its pipx installation, while MCP clients invoke the installed `code-review-graph serve` binary directly.
+The canonical MCP inventory is: shared code-review-graph and OpenAI Developer Docs; Codex-native Axiom plugin; Apple-profile-only XcodeBuildMCP and `xcode`; and optional disabled Computer Use. Claude user-local MCP entries are preserved during restore and never imported by backup. code-review-graph intentionally follows latest: setup and update upgrade its pipx installation, while MCP clients invoke the installed `code-review-graph serve` binary directly.
 
 ### Nested repository graph discovery
 
@@ -153,7 +153,7 @@ vadimcn.vscode-lldb
 vscode-icons-team.vscode-icons
 ```
 
-The current Codex baseline selects `gpt-5.6-sol`, high reasoning effort, the pragmatic personality, live web search, disabled memories, the `supercharged` permission profile, and the configured status line. Its lean base MCP inventory contains code-review-graph, OpenAI Developer Docs, and disabled Computer Use. Use `codex -p apple` for XcodeBuildMCP, Cupertino, and Apple’s `xcode` bridge, or `codex -p review` for xhigh review reasoning. Axiom is installed only through `npm run install:codex-plugins`, not as a duplicate MCP server. Codex asks for a one-time trust review before Axiom’s bundled hooks can run.
+The current Codex baseline selects `gpt-5.6-sol`, high reasoning effort, the pragmatic personality, live web search, disabled memories, the `supercharged` permission profile, and the configured status line. Its lean base MCP inventory contains code-review-graph, OpenAI Developer Docs, and disabled Computer Use. Use `codex -p apple` for XcodeBuildMCP and Apple’s `xcode` bridge, or `codex -p review` for xhigh review reasoning. Axiom is installed only through `npm run install:codex-plugins`, not as a duplicate MCP server. Codex asks for a one-time trust review before Axiom’s bundled hooks can run.
 
 Run `npm run audit:agents` for a local health check, `npm run audit:agents -- --json` for machine-readable output, or `npm run audit:agents -- --repo-only` for deterministic tracked-config validation. Apple tools are required only with `npm run audit:agents -- --profile apple`.
 

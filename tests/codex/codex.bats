@@ -254,14 +254,12 @@ EOF
   run grep -F '[mcp_servers.XcodeBuildMCP]' "$apple_config"
   [ "$status" -eq 0 ]
 
-  run grep -F '[mcp_servers.cupertino]' "$apple_config"
-  [ "$status" -eq 0 ]
-
   run grep -F '[mcp_servers.xcode]' "$apple_config"
   [ "$status" -eq 0 ]
 
   ! grep -F '[mcp_servers.axiom]' "$config"
   ! grep -F '[mcp_servers.XcodeBuildMCP]' "$config"
+  ! grep -F '[mcp_servers.cupertino]' "$apple_config"
   grep -F 'model_reasoning_effort = "xhigh"' "$review_config"
   grep -F 'memories = false' "$config"
   grep -F 'web_search = "live"' "$config"
