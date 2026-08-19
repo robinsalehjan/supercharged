@@ -87,6 +87,25 @@ The four graph skills live canonically in `agent_config/skills/<name>/SKILL.md`.
 
 The canonical MCP inventory is: shared code-review-graph and OpenAI Developer Docs; Codex-native Axiom plugin; Apple-profile-only XcodeBuildMCP, Cupertino, and `xcode`; and optional disabled Computer Use. Claude user-local MCP entries are preserved during restore and never imported by backup. code-review-graph intentionally follows latest: setup and update upgrade its pipx installation, while MCP clients invoke the installed `code-review-graph serve` binary directly.
 
+### Nested repository graph discovery
+
+The launchd watcher starts one `code-review-graph watch` process for each registered repository. To index a repository once, run `crg-here` from its root; it registers and fully builds the graph, then the watcher keeps it current.
+
+For a checkout that contains several independent Git repositories, opt in to automatic discovery by adding a registered parent root to the local, untracked `~/.code-review-graph/watcher-config.json` file:
+
+```json
+{
+  "discovery_roots": [
+    {
+      "path": "/absolute/path/to/ios-harness",
+      "max_depth": 4
+    }
+  ]
+}
+```
+
+The supervisor discovers nested repositories with `.git` directories, registers and fully builds each one, and starts an independent watcher for it. Linked Git worktrees use `.git` files and are intentionally skipped to avoid duplicate graphs. The discovery root itself must already be registered. Changes to this config reload the supervisor; new child repositories are discovered within five minutes by default.
+
 ## Personal Machine Baseline
 
 The repository was audited against the personal Mac and records the reproducible portion of that machine's setup. The authoritative locations are:

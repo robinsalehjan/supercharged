@@ -177,8 +177,11 @@ EOF
     [[ "$status" -eq 0 ]]
     [[ -x "$HOME/.local/bin/crg-watch-all.sh" ]]
     [[ -f "$HOME/Library/LaunchAgents/com.code-review-graph.watcher.plist" ]]
+    [[ -f "$HOME/.code-review-graph/watcher-config.json" ]]
     plutil -lint "$HOME/Library/LaunchAgents/com.code-review-graph.watcher.plist" >/dev/null
     grep -F '/opt/homebrew/bin:/usr/local/bin:' "$HOME/Library/LaunchAgents/com.code-review-graph.watcher.plist"
+    jq -e '.discovery_roots == []' "$HOME/.code-review-graph/watcher-config.json" >/dev/null
+    zsh -n "$HOME/.local/bin/crg-watch-all.sh"
 }
 
 @test "setup_crg_watcher is idempotent and skips reload when unchanged" {
@@ -210,6 +213,23 @@ EOF
     [[ "$first_mtime" == "$second_mtime" ]]
 }
 
+@test "setup_crg_watcher preserves an existing discovery configuration" {
+    mock_code_review_graph
+    mkdir -p "$HOME/.code-review-graph"
+    cat > "$HOME/.code-review-graph/watcher-config.json" <<'EOF'
+{"discovery_roots":[{"path":"/opt/projects/parent","max_depth":2}]}
+EOF
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH' SUPERCHARGED_SKIP_LAUNCHCTL=1
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_crg_watcher
+    "
+    [[ "$status" -eq 0 ]]
+    jq -e '.discovery_roots == [{"path":"/opt/projects/parent","max_depth":2}]' \
+        "$HOME/.code-review-graph/watcher-config.json" >/dev/null
+}
+
 @test "setup_crg_watcher honors SUPERCHARGED_SKIP_LAUNCHCTL=1" {
     mock_code_review_graph
 
@@ -220,6 +240,89 @@ EOF
     "
     [[ "$status" -eq 0 ]]
     [[ "$output" == *"skipping launchctl reload"* ]]
+}
+
+@test "crg watcher discovers, registers, builds, and watches nested repositories" {
+    mock_code_review_graph
+    local calls="$TEST_TEMP_DIR/crg-calls"
+    local parent="$TEST_TEMP_DIR/parent"
+    local child="$parent/services/child"
+    local worktree="$parent/services/child-feature-worktree"
+    local canonical_parent canonical_child canonical_worktree
+    mkdir -p "$parent/.git" "$child/.git" "$worktree" "$HOME/.code-review-graph"
+    printf 'gitdir: /example/.git/worktrees/child-feature\n' > "$worktree/.git"
+    canonical_parent="$(cd "$parent" && pwd -P)"
+    canonical_child="$(cd "$child" && pwd -P)"
+    canonical_worktree="$(cd "$worktree" && pwd -P)"
+    cat > "$HOME/.code-review-graph/registry.json" <<EOF
+{"repos":[{"path":"$parent","alias":"parent"}]}
+EOF
+    cat > "$HOME/.code-review-graph/watcher-config.json" <<EOF
+{"discovery_roots":[{"path":"$parent","max_depth":4}]}
+EOF
+    cat > "$MOCK_BIN_DIR/code-review-graph" <<EOF
+#!/bin/sh
+printf '%s\\n' "\$*" >> "$calls"
+exit 0
+EOF
+    cat > "$MOCK_BIN_DIR/sleep" <<'EOF'
+#!/bin/sh
+exit 1
+EOF
+    chmod +x "$MOCK_BIN_DIR/code-review-graph" "$MOCK_BIN_DIR/sleep"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$MOCK_BIN_DIR:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin' SUPERCHARGED_SKIP_LAUNCHCTL=1
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_crg_watcher
+        '$HOME/.local/bin/crg-watch-all.sh'
+    "
+    [[ "$status" -eq 0 ]]
+    [[ -f "$calls" ]] || { echo "$output"; false; }
+    grep -F "register $canonical_child" "$calls"
+    grep -F "build --repo $canonical_child" "$calls"
+    grep -F "watch --repo $canonical_parent" "$calls"
+    grep -F "watch --repo $canonical_child" "$calls"
+    ! grep -F "$canonical_worktree" "$calls"
+}
+
+@test "crg watcher periodically discovers nested repositories created after startup" {
+    mock_code_review_graph
+    local calls="$TEST_TEMP_DIR/crg-calls"
+    local parent="$TEST_TEMP_DIR/parent"
+    local child="$parent/services/new-child"
+    local canonical_child
+    mkdir -p "$parent/.git" "$HOME/.code-review-graph"
+    canonical_child="$(cd "$parent" && pwd -P)/services/new-child"
+    cat > "$HOME/.code-review-graph/registry.json" <<EOF
+{"repos":[{"path":"$parent","alias":"parent"}]}
+EOF
+    cat > "$HOME/.code-review-graph/watcher-config.json" <<EOF
+{"discovery_roots":[{"path":"$parent","max_depth":4}]}
+EOF
+    cat > "$MOCK_BIN_DIR/code-review-graph" <<EOF
+#!/bin/sh
+printf '%s\\n' "\$*" >> "$calls"
+exit 0
+EOF
+    cat > "$MOCK_BIN_DIR/sleep" <<'EOF'
+#!/bin/sh
+/bin/mkdir -p "$CRG_TEST_CHILD/.git"
+exit 0
+EOF
+    chmod +x "$MOCK_BIN_DIR/code-review-graph" "$MOCK_BIN_DIR/sleep"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$MOCK_BIN_DIR:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin' \
+            SUPERCHARGED_SKIP_LAUNCHCTL=1 CRG_DISCOVERY_INTERVAL=1 CRG_TEST_CHILD='$child'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_crg_watcher
+        '$HOME/.local/bin/crg-watch-all.sh'
+    "
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"nested repositories discovered — exiting for reload"* ]]
+    grep -F "register $canonical_child" "$calls"
+    grep -F "build --repo $canonical_child" "$calls"
 }
 
 # --- setup_obscura tests ---

@@ -186,7 +186,9 @@ setup_code_review_graph() {
 # Setup the code-review-graph multi-repo watcher (launchd-managed).
 # Orchestrates library primitives: reads ~/.code-review-graph/registry.json
 # and runs `code-review-graph watch --repo <path>` for each registered repo.
-# Reloads automatically when the registry changes.
+# An opt-in local watcher config can discover nested Git repositories, register
+# and build them, then add an independent watcher for each one.
+# Reloads automatically when the registry or watcher config changes.
 setup_crg_watcher() {
     if ! command_exists code-review-graph; then
         log_with_level "INFO" "code-review-graph not installed, skipping watcher setup"
@@ -195,24 +197,44 @@ setup_crg_watcher() {
 
     local script_path="$HOME/.local/bin/crg-watch-all.sh"
     local plist_path="$HOME/Library/LaunchAgents/com.code-review-graph.watcher.plist"
-    local script_tmp plist_tmp
+    local discovery_config_path="$HOME/.code-review-graph/watcher-config.json"
+    local script_tmp plist_tmp discovery_config_tmp
     script_tmp=$(mktemp)
     plist_tmp=$(mktemp)
+    discovery_config_tmp=$(mktemp)
 
     mkdir -p "$HOME/.local/bin" "$HOME/Library/LaunchAgents" "$HOME/.code-review-graph"
 
+    if [ ! -f "$discovery_config_path" ]; then
+        cat > "$discovery_config_tmp" <<'DISCOVERY_CONFIG_EOF'
+{
+  "discovery_roots": []
+}
+DISCOVERY_CONFIG_EOF
+        mv "$discovery_config_tmp" "$discovery_config_path"
+        log_with_level "INFO" "Created code-review-graph watcher config at $discovery_config_path"
+    else
+        rm -f "$discovery_config_tmp"
+    fi
+
     cat > "$script_tmp" <<'WATCHER_EOF'
 #!/usr/bin/env zsh
-# crg-watch-all.sh — Run `code-review-graph watch` for every registered repo.
-# Managed by launchd (com.code-review-graph.watcher). Exits on registry change
-# so launchd restarts us with fresh state.
+# crg-watch-all.sh — Run `code-review-graph watch` for registered repositories.
+# Optional discovery roots automatically register, build, and watch nested Git
+# repositories with .git directories. Linked worktrees use .git files and are
+# intentionally excluded to avoid duplicate graphs.
 
 set -u
 emulate -L zsh
 
 REGISTRY="${HOME}/.code-review-graph/registry.json"
+DISCOVERY_CONFIG="${CRG_WATCHER_CONFIG:-${HOME}/.code-review-graph/watcher-config.json}"
 CRG="${CRG_BIN:-$(command -v code-review-graph)}"
 INTERVAL="${CRG_WATCH_INTERVAL:-30}"
+DISCOVERY_INTERVAL="${CRG_DISCOVERY_INTERVAL:-300}"
+
+[[ "$INTERVAL" == <-> ]] && (( INTERVAL > 0 )) || INTERVAL=30
+[[ "$DISCOVERY_INTERVAL" == <-> ]] && (( DISCOVERY_INTERVAL > 0 )) || DISCOVERY_INTERVAL=300
 
 if [[ -z "$CRG" || ! -x "$CRG" ]]; then
     print -u2 "code-review-graph not on PATH"
@@ -226,16 +248,94 @@ if [[ ! -f "$REGISTRY" ]]; then
     exit 0
 fi
 
-paths=( "${(@f)$(jq -r '.repos[].path' "$REGISTRY" 2>/dev/null)}" )
-if (( ${#paths} == 0 )) || [[ -z "${paths[1]:-}" ]]; then
+canonical_path() {
+    local candidate="$1"
+    (cd "$candidate" 2>/dev/null && pwd -P)
+}
+
+file_mtime() {
+    [[ -e "$1" ]] && stat -f %m "$1" || print 0
+}
+
+typeset -a paths pids
+typeset -A registered_paths watched_paths
+new_discoveries=false
+
+add_watch_path() {
+    local candidate="$1" canonical
+    [[ -d "$candidate" ]] || { print -u2 "skip missing: $candidate"; return; }
+    canonical=$(canonical_path "$candidate") || { print -u2 "skip unreadable: $candidate"; return; }
+    [[ -n "${watched_paths[$canonical]:-}" ]] && return
+    paths+=("$canonical")
+    watched_paths[$canonical]=1
+}
+
+while IFS= read -r repo_path; do
+    [[ -n "$repo_path" ]] || continue
+    canonical=$(canonical_path "$repo_path") || continue
+    registered_paths[$canonical]=1
+    add_watch_path "$canonical"
+done < <(jq -r '.repos[]?.path // empty' "$REGISTRY" 2>/dev/null)
+
+if (( ${#paths} == 0 )); then
     print -u2 "No registered repos"
     sleep 60
     exit 0
 fi
 
-typeset -a pids
+discover_nested_repositories() {
+    [[ -f "$DISCOVERY_CONFIG" ]] || return 0
+
+    local discovery_root max_depth git_dir candidate canonical
+    while IFS=$'\t' read -r discovery_root max_depth; do
+        [[ -d "$discovery_root" ]] || {
+            print -u2 "skip missing discovery root: $discovery_root"
+            continue
+        }
+
+        discovery_root=$(canonical_path "$discovery_root") || continue
+        if [[ -z "${registered_paths[$discovery_root]:-}" ]]; then
+            print -u2 "skip unregistered discovery root: $discovery_root"
+            continue
+        fi
+
+        while IFS= read -r git_dir; do
+            candidate="${git_dir:h}"
+            canonical=$(canonical_path "$candidate") || continue
+            [[ "$canonical" == "$discovery_root" ]] && continue
+
+            if [[ -z "${registered_paths[$canonical]:-}" ]]; then
+                print -u2 "registering nested repo: $canonical"
+                if ! "$CRG" register "$canonical"; then
+                    print -u2 "failed to register nested repo: $canonical"
+                    continue
+                fi
+                if ! "$CRG" build --repo "$canonical"; then
+                    print -u2 "failed to build nested repo: $canonical"
+                    continue
+                fi
+                registered_paths[$canonical]=1
+                new_discoveries=true
+            fi
+
+            add_watch_path "$canonical"
+        done < <(find "$discovery_root" -mindepth 2 -maxdepth "$((max_depth + 1))" \
+            -type d -name .git -prune -print 2>/dev/null)
+    done < <(jq -r '
+        (.discovery_roots // [])[]?
+        | select(type == "object")
+        | .path as $path
+        | (.max_depth // 4) as $depth
+        | select(($path | type) == "string")
+        | select(($depth | type) == "number")
+        | select($depth >= 1 and $depth <= 10 and ($depth | floor) == $depth)
+        | [$path, $depth] | @tsv
+    ' "$DISCOVERY_CONFIG" 2>/dev/null)
+}
+
+discover_nested_repositories
+
 for p in "${paths[@]}"; do
-    [[ -d "$p" ]] || { print -u2 "skip missing: $p"; continue; }
     "$CRG" watch --repo "$p" &
     pids+=($!)
     print -u2 "watching: $p (pid $!)"
@@ -252,12 +352,26 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-mtime=$(stat -f %m "$REGISTRY")
+registry_mtime=$(file_mtime "$REGISTRY")
+config_mtime=$(file_mtime "$DISCOVERY_CONFIG")
+discovery_elapsed=0
 while sleep "$INTERVAL"; do
-    new=$(stat -f %m "$REGISTRY" 2>/dev/null)
-    if [[ "$new" != "$mtime" ]]; then
-        print -u2 "registry changed — exiting for reload"
+    new_registry_mtime=$(file_mtime "$REGISTRY")
+    new_config_mtime=$(file_mtime "$DISCOVERY_CONFIG")
+    if [[ "$new_registry_mtime" != "$registry_mtime" || "$new_config_mtime" != "$config_mtime" ]]; then
+        print -u2 "registry or watcher config changed — exiting for reload"
         exit 0
+    fi
+
+    discovery_elapsed=$((discovery_elapsed + INTERVAL))
+    if (( discovery_elapsed >= DISCOVERY_INTERVAL )); then
+        new_discoveries=false
+        discover_nested_repositories
+        if $new_discoveries; then
+            print -u2 "nested repositories discovered — exiting for reload"
+            exit 0
+        fi
+        discovery_elapsed=0
     fi
 done
 WATCHER_EOF
@@ -329,6 +443,7 @@ PLIST_EOF
     if launchctl load "$plist_path" 2>/dev/null; then
         log_with_level "SUCCESS" "code-review-graph watcher loaded (com.code-review-graph.watcher)"
         log_with_level "INFO" "Use 'crg-here' inside a git repo to register + build"
+        log_with_level "INFO" "Add registered parent roots to $discovery_config_path to auto-index nested repos"
     else
         log_with_level "WARN" "launchctl load failed for code-review-graph watcher"
     fi
