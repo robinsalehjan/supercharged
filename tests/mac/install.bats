@@ -140,6 +140,21 @@ run_zsh_func() {
   [[ "$output" == *'vscode "openai.chatgpt"'* ]]
 }
 
+@test "build_brewfile does not execute commands in its comments" {
+  create_mock_bin "brew" 'echo "unexpected brew invocation: $*" >&2; exit 1'
+
+  run zsh -c "
+    export PATH='$MOCK_BIN_DIR:$REAL_PATH'
+    source '$PROJECT_ROOT/scripts/utils.sh'
+    source '$PROJECT_ROOT/scripts/mac.sh'
+    build_brewfile
+  "
+
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"unexpected brew invocation"* ]]
+  [[ "$output" == *'# Homebrew release whenever the normal `brew update` + `brew upgrade` path runs.'* ]]
+}
+
 @test "build_brewfile includes Codex desktop app by default" {
   run zsh -c "
     unset INSTALL_CODEX_APP

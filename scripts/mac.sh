@@ -187,7 +187,7 @@ tap \"peripheryapp/periphery\"
 # the formula's \`periphery\` binary into /opt/homebrew/bin, breaking PATH lookup.
 brew \"periphery\", trusted: true
 # Official tap and fully qualified formula keep XcodeBuildMCP on the current
-# Homebrew release whenever the normal `brew update` + `brew upgrade` path runs.
+# Homebrew release whenever the normal \`brew update\` + \`brew upgrade\` path runs.
 tap \"getsentry/xcodebuildmcp\"
 brew \"getsentry/xcodebuildmcp/xcodebuildmcp\", trusted: true"
     fi
