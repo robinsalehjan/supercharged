@@ -105,12 +105,25 @@ with open(sys.argv[1], "w") as port_file:
 server.serve_forever()
 PYEOF
     port_file="$TEST_TEMP_DIR/http-port"
-    python3 "$TEST_TEMP_DIR/http-mcp.py" "$port_file" &
+    server_log="$TEST_TEMP_DIR/http-mcp.log"
+    python3 "$TEST_TEMP_DIR/http-mcp.py" "$port_file" >"$server_log" 2>&1 &
     HTTP_SERVER_PID=$!
-    for _ in {1..50}; do
+    for _ in {1..100}; do
         [ -s "$port_file" ] && break
-        sleep 0.02
+        if ! kill -0 "$HTTP_SERVER_PID" 2>/dev/null; then
+            echo "HTTP MCP test server exited before becoming ready" >&2
+            cat "$server_log" >&2
+            return 1
+        fi
+        sleep 0.1
     done
+
+    if [ ! -s "$port_file" ]; then
+        echo "Timed out waiting for HTTP MCP test server" >&2
+        cat "$server_log" >&2
+        return 1
+    fi
+
     port=$(<"$port_file")
     cat > "$CONFIG_DIR/config.toml" <<EOF
 [mcp_servers.docs]
