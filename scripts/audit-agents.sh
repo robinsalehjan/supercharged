@@ -231,7 +231,7 @@ else
     fail "Managed Codex plugin registry is malformed or does not match Axiom policy"
 fi
 
-MANAGED_TOOLS_MANIFEST="$AGENT_CONFIG_DIR/managed_tools.json"
+MANAGED_TOOLS_MANIFEST="${MANAGED_TOOLS_MANIFEST:-$AGENT_CONFIG_DIR/managed_tools.json}"
 if jq -e '
     .version == 2 and
     (.tools.plannotator.version | test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")) and

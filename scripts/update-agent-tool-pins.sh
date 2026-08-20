@@ -79,12 +79,12 @@ updates=$(jq -n \
     --arg a_current "$(jq -r '.marketplaces[0].ref' "$PLUGIN_REGISTRY")" --arg a_latest "$axiom_commit" \
     --arg av_current "$(jq -r '.plugins[0].version' "$PLUGIN_REGISTRY")" --arg av_latest "$axiom_version" \
     '[
-      select($p_current != $p_latest or $p_arm_current != $p_arm_latest or $p_x64_current != $p_x64_latest) | "Plannotator: \($p_current) -> \($p_latest)",
-      select($c_current != $c_latest) | "code-review-graph: \($c_current) -> \($c_latest)",
-      select($x_current != $x_latest or $x_arm_current != $x_arm_latest or $x_x64_current != $x_x64_latest) | "XcodeBuildMCP: \($x_current) -> \($x_latest)",
-      select($o_current != $o_latest or $o_arm_current != $o_arm_latest or $o_x64_current != $o_x64_latest) | "Obscura: \($o_current) -> \($o_latest)",
-      select($s_current != $s_latest) | "Claude statusline commit changed",
-      select($a_current != $a_latest or $av_current != $av_latest) | "Axiom marketplace commit changed"
+      (select($p_current != $p_latest or $p_arm_current != $p_arm_latest or $p_x64_current != $p_x64_latest) | "Plannotator: \($p_current) -> \($p_latest)"),
+      (select($c_current != $c_latest) | "code-review-graph: \($c_current) -> \($c_latest)"),
+      (select($x_current != $x_latest or $x_arm_current != $x_arm_latest or $x_x64_current != $x_x64_latest) | "XcodeBuildMCP: \($x_current) -> \($x_latest)"),
+      (select($o_current != $o_latest or $o_arm_current != $o_arm_latest or $o_x64_current != $o_x64_latest) | "Obscura: \($o_current) -> \($o_latest)"),
+      (select($s_current != $s_latest) | "Claude statusline commit changed"),
+      (select($a_current != $a_latest or $av_current != $av_latest) | "Axiom marketplace commit changed")
     ]')
 
 if [ "$(jq 'length' <<<"$updates")" -eq 0 ]; then

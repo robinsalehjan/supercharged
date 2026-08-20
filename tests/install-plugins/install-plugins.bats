@@ -83,3 +83,25 @@ teardown() {
   [[ "$output" == *"Unknown option"* ]]
   [[ "$output" == *"--bogus-flag"* ]]
 }
+
+@test "install-plugins.sh rejects a live Claude plugin version mismatch" {
+  mock_claude
+  local expected_version
+  local drifted_version="0.0.0-test-drift"
+  expected_version=$(jq -r '.plugins["swift-lsp@claude-plugins-official"][0].version' \
+    "$PROJECT_ROOT/claude_config/installed_plugins.json")
+  cp "$PROJECT_ROOT/claude_config/installed_plugins.json" \
+    "$TEMP_CLAUDE_PLUGINS/installed_plugins.json"
+  jq --arg version "$drifted_version" \
+    '.plugins["swift-lsp@claude-plugins-official"][0].version = $version' \
+    "$TEMP_CLAUDE_PLUGINS/installed_plugins.json" \
+    > "$TEMP_CLAUDE_PLUGINS/installed_plugins.json.tmp"
+  mv "$TEMP_CLAUDE_PLUGINS/installed_plugins.json.tmp" \
+    "$TEMP_CLAUDE_PLUGINS/installed_plugins.json"
+
+  run env CLAUDE_HOME="$TEMP_CLAUDE" "$SCRIPT"
+
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Claude plugin version mismatch for swift-lsp@claude-plugins-official"* ]]
+  [[ "$output" == *"expected $expected_version, found $drifted_version"* ]]
+}
