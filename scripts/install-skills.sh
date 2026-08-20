@@ -179,8 +179,7 @@ install_skill_for_destination() {
     if [ -d "$target/.git" ]; then
         log_with_level "INFO" "Updating skill for $destination_name: $name"
         if git_err=$(git -C "$target" fetch origin "$ref" 2>&1 \
-                  && git -C "$target" checkout "$ref" 2>&1 \
-                  && git -C "$target" pull --ff-only origin "$ref" 2>&1); then
+                  && git -C "$target" checkout --detach FETCH_HEAD 2>&1); then
             log_with_level "SUCCESS" "Updated skill for $destination_name: $name"
         else
             log_with_level "WARN" "Failed to update skill for $destination_name: $name (continuing) — $git_err"
@@ -189,14 +188,12 @@ install_skill_for_destination() {
         log_with_level "WARN" "Skipping $name for $destination_name — $target exists but is not a git checkout"
     else
         log_with_level "INFO" "Cloning skill for $destination_name: $name from $repo"
-        # Try branch-specific clone first; fall back to default branch. Capture
-        # stderr from the final attempt so users see the actual git error.
-        if git clone --quiet --branch "$ref" "$repo" "$target" 2>/dev/null; then
+        if git clone --quiet --no-checkout "$repo" "$target" 2>/dev/null && \
+           git -C "$target" fetch --quiet origin "$ref" 2>/dev/null && \
+           git -C "$target" checkout --quiet --detach FETCH_HEAD 2>/dev/null; then
             log_with_level "SUCCESS" "Installed skill for $destination_name: $name"
-        elif git_err=$(git clone "$repo" "$target" 2>&1); then
-            log_with_level "SUCCESS" "Installed skill for $destination_name: $name (default branch)"
         else
-            log_with_level "WARN" "Failed to clone skill for $destination_name: $name (continuing) — $git_err"
+            log_with_level "WARN" "Failed to clone pinned skill for $destination_name: $name (continuing)"
         fi
     fi
 }
@@ -222,7 +219,10 @@ done < <(echo "$SKILLS_JSON" | jq -r '.removed_skills // {} | to_entries[] | [.k
 # Iterate over each tracked skill
 while IFS=$'\t' read -r name repo ref; do
     [ -z "$name" ] && continue
-    ref="${ref:-main}"
+    if [[ ! "$ref" =~ ^[0-9a-f]{40}$ ]]; then
+        log_with_level "WARN" "Skipping $name — ref must be an immutable 40-character commit SHA"
+        continue
+    fi
 
     if [ -z "$repo" ] || [ "$repo" = "null" ]; then
         log_with_level "WARN" "Skipping $name — repo is not configured"
@@ -242,7 +242,7 @@ while IFS=$'\t' read -r name repo ref; do
         "$ref" \
         "Codex" \
         "$CODEX_SKILLS_DIR"
-done < <(echo "$SKILLS_JSON" | jq -r '.skills // {} | to_entries[] | [.key, .value.repo, (.value.ref // "main")] | @tsv')
+done < <(echo "$SKILLS_JSON" | jq -r '.skills // {} | to_entries[] | [.key, .value.repo, (.value.ref // "")] | @tsv')
 
 log_with_level "SUCCESS" "Skill installation complete"
 if [ "$DRY_RUN" = false ]; then

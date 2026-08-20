@@ -130,18 +130,49 @@ setup_worktrunk() {
 
 # Setup code-review-graph (AI-optimized code context via knowledge graph)
 setup_code_review_graph() {
+    local dry_run=false
+    [ "${1:-}" = "--dry-run" ] && dry_run=true
     if ! command_exists pipx; then
         log_with_level "WARN" "pipx not installed, skipping code-review-graph"
         return 0
     fi
 
+    local manifest="${MANAGED_TOOLS_MANIFEST:-$UTILS_PROJECT_ROOT/agent_config/managed_tools.json}"
+    local managed_version package extras managed_spec installed_version=""
+    managed_version=$(jq -er '.tools["code-review-graph"].version' "$manifest" 2>/dev/null) || managed_version=""
+    package=$(jq -er '.tools["code-review-graph"].package' "$manifest" 2>/dev/null) || package=""
+    extras=$(jq -er '.tools["code-review-graph"].extras | join(",")' "$manifest" 2>/dev/null) || extras=""
+    if [[ ! "$managed_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || \
+       [ "$package" != "code-review-graph" ] || [ -z "$extras" ]; then
+        log_with_level "ERROR" "Invalid code-review-graph pin in $manifest"
+        return 1
+    fi
+    managed_spec="${package}[${extras}]==${managed_version}"
+
     if command_exists code-review-graph; then
-        log_with_level "INFO" "Upgrading code-review-graph to the latest release..."
-        if pipx upgrade code-review-graph >/dev/null 2>&1; then
-            log_with_level "SUCCESS" "code-review-graph upgraded"
-        else
-            log_with_level "WARN" "code-review-graph upgrade failed; keeping the installed version"
+        installed_version=$(code-review-graph --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1) || installed_version=""
+    fi
+
+    if [ "$installed_version" != "$managed_version" ]; then
+        if $dry_run; then
+            log_with_level "INFO" "Would install managed code-review-graph $managed_version"
+            return 0
         fi
+        log_with_level "INFO" "Installing managed code-review-graph $managed_version..."
+        if pipx install --force "$managed_spec" >/dev/null 2>&1; then
+            log_with_level "SUCCESS" "code-review-graph $managed_version installed"
+        else
+            log_with_level "ERROR" "Failed to install managed code-review-graph $managed_version via pipx"
+            return 1
+        fi
+    fi
+
+    if $dry_run; then
+        log_with_level "INFO" "code-review-graph $managed_version matches the managed pin"
+        return 0
+    fi
+
+    if command_exists code-review-graph; then
         log_with_level "INFO" "Checking code-review-graph extras..."
 
         # Check if extras are installed in the pipx venv (not system Python)
@@ -164,14 +195,6 @@ setup_code_review_graph() {
             fi
         else
             log_with_level "INFO" "code-review-graph extras already installed"
-        fi
-    else
-        log_with_level "INFO" "Installing code-review-graph with embeddings + community detection..."
-        if pipx install 'code-review-graph[embeddings,communities]' >/dev/null 2>&1; then
-            log_with_level "SUCCESS" "code-review-graph installed successfully"
-        else
-            log_with_level "ERROR" "Failed to install code-review-graph via pipx"
-            return 1
         fi
     fi
 
@@ -451,149 +474,269 @@ PLIST_EOF
 
 # Setup Plannotator (Visual annotation tool for AI coding agents)
 setup_plannotator() {
-    # Path-based idempotency check — `command_exists` would miss a prior
-    # install when ~/.local/bin isn't on PATH in the current shell (e.g.
-    # non-interactive runs before .zshrc is sourced).
-    if [ -x "$HOME/.local/bin/plannotator" ]; then
-        log_with_level "INFO" "Plannotator already installed"
-        return 0
+    local dry_run=false
+    if [ "${1:-}" = "--dry-run" ]; then
+        dry_run=true
     fi
 
-    log_with_level "INFO" "Installing Plannotator..."
+    local manifest="${PLANNOTATOR_MANIFEST:-$UTILS_PROJECT_ROOT/agent_config/managed_tools.json}"
+    local install_dir="${PLANNOTATOR_INSTALL_DIR:-$HOME/.local/bin}"
+    local install_path="$install_dir/plannotator"
+    local arch_uname="${PLANNOTATOR_ARCH:-$(uname -m)}"
+    local asset_key
 
-    local arch
-    arch=$(uname -m)
-    if [[ "$arch" == "arm64" ]] || [[ "$arch" == "aarch64" ]]; then
-        arch="arm64"
-    elif [[ "$arch" == "x86_64" ]]; then
-        arch="x64"
-    else
-        # Plannotator is optional tooling; don't abort the larger setup pipeline
-        # over an unsupported arch (matches setup_obscura's policy).
-        log_with_level "WARN" "Unsupported architecture for Plannotator: $arch — skipping"
-        return 0
-    fi
-
-    # Fetch latest version via GitHub API. gh failures are handled by the
-    # curl fallback below (and stderr would just be noise here); if both
-    # fail, the final "Failed to determine latest plannotator version"
-    # error is the actionable line.
-    local version=""
-    if command_exists gh; then
-        version=$(gh api repos/backnotprop/plannotator/releases/latest --jq '.tag_name' 2>/dev/null) || version=""
-    fi
-
-    if [ -z "$version" ]; then
-        log_with_level "WARN" "Could not fetch latest version via gh CLI, trying curl..."
-        version=$(curl -fsSL https://api.github.com/repos/backnotprop/plannotator/releases/latest 2>/dev/null \
-            | grep -o '"tag_name": *"[^"]*"' \
-            | sed 's/"tag_name": *"\(.*\)"/\1/')
-    fi
-
-    if [ -z "$version" ]; then
-        log_with_level "ERROR" "Failed to determine latest plannotator version"
+    if ! command_exists jq; then
+        log_with_level "ERROR" "jq is required to read the managed Plannotator version"
         return 1
     fi
 
-    log_with_level "INFO" "Latest plannotator version: $version"
+    if [ ! -f "$manifest" ]; then
+        log_with_level "ERROR" "Managed tool manifest not found: $manifest"
+        return 1
+    fi
 
-    local binary_name="plannotator-darwin-${arch}"
-    local binary_url="https://github.com/backnotprop/plannotator/releases/download/${version}/${binary_name}"
-    local checksum_url="${binary_url}.sha256"
+    if [[ "$arch_uname" == "arm64" ]] || [[ "$arch_uname" == "aarch64" ]]; then
+        asset_key="darwin-arm64"
+    elif [[ "$arch_uname" == "x86_64" ]]; then
+        asset_key="darwin-x64"
+    else
+        log_with_level "WARN" "Unsupported architecture for Plannotator: $arch_uname — skipping"
+        return 0
+    fi
+
+    local version repository binary_name expected_sha
+    version=$(jq -er '.tools.plannotator.version' "$manifest" 2>/dev/null) || version=""
+    repository=$(jq -er '.tools.plannotator.repository' "$manifest" 2>/dev/null) || repository=""
+    binary_name=$(jq -er --arg asset "$asset_key" '.tools.plannotator.assets[$asset].name' "$manifest" 2>/dev/null) || binary_name=""
+    expected_sha=$(jq -er --arg asset "$asset_key" '.tools.plannotator.assets[$asset].sha256' "$manifest" 2>/dev/null) || expected_sha=""
+
+    if [ -z "$version" ] || [ -z "$repository" ] || [ -z "$binary_name" ] || \
+       [[ ! "$expected_sha" =~ ^[0-9a-f]{64}$ ]]; then
+        log_with_level "ERROR" "Invalid Plannotator entry in $manifest"
+        return 1
+    fi
+
+    local installed_sha=""
+    if [ -f "$install_path" ]; then
+        installed_sha=$(shasum -a 256 "$install_path" 2>/dev/null | awk '{print $1}') || installed_sha=""
+    fi
+
+    if [ "$installed_sha" = "$expected_sha" ] && [ -x "$install_path" ]; then
+        log_with_level "INFO" "Plannotator $version already installed"
+        return 0
+    fi
+
+    if $dry_run; then
+        if [ -e "$install_path" ]; then
+            log_with_level "INFO" "Would update Plannotator to $version"
+        else
+            log_with_level "INFO" "Would install Plannotator $version"
+        fi
+        return 0
+    fi
+
+    local action="Installing"
+    [ -e "$install_path" ] && action="Updating"
+    log_with_level "INFO" "$action Plannotator to managed version $version..."
+
+    if ! mkdir -p "$install_dir"; then
+        log_with_level "ERROR" "Failed to create Plannotator install directory: $install_dir"
+        return 1
+    fi
+
+    local binary_url="https://github.com/${repository}/releases/download/${version}/${binary_name}"
     local tmp_dir
-    tmp_dir=$(mktemp -d)
-    # shellcheck disable=SC2064
-    trap "rm -rf '$tmp_dir'" RETURN
+    if ! tmp_dir=$(mktemp -d "$install_dir/.plannotator.XXXXXX"); then
+        log_with_level "ERROR" "Failed to create a temporary Plannotator install directory"
+        return 1
+    fi
+    _plannotator_cleanup() { rm -rf "$tmp_dir"; }
 
-    # Capture stderr to surface the actual failure reason (HTTP 404, DNS, etc.)
     local curl_err
     if ! curl_err=$(curl -fsSL -o "$tmp_dir/${binary_name}" "$binary_url" 2>&1); then
         log_with_level "ERROR" "Failed to download plannotator binary ($binary_url): $curl_err"
+        _plannotator_cleanup
         return 1
     fi
 
-    if ! curl_err=$(curl -fsSL -o "$tmp_dir/${binary_name}.sha256" "$checksum_url" 2>&1); then
-        log_with_level "ERROR" "Failed to download plannotator checksum ($checksum_url): $curl_err"
+    local downloaded_sha
+    downloaded_sha=$(shasum -a 256 "$tmp_dir/${binary_name}" 2>/dev/null | awk '{print $1}') || downloaded_sha=""
+    if [ "$downloaded_sha" != "$expected_sha" ]; then
+        log_with_level "ERROR" "Plannotator checksum verification failed (expected $expected_sha, found ${downloaded_sha:-unavailable})"
+        _plannotator_cleanup
         return 1
     fi
 
-    # Verify checksum (checksum file references the original binary filename)
-    local shasum_err
-    if ! shasum_err=$(cd "$tmp_dir" && shasum -a 256 -c "${binary_name}.sha256" 2>&1); then
-        log_with_level "ERROR" "Plannotator checksum verification failed: $shasum_err"
+    # The temporary file lives beside the destination, so the final rename is
+    # atomic and a download/verification failure leaves the old binary intact.
+    if ! chmod +x "$tmp_dir/${binary_name}" || \
+       ! mv "$tmp_dir/${binary_name}" "$install_path"; then
+        log_with_level "ERROR" "Failed to install plannotator binary to $install_path"
+        _plannotator_cleanup
         return 1
     fi
 
-    # Single guarded block — without this, a failed mv (cross-device, disk
-    # full, permission denied) would silently log SUCCESS with no binary on
-    # disk.
-    if ! mkdir -p "$HOME/.local/bin" \
-        || ! mv "$tmp_dir/${binary_name}" "$HOME/.local/bin/plannotator" \
-        || ! chmod +x "$HOME/.local/bin/plannotator"; then
-        log_with_level "ERROR" "Failed to install plannotator binary to ~/.local/bin"
-        rm -f "$HOME/.local/bin/plannotator"
+    _plannotator_cleanup
+    log_with_level "SUCCESS" "Plannotator $version installed successfully"
+}
+
+# Setup XcodeBuildMCP from an exact, checksummed upstream release archive.
+setup_xcodebuildmcp() {
+    local dry_run=false
+    [ "${1:-}" = "--dry-run" ] && dry_run=true
+
+    local manifest="${MANAGED_TOOLS_MANIFEST:-$UTILS_PROJECT_ROOT/agent_config/managed_tools.json}"
+    local install_root="${XCODEBUILDMCP_INSTALL_ROOT:-$HOME/.local/share/supercharged/xcodebuildmcp}"
+    local bin_dir="${XCODEBUILDMCP_BIN_DIR:-$HOME/.local/bin}"
+    local arch_uname="${XCODEBUILDMCP_ARCH:-$(uname -m)}" asset_key
+    case "$arch_uname" in
+        arm64|aarch64) asset_key="darwin-arm64" ;;
+        x86_64) asset_key="darwin-x64" ;;
+        *)
+            log_with_level "WARN" "Unsupported architecture for XcodeBuildMCP: $arch_uname — skipping"
+            return 0
+            ;;
+    esac
+
+    local version repository asset_name expected_sha installed_version="" installed_sha=""
+    version=$(jq -er '.tools.xcodebuildmcp.version' "$manifest" 2>/dev/null) || version=""
+    repository=$(jq -er '.tools.xcodebuildmcp.repository' "$manifest" 2>/dev/null) || repository=""
+    asset_name=$(jq -er --arg asset "$asset_key" '.tools.xcodebuildmcp.assets[$asset].name' "$manifest" 2>/dev/null) || asset_name=""
+    expected_sha=$(jq -er --arg asset "$asset_key" '.tools.xcodebuildmcp.assets[$asset].sha256' "$manifest" 2>/dev/null) || expected_sha=""
+    if [[ ! "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || [ -z "$repository" ] || \
+       [ -z "$asset_name" ] || [[ ! "$expected_sha" =~ ^[0-9a-f]{64}$ ]]; then
+        log_with_level "ERROR" "Invalid XcodeBuildMCP pin in $manifest"
         return 1
     fi
 
-    log_with_level "SUCCESS" "Plannotator installed successfully"
-    log_with_level "INFO" "Install the Claude Code plugin: /plugin marketplace add backnotprop/plannotator"
+    if [ -x "$bin_dir/xcodebuildmcp" ]; then
+        installed_version=$("$bin_dir/xcodebuildmcp" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1) || installed_version=""
+    fi
+    installed_sha=$(cat "$install_root/.active-archive-sha256" 2>/dev/null || true)
+    if [ "$installed_version" = "${version#v}" ] && [ "$installed_sha" = "$expected_sha" ]; then
+        if ! $dry_run && [ "${XCODEBUILDMCP_SKIP_BREW_CLEANUP:-0}" != "1" ] && \
+           command_exists brew && brew list --formula xcodebuildmcp >/dev/null 2>&1; then
+            log_with_level "INFO" "Removing the superseded Homebrew XcodeBuildMCP installation"
+            brew uninstall xcodebuildmcp >/dev/null 2>&1 || brew unlink xcodebuildmcp >/dev/null 2>&1 || true
+        fi
+        log_with_level "INFO" "XcodeBuildMCP $version already installed"
+        return 0
+    fi
+    if $dry_run; then
+        log_with_level "INFO" "Would install XcodeBuildMCP $version"
+        return 0
+    fi
+
+    local target_dir="$install_root/${version}-${expected_sha[1,12]}" tmp_dir archive downloaded_sha
+    mkdir -p "$install_root" "$bin_dir" || return 1
+    tmp_dir=$(mktemp -d "$install_root/.xcodebuildmcp.XXXXXX") || return 1
+    archive="$tmp_dir/$asset_name"
+    _xcodebuildmcp_cleanup() { rm -rf "$tmp_dir"; }
+
+    if ! curl -fsSL "https://github.com/$repository/releases/download/$version/$asset_name" -o "$archive"; then
+        log_with_level "ERROR" "Failed to download XcodeBuildMCP $version"
+        _xcodebuildmcp_cleanup
+        return 1
+    fi
+    downloaded_sha=$(shasum -a 256 "$archive" 2>/dev/null | awk '{print $1}') || downloaded_sha=""
+    if [ "$downloaded_sha" != "$expected_sha" ]; then
+        log_with_level "ERROR" "XcodeBuildMCP checksum verification failed"
+        _xcodebuildmcp_cleanup
+        return 1
+    fi
+    mkdir -p "$tmp_dir/extracted"
+    if ! tar -xzf "$archive" -C "$tmp_dir/extracted" --strip-components=1 || \
+       [ ! -x "$tmp_dir/extracted/bin/xcodebuildmcp" ]; then
+        log_with_level "ERROR" "XcodeBuildMCP archive is malformed"
+        _xcodebuildmcp_cleanup
+        return 1
+    fi
+
+    if [ -d "$target_dir" ] && \
+       [ "$("$target_dir/bin/xcodebuildmcp" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)" != "${version#v}" ]; then
+        target_dir="${target_dir}-${EPOCHSECONDS}"
+    fi
+    if [ ! -d "$target_dir" ]; then
+        mv "$tmp_dir/extracted" "$target_dir" || {
+            _xcodebuildmcp_cleanup
+            return 1
+        }
+    fi
+    ln -sfn "$target_dir/bin/xcodebuildmcp" "$bin_dir/xcodebuildmcp"
+    ln -sfn "$target_dir/bin/xcodebuildmcp-doctor" "$bin_dir/xcodebuildmcp-doctor"
+    printf '%s\n' "$expected_sha" > "$install_root/.active-archive-sha256"
+    if [ "${XCODEBUILDMCP_SKIP_BREW_CLEANUP:-0}" != "1" ] && \
+       command_exists brew && brew list --formula xcodebuildmcp >/dev/null 2>&1; then
+        log_with_level "INFO" "Removing the superseded Homebrew XcodeBuildMCP installation"
+        brew uninstall xcodebuildmcp >/dev/null 2>&1 || brew unlink xcodebuildmcp >/dev/null 2>&1 || true
+    fi
+    _xcodebuildmcp_cleanup
+    log_with_level "SUCCESS" "XcodeBuildMCP $version installed"
 }
 
 # Setup Obscura (Rust-based headless browser for AI agents and web scraping)
-# Upstream: https://github.com/h4ckf0r0day/obscura
-# Releases ship as tarballs containing two binaries (`obscura` + `obscura-worker`)
-# and don't include .sha256 sidecars, so we rely on TLS-pinned download via
-# `gh release download` for integrity rather than the checksum-verification
-# pattern used by Plannotator.
 setup_obscura() {
-    # Path-based idempotency check — `command_exists` would miss a prior
-    # install when ~/.local/bin isn't on PATH in the current shell (e.g.
-    # non-interactive runs before .zshrc is sourced).
-    if [ -x "$HOME/.local/bin/obscura" ] && [ -x "$HOME/.local/bin/obscura-worker" ]; then
-        log_with_level "INFO" "Obscura already installed"
-        return 0
-    fi
-
-    # Defensive guard for standalone or sourced invocations that bypass the
-    # full setup sequence.
-    if ! command_exists gh; then
-        log_with_level "WARN" "gh CLI required to install Obscura (TLS-pinned download), skipping"
-        return 0
-    fi
-
-    log_with_level "INFO" "Installing Obscura (headless browser for AI agents)..."
-
-    local arch_uname asset_arch
-    arch_uname=$(uname -m)
+    local dry_run=false
+    [ "${1:-}" = "--dry-run" ] && dry_run=true
+    local manifest="${MANAGED_TOOLS_MANIFEST:-$UTILS_PROJECT_ROOT/agent_config/managed_tools.json}"
+    local install_dir="${OBSCURA_INSTALL_DIR:-$HOME/.local/bin}"
+    local arch_uname="${OBSCURA_ARCH:-$(uname -m)}" asset_key
     case "$arch_uname" in
-        arm64|aarch64) asset_arch="aarch64-macos" ;;
-        x86_64)        asset_arch="x86_64-macos" ;;
+        arm64|aarch64) asset_key="darwin-arm64" ;;
+        x86_64) asset_key="darwin-x64" ;;
         *)
-            # Obscura is optional tooling; don't abort the larger setup pipeline
-            # over an unsupported arch (matches the gh-missing precedent above).
             log_with_level "WARN" "Unsupported architecture for Obscura: $arch_uname — skipping"
             return 0
             ;;
     esac
 
-    local asset_name="obscura-${asset_arch}.tar.gz"
-    local tmp_dir
-    tmp_dir=$(mktemp -d)
+    local version repository asset_name expected_archive_sha expected_obscura_sha expected_worker_sha
+    version=$(jq -er '.tools.obscura.version' "$manifest" 2>/dev/null) || version=""
+    repository=$(jq -er '.tools.obscura.repository' "$manifest" 2>/dev/null) || repository=""
+    asset_name=$(jq -er --arg asset "$asset_key" '.tools.obscura.assets[$asset].name' "$manifest" 2>/dev/null) || asset_name=""
+    expected_archive_sha=$(jq -er --arg asset "$asset_key" '.tools.obscura.assets[$asset].sha256' "$manifest" 2>/dev/null) || expected_archive_sha=""
+    expected_obscura_sha=$(jq -er --arg asset "$asset_key" '.tools.obscura.assets[$asset].binaries.obscura' "$manifest" 2>/dev/null) || expected_obscura_sha=""
+    expected_worker_sha=$(jq -er --arg asset "$asset_key" '.tools.obscura.assets[$asset].binaries["obscura-worker"]' "$manifest" 2>/dev/null) || expected_worker_sha=""
+    if [[ ! "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || [ -z "$repository" ] || \
+       [ -z "$asset_name" ] || [[ ! "$expected_archive_sha" =~ ^[0-9a-f]{64}$ ]] || \
+       [[ ! "$expected_obscura_sha" =~ ^[0-9a-f]{64}$ ]] || [[ ! "$expected_worker_sha" =~ ^[0-9a-f]{64}$ ]]; then
+        log_with_level "ERROR" "Invalid Obscura pin in $manifest"
+        return 1
+    fi
 
-    # Cleanup helper — `trap ... RETURN` is bash-only (zsh errors with
-    # "undefined signal: RETURN"), and `trap ... EXIT` inside a function fires
-    # on shell exit in zsh, not function return. So clean up explicitly at
-    # each exit path via this helper.
+    local installed_obscura_sha="" installed_worker_sha=""
+    [ -f "$install_dir/obscura" ] && installed_obscura_sha=$(shasum -a 256 "$install_dir/obscura" | awk '{print $1}')
+    [ -f "$install_dir/obscura-worker" ] && installed_worker_sha=$(shasum -a 256 "$install_dir/obscura-worker" | awk '{print $1}')
+    if [ "$installed_obscura_sha" = "$expected_obscura_sha" ] && \
+       [ "$installed_worker_sha" = "$expected_worker_sha" ] && \
+       [ -x "$install_dir/obscura" ] && [ -x "$install_dir/obscura-worker" ]; then
+        log_with_level "INFO" "Obscura $version already installed"
+        return 0
+    fi
+    if $dry_run; then
+        log_with_level "INFO" "Would install Obscura $version"
+        return 0
+    fi
+
+    log_with_level "INFO" "Installing managed Obscura $version..."
+    local tmp_dir
+    mkdir -p "$install_dir" || return 1
+    tmp_dir=$(mktemp -d "$install_dir/.obscura.XXXXXX") || return 1
     _obscura_cleanup() { rm -rf "$tmp_dir"; }
 
-    # Capture stderr separately so failure messages carry the actual cause
-    # (auth, rate limit, 404, mismatched pattern) instead of a generic line.
-    local gh_err
-    if ! gh_err=$(gh release download \
-            --repo h4ckf0r0day/obscura \
-            --pattern "$asset_name" \
-            --dir "$tmp_dir" 2>&1 >/dev/null); then
-        log_with_level "ERROR" "Failed to download $asset_name from h4ckf0r0day/obscura: $gh_err"
+    local download_err
+    if ! download_err=$(curl -fsSL \
+            "https://github.com/$repository/releases/download/$version/$asset_name" \
+            -o "$tmp_dir/$asset_name" 2>&1); then
+        log_with_level "ERROR" "Failed to download $asset_name from $repository: $download_err"
+        _obscura_cleanup
+        return 1
+    fi
+
+    local downloaded_archive_sha
+    downloaded_archive_sha=$(shasum -a 256 "$tmp_dir/$asset_name" | awk '{print $1}') || downloaded_archive_sha=""
+    if [ "$downloaded_archive_sha" != "$expected_archive_sha" ]; then
+        log_with_level "ERROR" "Obscura archive checksum verification failed"
         _obscura_cleanup
         return 1
     fi
@@ -605,8 +748,6 @@ setup_obscura() {
         return 1
     fi
 
-    # Locate the two binaries anywhere in the extracted tree (some releases
-    # nest them in a subdir, others put them at the archive root).
     local obscura_bin worker_bin
     obscura_bin=$(find "$tmp_dir" -type f -name obscura -perm -u+x 2>/dev/null | head -1)
     worker_bin=$(find "$tmp_dir" -type f -name obscura-worker -perm -u+x 2>/dev/null | head -1)
@@ -616,28 +757,52 @@ setup_obscura() {
         return 1
     fi
 
-    # Single guarded block — a partial install (one binary moved, the other
-    # failed) would otherwise log SUCCESS with nothing usable on disk.
-    if ! mkdir -p "$HOME/.local/bin" \
-        || ! mv "$obscura_bin" "$HOME/.local/bin/obscura" \
-        || ! mv "$worker_bin" "$HOME/.local/bin/obscura-worker" \
-        || ! chmod +x "$HOME/.local/bin/obscura" "$HOME/.local/bin/obscura-worker"; then
-        log_with_level "ERROR" "Failed to install Obscura binaries to ~/.local/bin"
-        rm -f "$HOME/.local/bin/obscura" "$HOME/.local/bin/obscura-worker"
+    local obscura_sha worker_sha
+    obscura_sha=$(shasum -a 256 "$obscura_bin" | awk '{print $1}')
+    worker_sha=$(shasum -a 256 "$worker_bin" | awk '{print $1}')
+    if [ "$obscura_sha" != "$expected_obscura_sha" ] || [ "$worker_sha" != "$expected_worker_sha" ]; then
+        log_with_level "ERROR" "Obscura binary checksum verification failed"
+        _obscura_cleanup
+        return 1
+    fi
+
+    if ! chmod +x "$obscura_bin" "$worker_bin" || \
+       ! mv "$obscura_bin" "$install_dir/obscura" || \
+       ! mv "$worker_bin" "$install_dir/obscura-worker"; then
+        log_with_level "ERROR" "Failed to install Obscura binaries to $install_dir"
         _obscura_cleanup
         return 1
     fi
 
     _obscura_cleanup
-    log_with_level "SUCCESS" "Obscura installed to ~/.local/bin"
+    log_with_level "SUCCESS" "Obscura $version installed to $install_dir"
     log_with_level "INFO" "Test with: obscura fetch https://example.com --eval 'document.title'"
 }
 
 # Setup Claude Code Statusline (Enhanced terminal statusline)
 setup_statusline() {
-    # Check if statusline is already installed
-    if [ -f "$HOME/.claude/statusline/statusline.sh" ] && [ -d "$HOME/.claude/statusline/lib" ]; then
-        log_with_level "INFO" "Claude Code statusline already installed"
+    local dry_run=false
+    [ "${1:-}" = "--dry-run" ] && dry_run=true
+    local manifest="${MANAGED_TOOLS_MANIFEST:-$UTILS_PROJECT_ROOT/agent_config/managed_tools.json}"
+    local install_dir="$HOME/.claude/statusline"
+    local marker="$install_dir/.supercharged-source-ref"
+    local repository commit installer
+    repository=$(jq -er '.tools["claude-statusline"].repository' "$manifest" 2>/dev/null) || repository=""
+    commit=$(jq -er '.tools["claude-statusline"].commit' "$manifest" 2>/dev/null) || commit=""
+    installer=$(jq -er '.tools["claude-statusline"].installer' "$manifest" 2>/dev/null) || installer=""
+    if [ -z "$repository" ] || [[ ! "$commit" =~ ^[0-9a-f]{40}$ ]] || [ -z "$installer" ]; then
+        log_with_level "ERROR" "Invalid Claude statusline pin in $manifest"
+        return 1
+    fi
+
+    if [ -f "$install_dir/statusline.sh" ] && [ -d "$install_dir/lib" ] && \
+       [ "$(cat "$marker" 2>/dev/null)" = "$commit" ]; then
+        log_with_level "INFO" "Claude Code statusline already at managed commit ${commit[1,12]}"
+        return 0
+    fi
+
+    if $dry_run; then
+        log_with_level "INFO" "Would install Claude Code statusline commit ${commit[1,12]}"
         return 0
     fi
 
@@ -645,14 +810,14 @@ setup_statusline() {
 
     # Backup existing Config.toml if present (preserve user customizations)
     local config_backup=""
-    if [ -f "$HOME/.claude/statusline/Config.toml" ]; then
+    if [ -f "$install_dir/Config.toml" ]; then
         config_backup=$(mktemp)
-        cp "$HOME/.claude/statusline/Config.toml" "$config_backup"
+        cp "$install_dir/Config.toml" "$config_backup"
         log_with_level "INFO" "Preserved existing Config.toml"
     fi
 
     # Download and run the installer
-    local installer_url="https://raw.githubusercontent.com/rz1989s/claude-code-statusline/main/install.sh"
+    local installer_url="https://raw.githubusercontent.com/${repository}/${commit}/${installer}"
     local tmp_installer
     tmp_installer=$(mktemp)
 
@@ -664,15 +829,16 @@ setup_statusline() {
     fi
 
     # Run the installer
-    if bash "$tmp_installer" >/dev/null 2>&1; then
+    if CLAUDE_INSTALL_BRANCH="$commit" bash "$tmp_installer" >/dev/null 2>&1; then
         # Restore backed up config if it existed
         if [ -n "$config_backup" ] && [ -f "$config_backup" ]; then
-            cp "$config_backup" "$HOME/.claude/statusline/Config.toml"
+            cp "$config_backup" "$install_dir/Config.toml"
             log_with_level "INFO" "Restored preserved Config.toml"
             rm -f "$config_backup"
         fi
 
-        log_with_level "SUCCESS" "Claude Code statusline installed successfully"
+        printf '%s\n' "$commit" > "$marker"
+        log_with_level "SUCCESS" "Claude Code statusline installed at commit ${commit[1,12]}"
         log_with_level "INFO" "Statusline provides real-time metrics, cost tracking, and MCP monitoring"
         log_with_level "INFO" "Customize: ~/.claude/statusline/Config.toml"
     else

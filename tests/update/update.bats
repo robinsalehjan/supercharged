@@ -20,6 +20,20 @@ teardown() {
 
   [[ "$update_script" == *"npm run install:skills"* ]]
   [[ "$update_only_script" == *"npm run install:skills"* ]]
+  [[ "$update_script" == *"npm run install:managed-tools"* ]]
+  [[ "$update_only_script" == *"npm run install:managed-tools"* ]]
+}
+
+@test "update dry-run checks managed tools without changing them" {
+  update_script=$(jq -r '.scripts["update:dry-run"]' "$PROJECT_ROOT/package.json")
+
+  [[ "$update_script" == *"npm run install:managed-tools -- --dry-run"* ]]
+}
+
+@test "managed tool pins have a dedicated update command" {
+  update_script=$(jq -r '.scripts["update:tool-pins"]' "$PROJECT_ROOT/package.json")
+
+  [ "$update_script" = "./scripts/update-agent-tool-pins.sh" ]
 }
 
 @test "safe update does not capture live agent configuration" {

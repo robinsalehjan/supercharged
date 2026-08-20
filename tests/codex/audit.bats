@@ -17,6 +17,7 @@ teardown() {
   [ "$status" -eq 0 ]
   [[ "$output" == *"Tracked Codex base, Apple, headless Apple, and review TOML profiles parse"* ]]
   [[ "$output" == *"RTK hook rewrites a command without blocking it"* ]]
+  [[ "$output" == *"Managed tool manifest pins exact tools, remote commits, and compatibility floors"* ]]
 
   run "$AUDIT" --repo-only --json
   [ "$status" -eq 0 ]

@@ -30,6 +30,45 @@ check_version() {
     return 0
 }
 
+validate_managed_plannotator() {
+    local manifest="${PLANNOTATOR_MANIFEST:-$UTILS_PROJECT_ROOT/agent_config/managed_tools.json}"
+    local install_dir="${PLANNOTATOR_INSTALL_DIR:-$HOME/.local/bin}"
+    local install_path="$install_dir/plannotator"
+    local arch_uname="${PLANNOTATOR_ARCH:-$(uname -m)}"
+    local asset_key version expected_sha installed_sha
+
+    case "$arch_uname" in
+        arm64|aarch64) asset_key="darwin-arm64" ;;
+        x86_64) asset_key="darwin-x64" ;;
+        *)
+            echo "⚠️  Plannotator: unsupported architecture $arch_uname"
+            return 1
+            ;;
+    esac
+
+    if [ ! -f "$manifest" ] || ! command -v jq >/dev/null 2>&1; then
+        echo "⚠️  Plannotator: managed version manifest unavailable"
+        return 1
+    fi
+
+    version=$(jq -er '.tools.plannotator.version' "$manifest" 2>/dev/null) || version=""
+    expected_sha=$(jq -er --arg asset "$asset_key" '.tools.plannotator.assets[$asset].sha256' "$manifest" 2>/dev/null) || expected_sha=""
+
+    if [ ! -f "$install_path" ]; then
+        echo "⚠️  Plannotator $version not installed (run: npm run install:plannotator)"
+        return 1
+    fi
+
+    installed_sha=$(shasum -a 256 "$install_path" 2>/dev/null | awk '{print $1}') || installed_sha=""
+    if [ -n "$expected_sha" ] && [ "$installed_sha" = "$expected_sha" ] && [ -x "$install_path" ]; then
+        echo "✅ Plannotator $version"
+        return 0
+    fi
+
+    echo "⚠️  Plannotator does not match managed version $version (run: npm run install:plannotator)"
+    return 1
+}
+
 # Extract version from a tool command
 extract_tool_version() {
     local cmd=$1
@@ -527,7 +566,7 @@ validate_installation() {
         echo "Claude Code Components:"
         validate_claude_component "RTK hooks" "$HOME/.claude/hooks/rtk-rewrite.sh" || ((warned++))
         validate_claude_component "Statusline" "$HOME/.claude/statusline/statusline.sh" || ((warned++))
-        validate_tool "plannotator" "" || ((warned++))
+        validate_managed_plannotator || ((warned++))
         validate_tool "obscura" "" || ((warned++))
 
         # Check for code-review-graph watcher

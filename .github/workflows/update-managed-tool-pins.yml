@@ -1,0 +1,57 @@
+name: Update managed tool pins
+
+on:
+  schedule:
+    - cron: '30 7 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-agent-tools:
+    runs-on: macos-15
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Update managed tool manifest
+        run: ./scripts/update-agent-tool-pins.sh --apply
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Open update pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- agent_config/managed_tools.json codex_config/plugins.json; then
+            echo "Managed tool pins are current"
+            exit 0
+          fi
+
+          pin_id=$(shasum -a 256 agent_config/managed_tools.json codex_config/plugins.json | shasum -a 256 | cut -c1-12)
+          branch="chore/update-agent-tool-pins-${pin_id}"
+          if [ "$(gh pr list --head "$branch" --state all --limit 1 --json number --jq 'length')" != "0" ]; then
+            echo "An agent-tool pin update pull request already exists"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add agent_config/managed_tools.json codex_config/plugins.json
+          git commit -m "chore(deps): update agent tool pins"
+          gh auth setup-git
+          git push --set-upstream origin "$branch"
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "chore(deps): update agent tool pins" \
+            --body "Updates exact agent-tool releases, verified macOS checksums, and immutable remote refs for review. Compatibility floors remain manual so they move only after validation."

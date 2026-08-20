@@ -3,12 +3,14 @@
   "marketplaces": [
     {
       "name": "axiom-marketplace",
-      "source": "CharlesWiltgen/Axiom"
+      "source": "CharlesWiltgen/Axiom",
+      "ref": "69ffef661136778a872b3e5959306992bb5648a0"
     }
   ],
   "plugins": [
     {
       "id": "axiom@axiom-marketplace",
+      "version": "27.0.0-beta.47",
       "required": true,
       "enabled": true
     }

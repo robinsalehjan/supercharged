@@ -354,6 +354,15 @@ main() {
         exit 0
     fi
 
+    # hooks.json invokes the managed binary directly. Reconcile it before the
+    # timestamp gate so an up-to-date Codex config cannot retain a stale hook
+    # executable. Tests may skip this external tool reconciliation explicitly.
+    if [ "${SUPERCHARGED_SKIP_MANAGED_TOOL_INSTALLS:-0}" != "1" ] && \
+       [ -f "$CODEX_CONFIG_DIR/hooks.json" ]; then
+        log_with_level "INFO" "Reconciling managed Plannotator binary..."
+        "$PROJECT_ROOT/scripts/install-plannotator.sh"
+    fi
+
     if [ "$FORCE_RESTORE" = true ]; then
         log_with_level "INFO" "Force restoring Codex configuration..."
     elif is_repo_newer; then
