@@ -4,30 +4,30 @@
 
 # Development Languages
 # Node.js - LTS version, minimum 20.0.0 for modern features
-nodejs 24.14.1
+nodejs 24.19.0
 
 # Python - Latest stable, minimum 3.10.0 for type hints and match statements
-python 3.14.5
+python 3.14.7
 
 # Ruby - Stable version, minimum 2.7.0 for pattern matching
-ruby 3.4.9
+ruby 3.4.10
 
 # Package Managers
 # Bundler - Ruby package manager, minimum 2.2.0 for lockfile improvements
-bundler 4.0.10
+bundler 4.0.19
 
 # Cloud and DevOps Tools
 # Google Cloud SDK - Latest stable, minimum 400.0.0 for gke-gcloud-auth-plugin
-gcloud 568.0.0
+gcloud 581.0.0
 
 # Firebase CLI - Latest stable, minimum 12.0.0 for modern deployment features
-firebase 15.18.0
+firebase 15.28.1
 
 # JVM toolchain (java, kotlin) is opt-in via INSTALL_JVM_TOOLS=Y.
 # By default setup resolves `asdf latest java openjdk` and `asdf latest kotlin`.
 # Java is pinned because the Firebase emulator suite (Firestore rules tests)
 # requires a JDK 11+ runtime.
-java openjdk-26.0.1
+java openjdk-26.0.2.1
 
 # Additional tools can be added here
 # Example:
