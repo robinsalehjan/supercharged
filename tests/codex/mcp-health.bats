@@ -74,7 +74,8 @@ EOF
     cat > "$TEST_TEMP_DIR/http-mcp.py" <<'PYEOF'
 import json
 import sys
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler
+from socketserver import TCPServer
 
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
@@ -99,9 +100,10 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         pass
 
-server = HTTPServer(("127.0.0.1", 0), Handler)
+# HTTPServer resolves the bound address with getfqdn(), which can stall in CI.
+server = TCPServer(("127.0.0.1", 0), Handler)
 with open(sys.argv[1], "w") as port_file:
-    port_file.write(str(server.server_port))
+    port_file.write(str(server.server_address[1]))
 server.serve_forever()
 PYEOF
     port_file="$TEST_TEMP_DIR/http-port"
