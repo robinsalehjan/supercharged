@@ -255,7 +255,7 @@ source_real_load_secrets() {
 }
 
 @test "preserves ANSI escape sequences as JSON unicode escapes during env injection" {
-  # Arrange: settings.json with \u001b ANSI color codes in statusLine
+  # Arrange: settings.json with \u001b ANSI color codes in a hook command
   load_fixture "claude-backup/settings-with-ansi.json" "$TEMP_CLAUDE/settings.json"
   echo 'export GITHUB_PERSONAL_ACCESS_TOKEN="test-token"' > "$HOME/.secrets"
 
@@ -585,7 +585,7 @@ EOF
 # =============================================================================
 
 @test "preserves ANSI escape sequences through full backup/restore cycle" {
-  # Arrange: Create settings.json with ANSI color codes (like real statusLine)
+  # Arrange: Create settings.json with ANSI color codes in a hook command
   # Use jq to build it with proper escaping
   jq -n --arg home "$HOME" '{
     env: {
@@ -602,11 +602,13 @@ EOF
             }
           ]
         }
-      ]
-    },
-    statusLine: {
-      type: "command",
-      command: "input=$(cat); printf \"\\u001b[36m%s\\u001b[0m:\\u001b[34m%s\\u001b[0m\" \"user\" \"dir\""
+      ],
+      Notification: [{
+        hooks: [{
+          type: "command",
+          command: "input=$(cat); printf \"\\u001b[36m%s\\u001b[0m:\\u001b[34m%s\\u001b[0m\" \"user\" \"dir\""
+        }]
+      }]
     }
   }' > "$TEMP_CLAUDE/settings.json"
 
@@ -631,21 +633,21 @@ EOF
     return 1
   }
 
-  # Assert: StatusLine ANSI codes preserved in JSON (as \u001b)
+  # Assert: Hook ANSI codes preserved in JSON (as \u001b)
   grep -q '\\u001b\[36m' "$TEMP_CLAUDE/restored.json" || {
-    echo "StatusLine ANSI cyan not preserved"
+    echo "Hook ANSI cyan not preserved"
     cat "$TEMP_CLAUDE/restored.json"
     return 1
   }
 
   grep -q '\\u001b\[0m' "$TEMP_CLAUDE/restored.json" || {
-    echo "StatusLine ANSI reset not preserved"
+    echo "Hook ANSI reset not preserved"
     cat "$TEMP_CLAUDE/restored.json"
     return 1
   }
 
   grep -q '\\u001b\[34m' "$TEMP_CLAUDE/restored.json" || {
-    echo "StatusLine ANSI blue not preserved"
+    echo "Hook ANSI blue not preserved"
     cat "$TEMP_CLAUDE/restored.json"
     return 1
   }
@@ -653,7 +655,7 @@ EOF
 
 @test "preserves complex escape sequences in realistic settings.json" {
   # Arrange: Use actual production settings.json format with jq
-  # This matches the real statusLine command with multiple ANSI codes and complex shell escaping
+  # Include multiple ANSI codes and complex shell escaping in a notification hook.
   jq -n --arg home "$HOME" '{
     hooks: {
       PreToolUse: [
@@ -666,11 +668,13 @@ EOF
             }
           ]
         }
-      ]
-    },
-    statusLine: {
-      type: "command",
-      command: "input=$(cat); cwd=$(echo \"$input\" | jq -r '\''.workspace.current_dir'\''); user=$(whoami); dir=$(basename \"$cwd\"); branch=$(git -C \"$cwd\" branch --show-current 2>/dev/null || echo '\'''\''); git_info='\'''\''; [ -n \"$branch\" ] && git_info=\" (git:$branch)\"; remaining=$(echo \"$input\" | jq -r '\''.context_window.remaining_percentage // empty'\''); ctx_info='\'''\''; [ -n \"$remaining\" ] && ctx_info=\" [ctx:${remaining}%]\"; printf \"\\u001b[36m%s\\u001b[0m:\\u001b[34m%s\\u001b[0m%s%s\" \"$user\" \"$dir\" \"$git_info\" \"$ctx_info\""
+      ],
+      Notification: [{
+        hooks: [{
+          type: "command",
+          command: "input=$(cat); cwd=$(echo \"$input\" | jq -r '\''.workspace.current_dir'\''); user=$(whoami); dir=$(basename \"$cwd\"); branch=$(git -C \"$cwd\" branch --show-current 2>/dev/null || echo '\'''\''); git_info='\'''\''; [ -n \"$branch\" ] && git_info=\" (git:$branch)\"; remaining=$(echo \"$input\" | jq -r '\''.context_window.remaining_percentage // empty'\''); ctx_info='\'''\''; [ -n \"$remaining\" ] && ctx_info=\" [ctx:${remaining}%]\"; printf \"\\u001b[36m%s\\u001b[0m:\\u001b[34m%s\\u001b[0m%s%s\" \"$user\" \"$dir\" \"$git_info\" \"$ctx_info\""
+        }]
+      }]
     }
   }' > "$TEMP_CLAUDE/settings.json"
 

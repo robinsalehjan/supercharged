@@ -605,7 +605,7 @@ CURLEOF
     [[ ! -e "$HOME/.local/bin/obscura" ]]
 }
 
-# --- exact XcodeBuildMCP and statusline pins ---
+# --- exact XcodeBuildMCP pin ---
 
 @test "setup_xcodebuildmcp verifies and installs the exact release archive" {
     archive="$TEST_TEMP_DIR/xcodebuildmcp.tar.gz"
@@ -641,38 +641,4 @@ EOF
     [ -x "$TEST_TEMP_DIR/xcode-install/v9.9.9-$short_sha/bin/xcodebuildmcp" ]
     [ -L "$HOME/.local/bin/xcodebuildmcp" ]
     [ "$(cat "$TEST_TEMP_DIR/xcode-install/.active-archive-sha256")" = "$sha" ]
-}
-
-@test "setup_statusline records and honors the immutable installer commit" {
-    commit="1111111111111111111111111111111111111111"
-    manifest="$TEST_TEMP_DIR/statusline-manifest.json"
-    installer="$TEST_TEMP_DIR/statusline-install.sh"
-    calls="$TEST_TEMP_DIR/statusline-curl.calls"
-    printf '{"tools":{"claude-statusline":{"repository":"example/statusline","commit":"%s","installer":"install.sh"}}}\n' "$commit" > "$manifest"
-    cat > "$installer" <<'EOF'
-#!/bin/sh
-mkdir -p "$HOME/.claude/statusline/lib"
-printf '#!/bin/sh\n' > "$HOME/.claude/statusline/statusline.sh"
-printf '%s\n' "$CLAUDE_INSTALL_BRANCH" > "$HOME/.claude/statusline/installer-ref"
-EOF
-    _ensure_mock_bin_dir
-    cat > "$MOCK_BIN_DIR/curl" <<'EOF'
-#!/bin/sh
-printf '%s\n' "$*" >> "$STATUSLINE_CURL_CALLS"
-while [ $# -gt 0 ]; do
-  [ "$1" = -o ] && { cp "$STATUSLINE_TEST_INSTALLER" "$2"; exit 0; }
-  shift
-done
-exit 1
-EOF
-    chmod +x "$MOCK_BIN_DIR/curl"
-
-    run env HOME="$HOME" PATH="$PATH" MANAGED_TOOLS_MANIFEST="$manifest" \
-      STATUSLINE_TEST_INSTALLER="$installer" STATUSLINE_CURL_CALLS="$calls" \
-      zsh -c "source '$PROJECT_ROOT/scripts/utils.sh'; setup_statusline; setup_statusline"
-
-    [ "$status" -eq 0 ]
-    [ "$(cat "$HOME/.claude/statusline/.supercharged-source-ref")" = "$commit" ]
-    [ "$(cat "$HOME/.claude/statusline/installer-ref")" = "$commit" ]
-    [ "$(wc -l < "$calls" | tr -d ' ')" -eq 1 ]
 }

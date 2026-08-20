@@ -59,12 +59,6 @@
           }
         }
       }
-    },
-    "claude-statusline": {
-      "policy": "commit",
-      "repository": "rz1989s/claude-code-statusline",
-      "commit": "3a648f21acb9b01ae90a0b84c2f0cd52f5592ec5",
-      "installer": "install.sh"
     }
   },
   "compatibility": {

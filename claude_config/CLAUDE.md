@@ -15,8 +15,6 @@ Reserve the default (Opus) for tasks requiring deep reasoning, complex architect
 
 ## Backed-Up Config
 
-Statusline theme config (`statusline/Config.toml`) is backed up and restored with `npm run backup:claude` / `npm run restore:claude`.
-
 ## References
 
 @AGENTS.md

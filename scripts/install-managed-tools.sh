@@ -27,5 +27,4 @@ fi
 
 if command_exists claude; then
     setup_obscura "${setup_args[@]}"
-    setup_statusline "${setup_args[@]}"
 fi

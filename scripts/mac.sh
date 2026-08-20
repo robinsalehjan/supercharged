@@ -431,12 +431,7 @@ main() {
         # Setup Obscura (Rust-based headless browser for AI agents / web scraping)
         setup_obscura
 
-        # Setup Claude Code statusline for enhanced terminal display
-        setup_statusline
-
         # Restore Claude configuration from repository if available
-        # IMPORTANT: This runs AFTER setup_statusline to ensure backed up Config.toml
-        # overwrites the default one created by the statusline installer
         if [ -x "$UTILS_SCRIPT_DIR/restore-claude.sh" ]; then
             log_with_level "INFO" "Restoring Claude configuration from repository..."
             if [ "$SKIP_BACKUP" = true ]; then

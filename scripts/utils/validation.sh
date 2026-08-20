@@ -565,7 +565,6 @@ validate_installation() {
         echo ""
         echo "Claude Code Components:"
         validate_claude_component "RTK hooks" "$HOME/.claude/hooks/rtk-rewrite.sh" || ((warned++))
-        validate_claude_component "Statusline" "$HOME/.claude/statusline/statusline.sh" || ((warned++))
         validate_managed_plannotator || ((warned++))
         validate_tool "obscura" "" || ((warned++))
 

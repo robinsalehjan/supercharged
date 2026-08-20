@@ -114,7 +114,7 @@ sanitize_settings() {
 
   set -o pipefail
   jq "${jq_args[@]}" \
-    "(. + {enabledPlugins: (.enabledPlugins | $plugin_filter)}) | del(.mcpServers) | del(.env[\"GITHUB_PERSONAL_ACCESS_TOKEN\"])" \
+    "(. + {enabledPlugins: (.enabledPlugins | $plugin_filter)}) | del(.mcpServers, .statusLine) | del(.env[\"GITHUB_PERSONAL_ACCESS_TOKEN\"])" \
     "$input_file" | sed "s|$ORIGINAL_HOME|\$HOME|g" > "$output_file"
   local result=$?
   set +o pipefail
@@ -290,31 +290,15 @@ sanitize_settings() {
   assert_json_field "$TEMP_REPO_CONFIG/installed_plugins.json" ".version" "2"
 }
 
-@test "preserves ANSI escape sequences as JSON unicode escapes during backup" {
-  # Arrange: Load settings fixture with \u001b ANSI color codes in statusLine
+@test "removes unmanaged statusLine configuration during backup" {
   load_fixture "claude-backup/settings-with-ansi.json" "$TEMP_CLAUDE/settings.json"
+  jq '.statusLine = {type: "command", command: "legacy-statusline"}' \
+    "$TEMP_CLAUDE/settings.json" > "$TEMP_CLAUDE/settings.json.tmp"
+  mv "$TEMP_CLAUDE/settings.json.tmp" "$TEMP_CLAUDE/settings.json"
 
-  # Act: Sanitize settings (runs through jq)
   sanitize_settings "$TEMP_CLAUDE/settings.json" "$TEMP_REPO_CONFIG/settings.json" "${TEST_SANITIZE_MARKETPLACES[@]}"
 
-  # Assert: Output is valid JSON (no literal control characters)
-  run python3 -c "import json; json.load(open('$TEMP_REPO_CONFIG/settings.json'))"
-  [ "$status" -eq 0 ]
-
-  # Assert: No literal ESC bytes (0x1b) in the output file
-  run python3 -c "
-data = open('$TEMP_REPO_CONFIG/settings.json', 'rb').read()
-esc_count = data.count(b'\x1b')
-u_count = data.count(b'\\\\u001b')
-if esc_count > 0:
-    print(f'Found {esc_count} literal ESC byte(s)')
-    exit(1)
-if u_count == 0:
-    print('No \\\\u001b sequences found - ANSI codes were lost')
-    exit(1)
-print(f'OK: {u_count} \\\\u001b escape(s), 0 literal ESC bytes')
-"
-  [ "$status" -eq 0 ]
+  assert_json_field "$TEMP_REPO_CONFIG/settings.json" 'has("statusLine")' "false"
 }
 
 @test "handles all vend-plugins removed scenario" {

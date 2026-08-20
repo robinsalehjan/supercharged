@@ -27,12 +27,10 @@ fetch_json() {
 plannotator_repo=$(jq -r '.tools.plannotator.repository' "$MANIFEST")
 xcodebuildmcp_repo=$(jq -r '.tools.xcodebuildmcp.repository' "$MANIFEST")
 obscura_repo=$(jq -r '.tools.obscura.repository' "$MANIFEST")
-statusline_repo=$(jq -r '.tools["claude-statusline"].repository' "$MANIFEST")
 
 plannotator_json=$(fetch_json "${PLANNOTATOR_RELEASE_JSON:-}" "repos/$plannotator_repo/releases/latest")
 xcodebuildmcp_json=$(fetch_json "${XCODEBUILDMCP_RELEASE_JSON:-}" "repos/$xcodebuildmcp_repo/releases/latest")
 obscura_json=$(fetch_json "${OBSCURA_RELEASE_JSON:-}" "repos/$obscura_repo/releases/latest")
-statusline_json=$(fetch_json "${STATUSLINE_COMMIT_JSON:-}" "repos/$statusline_repo/commits/main")
 axiom_json=$(fetch_json "${AXIOM_COMMIT_JSON:-}" "repos/CharlesWiltgen/Axiom/commits/main")
 if [ -n "${CRG_PYPI_JSON:-}" ]; then
     crg_json=$(<"$CRG_PYPI_JSON")
@@ -55,7 +53,6 @@ obscura_arm_name="obscura-aarch64-macos.tar.gz"
 obscura_x64_name="obscura-x86_64-macos.tar.gz"
 obscura_arm_sha=$(jq -er --arg name "$obscura_arm_name" '.assets[] | select(.name == $name) | .digest | sub("^sha256:"; "") | select(test("^[0-9a-f]{64}$"))' <<<"$obscura_json")
 obscura_x64_sha=$(jq -er --arg name "$obscura_x64_name" '.assets[] | select(.name == $name) | .digest | sub("^sha256:"; "") | select(test("^[0-9a-f]{64}$"))' <<<"$obscura_json")
-statusline_commit=$(jq -er '.sha | select(test("^[0-9a-f]{40}$"))' <<<"$statusline_json")
 axiom_commit=$(jq -er '.sha | select(test("^[0-9a-f]{40}$"))' <<<"$axiom_json")
 if [ -n "${AXIOM_PLUGIN_JSON:-}" ]; then
     axiom_plugin_json=$(<"$AXIOM_PLUGIN_JSON")
@@ -75,7 +72,6 @@ updates=$(jq -n \
     --arg o_current "$(jq -r '.tools.obscura.version' "$MANIFEST")" --arg o_latest "$obscura_version" \
     --arg o_arm_current "$(jq -r '.tools.obscura.assets["darwin-arm64"].sha256' "$MANIFEST")" --arg o_arm_latest "$obscura_arm_sha" \
     --arg o_x64_current "$(jq -r '.tools.obscura.assets["darwin-x64"].sha256' "$MANIFEST")" --arg o_x64_latest "$obscura_x64_sha" \
-    --arg s_current "$(jq -r '.tools["claude-statusline"].commit' "$MANIFEST")" --arg s_latest "$statusline_commit" \
     --arg a_current "$(jq -r '.marketplaces[0].ref' "$PLUGIN_REGISTRY")" --arg a_latest "$axiom_commit" \
     --arg av_current "$(jq -r '.plugins[0].version' "$PLUGIN_REGISTRY")" --arg av_latest "$axiom_version" \
     '[
@@ -83,7 +79,6 @@ updates=$(jq -n \
       (select($c_current != $c_latest) | "code-review-graph: \($c_current) -> \($c_latest)"),
       (select($x_current != $x_latest or $x_arm_current != $x_arm_latest or $x_x64_current != $x_x64_latest) | "XcodeBuildMCP: \($x_current) -> \($x_latest)"),
       (select($o_current != $o_latest or $o_arm_current != $o_arm_latest or $o_x64_current != $o_x64_latest) | "Obscura: \($o_current) -> \($o_latest)"),
-      (select($s_current != $s_latest) | "Claude statusline commit changed"),
       (select($a_current != $a_latest or $av_current != $av_latest) | "Axiom marketplace commit changed")
     ]')
 
@@ -131,8 +126,7 @@ jq \
   --arg cv "$crg_version" \
   --arg xv "$xcodebuildmcp_version" --arg xan "$xcodebuildmcp_arm_name" --arg xas "$xcodebuildmcp_arm_sha" --arg xxn "$xcodebuildmcp_x64_name" --arg xxs "$xcodebuildmcp_x64_sha" \
   --arg ov "$obscura_version" --arg oan "$obscura_arm_name" --arg oas "$obscura_arm_sha" --arg oab "$obscura_arm_bin" --arg oaw "$obscura_arm_worker" \
-  --arg oxn "$obscura_x64_name" --arg oxs "$obscura_x64_sha" --arg oxb "$obscura_x64_bin" --arg oxw "$obscura_x64_worker" \
-  --arg sc "$statusline_commit" '
+  --arg oxn "$obscura_x64_name" --arg oxs "$obscura_x64_sha" --arg oxb "$obscura_x64_bin" --arg oxw "$obscura_x64_worker" '
     .tools.plannotator.version = $pv |
     .tools.plannotator.assets["darwin-arm64"].sha256 = $pas |
     .tools.plannotator.assets["darwin-x64"].sha256 = $pxs |
@@ -142,8 +136,7 @@ jq \
     .tools.xcodebuildmcp.assets["darwin-x64"] = {name: $xxn, sha256: $xxs} |
     .tools.obscura.version = $ov |
     .tools.obscura.assets["darwin-arm64"] = {name: $oan, sha256: $oas, binaries: {obscura: $oab, "obscura-worker": $oaw}} |
-    .tools.obscura.assets["darwin-x64"] = {name: $oxn, sha256: $oxs, binaries: {obscura: $oxb, "obscura-worker": $oxw}} |
-    .tools["claude-statusline"].commit = $sc
+    .tools.obscura.assets["darwin-x64"] = {name: $oxn, sha256: $oxs, binaries: {obscura: $oxb, "obscura-worker": $oxw}}
   ' "$MANIFEST" > "$manifest_tmp"
 mv "$manifest_tmp" "$MANIFEST"
 
