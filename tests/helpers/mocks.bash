@@ -152,7 +152,7 @@ unmock_pipx() {
 mock_code_review_graph() {
     _ensure_mock_bin_dir
     if [ -n "${MOCK_BIN_DIR:-}" ]; then
-        printf '#!/bin/sh\nexit 0\n' > "$MOCK_BIN_DIR/code-review-graph"
+        printf '#!/bin/sh\n[ "$1" = "--version" ] && echo "code-review-graph 2.3.7"\nexit 0\n' > "$MOCK_BIN_DIR/code-review-graph"
         chmod +x "$MOCK_BIN_DIR/code-review-graph"
     fi
 }
@@ -180,46 +180,43 @@ unmock_wt() {
     [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/wt"
 }
 
-# Mock gh CLI for Obscura release-download tests.
-# Intercepts `gh release download --pattern <name> --dir <dir>` and writes a
-# fake tarball at <dir>/<name> containing two stub binaries (obscura,
-# obscura-worker). Binaries are placed at archive root only — the
-# subdir-nesting fallback in setup_obscura's `find` call is NOT exercised
-# by this mock. Any other gh subcommand is a silent success.
-mock_gh_release_obscura() {
+# Build a checksummed Obscura fixture and mock the exact-release curl download.
+mock_obscura_release() {
     _ensure_mock_bin_dir
     if [ -n "${MOCK_BIN_DIR:-}" ]; then
-        cat > "$MOCK_BIN_DIR/gh" << 'GHEOF'
+        OBSCURA_TEST_ARCHIVE="$TEST_TEMP_DIR/obscura-test.tar.gz"
+        MANAGED_TOOLS_MANIFEST="$TEST_TEMP_DIR/obscura-manifest.json"
+        staging="$TEST_TEMP_DIR/obscura-staging"
+        mkdir -p "$staging"
+        printf '#!/bin/sh\necho obscura-stub\n' > "$staging/obscura"
+        printf '#!/bin/sh\necho obscura-worker-stub\n' > "$staging/obscura-worker"
+        chmod +x "$staging/obscura" "$staging/obscura-worker"
+        tar -czf "$OBSCURA_TEST_ARCHIVE" -C "$staging" obscura obscura-worker
+        archive_sha=$(shasum -a 256 "$OBSCURA_TEST_ARCHIVE" | awk '{print $1}')
+        obscura_sha=$(shasum -a 256 "$staging/obscura" | awk '{print $1}')
+        worker_sha=$(shasum -a 256 "$staging/obscura-worker" | awk '{print $1}')
+        cat > "$MANAGED_TOOLS_MANIFEST" <<EOF
+{"tools":{"obscura":{"version":"v9.9.9","repository":"example/obscura","assets":{"darwin-arm64":{"name":"obscura-aarch64-macos.tar.gz","sha256":"$archive_sha","binaries":{"obscura":"$obscura_sha","obscura-worker":"$worker_sha"}},"darwin-x64":{"name":"obscura-x86_64-macos.tar.gz","sha256":"$archive_sha","binaries":{"obscura":"$obscura_sha","obscura-worker":"$worker_sha"}}}}}}
+EOF
+        export OBSCURA_TEST_ARCHIVE MANAGED_TOOLS_MANIFEST
+        cat > "$MOCK_BIN_DIR/curl" << 'CURLEOF'
 #!/bin/sh
-if [ "$1" = "release" ] && [ "$2" = "download" ]; then
-    # Parse --pattern and --dir
-    pattern=""
-    dir=""
-    while [ $# -gt 0 ]; do
-        case "$1" in
-            --pattern) pattern="$2"; shift 2 ;;
-            --dir) dir="$2"; shift 2 ;;
-            *) shift ;;
-        esac
-    done
-    [ -n "$pattern" ] && [ -n "$dir" ] || exit 1
-    mkdir -p "$dir"
-    staging=$(mktemp -d)
-    printf '#!/bin/sh\necho obscura-stub\n' > "$staging/obscura"
-    printf '#!/bin/sh\necho obscura-worker-stub\n' > "$staging/obscura-worker"
-    chmod +x "$staging/obscura" "$staging/obscura-worker"
-    tar -czf "$dir/$pattern" -C "$staging" obscura obscura-worker
-    rm -rf "$staging"
-    exit 0
-fi
-exit 0
-GHEOF
-        chmod +x "$MOCK_BIN_DIR/gh"
+destination=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -o) destination="$2"; shift 2 ;;
+        *) shift ;;
+    esac
+done
+[ -n "$destination" ] || exit 1
+cp "$OBSCURA_TEST_ARCHIVE" "$destination"
+CURLEOF
+        chmod +x "$MOCK_BIN_DIR/curl"
     fi
 }
 
-unmock_gh_release_obscura() {
-    [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/gh"
+unmock_obscura_release() {
+    [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/curl"
 }
 
 # Mock claude CLI — records every invocation to $MOCK_BIN_DIR/claude.calls
@@ -249,5 +246,5 @@ unmock_claude() {
 # Unmock all system command mocks — call in teardown to prevent leaks
 unmock_all() {
   unset -f brew ping asdf 2>/dev/null || true
-  [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/rtk" "$MOCK_BIN_DIR/pipx" "$MOCK_BIN_DIR/code-review-graph" "$MOCK_BIN_DIR/wt" "$MOCK_BIN_DIR/gh" "$MOCK_BIN_DIR/obscura" "$MOCK_BIN_DIR/obscura-worker" "$MOCK_BIN_DIR/ping" "$MOCK_BIN_DIR/brew" "$MOCK_BIN_DIR/claude" "$MOCK_BIN_DIR/claude.calls" 2>/dev/null || true
+  [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/rtk" "$MOCK_BIN_DIR/pipx" "$MOCK_BIN_DIR/code-review-graph" "$MOCK_BIN_DIR/wt" "$MOCK_BIN_DIR/gh" "$MOCK_BIN_DIR/curl" "$MOCK_BIN_DIR/obscura" "$MOCK_BIN_DIR/obscura-worker" "$MOCK_BIN_DIR/ping" "$MOCK_BIN_DIR/brew" "$MOCK_BIN_DIR/claude" "$MOCK_BIN_DIR/claude.calls" 2>/dev/null || true
 }

@@ -298,10 +298,11 @@ EOF
   [ "$status" -eq 0 ]
 }
 
-@test "code-review-graph configuration follows latest everywhere" {
+@test "code-review-graph MCP uses the exact managed pipx installation" {
   ! grep -R -E 'code-review-graph@[0-9]|uvx' "$PROJECT_ROOT/.mcp.json" "$PROJECT_ROOT/codex_config/config.toml"
   grep -F 'command = "code-review-graph"' "$PROJECT_ROOT/codex_config/config.toml"
-  grep -F 'pipx upgrade code-review-graph' "$PROJECT_ROOT/scripts/utils/tools.sh"
+  grep -F 'managed_spec="${package}[${extras}]==${managed_version}"' "$PROJECT_ROOT/scripts/utils/tools.sh"
+  jq -e '.tools["code-review-graph"].policy == "exact-pypi"' "$PROJECT_ROOT/agent_config/managed_tools.json"
 }
 
 @test "codex hooks include RTK pre-tool enforcement" {
@@ -614,7 +615,7 @@ exit 0
 EOF
   chmod +x "$mock_bin/codex"
 
-  run env PATH="$mock_bin:$PATH" "$RESTORE_SCRIPT" --force
+  run env PATH="$mock_bin:$PATH" SUPERCHARGED_SKIP_MANAGED_TOOL_INSTALLS=1 "$RESTORE_SCRIPT" --force
 
   [ "$status" -eq 0 ]
   [ -f "$HOME/.codex/config.toml" ]

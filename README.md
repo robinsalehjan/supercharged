@@ -39,7 +39,10 @@ npm run backup:all         # Backup Claude Code and Codex config
 npm run backup:claude      # Backup Claude Code config
 npm run backup:codex       # Backup Codex config, hooks, RTK, and skills
 npm run install:plugins    # Install all Claude Code plugins
+npm run install:managed-tools # Reconcile exact-pinned local agent tools
+npm run install:plannotator # Install or update the checksum-pinned Plannotator binary
 npm run install:skills     # Install, update, or safely prune shared git skills
+npm run update:tool-pins   # Check for newer managed tool releases
 npm run restore            # Restore from last backup
 npm run version:show       # Print current version, commit, tag, branch
 npm run release -- patch   # Cut a release (patch|minor|major|x.y.z)
@@ -67,7 +70,7 @@ Git identity is machine-local in `~/.gitconfig.local`. The first restore migrate
 
 Restoration points cover managed configuration and registries, including absence information so rollback removes files created by a restore. They intentionally exclude auth, secrets, sessions, histories, logs, databases, plugin caches, and installed packages; plugins may need reinstalling after rollback. Older backups without an absence manifest remain copy-only restorable.
 
-The shared MCP baseline is code-review-graph and OpenAI Developer Docs. Codex provides Axiom through its native plugin (including its skills and optional trusted hooks). Apple’s native `xcode` bridge is isolated behind `codex -p apple`; use `codex -p apple-headless` for XcodeBuildMCP outside an open Xcode project. The disabled computer-use bridge remains optional. `codex -p review` layers xhigh reasoning over the base review tooling. code-review-graph is intentionally unpinned, runs from its installed binary rather than `uvx`, and an existing pipx installation is upgraded during setup/update.
+The shared MCP baseline is code-review-graph and OpenAI Developer Docs. Codex provides Axiom through its native plugin (including its skills and optional trusted hooks). Apple’s native `xcode` bridge is isolated behind `codex -p apple`; use `codex -p apple-headless` for XcodeBuildMCP outside an open Xcode project. The disabled computer-use bridge remains optional. `codex -p review` layers xhigh reasoning over the base review tooling. `agent_config/managed_tools.json` exact-pins Plannotator, code-review-graph, XcodeBuildMCP, Obscura, and the Claude statusline, while recording tested compatibility floors for Codex, Claude, RTK, and Worktrunk. Axiom uses an immutable marketplace commit plus an expected plugin version; shared git skills also require commit SHAs. A weekly workflow proposes reviewed exact-pin updates.
 
 ### New machine: full baseline
 

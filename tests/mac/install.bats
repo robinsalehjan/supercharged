@@ -151,7 +151,7 @@ run_zsh_func() {
 
   [ "$status" -eq 0 ]
   [[ "$output" != *"unexpected brew invocation"* ]]
-  [[ "$output" == *'# Homebrew release whenever the normal `brew update` + `brew upgrade` path runs.'* ]]
+  [[ "$output" == *'# Formula only — do NOT also install `brew install --cask periphery`.'* ]]
 }
 
 @test "build_brewfile includes Codex desktop app by default" {
@@ -198,7 +198,9 @@ run_zsh_func() {
   [[ "$output" == *'swiftformat'* ]]
   [[ "$output" == *'ios-deploy'* ]]
   [[ "$output" == *'periphery'* ]]
-  [[ "$output" == *'xcodebuildmcp'* ]]
+  [[ "$output" != *'xcodebuildmcp'* ]]
+  run rg -F 'setup_xcodebuildmcp' "$PROJECT_ROOT/scripts/mac.sh"
+  [ "$status" -eq 0 ]
 }
 
 @test "build_brewfile excludes iOS tools when INSTALL_IOS_TOOLS=n" {
@@ -407,13 +409,15 @@ EOF
 @test "setup_statusline detects existing installation" {
   mkdir -p "$HOME/.claude/statusline/lib"
   touch "$HOME/.claude/statusline/statusline.sh"
+  jq -r '.tools["claude-statusline"].commit' "$PROJECT_ROOT/agent_config/managed_tools.json" > \
+    "$HOME/.claude/statusline/.supercharged-source-ref"
 
   run zsh -c "
     source '$PROJECT_ROOT/scripts/utils.sh'
     setup_statusline
   "
   [ "$status" -eq 0 ]
-  [[ "$output" == *"statusline already installed"* ]]
+  [[ "$output" == *"statusline already at managed commit"* ]]
 }
 
 @test "setup_statusline installs when missing" {

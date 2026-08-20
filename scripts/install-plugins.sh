@@ -18,6 +18,7 @@ source "$(dirname "$0")/utils.sh"
 
 PROJECT_ROOT="$UTILS_PROJECT_ROOT"
 CLAUDE_CONFIG_DIR="$PROJECT_ROOT/claude_config"
+CLAUDE_HOME="${CLAUDE_HOME:-$HOME/.claude}"
 DRY_RUN=false
 
 # Parse arguments
@@ -112,6 +113,21 @@ else
             fi
         fi
     done < <(echo "$PLUGINS_JSON" | jq -r '.plugins | keys[]')
+
+    if [ "$DRY_RUN" = false ]; then
+        LIVE_PLUGINS_FILE="$CLAUDE_HOME/plugins/installed_plugins.json"
+        if [ ! -f "$LIVE_PLUGINS_FILE" ]; then
+            log_with_level "ERROR" "Claude plugin registry was not created: $LIVE_PLUGINS_FILE"
+            exit 1
+        fi
+        while IFS=$'\t' read -r plugin expected_version; do
+            installed_version=$(jq -r --arg plugin "$plugin" '.plugins[$plugin][0].version // empty' "$LIVE_PLUGINS_FILE")
+            if [ "$installed_version" != "$expected_version" ]; then
+                log_with_level "ERROR" "Claude plugin version mismatch for $plugin (expected $expected_version, found ${installed_version:-missing})"
+                exit 1
+            fi
+        done < <(echo "$PLUGINS_JSON" | jq -r '.plugins | to_entries[] | [.key, .value[0].version] | @tsv')
+    fi
 fi
 
 log_with_level "SUCCESS" "Plugin installation complete"

@@ -49,7 +49,13 @@ fi
 if ! jq -e '
     (.version == 1) and
     (.marketplaces | type == "array" and length > 0) and
-    (.plugins | type == "array" and length > 0)
+    (.marketplaces | all(
+        (.name | type == "string" and length > 0) and
+        (.source | type == "string" and length > 0) and
+        (.ref | test("^[0-9a-f]{40}$"))
+    )) and
+    (.plugins | type == "array" and length > 0) and
+    (.plugins | all(.version | test("^[0-9]+\\.[0-9]+\\.[0-9]+([.-][0-9A-Za-z.-]+)?$")))
 ' "$CODEX_PLUGIN_REGISTRY" >/dev/null 2>&1; then
     log_with_level "ERROR" "Managed Codex plugin registry is malformed: $CODEX_PLUGIN_REGISTRY"
     exit 1
@@ -60,8 +66,8 @@ plugin_count=$(jq '.plugins | length' "$CODEX_PLUGIN_REGISTRY")
 
 if [ "$DRY_RUN" = true ]; then
     log_with_level "INFO" "[dry-run] Would reconcile $marketplace_count Codex marketplace(s) and $plugin_count plugin(s)"
-    jq -r '.marketplaces[] | "[dry-run] Would add or upgrade marketplace: \(.name) (\(.source))"' "$CODEX_PLUGIN_REGISTRY"
-    jq -r '.plugins[] | select(.enabled == true) | "[dry-run] Would install or reinstall plugin: \(.id)"' "$CODEX_PLUGIN_REGISTRY"
+    jq -r '.marketplaces[] | "[dry-run] Would pin marketplace: \(.name) (\(.source) @ \(.ref))"' "$CODEX_PLUGIN_REGISTRY"
+    jq -r '.plugins[] | select(.enabled == true) | "[dry-run] Would install or verify plugin: \(.id) @ \(.version)"' "$CODEX_PLUGIN_REGISTRY"
     exit 0
 fi
 
@@ -75,22 +81,21 @@ if ! marketplace_json=$(codex plugin marketplace list --json 2>&1); then
     exit 1
 fi
 
-while IFS=$'\t' read -r name source; do
+while IFS=$'\t' read -r name source ref; do
     [ -n "$name" ] || continue
-    if ! jq -e --arg name "$name" '.marketplaces[]? | select(.name == $name)' <<<"$marketplace_json" >/dev/null; then
-        log_with_level "INFO" "Adding Codex marketplace: $name"
-        if ! codex plugin marketplace add "$source"; then
-            log_with_level "ERROR" "Failed to add Codex marketplace: $name"
-            exit 1
-        fi
-    else
-        log_with_level "INFO" "Upgrading Codex marketplace: $name"
-        if ! codex plugin marketplace upgrade "$name"; then
-            log_with_level "ERROR" "Failed to upgrade Codex marketplace: $name"
+    if jq -e --arg name "$name" '.marketplaces[]? | select(.name == $name)' <<<"$marketplace_json" >/dev/null; then
+        log_with_level "INFO" "Replacing Codex marketplace snapshot with pinned ref: $name"
+        if ! codex plugin marketplace remove "$name"; then
+            log_with_level "ERROR" "Failed to remove existing Codex marketplace: $name"
             exit 1
         fi
     fi
-done < <(jq -r '.marketplaces[] | [.name, .source] | @tsv' "$CODEX_PLUGIN_REGISTRY")
+    log_with_level "INFO" "Adding Codex marketplace at immutable ref: $name @ $ref"
+    if ! codex plugin marketplace add "$source" --ref "$ref"; then
+        log_with_level "ERROR" "Failed to add Codex marketplace: $name"
+        exit 1
+    fi
+done < <(jq -r '.marketplaces[] | [.name, .source, .ref] | @tsv' "$CODEX_PLUGIN_REGISTRY")
 
 while IFS= read -r plugin; do
     [ -n "$plugin" ] || continue
@@ -100,6 +105,20 @@ while IFS= read -r plugin; do
         exit 1
     fi
 done < <(jq -r '.plugins[] | select(.enabled == true) | .id' "$CODEX_PLUGIN_REGISTRY")
+
+if ! plugin_json=$(codex plugin list --json 2>&1); then
+    log_with_level "ERROR" "Could not verify installed Codex plugin versions: $plugin_json"
+    exit 1
+fi
+while IFS=$'\t' read -r plugin expected_version; do
+    installed_version=$(jq -r --arg plugin "$plugin" '
+        .installed[]? | select((.pluginId // .id // .name) == $plugin) | .version // empty
+    ' <<<"$plugin_json" | head -1)
+    if [ "$installed_version" != "$expected_version" ]; then
+        log_with_level "ERROR" "Codex plugin version mismatch for $plugin (expected $expected_version, found ${installed_version:-missing})"
+        exit 1
+    fi
+done < <(jq -r '.plugins[] | select(.enabled == true) | [.id, .version] | @tsv' "$CODEX_PLUGIN_REGISTRY")
 
 log_with_level "SUCCESS" "Managed Codex plugins are installed"
 log_with_level "WARN" "Axiom's bundled hooks require Codex's one-time trust review on first run; approve only after reviewing the plugin source."

@@ -183,11 +183,7 @@ tap \"peripheryapp/periphery\"
 # Formula only — do NOT also install \`brew install --cask periphery\`. The cask
 # ships an older standalone build and its presence prevents \`brew\` from linking
 # the formula's \`periphery\` binary into /opt/homebrew/bin, breaking PATH lookup.
-brew \"periphery\", trusted: true
-# Official tap and fully qualified formula keep XcodeBuildMCP on the current
-# Homebrew release whenever the normal \`brew update\` + \`brew upgrade\` path runs.
-tap \"getsentry/xcodebuildmcp\"
-brew \"getsentry/xcodebuildmcp/xcodebuildmcp\", trusted: true"
+brew \"periphery\", trusted: true"
     fi
 
     if [[ "${INSTALL_DEV_TOOLS:-Y}" =~ ^[Yy] ]]; then
@@ -449,6 +445,10 @@ main() {
                 "$UTILS_SCRIPT_DIR/restore-claude.sh" --force || log_with_level "WARN" "Claude config restore skipped or failed"
             fi
         fi
+    fi
+
+    if [[ "${INSTALL_IOS_TOOLS:-Y}" =~ ^[Yy] ]]; then
+        setup_xcodebuildmcp
     fi
 
     # Restore Codex configuration independently of the Claude preference.

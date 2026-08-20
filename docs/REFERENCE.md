@@ -16,6 +16,9 @@ npm run restore:all           # Restore Claude, Codex, and dotfiles
 npm run restore:all -- --force # Force the all-in-one restore
 npm run backup:all            # Backup Claude and Codex config
 npm run install:skills        # Install, update, or safely prune shared git skills
+npm run install:managed-tools # Reconcile exact-pinned local agent tools
+npm run install:plannotator   # Reconcile the checksum-pinned Plannotator binary
+npm run update:tool-pins      # Check upstream releases against managed pins
 npm test                      # Run BATS tests
 npm run lint                  # ShellCheck, zsh syntax checks, and actionlint
 npm run scan:secrets          # Scan repository paths for likely secrets
@@ -31,7 +34,7 @@ Use the forced orchestrated restore when an existing machine should adopt the re
 npm run restore:all -- --force
 ```
 
-The orchestrator creates exactly one configuration-only snapshot, then passes an internal skip flag to each restore stage. It does not run `mac.sh`, Homebrew Bundle, or dependency updates and therefore does not install or remove applications. Without `--force`, Claude and Codex remain timestamp-gated.
+The orchestrator creates exactly one configuration-only snapshot, then passes an internal skip flag to each restore stage. It does not run `mac.sh`, Homebrew Bundle, or general dependency updates. Codex restore does reconcile the checksum-pinned Plannotator hook binary before its timestamp gate so a current configuration cannot retain an incompatible executable. Without `--force`, Claude and Codex configuration remains timestamp-gated.
 
 `~/.gitconfig` contains portable shared settings and includes `~/.gitconfig.local` for machine identity. Before the first replacement, existing `user.*` values are migrated when the local file does not yet exist. Interactive setup prompts for non-empty name and email on a new machine; restore-only commands never prompt and warn when identity is unset. Claude restore preserves `@vend-plugins` enabled/disabled values and the matching marketplace entry.
 
@@ -73,19 +76,36 @@ The Homebrew Bundle baseline is defined by `build_brewfile` in `scripts/mac.sh`.
 
 The `omlx` CLI above is scripted via its own tap. Its optional menu bar app (`oMLX.app`) has no Homebrew cask — download the `.dmg` for your macOS version from [github.com/jundot/omlx/releases](https://github.com/jundot/omlx/releases) and drag it into `/Applications` manually. If its installer offers to add a shell PATH entry for its bundled CLI shim, decline it — the Homebrew-installed `omlx` is already on PATH and having two competing binaries just causes ambiguity.
 
-Conditional Brewfile groups add iOS, container, cloud (`hashicorp/tap/terraform`), network, and extra application tooling according to the setup preferences above. Dedicated setup helpers install Claude Code, Plannotator, code-review-graph, Obscura, and the Claude statusline; these tools are not Homebrew Bundle entries.
+Conditional Brewfile groups add iOS, container, cloud (`hashicorp/tap/terraform`), network, and extra application tooling according to the setup preferences above. Dedicated setup helpers install Claude Code and the exact-pinned Plannotator, code-review-graph, XcodeBuildMCP, Obscura, and Claude statusline. `agent_config/managed_tools.json` is their desired-state source. Release archives verify architecture-specific SHA-256 values before installation; code-review-graph uses an exact PyPI version; the statusline installer uses an immutable commit. XcodeBuildMCP installs under `~/.local/share/supercharged/` and removes the superseded Homebrew formula so a later `brew upgrade` cannot shadow the pin. Run `npm run install:managed-tools` to reconcile the installed set or add `-- --dry-run` to inspect drift.
 
 asdf-managed tools are listed in `dot_files/.tool-versions`, including Node.js, Python, Ruby, Bundler, gcloud, Firebase CLI, and optional JVM pins.
 
 Claude Code configuration is backed up under `claude_config/`. Codex configuration is backed up under `codex_config/`. Shared cross-agent instructions live in `agent_config/AGENTS.md`.
 
-Shared git-cloned skills are declared in `agent_config/installed_skills.json`. Its `removed_skills` tombstones safely prune retired managed clones from both agent homes during `npm run install:skills`; removal is limited to git checkouts whose origin matches the retired registry entry, so unrelated local skills are preserved.
+Shared git-cloned skills are declared in `agent_config/installed_skills.json`. Active entries must use immutable 40-character commit refs. Its `removed_skills` tombstones safely prune retired managed clones from both agent homes during `npm run install:skills`; removal is limited to git checkouts whose origin matches the retired registry entry, so unrelated local skills are preserved.
 
 ### Shared Agent Capabilities
 
 The four graph skills live canonically in `agent_config/skills/<name>/SKILL.md`. `restore:codex` restores those directories directly into Codex; `.claude/skills/*.md` is a generated one-way Claude compatibility mirror and `scripts/generate-claude-skill-mirrors.sh --check` detects drift. Git-cloned skills in `agent_config/installed_skills.json` are also installed into both agent homes. Claude plugins and Codex plugins can contribute additional tool-specific skills, so the complete runtime skill lists are intentionally not identical.
 
-The canonical MCP inventory is: shared code-review-graph and OpenAI Developer Docs; Codex-native Axiom plugin; the `xcode` bridge in the Apple profile; XcodeBuildMCP in the headless Apple profile; and optional disabled Computer Use. Claude user-local MCP entries are preserved during restore and never imported by backup. code-review-graph intentionally follows latest: setup and update upgrade its pipx installation, while MCP clients invoke the installed `code-review-graph serve` binary directly.
+The canonical MCP inventory is: shared code-review-graph and OpenAI Developer Docs; Codex-native Axiom plugin; the `xcode` bridge in the Apple profile; XcodeBuildMCP in the headless Apple profile; and optional disabled Computer Use. Claude user-local MCP entries are preserved during restore and never imported by backup. Local MCP executables are exact-pinned where this repository controls installation. The hosted OpenAI Developer Docs MCP has no local executable to pin; native Xcode MCP follows the selected Xcode installation.
+
+The weekly `update-managed-tool-pins.yml` workflow checks exact releases and immutable remote refs, then opens one reviewable pull request when they change. Run `npm run update:tool-pins` locally to check, or add `-- --apply` to update the tracked pins. Compatibility floors move manually only after the newer clients have passed this repository’s validation.
+
+Version policy depends on the integration boundary:
+
+| Integration | Policy |
+| --- | --- |
+| Plannotator Stop-hook binary | Exact release and SHA-256 per macOS architecture |
+| code-review-graph local MCP | Exact PyPI version with required extras |
+| XcodeBuildMCP and Obscura | Exact release archive and SHA-256 per macOS architecture; Obscura binaries are verified after extraction |
+| Claude statusline | Immutable installer commit, recorded locally after successful installation |
+| Axiom | Immutable Codex marketplace commit plus expected plugin version |
+| Claude plugins | Native marketplace installation verified against tracked plugin versions |
+| Shared git skills | Immutable commit SHA; mutable branches are rejected |
+| Codex, Claude, RTK, Worktrunk | Minimum compatible and last-tested versions; newer versions warn until validated |
+| OpenAI Developer Docs MCP | Hosted HTTP service; there is no local server binary to pin |
+| Native Xcode MCP bridge | Ships with Xcode and follows the selected Xcode installation |
 
 ### Nested repository graph discovery
 
@@ -116,6 +136,7 @@ The repository was audited against the personal Mac and records the reproducible
 | asdf runtimes | `dot_files/.tool-versions` |
 | Shell and terminal configuration | `dot_files/` |
 | Shared Claude/Codex instructions | `agent_config/AGENTS.md` |
+| Managed agent-tool versions and release checksums | `agent_config/managed_tools.json` |
 | Sanitized Claude Code state | `claude_config/` |
 | Durable Codex defaults, permissions, MCP servers, hooks, and skills | `codex_config/` |
 | Legacy Claude user-scoped MCP registry (empty by default) | `claude_config/mcp_servers.json` |

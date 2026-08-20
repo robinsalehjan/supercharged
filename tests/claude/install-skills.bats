@@ -58,7 +58,7 @@ run_install_skills() {
 }
 
 @test "--dry-run reports clone for a missing skill" {
-  local skills='{"version":1,"skills":{"my-skill":{"repo":"https://example.com/my-skill.git","ref":"main"}}}'
+  local skills='{"version":1,"skills":{"my-skill":{"repo":"https://example.com/my-skill.git","ref":"1111111111111111111111111111111111111111"}}}'
 
   run run_install_skills "$skills" "" --dry-run
 
@@ -71,7 +71,7 @@ run_install_skills() {
 }
 
 @test "--dry-run reports update for an existing git checkout" {
-  local skills='{"version":1,"skills":{"existing-skill":{"repo":"https://example.com/existing.git","ref":"main"}}}'
+  local skills='{"version":1,"skills":{"existing-skill":{"repo":"https://example.com/existing.git","ref":"1111111111111111111111111111111111111111"}}}'
 
   mkdir -p "$HOME/.claude/skills/existing-skill/.git"
 
@@ -83,8 +83,8 @@ run_install_skills() {
 }
 
 @test "merges installed_skills.local.json on top of the tracked set" {
-  local skills='{"version":1,"skills":{"shared-skill":{"repo":"https://example.com/shared.git","ref":"main"}}}'
-  local local_skills='{"version":1,"skills":{"local-only":{"repo":"https://example.com/local.git","ref":"main"}}}'
+  local skills='{"version":1,"skills":{"shared-skill":{"repo":"https://example.com/shared.git","ref":"1111111111111111111111111111111111111111"}}}'
+  local local_skills='{"version":1,"skills":{"local-only":{"repo":"https://example.com/local.git","ref":"1111111111111111111111111111111111111111"}}}'
 
   run run_install_skills "$skills" "$local_skills" --dry-run
 
@@ -95,25 +95,26 @@ run_install_skills() {
 }
 
 @test "local override takes precedence when both define the same skill" {
-  # repo points at original.git @ main; local pins it to a fork @ dev.
-  local skills='{"version":1,"skills":{"pinned":{"repo":"https://example.com/original.git","ref":"main"}}}'
-  local local_skills='{"version":1,"skills":{"pinned":{"repo":"https://example.com/fork.git","ref":"dev"}}}'
+  # repo points at original.git @ 1111111111111111111111111111111111111111; local pins it to a fork @ 2222222222222222222222222222222222222222.
+  local skills='{"version":1,"skills":{"pinned":{"repo":"https://example.com/original.git","ref":"1111111111111111111111111111111111111111"}}}'
+  local local_skills='{"version":1,"skills":{"pinned":{"repo":"https://example.com/fork.git","ref":"2222222222222222222222222222222222222222"}}}'
 
   run run_install_skills "$skills" "$local_skills" --dry-run
 
   [ "$status" -eq 0 ]
   # Dry-run output includes the resolved repo+ref tuple.
-  [[ "$output" == *"fork.git @ dev"* ]]
-  [[ "$output" != *"original.git @ main"* ]]
+  [[ "$output" == *"fork.git @ 2222222222222222222222222222222222222222"* ]]
+  [[ "$output" != *"original.git @ 1111111111111111111111111111111111111111"* ]]
 }
 
-@test "missing ref defaults to main" {
+@test "missing ref is rejected instead of tracking a mutable branch" {
   local skills='{"version":1,"skills":{"no-ref-skill":{"repo":"https://example.com/no-ref.git"}}}'
 
   run run_install_skills "$skills" "" --dry-run
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"no-ref-skill (https://example.com/no-ref.git @ main)"* ]]
+  [[ "$output" == *"ref must be an immutable 40-character commit SHA"* ]]
+  [[ "$output" != *"Would clone"* ]]
 }
 
 @test "degenerate installed_skills.json is a clean no-op" {
@@ -221,7 +222,7 @@ run_install_skills() {
 }
 
 @test "unsafe active skill names cannot escape managed skill directories" {
-  local skills='{"version":2,"skills":{"../../escape":{"repo":"https://example.com/escape.git","ref":"main"}}}'
+  local skills='{"version":2,"skills":{"../../escape":{"repo":"https://example.com/escape.git","ref":"1111111111111111111111111111111111111111"}}}'
 
   run run_install_skills "$skills" "" --dry-run
 
@@ -233,7 +234,7 @@ run_install_skills() {
 
 @test "removed skill tombstone wins over a local active override" {
   local skills='{"version":2,"skills":{},"removed_skills":{"retired":{"repo":"https://example.com/retired.git"}}}'
-  local local_skills='{"version":1,"skills":{"retired":{"repo":"https://example.com/fork.git","ref":"main"}}}'
+  local local_skills='{"version":1,"skills":{"retired":{"repo":"https://example.com/fork.git","ref":"1111111111111111111111111111111111111111"}}}'
 
   run run_install_skills "$skills" "$local_skills" --dry-run
 
@@ -245,7 +246,7 @@ run_install_skills() {
 @test "skips a target that exists but is not a git checkout" {
   # Pre-create a plain directory at the target path. Production behavior is to
   # log a warning and continue — must not rm-rf or attempt a clone over it.
-  local skills='{"version":1,"skills":{"squatted":{"repo":"https://example.com/squatted.git","ref":"main"}}}'
+  local skills='{"version":1,"skills":{"squatted":{"repo":"https://example.com/squatted.git","ref":"1111111111111111111111111111111111111111"}}}'
 
   mkdir -p "$HOME/.claude/skills/squatted"
   echo "user data" > "$HOME/.claude/skills/squatted/important.txt"
@@ -260,19 +261,17 @@ run_install_skills() {
   [ "$(cat "$HOME/.claude/skills/squatted/important.txt")" = "user data" ]
 }
 
-@test "failed clone surfaces git stderr and continues to the next skill" {
+@test "failed pinned clone warns and continues to the next skill" {
   # Bogus URL forces a clone failure; the WARN line must include git's actual
   # error rather than the silent "(continuing)" we used to print. The second
   # skill should still be processed.
-  local skills='{"version":1,"skills":{"bad-repo":{"repo":"file:///nonexistent/path.git","ref":"main"},"second":{"repo":"file:///also-nonexistent.git","ref":"main"}}}'
+  local skills='{"version":1,"skills":{"bad-repo":{"repo":"file:///nonexistent/path.git","ref":"1111111111111111111111111111111111111111"},"second":{"repo":"file:///also-nonexistent.git","ref":"1111111111111111111111111111111111111111"}}}'
 
   run run_install_skills "$skills" ""
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Failed to clone skill for Claude Code: bad-repo"* ]]
-  [[ "$output" == *"Failed to clone skill for Codex: bad-repo"* ]]
-  # git's actual error should appear after the dash separator.
-  [[ "$output" == *"Failed to clone skill for Claude Code: bad-repo (continuing) — "* ]]
+  [[ "$output" == *"Failed to clone pinned skill for Claude Code: bad-repo"* ]]
+  [[ "$output" == *"Failed to clone pinned skill for Codex: bad-repo"* ]]
   # Second skill is still attempted even after the first failed.
   [[ "$output" == *"Cloning skill for Claude Code: second"* ]]
   [[ "$output" == *"Cloning skill for Codex: second"* ]]
@@ -280,7 +279,7 @@ run_install_skills() {
 }
 
 @test "malformed installed_skills.local.json surfaces a warning and falls back to the base file" {
-  local skills='{"version":1,"skills":{"only-base":{"repo":"https://example.com/base.git","ref":"main"}}}'
+  local skills='{"version":1,"skills":{"only-base":{"repo":"https://example.com/base.git","ref":"1111111111111111111111111111111111111111"}}}'
   local bad_local='{not valid json'
 
   run run_install_skills "$skills" "$bad_local" --dry-run

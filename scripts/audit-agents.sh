@@ -79,6 +79,43 @@ require_command() {
     fi
 }
 
+version_gte() {
+    local installed="$1" required="$2"
+    local installed_major installed_minor installed_patch
+    local required_major required_minor required_patch
+    IFS=. read -r installed_major installed_minor installed_patch <<<"$installed"
+    IFS=. read -r required_major required_minor required_patch <<<"$required"
+    (( installed_major > required_major )) && return 0
+    (( installed_major < required_major )) && return 1
+    (( installed_minor > required_minor )) && return 0
+    (( installed_minor < required_minor )) && return 1
+    (( installed_patch > required_patch )) && return 0
+    (( installed_patch < required_patch )) && return 1
+    return 0
+}
+
+audit_compatibility_tool() {
+    local key="$1" default_command="$2"
+    local command_name minimum tested output installed
+    command_name=$(jq -r --arg key "$key" '.compatibility[$key].command // empty' "$MANAGED_TOOLS_MANIFEST")
+    command_name="${command_name:-$default_command}"
+    minimum=$(jq -r --arg key "$key" '.compatibility[$key].minimum_version' "$MANAGED_TOOLS_MANIFEST")
+    tested=$(jq -r --arg key "$key" '.compatibility[$key].tested_version' "$MANAGED_TOOLS_MANIFEST")
+    if ! command -v "$command_name" >/dev/null 2>&1; then
+        fail "$key compatibility floor cannot be checked (missing $command_name)"
+        return
+    fi
+    output=$("$command_name" --version 2>&1 || true)
+    installed=$(grep -oE '[0-9]+\.[0-9]+\.[0-9]+' <<<"$output" | head -1)
+    if [ -z "$installed" ] || ! version_gte "$installed" "$minimum"; then
+        fail "$key $installed is below the supported minimum $minimum"
+    elif [ "$installed" = "$tested" ]; then
+        pass "$key $installed matches the tested version"
+    else
+        warn "$key $installed meets the $minimum minimum but differs from tested $tested"
+    fi
+}
+
 if ! command -v jq >/dev/null 2>&1; then
     echo "audit:agents requires jq" >&2
     exit 2
@@ -181,13 +218,57 @@ fi
 if jq -e '
     .version == 1 and
     (.marketplaces | length == 1) and
-    .marketplaces[0] == {name: "axiom-marketplace", source: "CharlesWiltgen/Axiom"} and
+    .marketplaces[0].name == "axiom-marketplace" and
+    .marketplaces[0].source == "CharlesWiltgen/Axiom" and
+    (.marketplaces[0].ref | test("^[0-9a-f]{40}$")) and
     (.plugins | length == 1) and
-    .plugins[0] == {id: "axiom@axiom-marketplace", required: true, enabled: true}
+    .plugins[0].id == "axiom@axiom-marketplace" and
+    (.plugins[0].version | test("^[0-9]+\\.[0-9]+\\.[0-9]+([.-][0-9A-Za-z.-]+)?$")) and
+    .plugins[0].required == true and .plugins[0].enabled == true
 ' "$CODEX_CONFIG_DIR/plugins.json" >/dev/null 2>&1; then
     pass "Managed plugin registry contains only required enabled Axiom"
 else
     fail "Managed Codex plugin registry is malformed or does not match Axiom policy"
+fi
+
+MANAGED_TOOLS_MANIFEST="${MANAGED_TOOLS_MANIFEST:-$AGENT_CONFIG_DIR/managed_tools.json}"
+if jq -e '
+    .version == 2 and
+    (.tools.plannotator.version | test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")) and
+    .tools.plannotator.repository == "backnotprop/plannotator" and
+    ([.tools.plannotator.assets["darwin-arm64"], .tools.plannotator.assets["darwin-x64"]] | all(
+        (.name | test("^plannotator-darwin-(arm64|x64)$")) and
+        (.sha256 | test("^[0-9a-f]{64}$"))
+    )) and
+    (.tools["code-review-graph"].version | test("^[0-9]+\\.[0-9]+\\.[0-9]+$")) and
+    .tools["code-review-graph"].policy == "exact-pypi" and
+    .tools["code-review-graph"].package == "code-review-graph" and
+    .tools["code-review-graph"].extras == ["embeddings", "communities"] and
+    ([.tools.xcodebuildmcp, .tools.obscura] | all(
+        .policy == "exact-release" and
+        (.version | test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")) and
+        ([.assets["darwin-arm64"], .assets["darwin-x64"]] | all(.sha256 | test("^[0-9a-f]{64}$")))
+    )) and
+    (.tools.obscura.assets | [."darwin-arm64", ."darwin-x64"] | all(
+        (.binaries.obscura | test("^[0-9a-f]{64}$")) and
+        (.binaries["obscura-worker"] | test("^[0-9a-f]{64}$"))
+    )) and
+    (.tools["claude-statusline"].commit | test("^[0-9a-f]{40}$")) and
+    (.compatibility | to_entries | all(
+        (.value.minimum_version | test("^[0-9]+\\.[0-9]+\\.[0-9]+$")) and
+        (.value.tested_version | test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))
+    ))
+' "$MANAGED_TOOLS_MANIFEST" >/dev/null 2>&1; then
+    pass "Managed tool manifest pins exact tools, remote commits, and compatibility floors"
+else
+    fail "Managed tool manifest is missing or has invalid pin policy"
+fi
+
+if jq -e '.skills // {} | to_entries | all(.value.ref | test("^[0-9a-f]{40}$"))' \
+    "$AGENT_CONFIG_DIR/installed_skills.json" >/dev/null 2>&1; then
+    pass "Tracked git skills use immutable commit refs"
+else
+    fail "Tracked git skills must use immutable 40-character commit refs"
 fi
 
 if "$SCRIPT_DIR/generate-claude-skill-mirrors.sh" --check >/dev/null 2>&1; then
@@ -206,6 +287,70 @@ if [ "$REPO_ONLY" = false ]; then
     require_command codex "Codex CLI is installed"
     require_command rtk "RTK is installed"
     require_command code-review-graph "code-review-graph is installed"
+
+    audit_compatibility_tool codex codex
+    audit_compatibility_tool claude claude
+    audit_compatibility_tool rtk rtk
+    audit_compatibility_tool worktrunk wt
+
+    plannotator_arch=$(uname -m)
+    case "$plannotator_arch" in
+        arm64|aarch64) plannotator_asset="darwin-arm64" ;;
+        x86_64) plannotator_asset="darwin-x64" ;;
+        *) plannotator_asset="" ;;
+    esac
+    plannotator_path="$HOME/.local/bin/plannotator"
+    plannotator_version=$(jq -r '.tools.plannotator.version' "$MANAGED_TOOLS_MANIFEST")
+    plannotator_expected_sha=$(jq -r --arg asset "$plannotator_asset" '.tools.plannotator.assets[$asset].sha256 // ""' "$MANAGED_TOOLS_MANIFEST")
+    plannotator_installed_sha=""
+    if [ -f "$plannotator_path" ]; then
+        plannotator_installed_sha=$(shasum -a 256 "$plannotator_path" 2>/dev/null | awk '{print $1}') || plannotator_installed_sha=""
+    fi
+    if [ -n "$plannotator_expected_sha" ] && \
+       [ "$plannotator_installed_sha" = "$plannotator_expected_sha" ] && \
+       [ -x "$plannotator_path" ]; then
+        pass "Plannotator $plannotator_version matches the managed checksum"
+    else
+        fail "Plannotator does not match managed version $plannotator_version; run npm run install:plannotator"
+    fi
+
+    obscura_arch=$(uname -m)
+    case "$obscura_arch" in
+        arm64|aarch64) obscura_asset="darwin-arm64" ;;
+        x86_64) obscura_asset="darwin-x64" ;;
+        *) obscura_asset="" ;;
+    esac
+    obscura_version=$(jq -r '.tools.obscura.version' "$MANAGED_TOOLS_MANIFEST")
+    obscura_expected_sha=$(jq -r --arg asset "$obscura_asset" '.tools.obscura.assets[$asset].binaries.obscura // ""' "$MANAGED_TOOLS_MANIFEST")
+    worker_expected_sha=$(jq -r --arg asset "$obscura_asset" '.tools.obscura.assets[$asset].binaries["obscura-worker"] // ""' "$MANAGED_TOOLS_MANIFEST")
+    obscura_installed_sha=$(shasum -a 256 "$HOME/.local/bin/obscura" 2>/dev/null | awk '{print $1}') || obscura_installed_sha=""
+    worker_installed_sha=$(shasum -a 256 "$HOME/.local/bin/obscura-worker" 2>/dev/null | awk '{print $1}') || worker_installed_sha=""
+    if [ "$obscura_installed_sha" = "$obscura_expected_sha" ] && \
+       [ "$worker_installed_sha" = "$worker_expected_sha" ]; then
+        pass "Obscura $obscura_version binaries match the managed checksums"
+    else
+        fail "Obscura differs from managed version $obscura_version; run npm run install:managed-tools"
+    fi
+
+    statusline_commit=$(jq -r '.tools["claude-statusline"].commit' "$MANAGED_TOOLS_MANIFEST")
+    statusline_marker=$(cat "$HOME/.claude/statusline/.supercharged-source-ref" 2>/dev/null || true)
+    if [ "$statusline_marker" = "$statusline_commit" ]; then
+        pass "Claude statusline matches managed commit ${statusline_commit[1,12]}"
+    else
+        fail "Claude statusline differs from the managed commit; run npm run install:managed-tools"
+    fi
+
+    claude_plugins_live="$HOME/.claude/plugins/installed_plugins.json"
+    if [ -f "$claude_plugins_live" ] && jq -e --slurpfile desired "$PROJECT_ROOT/claude_config/installed_plugins.json" '
+        . as $live |
+        ($desired[0].plugins | to_entries) as $expected |
+        all($expected[]; .key as $plugin | .value[0].version as $version |
+            ($live.plugins[$plugin][0].version // "") == $version)
+    ' "$claude_plugins_live" >/dev/null 2>&1; then
+        pass "Claude plugins match their tracked marketplace versions"
+    else
+        fail "Claude plugins differ from tracked versions; run npm run install:plugins"
+    fi
 
     if command -v codex >/dev/null 2>&1; then
         audit_codex_home="$AUDIT_TMP_DIR/codex-home"
@@ -227,16 +372,26 @@ if [ "$REPO_ONLY" = false ]; then
             fail "Axiom marketplace is not configured locally"
         fi
 
+        axiom_version=$(jq -r '.plugins[] | select(.id == "axiom@axiom-marketplace") | .version' "$CODEX_CONFIG_DIR/plugins.json")
         if plugin_state=$(codex plugin list --json 2>&1) && \
-           jq -e '[.installed[]? | if type == "string" then . else (.pluginId // .id // .name // "") end] | index("axiom@axiom-marketplace") != null' \
-               <<<"$plugin_state" >/dev/null; then
-            pass "Required Axiom plugin is installed locally"
+           jq -e --arg version "$axiom_version" '.installed[]? | select(
+               (.pluginId // .id // .name // "") == "axiom@axiom-marketplace" and .version == $version
+           )' <<<"$plugin_state" >/dev/null; then
+            pass "Required Axiom plugin matches pinned version $axiom_version"
         else
-            fail "Required Axiom plugin is not installed locally"
+            fail "Required Axiom plugin is missing or differs from pinned version $axiom_version"
         fi
     fi
 
     if command -v code-review-graph >/dev/null 2>&1; then
+        crg_expected=$(jq -r '.tools["code-review-graph"].version' "$MANAGED_TOOLS_MANIFEST")
+        crg_installed=$(code-review-graph --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+        if [ "$crg_installed" = "$crg_expected" ]; then
+            pass "code-review-graph $crg_installed matches the exact pin"
+        else
+            fail "code-review-graph ${crg_installed:-unknown} differs from exact pin $crg_expected"
+        fi
+
         if code-review-graph status >/dev/null 2>&1; then
             pass "code-review-graph reports a registered, current graph"
         else
@@ -256,6 +411,21 @@ if [ "$REPO_ONLY" = false ]; then
             ;;
         apple-headless)
             require_command xcodebuildmcp "Headless Apple profile: XcodeBuildMCP is installed"
+            xcodebuildmcp_expected=$(jq -r '.tools.xcodebuildmcp.version | sub("^v"; "")' "$MANAGED_TOOLS_MANIFEST")
+            case "$(uname -m)" in
+                arm64|aarch64) xcodebuildmcp_asset="darwin-arm64" ;;
+                x86_64) xcodebuildmcp_asset="darwin-x64" ;;
+                *) xcodebuildmcp_asset="" ;;
+            esac
+            xcodebuildmcp_expected_sha=$(jq -r --arg asset "$xcodebuildmcp_asset" '.tools.xcodebuildmcp.assets[$asset].sha256 // ""' "$MANAGED_TOOLS_MANIFEST")
+            xcodebuildmcp_installed_sha=$(cat "$HOME/.local/share/supercharged/xcodebuildmcp/.active-archive-sha256" 2>/dev/null || true)
+            xcodebuildmcp_installed=$(xcodebuildmcp --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+            if [ "$xcodebuildmcp_installed" = "$xcodebuildmcp_expected" ] && \
+               [ "$xcodebuildmcp_installed_sha" = "$xcodebuildmcp_expected_sha" ]; then
+                pass "XcodeBuildMCP $xcodebuildmcp_installed matches the exact release checksum"
+            else
+                fail "XcodeBuildMCP differs from exact pin $xcodebuildmcp_expected; run npm run install:managed-tools"
+            fi
             ;;
         *)
             pass "Apple-profile executables are not required without an Apple profile"

@@ -76,8 +76,13 @@ npm run install:plugins           # Install all marketplaces and plugins via cla
 npm run install:plugins -- --dry-run # Preview what would be installed
 npm run install:codex-plugins     # Install or refresh Axiom through the Codex plugin marketplace
 npm run install:codex-plugins -- --dry-run # Preview managed Codex plugin work
+npm run install:managed-tools     # Reconcile exact-pinned local agent tools
+npm run install:managed-tools -- --dry-run # Inspect managed tool drift
+npm run install:plannotator       # Install/update the checksum-pinned Plannotator binary
 npm run install:skills            # Install/update/prune shared git skills for Claude and Codex
 npm run install:skills -- --dry-run # Preview installs, updates, and safe removals
+npm run update:tool-pins          # Check upstream releases against tracked managed-tool pins
+npm run update:tool-pins -- --apply # Refresh managed-tool versions and checksums for review
 
 # Versioning and Releases
 npm run version:show              # Print version, commit SHA, tag, branch, host
@@ -209,6 +214,7 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 - Codex settings: `codex_config/config.toml` restores lean durable defaults such as model, personality, live web search, disabled memories, base MCP settings, hook enablement, instruction discovery, and a permission profile that denies `.env*`/`.secrets` paths; `apple.config.toml`, `apple-headless.config.toml`, and `review.config.toml` provide `codex -p apple`, `codex -p apple-headless`, and `codex -p review` overlays
 - Codex hooks and skills: `codex_config/hooks.json`, `codex_config/RTK.md`, and `codex_config/skills/plannotator-*` restore the non-blocking RTK rewrite hook, Plannotator Stop-hook review, Plannotator skills, and the Codex-only RTK instruction include; code-review-graph stays current through its launchd watcher and explicit audits
 - Codex plugins: `codex_config/plugins.json` is a sanitized desired-state registry; `npm run install:codex-plugins` uses the Codex CLI to manage Axiom while marketplace snapshots, plugin caches, credentials, and hook trust state stay local
+- Managed agent tools: `agent_config/managed_tools.json` exact-pins local release/PyPI tools and remote installer commits, and records tested compatibility floors; Axiom and shared git skills use immutable commits, while a weekly workflow proposes reviewed exact-pin bumps
 - Codex rules: `codex_config/rules/*.rules` restores repo-managed command deny rules that mirror the Claude hard-deny list where Codex prefix rules can express it; local approval rules in `~/.codex/rules/default.rules` remain local
 - Shared git skills: `agent_config/installed_skills.json` is installed into both `~/.claude/skills/*` and `~/.codex/skills/*` by `npm run install:skills`
 - Shared graph skills: `agent_config/skills/<name>/SKILL.md` is the canonical source; `restore:codex` restores those directories directly while `.claude/skills/*.md` is a generated compatibility mirror
@@ -254,6 +260,7 @@ Plugins are auto-installed during restore. `install:plugins` merges repo configs
 | Update shared agent instructions | Edit `agent_config/AGENTS.md`, then run `npm run restore:agents` |
 | Update Codex defaults | Edit `codex_config/config.toml`, then run `npm run restore:codex` |
 | Update Codex command deny rules | Edit `codex_config/rules/*.rules`, then run `npm run restore:codex` |
+| Update managed agent-tool pins | Run `npm run update:tool-pins -- --apply`, review release checksums and commit refs, then run `npm run install:managed-tools -- --dry-run` |
 | Add shared project skill rule | Create/edit `agent_config/skills/<name>/SKILL.md`, run `scripts/generate-claude-skill-mirrors.sh`, then run `npm run restore:codex` |
 | Add shared MCP server | Add compatible entries to `.mcp.json` and `codex_config/config.toml`; skip Codex if unsupported |
 | Update security policy | Edit `SECURITY.md`, `scripts/scan-secrets.sh`, `codex_config/rules/*.rules`, or `codex_config/hooks/` as appropriate |

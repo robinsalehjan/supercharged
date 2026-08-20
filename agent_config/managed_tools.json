@@ -1,0 +1,89 @@
+{
+  "version": 2,
+  "tools": {
+    "plannotator": {
+      "policy": "exact-release",
+      "version": "v0.27.4",
+      "repository": "backnotprop/plannotator",
+      "assets": {
+        "darwin-arm64": {
+          "name": "plannotator-darwin-arm64",
+          "sha256": "d71bedfd3587c9753e0d0b91d22dcdb619d80488ea5ae9b459ac6f34621d7cf1"
+        },
+        "darwin-x64": {
+          "name": "plannotator-darwin-x64",
+          "sha256": "2718b90b09b97af91b5fa730ba050eba07d6752a05fafd12c44800042dd877b6"
+        }
+      }
+    },
+    "code-review-graph": {
+      "policy": "exact-pypi",
+      "version": "2.3.7",
+      "package": "code-review-graph",
+      "extras": ["embeddings", "communities"]
+    },
+    "xcodebuildmcp": {
+      "policy": "exact-release",
+      "version": "v2.7.0",
+      "repository": "getsentry/XcodeBuildMCP",
+      "assets": {
+        "darwin-arm64": {
+          "name": "xcodebuildmcp-2.7.0-darwin-arm64.tar.gz",
+          "sha256": "bd724a2c0e6ffe027b3f46257e66d626149a64cd045f4867124bd683b3cf081a"
+        },
+        "darwin-x64": {
+          "name": "xcodebuildmcp-2.7.0-darwin-x64.tar.gz",
+          "sha256": "f62522c07591a0871601b9fe0c30666bcbe3b1d93dc458eb295c8998ac4fa304"
+        }
+      }
+    },
+    "obscura": {
+      "policy": "exact-release",
+      "version": "v0.2.0",
+      "repository": "h4ckf0r0day/obscura",
+      "assets": {
+        "darwin-arm64": {
+          "name": "obscura-aarch64-macos.tar.gz",
+          "sha256": "ccb0ee8a6905947d610beb1d7a250f7e6f8b9a75b1419fc59a9f3b607fabf54e",
+          "binaries": {
+            "obscura": "23d8a0e49828ab631b4924f674a7e8630826bc784754123b4377d3e1e2a50b58",
+            "obscura-worker": "6bc2a11483c01087ff4909a7a497689ef069c8f390516c45ecd8865c15290247"
+          }
+        },
+        "darwin-x64": {
+          "name": "obscura-x86_64-macos.tar.gz",
+          "sha256": "72613618071c6bb75b4dbecfb79844232bcc5eeef2b53d7e3f424cb3ad42b345",
+          "binaries": {
+            "obscura": "04cc8e3f3b128ddeeb23e737edb56895322914cd1007876c24240a3d147adf02",
+            "obscura-worker": "b6723bcc4086365b40bdf5fc30877d2bdc14bd437f478c35ffb6238c4d484bc7"
+          }
+        }
+      }
+    },
+    "claude-statusline": {
+      "policy": "commit",
+      "repository": "rz1989s/claude-code-statusline",
+      "commit": "3a648f21acb9b01ae90a0b84c2f0cd52f5592ec5",
+      "installer": "install.sh"
+    }
+  },
+  "compatibility": {
+    "codex": {
+      "minimum_version": "0.148.0",
+      "tested_version": "0.148.0"
+    },
+    "claude": {
+      "minimum_version": "2.1.234",
+      "tested_version": "2.1.234"
+    },
+    "rtk": {
+      "minimum_version": "0.45.0",
+      "tested_version": "0.45.0"
+    },
+    "worktrunk": {
+      "command": "wt",
+      "minimum_version": "0.74.0",
+      "tested_version": "0.74.0"
+    }
+  }
+}
