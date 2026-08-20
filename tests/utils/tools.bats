@@ -141,7 +141,16 @@ RTKEOF
     mock_pipx
     mock_code_review_graph
     calls="$TEST_TEMP_DIR/pipx-calls"
-    printf '#!/bin/sh\n[ "$1" = "--version" ] && echo "code-review-graph 1.0.0"\nexit 0\n' > "$MOCK_BIN_DIR/code-review-graph"
+    cat > "$MOCK_BIN_DIR/code-review-graph" <<'EOF'
+#!/bin/sh
+if [ "$1" = "--version" ]; then
+    echo "code-review-graph 1.0.0"
+elif [ "$1" = "serve" ]; then
+    IFS= read -r request
+    printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{},"serverInfo":{"name":"code-review-graph","version":"1.0.0"}}}'
+fi
+exit 0
+EOF
     chmod +x "$MOCK_BIN_DIR/code-review-graph"
     cat > "$MOCK_BIN_DIR/pipx" <<EOF
 #!/bin/sh
@@ -154,6 +163,38 @@ EOF
 
     [[ "$status" -eq 0 ]]
     grep -F 'install --force code-review-graph[embeddings,communities]==2.3.7' "$calls"
+}
+
+@test "code-review-graph setup repairs an installed server that cannot initialize" {
+    _ensure_mock_bin_dir
+    marker="$TEST_TEMP_DIR/crg-repaired"
+    calls="$TEST_TEMP_DIR/pipx-calls"
+    cat > "$MOCK_BIN_DIR/code-review-graph" <<EOF
+#!/bin/sh
+if [ "\$1" = "--version" ]; then
+    echo "code-review-graph 2.3.7"
+elif [ "\$1" = "serve" ]; then
+    if [ ! -f "$marker" ]; then
+        echo "ImportError: cannot import name FastMCP" >&2
+        exit 1
+    fi
+    IFS= read -r request
+    printf '%s\\n' '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{},"serverInfo":{"name":"code-review-graph","version":"2.3.7"}}}'
+fi
+EOF
+    cat > "$MOCK_BIN_DIR/pipx" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >> "$calls"
+[ "\$1 \$2" = "reinstall code-review-graph" ] && touch "$marker"
+exit 0
+EOF
+    chmod +x "$MOCK_BIN_DIR/code-review-graph" "$MOCK_BIN_DIR/pipx"
+
+    run zsh -c "export HOME='$HOME' PATH='$PATH'; source '$PROJECT_ROOT/scripts/utils.sh'; setup_code_review_graph"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"MCP handshake repaired"* ]]
+    grep -Fx 'reinstall code-review-graph' "$calls"
 }
 
 # --- setup_crg_watcher tests ---
@@ -611,7 +652,15 @@ CURLEOF
     archive="$TEST_TEMP_DIR/xcodebuildmcp.tar.gz"
     staging="$TEST_TEMP_DIR/xcodebuildmcp-9.9.9-darwin-arm64"
     mkdir -p "$staging/bin" "$staging/libexec"
-    printf '#!/bin/sh\necho 9.9.9\n' > "$staging/bin/xcodebuildmcp"
+    cat > "$staging/bin/xcodebuildmcp" <<'EOF'
+#!/bin/sh
+if [ "$1" = "--version" ]; then
+    echo 9.9.9
+elif [ "$1" = "mcp" ]; then
+    IFS= read -r request
+    printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{},"serverInfo":{"name":"xcodebuildmcp","version":"9.9.9"}}}'
+fi
+EOF
     printf '#!/bin/sh\nexit 0\n' > "$staging/bin/xcodebuildmcp-doctor"
     chmod +x "$staging/bin/xcodebuildmcp" "$staging/bin/xcodebuildmcp-doctor"
     tar -czf "$archive" -C "$TEST_TEMP_DIR" "$(basename "$staging")"
@@ -641,4 +690,64 @@ EOF
     [ -x "$TEST_TEMP_DIR/xcode-install/v9.9.9-$short_sha/bin/xcodebuildmcp" ]
     [ -L "$HOME/.local/bin/xcodebuildmcp" ]
     [ "$(cat "$TEST_TEMP_DIR/xcode-install/.active-archive-sha256")" = "$sha" ]
+}
+
+@test "setup_xcodebuildmcp replaces a checksummed binary that cannot initialize" {
+    archive="$TEST_TEMP_DIR/xcodebuildmcp-repair.tar.gz"
+    staging="$TEST_TEMP_DIR/xcodebuildmcp-repair-9.9.9-darwin-arm64"
+    mkdir -p "$staging/bin"
+    cat > "$staging/bin/xcodebuildmcp" <<'EOF'
+#!/bin/sh
+if [ "$1" = "--version" ]; then
+    echo 9.9.9
+elif [ "$1" = "mcp" ]; then
+    IFS= read -r request
+    printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{},"serverInfo":{"name":"xcodebuildmcp","version":"9.9.9"}}}'
+fi
+EOF
+    printf '#!/bin/sh\nexit 0\n' > "$staging/bin/xcodebuildmcp-doctor"
+    chmod +x "$staging/bin/xcodebuildmcp" "$staging/bin/xcodebuildmcp-doctor"
+    tar -czf "$archive" -C "$TEST_TEMP_DIR" "$(basename "$staging")"
+    sha=$(shasum -a 256 "$archive" | awk '{print $1}')
+    short_sha="${sha:0:12}"
+    install_root="$TEST_TEMP_DIR/xcode-repair-install"
+    broken_target="$install_root/v9.9.9-$short_sha"
+    bin_dir="$HOME/.local/bin"
+    mkdir -p "$broken_target/bin" "$bin_dir"
+    cat > "$broken_target/bin/xcodebuildmcp" <<'EOF'
+#!/bin/sh
+if [ "$1" = "--version" ]; then
+    echo 9.9.9
+else
+    echo 'dyld: missing dependency' >&2
+    exit 1
+fi
+EOF
+    chmod +x "$broken_target/bin/xcodebuildmcp"
+    ln -s "$broken_target/bin/xcodebuildmcp" "$bin_dir/xcodebuildmcp"
+    printf '%s\n' "$sha" > "$install_root/.active-archive-sha256"
+    manifest="$TEST_TEMP_DIR/xcode-repair-manifest.json"
+    printf '{"tools":{"xcodebuildmcp":{"version":"v9.9.9","repository":"example/xcode","assets":{"darwin-arm64":{"name":"xcodebuildmcp-repair.tar.gz","sha256":"%s"}}}}}\n' "$sha" > "$manifest"
+    _ensure_mock_bin_dir
+    cat > "$MOCK_BIN_DIR/curl" <<'EOF'
+#!/bin/sh
+while [ $# -gt 0 ]; do
+  [ "$1" = -o ] && { cp "$XCODE_TEST_ARCHIVE" "$2"; exit 0; }
+  shift
+done
+exit 1
+EOF
+    chmod +x "$MOCK_BIN_DIR/curl"
+
+    run env HOME="$HOME" PATH="$PATH" MANAGED_TOOLS_MANIFEST="$manifest" \
+      XCODE_TEST_ARCHIVE="$archive" XCODEBUILDMCP_ARCH=arm64 \
+      XCODEBUILDMCP_SKIP_BREW_CLEANUP=1 \
+      XCODEBUILDMCP_INSTALL_ROOT="$install_root" \
+      XCODEBUILDMCP_BIN_DIR="$bin_dir" \
+      zsh -c "source '$PROJECT_ROOT/scripts/utils.sh'; setup_xcodebuildmcp"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"MCP handshake failed"* ]]
+    [[ "$output" == *"installed"* ]]
+    [ "$(readlink "$bin_dir/xcodebuildmcp")" != "$broken_target/bin/xcodebuildmcp" ]
 }

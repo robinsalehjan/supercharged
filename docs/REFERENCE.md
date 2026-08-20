@@ -141,6 +141,13 @@ The repository was audited against the personal Mac and records the reproducible
 | Legacy Claude user-scoped MCP registry (empty by default) | `claude_config/mcp_servers.json` |
 | Shared project MCP servers | `.mcp.json` and compatible entries in `codex_config/config.toml` |
 
+Run `npm run check:mcps` to verify that every enabled base MCP server completes
+the protocol initialize handshake. Use `npm run check:mcps -- --profile apple`
+or `--profile apple-headless` to include profile-specific servers. Disabled MCPs
+are reported and skipped. The local agent audit runs the same check; managed
+tool installation reinstalls CRG or XcodeBuildMCP when their pinned executable
+is present but cannot initialize.
+
 The audited VS Code extension inventory is installed through Homebrew Bundle:
 
 ```text

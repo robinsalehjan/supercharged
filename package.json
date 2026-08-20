@@ -28,6 +28,7 @@
     "install:plannotator": "./scripts/install-plannotator.sh",
     "install:skills": "./scripts/install-skills.sh",
     "audit:agents": "./scripts/audit-agents.sh",
+    "check:mcps": "./scripts/check-mcps.py",
     "lint": "shellcheck --shell=bash --severity=warning scripts/*.sh scripts/utils/*.sh tests/helpers/*.bash codex_config/hooks/*.sh && zsh -n scripts/*.sh scripts/utils/*.sh dot_files/.zshrc dot_files/.zprofile dot_files/.p10k.zsh && actionlint",
     "scan:secrets": "./scripts/scan-secrets.sh",
     "test": "bats -r tests",

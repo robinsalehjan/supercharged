@@ -128,6 +128,26 @@ setup_worktrunk() {
     fi
 }
 
+_mcp_server_healthy() {
+    local profile="$1" server="$2" path_prefix="${3:-}"
+    local checker="${MCP_HEALTH_CHECKER:-$UTILS_PROJECT_ROOT/scripts/check-mcps.py}"
+
+    # The runtime audit will report a missing Python installation. Tool setup
+    # should not fail before the managed Python toolchain has been installed.
+    if ! command_exists python3 || [ ! -x "$checker" ]; then
+        return 0
+    fi
+
+    if [ -n "$path_prefix" ]; then
+        PATH="$path_prefix:$PATH" "$checker" \
+            --config-dir "$UTILS_PROJECT_ROOT/codex_config" \
+            --profile "$profile" --server "$server" --timeout 10 >/dev/null 2>&1
+    else
+        "$checker" --config-dir "$UTILS_PROJECT_ROOT/codex_config" \
+            --profile "$profile" --server "$server" --timeout 10 >/dev/null 2>&1
+    fi
+}
+
 # Setup code-review-graph (AI-optimized code context via knowledge graph)
 setup_code_review_graph() {
     local dry_run=false
@@ -168,7 +188,11 @@ setup_code_review_graph() {
     fi
 
     if $dry_run; then
-        log_with_level "INFO" "code-review-graph $managed_version matches the managed pin"
+        if command_exists code-review-graph && ! _mcp_server_healthy base code-review-graph; then
+            log_with_level "INFO" "Would repair code-review-graph $managed_version because its MCP handshake fails"
+        else
+            log_with_level "INFO" "code-review-graph $managed_version matches the managed pin"
+        fi
         return 0
     fi
 
@@ -195,6 +219,19 @@ setup_code_review_graph() {
             fi
         else
             log_with_level "INFO" "code-review-graph extras already installed"
+        fi
+
+        if ! _mcp_server_healthy base code-review-graph; then
+            log_with_level "WARN" "code-review-graph MCP handshake failed; reinstalling its managed pipx environment"
+            if ! pipx reinstall code-review-graph >/dev/null 2>&1; then
+                log_with_level "ERROR" "Failed to repair the code-review-graph pipx environment"
+                return 1
+            fi
+            if ! _mcp_server_healthy base code-review-graph; then
+                log_with_level "ERROR" "code-review-graph still fails the MCP initialize handshake after reinstall"
+                return 1
+            fi
+            log_with_level "SUCCESS" "code-review-graph MCP handshake repaired"
         fi
     fi
 
@@ -598,7 +635,7 @@ setup_xcodebuildmcp() {
             ;;
     esac
 
-    local version repository asset_name expected_sha installed_version="" installed_sha=""
+    local version repository asset_name expected_sha installed_version="" installed_sha="" force_install=false
     version=$(jq -er '.tools.xcodebuildmcp.version' "$manifest" 2>/dev/null) || version=""
     repository=$(jq -er '.tools.xcodebuildmcp.repository' "$manifest" 2>/dev/null) || repository=""
     asset_name=$(jq -er --arg asset "$asset_key" '.tools.xcodebuildmcp.assets[$asset].name' "$manifest" 2>/dev/null) || asset_name=""
@@ -614,13 +651,21 @@ setup_xcodebuildmcp() {
     fi
     installed_sha=$(cat "$install_root/.active-archive-sha256" 2>/dev/null || true)
     if [ "$installed_version" = "${version#v}" ] && [ "$installed_sha" = "$expected_sha" ]; then
-        if ! $dry_run && [ "${XCODEBUILDMCP_SKIP_BREW_CLEANUP:-0}" != "1" ] && \
-           command_exists brew && brew list --formula xcodebuildmcp >/dev/null 2>&1; then
-            log_with_level "INFO" "Removing the superseded Homebrew XcodeBuildMCP installation"
-            brew uninstall xcodebuildmcp >/dev/null 2>&1 || brew unlink xcodebuildmcp >/dev/null 2>&1 || true
+        if _mcp_server_healthy apple-headless XcodeBuildMCP "$bin_dir"; then
+            if ! $dry_run && [ "${XCODEBUILDMCP_SKIP_BREW_CLEANUP:-0}" != "1" ] && \
+               command_exists brew && brew list --formula xcodebuildmcp >/dev/null 2>&1; then
+                log_with_level "INFO" "Removing the superseded Homebrew XcodeBuildMCP installation"
+                brew uninstall xcodebuildmcp >/dev/null 2>&1 || brew unlink xcodebuildmcp >/dev/null 2>&1 || true
+            fi
+            log_with_level "INFO" "XcodeBuildMCP $version already installed"
+            return 0
         fi
-        log_with_level "INFO" "XcodeBuildMCP $version already installed"
-        return 0
+        if $dry_run; then
+            log_with_level "INFO" "Would repair XcodeBuildMCP $version because its MCP handshake fails"
+            return 0
+        fi
+        log_with_level "WARN" "XcodeBuildMCP MCP handshake failed; reinstalling its managed release"
+        force_install=true
     fi
     if $dry_run; then
         log_with_level "INFO" "Would install XcodeBuildMCP $version"
@@ -652,8 +697,8 @@ setup_xcodebuildmcp() {
         return 1
     fi
 
-    if [ -d "$target_dir" ] && \
-       [ "$("$target_dir/bin/xcodebuildmcp" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)" != "${version#v}" ]; then
+    if [ -d "$target_dir" ] && { $force_install || \
+       [ "$("$target_dir/bin/xcodebuildmcp" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)" != "${version#v}" ]; }; then
         target_dir="${target_dir}-${EPOCHSECONDS}"
     fi
     if [ ! -d "$target_dir" ]; then
@@ -671,6 +716,10 @@ setup_xcodebuildmcp() {
         brew uninstall xcodebuildmcp >/dev/null 2>&1 || brew unlink xcodebuildmcp >/dev/null 2>&1 || true
     fi
     _xcodebuildmcp_cleanup
+    if ! _mcp_server_healthy apple-headless XcodeBuildMCP "$bin_dir"; then
+        log_with_level "ERROR" "XcodeBuildMCP fails the MCP initialize handshake after installation"
+        return 1
+    fi
     log_with_level "SUCCESS" "XcodeBuildMCP $version installed"
 }
 

@@ -60,6 +60,8 @@ npm run update:only -- <comp>     # Sync dotfiles/skills + update one component 
 
 # Validation and Recovery
 npm run validate              # Verify all tools installed correctly
+npm run check:mcps            # Complete initialize handshake for enabled base MCPs
+npm run check:mcps -- --profile apple-headless # Include profile-specific MCPs
 npm run restore               # Restore from latest backup
 
 # Claude Code Configuration

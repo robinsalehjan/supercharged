@@ -152,7 +152,16 @@ unmock_pipx() {
 mock_code_review_graph() {
     _ensure_mock_bin_dir
     if [ -n "${MOCK_BIN_DIR:-}" ]; then
-        printf '#!/bin/sh\n[ "$1" = "--version" ] && echo "code-review-graph 2.3.7"\nexit 0\n' > "$MOCK_BIN_DIR/code-review-graph"
+        cat > "$MOCK_BIN_DIR/code-review-graph" <<'CRGEOF'
+#!/bin/sh
+if [ "$1" = "--version" ]; then
+    echo "code-review-graph 2.3.7"
+elif [ "$1" = "serve" ]; then
+    IFS= read -r request
+    printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{},"serverInfo":{"name":"code-review-graph","version":"2.3.7"}}}'
+fi
+exit 0
+CRGEOF
         chmod +x "$MOCK_BIN_DIR/code-review-graph"
     fi
 }

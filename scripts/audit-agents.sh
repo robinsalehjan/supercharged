@@ -183,6 +183,13 @@ else
     fail "Shared MCP inventory has duplicate, misplaced, or malformed servers"
 fi
 
+if [ -x "$SCRIPT_DIR/check-mcps.py" ] && \
+   [ "$(jq -r '.scripts["check:mcps"]' "$PROJECT_ROOT/package.json")" = "./scripts/check-mcps.py" ]; then
+    pass "MCP initialize health checker is executable and exposed through npm"
+else
+    fail "MCP initialize health checker is missing, non-executable, or not exposed through npm"
+fi
+
 if jq -e '
     (.hooks.PreToolUse | length == 1) and
     (.hooks.Stop | length == 1) and
@@ -285,6 +292,7 @@ fi
 
 if [ "$REPO_ONLY" = false ]; then
     require_command codex "Codex CLI is installed"
+    require_command python3 "Python is installed for MCP health checks"
     require_command rtk "RTK is installed"
     require_command code-review-graph "code-review-graph is installed"
 
@@ -355,6 +363,30 @@ if [ "$REPO_ONLY" = false ]; then
             pass "Codex CLI strictly parses the tracked base and profile configuration"
         else
             fail "Codex CLI rejects tracked base or profile configuration"
+        fi
+
+        if command -v python3 >/dev/null 2>&1; then
+            mcp_health_json=""
+            if mcp_health_json=$("$SCRIPT_DIR/check-mcps.py" \
+                --config-dir "$CODEX_CONFIG_DIR" --profile "$PROFILE" --json 2>"$AUDIT_TMP_DIR/mcp-health.err"); then
+                :
+            fi
+            if jq -e 'type == "array"' <<<"$mcp_health_json" >/dev/null 2>&1; then
+                while IFS= read -r result; do
+                    mcp_name=$(jq -r '.name' <<<"$result")
+                    mcp_transport=$(jq -r '.transport' <<<"$result")
+                    mcp_status=$(jq -r '.status' <<<"$result")
+                    mcp_detail=$(jq -r '.detail' <<<"$result")
+                    case "$mcp_status" in
+                        pass) pass "MCP $mcp_name ($mcp_transport) completes the initialize handshake" ;;
+                        skip) pass "MCP $mcp_name is disabled and skipped" ;;
+                        *) fail "MCP $mcp_name ($mcp_transport) initialize failed: $mcp_detail" ;;
+                    esac
+                done < <(jq -c '.[]' <<<"$mcp_health_json")
+            else
+                mcp_health_error=$(<"$AUDIT_TMP_DIR/mcp-health.err")
+                fail "MCP health checker failed: ${mcp_health_error:-invalid JSON output}"
+            fi
         fi
 
         if marketplace_state=$(codex plugin marketplace list --json 2>&1) && \
