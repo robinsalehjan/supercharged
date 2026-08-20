@@ -234,6 +234,7 @@ fi
 MANAGED_TOOLS_MANIFEST="${MANAGED_TOOLS_MANIFEST:-$AGENT_CONFIG_DIR/managed_tools.json}"
 if jq -e '
     .version == 2 and
+    (.tools | keys | sort) == ["code-review-graph", "obscura", "plannotator", "xcodebuildmcp"] and
     (.tools.plannotator.version | test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")) and
     .tools.plannotator.repository == "backnotprop/plannotator" and
     ([.tools.plannotator.assets["darwin-arm64"], .tools.plannotator.assets["darwin-x64"]] | all(
@@ -253,13 +254,12 @@ if jq -e '
         (.binaries.obscura | test("^[0-9a-f]{64}$")) and
         (.binaries["obscura-worker"] | test("^[0-9a-f]{64}$"))
     )) and
-    (.tools["claude-statusline"].commit | test("^[0-9a-f]{40}$")) and
     (.compatibility | to_entries | all(
         (.value.minimum_version | test("^[0-9]+\\.[0-9]+\\.[0-9]+$")) and
         (.value.tested_version | test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))
     ))
 ' "$MANAGED_TOOLS_MANIFEST" >/dev/null 2>&1; then
-    pass "Managed tool manifest pins exact tools, remote commits, and compatibility floors"
+    pass "Managed tool manifest pins exact tools and compatibility floors"
 else
     fail "Managed tool manifest is missing or has invalid pin policy"
 fi
@@ -330,14 +330,6 @@ if [ "$REPO_ONLY" = false ]; then
         pass "Obscura $obscura_version binaries match the managed checksums"
     else
         fail "Obscura differs from managed version $obscura_version; run npm run install:managed-tools"
-    fi
-
-    statusline_commit=$(jq -r '.tools["claude-statusline"].commit' "$MANAGED_TOOLS_MANIFEST")
-    statusline_marker=$(cat "$HOME/.claude/statusline/.supercharged-source-ref" 2>/dev/null || true)
-    if [ "$statusline_marker" = "$statusline_commit" ]; then
-        pass "Claude statusline matches managed commit ${statusline_commit[1,12]}"
-    else
-        fail "Claude statusline differs from the managed commit; run npm run install:managed-tools"
     fi
 
     claude_plugins_live="$HOME/.claude/plugins/installed_plugins.json"

@@ -278,7 +278,8 @@ EOF
       "pyright-lsp@claude-plugins-official",
       "swift-lsp@claude-plugins-official",
       "typescript-lsp@claude-plugins-official"
-    ]
+    ] and
+    (has("statusLine") | not)
   ' "$settings"
   [ "$status" -eq 0 ]
 

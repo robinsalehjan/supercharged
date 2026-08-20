@@ -18,13 +18,11 @@ write_other_fixtures() {
   CRG_JSON="$TEST_TEMP_DIR/crg.json"
   XCODE_JSON="$TEST_TEMP_DIR/xcode.json"
   OBSCURA_JSON="$TEST_TEMP_DIR/obscura.json"
-  STATUSLINE_JSON="$TEST_TEMP_DIR/statusline.json"
   AXIOM_JSON="$TEST_TEMP_DIR/axiom.json"
   AXIOM_PLUGIN_JSON="$TEST_TEMP_DIR/axiom-plugin.json"
   crg=$(jq -r '.tools["code-review-graph"].version' "$MANIFEST")
   xv=$(jq -r '.tools.xcodebuildmcp.version' "$MANIFEST")
   ov=$(jq -r '.tools.obscura.version' "$MANIFEST")
-  sc=$(jq -r '.tools["claude-statusline"].commit' "$MANIFEST")
   ac=$(jq -r '.marketplaces[0].ref' "$PLUGIN_REGISTRY")
   av=$(jq -r '.plugins[0].version' "$PLUGIN_REGISTRY")
   printf '{"info":{"version":"%s"}}\n' "$crg" > "$CRG_JSON"
@@ -40,7 +38,6 @@ write_other_fixtures() {
     --arg xn "$(jq -r '.tools.obscura.assets["darwin-x64"].name' "$MANIFEST")" \
     --arg xs "$(jq -r '.tools.obscura.assets["darwin-x64"].sha256' "$MANIFEST")" \
     '{tag_name:$tag,assets:[{name:$an,digest:("sha256:"+$as)},{name:$xn,digest:("sha256:"+$xs)}]}' > "$OBSCURA_JSON"
-  printf '{"sha":"%s"}\n' "$sc" > "$STATUSLINE_JSON"
   printf '{"sha":"%s"}\n' "$ac" > "$AXIOM_JSON"
   printf '{"version":"%s"}\n' "$av" > "$AXIOM_PLUGIN_JSON"
 }
@@ -49,7 +46,7 @@ run_updater() {
   env MANAGED_TOOLS_MANIFEST="$MANIFEST" CODEX_PLUGIN_REGISTRY="$PLUGIN_REGISTRY" \
     PLANNOTATOR_RELEASE_JSON="$RELEASE_JSON" CRG_PYPI_JSON="$CRG_JSON" \
     XCODEBUILDMCP_RELEASE_JSON="$XCODE_JSON" OBSCURA_RELEASE_JSON="$OBSCURA_JSON" \
-    STATUSLINE_COMMIT_JSON="$STATUSLINE_JSON" AXIOM_COMMIT_JSON="$AXIOM_JSON" \
+    AXIOM_COMMIT_JSON="$AXIOM_JSON" \
     AXIOM_PLUGIN_JSON="$AXIOM_PLUGIN_JSON" \
     OBSCURA_ARCHIVES_DIR="${OBSCURA_ARCHIVES_DIR:-}" "$UPDATE_SCRIPT" "$@"
 }
@@ -228,19 +225,6 @@ EOF
       .tools.obscura.assets["darwin-x64"].binaries.obscura == $x64_bin and
       .tools.obscura.assets["darwin-x64"].binaries["obscura-worker"] == $x64_worker
     ' "$MANIFEST"
-  [ "$status" -eq 0 ]
-}
-
-@test "managed tool pin updater applies a Claude statusline commit" {
-  write_current_release
-  local commit="1111111111111111111111111111111111111111"
-  printf '{"sha":"%s"}\n' "$commit" > "$STATUSLINE_JSON"
-
-  run run_updater --apply
-
-  [ "$status" -eq 0 ]
-  run jq -e --arg commit "$commit" \
-    '.tools["claude-statusline"].commit == $commit' "$MANIFEST"
   [ "$status" -eq 0 ]
 }
 

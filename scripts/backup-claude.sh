@@ -62,16 +62,16 @@ if [ -f "$CLAUDE_HOME/settings.json" ]; then
     done
 
     # Preserve all fields except enabledPlugins, then apply sanitized enabledPlugins,
-    # strip sanitized marketplaces from pluginMarketplaces, and remove sensitive env vars
+    # strip sanitized marketplaces, deprecated statusline configuration, and sensitive env vars.
     # Write to temp file first to avoid corrupting output on pipeline failure
-    if ! jq -a --argjson plugins "$filtered_plugins" "(. + {enabledPlugins: \$plugins}) | del(.mcpServers)${marketplace_del_filter}${env_del_filter}" <<< "$settings_json" | \
+    if ! jq -a --argjson plugins "$filtered_plugins" "(. + {enabledPlugins: \$plugins}) | del(.mcpServers, .statusLine)${marketplace_del_filter}${env_del_filter}" <<< "$settings_json" | \
         make_path_portable > "$CLAUDE_CONFIG_DIR/settings.json.tmp"; then
         rm -f "$CLAUDE_CONFIG_DIR/settings.json.tmp"
         log_with_level "ERROR" "Failed to sanitize settings.json - backup aborted"
         exit 1
     fi
     mv "$CLAUDE_CONFIG_DIR/settings.json.tmp" "$CLAUDE_CONFIG_DIR/settings.json"
-    log_with_level "SUCCESS" "Backed up settings.json (sanitized ${#SANITIZE_MARKETPLACES[@]} marketplace(s) from enabledPlugins and pluginMarketplaces, stripped ${#SANITIZE_ENV_VARS[@]} env var(s), paths made portable)"
+    log_with_level "SUCCESS" "Backed up settings.json (sanitized ${#SANITIZE_MARKETPLACES[@]} marketplace(s), removed unmanaged statusLine, stripped ${#SANITIZE_ENV_VARS[@]} env var(s), paths made portable)"
 else
     log_with_level "WARN" "settings.json not found"
 fi
@@ -196,16 +196,6 @@ if [ -f "$CLAUDE_HOME/CLAUDE.md" ]; then
     done < <(sed -n 's/^@\(.*\.md\)$/\1/p' "$CLAUDE_HOME/CLAUDE.md")
 fi
 
-# Backup statusline Config.toml (theme and display configuration)
-STATUSLINE_CONFIG="$CLAUDE_HOME/statusline/Config.toml"
-if [ -f "$STATUSLINE_CONFIG" ]; then
-    mkdir -p "$CLAUDE_CONFIG_DIR/statusline"
-    cp "$STATUSLINE_CONFIG" "$CLAUDE_CONFIG_DIR/statusline/Config.toml"
-    log_with_level "SUCCESS" "Backed up statusline/Config.toml"
-else
-    log_with_level "WARN" "statusline/Config.toml not found"
-fi
-
 log_with_level "SUCCESS" "Claude Code configuration backup completed!"
 echo ""
 echo "📦 Backed up files:"
@@ -217,6 +207,5 @@ echo "   - CLAUDE.md"
 for ref_file in "${claude_md_refs_backed_up[@]}"; do
     echo "   - $ref_file"
 done
-echo "   - statusline/Config.toml"
 echo ""
 echo "💡 Commit these changes to git to save your Claude Code configuration"

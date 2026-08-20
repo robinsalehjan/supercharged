@@ -93,7 +93,7 @@ teardown() {
 
 @test "restoration point captures complete managed configuration privately" {
   source "$PROJECT_ROOT/scripts/utils.sh"
-  mkdir -p "$HOME/.codex/hooks" "$HOME/.codex/rules" "$HOME/.codex/skills/example" "$HOME/.claude/statusline" "$HOME/.claude/skills/example"
+  mkdir -p "$HOME/.codex/hooks" "$HOME/.codex/rules" "$HOME/.codex/skills/example" "$HOME/.claude/skills/example"
   printf '%s\n' 'git identity' > "$HOME/.gitconfig.local"
   printf '%s\n' '{}' > "$HOME/.claude/settings.json"
   printf '%s\n' '{}' > "$HOME/.claude.json"

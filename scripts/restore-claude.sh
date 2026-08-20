@@ -810,13 +810,6 @@ if [ -f "$CLAUDE_CONFIG_DIR/CLAUDE.md" ]; then
     done < <(sed -n 's/^@\(.*\.md\)$/\1/p' "$CLAUDE_CONFIG_DIR/CLAUDE.md")
 fi
 
-# Restore statusline Config.toml (theme and display configuration)
-if [ -f "$CLAUDE_CONFIG_DIR/statusline/Config.toml" ]; then
-    mkdir -p "$CLAUDE_HOME/statusline"
-    cp "$CLAUDE_CONFIG_DIR/statusline/Config.toml" "$CLAUDE_HOME/statusline/Config.toml"
-    log_with_level "SUCCESS" "Restored statusline/Config.toml"
-fi
-
 # Restore MCP server configurations into ~/.claude.json (env vars sourced from ~/.secrets)
 restore_mcp_servers
 
@@ -854,7 +847,6 @@ echo "   - CLAUDE.md"
 for ref_file in "${claude_md_refs_restored[@]}"; do
     echo "   - $ref_file"
 done
-echo "   - statusline/Config.toml"
 echo "   - ~/.claude.json MCP servers (user scope, env vars from ~/.secrets)"
 echo ""
 echo "💡 Restart Claude Code for changes to take effect"

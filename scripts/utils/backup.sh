@@ -11,7 +11,6 @@ _configuration_restore_paths() {
         ".claude/plugins/known_marketplaces.json" \
         ".claude/keybindings.json" \
         ".claude/CLAUDE.md" \
-        ".claude/statusline/Config.toml" \
         ".claude/skills" \
         ".claude.json" \
         ".codex/config.toml" \

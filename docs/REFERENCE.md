@@ -38,7 +38,7 @@ The orchestrator creates exactly one configuration-only snapshot, then passes an
 
 `~/.gitconfig` contains portable shared settings and includes `~/.gitconfig.local` for machine identity. Before the first replacement, existing `user.*` values are migrated when the local file does not yet exist. Interactive setup prompts for non-empty name and email on a new machine; restore-only commands never prompt and warn when identity is unset. Claude restore preserves `@vend-plugins` enabled/disabled values and the matching marketplace entry.
 
-Snapshots cover overwritten dotfiles, Git identity, Claude configuration/registries/instructions/statusline/user MCP state, and Codex configuration/hooks/rules/skills. Presence manifests let rollback remove restore-created files. Auth, secrets, sessions, histories, logs, databases, plugin caches, and packages are excluded; plugin reinstall may be necessary after rollback. Legacy backups without a manifest restore available copies but cannot remove newly created files.
+Snapshots cover overwritten dotfiles, Git identity, Claude configuration/registries/instructions/user MCP state, and Codex configuration/hooks/rules/skills. Presence manifests let rollback remove restore-created files. Auth, secrets, sessions, histories, logs, databases, plugin caches, and packages are excluded; plugin reinstall may be necessary after rollback. Legacy backups without a manifest restore available copies but cannot remove newly created files.
 
 ### New Machine: Install the Full Baseline
 
@@ -76,7 +76,7 @@ The Homebrew Bundle baseline is defined by `build_brewfile` in `scripts/mac.sh`.
 
 The `omlx` CLI above is scripted via its own tap. Its optional menu bar app (`oMLX.app`) has no Homebrew cask — download the `.dmg` for your macOS version from [github.com/jundot/omlx/releases](https://github.com/jundot/omlx/releases) and drag it into `/Applications` manually. If its installer offers to add a shell PATH entry for its bundled CLI shim, decline it — the Homebrew-installed `omlx` is already on PATH and having two competing binaries just causes ambiguity.
 
-Conditional Brewfile groups add iOS, container, cloud (`hashicorp/tap/terraform`), network, and extra application tooling according to the setup preferences above. Dedicated setup helpers install Claude Code and the exact-pinned Plannotator, code-review-graph, XcodeBuildMCP, Obscura, and Claude statusline. `agent_config/managed_tools.json` is their desired-state source. Release archives verify architecture-specific SHA-256 values before installation; code-review-graph uses an exact PyPI version; the statusline installer uses an immutable commit. XcodeBuildMCP installs under `~/.local/share/supercharged/` and removes the superseded Homebrew formula so a later `brew upgrade` cannot shadow the pin. Run `npm run install:managed-tools` to reconcile the installed set or add `-- --dry-run` to inspect drift.
+Conditional Brewfile groups add iOS, container, cloud (`hashicorp/tap/terraform`), network, and extra application tooling according to the setup preferences above. Dedicated setup helpers install Claude Code and the exact-pinned Plannotator, code-review-graph, XcodeBuildMCP, and Obscura. `agent_config/managed_tools.json` is their desired-state source. Release archives verify architecture-specific SHA-256 values before installation; code-review-graph uses an exact PyPI version. XcodeBuildMCP installs under `~/.local/share/supercharged/` and removes the superseded Homebrew formula so a later `brew upgrade` cannot shadow the pin. Run `npm run install:managed-tools` to reconcile the installed set or add `-- --dry-run` to inspect drift.
 
 asdf-managed tools are listed in `dot_files/.tool-versions`, including Node.js, Python, Ruby, Bundler, gcloud, Firebase CLI, and optional JVM pins.
 
@@ -99,7 +99,6 @@ Version policy depends on the integration boundary:
 | Plannotator Stop-hook binary | Exact release and SHA-256 per macOS architecture |
 | code-review-graph local MCP | Exact PyPI version with required extras |
 | XcodeBuildMCP and Obscura | Exact release archive and SHA-256 per macOS architecture; Obscura binaries are verified after extraction |
-| Claude statusline | Immutable installer commit, recorded locally after successful installation |
 | Axiom | Immutable Codex marketplace commit plus expected plugin version |
 | Claude plugins | Native marketplace installation verified against tracked plugin versions |
 | Shared git skills | Immutable commit SHA; mutable branches are rejected |

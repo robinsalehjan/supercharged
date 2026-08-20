@@ -211,10 +211,10 @@ EOF
 }
 
 @test "preserves ANSI escape sequences in JSON strings" {
-  # Arrange: Create JSON with ANSI color codes (like statusLine command)
+  # Arrange: Create JSON with ANSI color codes in a command string
   cat > "$TEST_TEMP_DIR/input.json" <<'EOF'
 {
-  "statusLine": {
+  "notificationCommand": {
     "type": "command",
     "command": "printf \"\\033[36m%s\\033[0m:\\033[34m%s\\033[0m\" \"user\" \"dir\""
   }
@@ -266,7 +266,7 @@ EOF
     hooks: {
       command: ($home + "/.claude/hooks/test.sh")
     },
-    statusLine: {
+    formatting: {
       command: "printf \"\\u001b[36m%s\\u001b[0m\" \"test\""
     }
   }' > "$TEST_TEMP_DIR/input.json"
@@ -313,11 +313,13 @@ EOF
             }
           ]
         }
-      ]
-    },
-    statusLine: {
-      type: "command",
-      command: "input=$(cat); printf \"\\u001b[36m%s\\u001b[0m:\\u001b[34m%s\\u001b[0m\" \"user\" \"dir\""
+      ],
+      Notification: [{
+        hooks: [{
+          type: "command",
+          command: "input=$(cat); printf \"\\u001b[36m%s\\u001b[0m:\\u001b[34m%s\\u001b[0m\" \"user\" \"dir\""
+        }]
+      }]
     }
   }' > "$TEST_TEMP_DIR/settings.json"
 
@@ -340,21 +342,21 @@ EOF
     return 1
   }
 
-  # Assert: StatusLine escape sequences preserved in JSON (as \u001b)
+  # Assert: Hook escape sequences preserved in JSON (as \u001b)
   grep -q '\\u001b\[36m' "$TEST_TEMP_DIR/restored.json" || {
-    echo "StatusLine ANSI cyan code not preserved in JSON"
+    echo "Hook ANSI cyan code not preserved in JSON"
     cat "$TEST_TEMP_DIR/restored.json"
     return 1
   }
 
   grep -q '\\u001b\[0m' "$TEST_TEMP_DIR/restored.json" || {
-    echo "StatusLine ANSI reset not preserved in JSON"
+    echo "Hook ANSI reset not preserved in JSON"
     cat "$TEST_TEMP_DIR/restored.json"
     return 1
   }
 
   grep -q '\\u001b\[34m' "$TEST_TEMP_DIR/restored.json" || {
-    echo "StatusLine ANSI blue code not preserved in JSON"
+    echo "Hook ANSI blue code not preserved in JSON"
     cat "$TEST_TEMP_DIR/restored.json"
     return 1
   }
