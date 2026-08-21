@@ -36,6 +36,13 @@ teardown() {
   [ "$update_script" = "./scripts/update-agent-tool-pins.sh" ]
 }
 
+@test "cask updates reconcile the tmux Nerd Font registration" {
+  update_source="$(<"$PROJECT_ROOT/scripts/update.sh")"
+
+  [[ "$update_source" == *'ensure_font_registered "font-jetbrains-mono-nerd-font" "JetBrainsMono*Nerd*.ttf"'* ]]
+  [[ "$update_source" == *'JetBrainsMono Nerd Font could not be registered'* ]]
+}
+
 @test "safe update does not capture live agent configuration" {
   update_script=$(jq -r '.scripts.update' "$PROJECT_ROOT/package.json")
 

@@ -87,7 +87,7 @@ Setup installs **JetBrainsMono Nerd Font** so the tmux/Catppuccin status bar ren
 - **iTerm2** — Settings → Profiles → Text → Font.
 - **Ghostty** — set `font-family = "JetBrainsMono Nerd Font Mono"` in `~/.config/ghostty/config`.
 
-If glyphs still appear as boxes, run `npm run validate` — the validator checks the font is registered and `npm run setup` will self-heal a stale Caskroom install.
+If glyphs still appear as boxes, run `npm run validate` — the validator checks the font is registered. Both `npm run setup` and cask-enabled updates self-heal stale Caskroom installs.
 
 ## Releases
 

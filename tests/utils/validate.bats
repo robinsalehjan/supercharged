@@ -207,6 +207,35 @@ EOF
   [ -f "$HOME/Library/Fonts/JetBrainsMonoNerdFontMono-Bold.ttf" ]
 }
 
+@test "ensure_font_registered reinstalls a metadata-only font cask" {
+  source "$PROJECT_ROOT/scripts/utils.sh"
+
+  local fake_prefix="$TEST_TEMP_DIR/brew-prefix"
+  mkdir -p "$fake_prefix/Caskroom/font-jetbrains-mono-nerd-font/.metadata"
+
+  mkdir -p "$TEST_TEMP_DIR/bin"
+  cat > "$TEST_TEMP_DIR/bin/brew" <<EOF
+#!/bin/bash
+case "\$1" in
+  list) [[ "\$2" == "--cask" && "\$3" == "font-jetbrains-mono-nerd-font" ]] && exit 0 ;;
+  --prefix) echo "$fake_prefix" ;;
+  reinstall)
+    mkdir -p "$fake_prefix/Caskroom/font-jetbrains-mono-nerd-font/3.5.0"
+    : > "$fake_prefix/Caskroom/font-jetbrains-mono-nerd-font/3.5.0/JetBrainsMonoNerdFontMono-Regular.ttf"
+    ;;
+esac
+exit 0
+EOF
+  chmod +x "$TEST_TEMP_DIR/bin/brew"
+  PATH="$TEST_TEMP_DIR/bin:$PATH"
+
+  run ensure_font_registered "font-jetbrains-mono-nerd-font" "JetBrainsMono*Nerd*.ttf"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"reinstalling"* ]]
+  [ -f "$HOME/Library/Fonts/JetBrainsMonoNerdFontMono-Regular.ttf" ]
+}
+
 @test "ensure_font_registered is a no-op when fonts already registered" {
   # Arrange
   source "$PROJECT_ROOT/scripts/utils.sh"

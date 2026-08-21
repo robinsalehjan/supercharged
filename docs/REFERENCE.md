@@ -269,7 +269,7 @@ npm run validate
 ls ~/Library/Fonts/ | grep -i jetbrains
 ```
 
-`npm run setup` self-heals a stale Homebrew Caskroom font install by copying staged `.ttf` files into `~/Library/Fonts`.
+`npm run setup` and cask-enabled updates self-heal stale Homebrew Caskroom font installs by registering staged `.ttf` files or reinstalling the cask when its staged files are unusable.
 
 Apple Terminal cannot render Unicode Plane 15 glyphs. The tracked `.tmux.conf` uses BMP private-use glyphs so the status bar renders in Apple Terminal, iTerm2, Ghostty, and similar terminals.
 
