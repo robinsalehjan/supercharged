@@ -196,6 +196,12 @@ main() {
             log_with_level "WARN" "Some casks may have failed to update (this can happen with upstream cask definition issues)"
         fi
         brew cleanup
+
+        # Repair stale or dangling Homebrew font-cask registrations so tmux
+        # status icons keep rendering after cask upgrades and cleanup.
+        if ! ensure_font_registered "font-jetbrains-mono-nerd-font" "JetBrainsMono*Nerd*.ttf"; then
+            log_with_level "WARN" "JetBrainsMono Nerd Font could not be registered; run 'npm run validate' for details"
+        fi
     fi
 
     if ! $SKIP_ASDF; then

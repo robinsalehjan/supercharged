@@ -280,18 +280,12 @@ ensure_font_registered() {
 
     local caskroom
     caskroom="$(brew --prefix 2>/dev/null)/Caskroom/$cask"
-    if [[ ! -d "$caskroom" ]]; then
-        log_with_level "WARN" "Cask '$cask' marked installed but Caskroom missing; reinstall recommended"
-        return 1
-    fi
 
     # Pick the highest version directory present (sorts version-aware).
-    local version_dir
-    version_dir="$(find "$caskroom" -mindepth 1 -maxdepth 1 -type d ! -name '.metadata' \
-        | sort -V | tail -n1)"
-    if [[ -z "$version_dir" ]]; then
-        log_with_level "WARN" "No staged fonts found in $caskroom"
-        return 1
+    local version_dir=""
+    if [[ -d "$caskroom" ]]; then
+        version_dir="$(find "$caskroom" -mindepth 1 -maxdepth 1 -type d ! -name '.metadata' \
+            | sort -V | tail -n1)"
     fi
 
     mkdir -p "$HOME/Library/Fonts"
@@ -300,9 +294,11 @@ ensure_font_registered() {
     # whose target exists. Dangling symlinks (a real-world failure mode where
     # the cask was installed once but ~/Library/Fonts was wiped) are skipped.
     local copied=0
-    while IFS= read -r -d '' ttf; do
-        cp -fL "$ttf" "$HOME/Library/Fonts/" && copied=$((copied + 1))
-    done < <(find -L "$version_dir" -maxdepth 1 -type f \( -iname '*.ttf' -o -iname '*.otf' \) -print0 2>/dev/null)
+    if [[ -n "$version_dir" ]]; then
+        while IFS= read -r -d '' ttf; do
+            cp -fL "$ttf" "$HOME/Library/Fonts/" && copied=$((copied + 1))
+        done < <(find -L "$version_dir" -maxdepth 1 -type f \( -iname '*.ttf' -o -iname '*.otf' \) -print0 2>/dev/null)
+    fi
 
     if [[ $copied -gt 0 ]]; then
         log_with_level "SUCCESS" "Registered $copied font file(s) from $cask into ~/Library/Fonts"
@@ -315,9 +311,13 @@ ensure_font_registered() {
     log_with_level "WARN" "Cask '$cask' has no usable font files; reinstalling..."
     if brew reinstall --cask "$cask" >/dev/null 2>&1; then
         copied=0
-        while IFS= read -r -d '' ttf; do
-            cp -fL "$ttf" "$HOME/Library/Fonts/" 2>/dev/null && copied=$((copied + 1))
-        done < <(find -L "$version_dir" -maxdepth 1 -type f \( -iname '*.ttf' -o -iname '*.otf' \) -print0 2>/dev/null)
+        version_dir="$(find "$caskroom" -mindepth 1 -maxdepth 1 -type d ! -name '.metadata' \
+            | sort -V | tail -n1)"
+        if [[ -n "$version_dir" ]]; then
+            while IFS= read -r -d '' ttf; do
+                cp -fL "$ttf" "$HOME/Library/Fonts/" 2>/dev/null && copied=$((copied + 1))
+            done < <(find -L "$version_dir" -maxdepth 1 -type f \( -iname '*.ttf' -o -iname '*.otf' \) -print0 2>/dev/null)
+        fi
 
         # After a reinstall the fonts may already be in ~/Library/Fonts (cask
         # does that itself). Treat either success path as a win.
