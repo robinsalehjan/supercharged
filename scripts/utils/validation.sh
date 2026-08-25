@@ -116,6 +116,11 @@ extract_tool_version() {
             # plannotator has no version flag - just check if executable
             echo "installed"
             ;;
+        "openwiki")
+            # OpenWiki has no --version flag; command existence is verified by
+            # validate_tool before this function is called.
+            echo "installed"
+            ;;
         "xcodes")
             # xcodes uses `xcodes version` subcommand (rejects --version)
             xcodes version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || echo "0.0.0"
@@ -459,6 +464,7 @@ validate_installation() {
     validate_tool "omlx" "" || true  # Optional local AI runtime
     validate_tool "codex" "" || ((warned++))  # OpenAI Codex CLI
     validate_tool "replicate" "" || ((warned++))  # Replicate CLI
+    validate_tool "openwiki" "" || ((warned++))  # Agent documentation CLI
     validate_tool "pipx" "" || ((warned++))
     validate_tool "uv" "" || ((warned++))
 

@@ -37,11 +37,17 @@ if [ -n "${CRG_PYPI_JSON:-}" ]; then
 else
     crg_json=$(curl -fsSL https://pypi.org/pypi/code-review-graph/json)
 fi
+if [ -n "${OPENWIKI_NPM_VERSION:-}" ]; then
+    openwiki_version="$OPENWIKI_NPM_VERSION"
+else
+    openwiki_version=$(npm view openwiki version)
+fi
 
 plannotator_version=$(jq -er '.tag_name | select(test("^v[0-9]+\\.[0-9]+\\.[0-9]+$"))' <<<"$plannotator_json")
 plannotator_arm_sha=$(jq -er '.assets[] | select(.name == "plannotator-darwin-arm64") | .digest | sub("^sha256:"; "") | select(test("^[0-9a-f]{64}$"))' <<<"$plannotator_json")
 plannotator_x64_sha=$(jq -er '.assets[] | select(.name == "plannotator-darwin-x64") | .digest | sub("^sha256:"; "") | select(test("^[0-9a-f]{64}$"))' <<<"$plannotator_json")
 crg_version=$(jq -er '.info.version | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))' <<<"$crg_json")
+openwiki_version=$(printf '%s' "$openwiki_version" | jq -Rer 'select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))')
 xcodebuildmcp_version=$(jq -er '.tag_name | select(test("^v[0-9]+\\.[0-9]+\\.[0-9]+$"))' <<<"$xcodebuildmcp_json")
 xcodebuildmcp_plain="${xcodebuildmcp_version#v}"
 xcodebuildmcp_arm_name="xcodebuildmcp-${xcodebuildmcp_plain}-darwin-arm64.tar.gz"
@@ -66,6 +72,7 @@ updates=$(jq -n \
     --arg p_arm_current "$(jq -r '.tools.plannotator.assets["darwin-arm64"].sha256' "$MANIFEST")" --arg p_arm_latest "$plannotator_arm_sha" \
     --arg p_x64_current "$(jq -r '.tools.plannotator.assets["darwin-x64"].sha256' "$MANIFEST")" --arg p_x64_latest "$plannotator_x64_sha" \
     --arg c_current "$(jq -r '.tools["code-review-graph"].version' "$MANIFEST")" --arg c_latest "$crg_version" \
+    --arg w_current "$(jq -r '.tools.openwiki.version' "$MANIFEST")" --arg w_latest "$openwiki_version" \
     --arg x_current "$(jq -r '.tools.xcodebuildmcp.version' "$MANIFEST")" --arg x_latest "$xcodebuildmcp_version" \
     --arg x_arm_current "$(jq -r '.tools.xcodebuildmcp.assets["darwin-arm64"].sha256' "$MANIFEST")" --arg x_arm_latest "$xcodebuildmcp_arm_sha" \
     --arg x_x64_current "$(jq -r '.tools.xcodebuildmcp.assets["darwin-x64"].sha256' "$MANIFEST")" --arg x_x64_latest "$xcodebuildmcp_x64_sha" \
@@ -77,6 +84,7 @@ updates=$(jq -n \
     '[
       (select($p_current != $p_latest or $p_arm_current != $p_arm_latest or $p_x64_current != $p_x64_latest) | "Plannotator: \($p_current) -> \($p_latest)"),
       (select($c_current != $c_latest) | "code-review-graph: \($c_current) -> \($c_latest)"),
+      (select($w_current != $w_latest) | "OpenWiki: \($w_current) -> \($w_latest)"),
       (select($x_current != $x_latest or $x_arm_current != $x_arm_latest or $x_x64_current != $x_x64_latest) | "XcodeBuildMCP: \($x_current) -> \($x_latest)"),
       (select($o_current != $o_latest or $o_arm_current != $o_arm_latest or $o_x64_current != $o_x64_latest) | "Obscura: \($o_current) -> \($o_latest)"),
       (select($a_current != $a_latest or $av_current != $av_latest) | "Axiom marketplace commit changed")
@@ -124,6 +132,7 @@ manifest_tmp=$(mktemp "${MANIFEST}.XXXXXX")
 jq \
   --arg pv "$plannotator_version" --arg pas "$plannotator_arm_sha" --arg pxs "$plannotator_x64_sha" \
   --arg cv "$crg_version" \
+  --arg wv "$openwiki_version" \
   --arg xv "$xcodebuildmcp_version" --arg xan "$xcodebuildmcp_arm_name" --arg xas "$xcodebuildmcp_arm_sha" --arg xxn "$xcodebuildmcp_x64_name" --arg xxs "$xcodebuildmcp_x64_sha" \
   --arg ov "$obscura_version" --arg oan "$obscura_arm_name" --arg oas "$obscura_arm_sha" --arg oab "$obscura_arm_bin" --arg oaw "$obscura_arm_worker" \
   --arg oxn "$obscura_x64_name" --arg oxs "$obscura_x64_sha" --arg oxb "$obscura_x64_bin" --arg oxw "$obscura_x64_worker" '
@@ -131,6 +140,7 @@ jq \
     .tools.plannotator.assets["darwin-arm64"].sha256 = $pas |
     .tools.plannotator.assets["darwin-x64"].sha256 = $pxs |
     .tools["code-review-graph"].version = $cv |
+    .tools.openwiki.version = $wv |
     .tools.xcodebuildmcp.version = $xv |
     .tools.xcodebuildmcp.assets["darwin-arm64"] = {name: $xan, sha256: $xas} |
     .tools.xcodebuildmcp.assets["darwin-x64"] = {name: $xxn, sha256: $xxs} |

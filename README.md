@@ -40,6 +40,7 @@ npm run backup:claude      # Backup Claude Code config
 npm run backup:codex       # Backup Codex config, hooks, RTK, and skills
 npm run install:plugins    # Install all Claude Code plugins
 npm run install:managed-tools # Reconcile exact-pinned local agent tools
+npm run install:openwiki    # Install or update OpenWiki for agent documentation
 npm run install:plannotator # Install or update the checksum-pinned Plannotator binary
 npm run install:skills     # Install, update, or safely prune shared git skills
 npm run update:tool-pins   # Check for newer managed tool releases
@@ -54,7 +55,7 @@ npm run help               # Show all commands
 
 ## Reproduced environment
 
-The repository is the portable source of truth for the audited personal-machine setup: Homebrew formulae and applications, Mac App Store applications, VS Code extensions, asdf runtime pins, dotfiles, and sanitized Claude Code and Codex configuration.
+The repository is the portable source of truth for the audited personal-machine setup: Homebrew formulae and applications, Mac App Store applications, VS Code extensions, asdf runtime pins, dotfiles, OpenWiki, and sanitized Claude Code and Codex configuration.
 
 ### Existing machine: configuration only
 

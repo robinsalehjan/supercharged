@@ -241,7 +241,7 @@ fi
 MANAGED_TOOLS_MANIFEST="${MANAGED_TOOLS_MANIFEST:-$AGENT_CONFIG_DIR/managed_tools.json}"
 if jq -e '
     .version == 2 and
-    (.tools | keys | sort) == ["code-review-graph", "obscura", "plannotator", "xcodebuildmcp"] and
+    (.tools | keys | sort) == ["code-review-graph", "obscura", "openwiki", "plannotator", "xcodebuildmcp"] and
     (.tools.plannotator.version | test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")) and
     .tools.plannotator.repository == "backnotprop/plannotator" and
     ([.tools.plannotator.assets["darwin-arm64"], .tools.plannotator.assets["darwin-x64"]] | all(
@@ -252,6 +252,9 @@ if jq -e '
     .tools["code-review-graph"].policy == "exact-pypi" and
     .tools["code-review-graph"].package == "code-review-graph" and
     .tools["code-review-graph"].extras == ["embeddings", "communities"] and
+    .tools.openwiki.policy == "exact-npm" and
+    .tools.openwiki.package == "openwiki" and
+    (.tools.openwiki.version | test("^[0-9]+\\.[0-9]+\\.[0-9]+$")) and
     ([.tools.xcodebuildmcp, .tools.obscura] | all(
         .policy == "exact-release" and
         (.version | test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")) and
@@ -295,11 +298,20 @@ if [ "$REPO_ONLY" = false ]; then
     require_command python3 "Python is installed for MCP health checks"
     require_command rtk "RTK is installed"
     require_command code-review-graph "code-review-graph is installed"
+    require_command openwiki "OpenWiki is installed"
 
     audit_compatibility_tool codex codex
     audit_compatibility_tool claude claude
     audit_compatibility_tool rtk rtk
     audit_compatibility_tool worktrunk wt
+
+    openwiki_version=$(jq -r '.tools.openwiki.version' "$MANAGED_TOOLS_MANIFEST")
+    openwiki_installed_version=$(npm list --global --depth=0 --json openwiki 2>/dev/null | jq -r '.dependencies.openwiki.version // empty') || openwiki_installed_version=""
+    if [ "$openwiki_installed_version" = "$openwiki_version" ]; then
+        pass "OpenWiki $openwiki_version matches the managed npm pin"
+    else
+        fail "OpenWiki differs from managed version $openwiki_version; run npm run install:openwiki"
+    fi
 
     plannotator_arch=$(uname -m)
     case "$plannotator_arch" in

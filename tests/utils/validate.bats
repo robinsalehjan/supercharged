@@ -92,6 +92,15 @@ teardown() {
   [ "$output" = "0.32.1" ]
 }
 
+@test "extract_tool_version recognizes OpenWiki without a version flag" {
+  source "$PROJECT_ROOT/scripts/utils.sh"
+
+  run extract_tool_version openwiki
+
+  [ "$status" -eq 0 ]
+  [ "$output" = "installed" ]
+}
+
 @test "validate_installation function exists in utils.sh" {
   # Arrange
   source "$PROJECT_ROOT/scripts/utils.sh"

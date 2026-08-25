@@ -23,6 +23,7 @@ write_other_fixtures() {
   crg=$(jq -r '.tools["code-review-graph"].version' "$MANIFEST")
   xv=$(jq -r '.tools.xcodebuildmcp.version' "$MANIFEST")
   ov=$(jq -r '.tools.obscura.version' "$MANIFEST")
+  wv=$(jq -r '.tools.openwiki.version' "$MANIFEST")
   ac=$(jq -r '.marketplaces[0].ref' "$PLUGIN_REGISTRY")
   av=$(jq -r '.plugins[0].version' "$PLUGIN_REGISTRY")
   printf '{"info":{"version":"%s"}}\n' "$crg" > "$CRG_JSON"
@@ -40,6 +41,7 @@ write_other_fixtures() {
     '{tag_name:$tag,assets:[{name:$an,digest:("sha256:"+$as)},{name:$xn,digest:("sha256:"+$xs)}]}' > "$OBSCURA_JSON"
   printf '{"sha":"%s"}\n' "$ac" > "$AXIOM_JSON"
   printf '{"version":"%s"}\n' "$av" > "$AXIOM_PLUGIN_JSON"
+  OPENWIKI_VERSION="$wv"
 }
 
 run_updater() {
@@ -48,6 +50,7 @@ run_updater() {
     XCODEBUILDMCP_RELEASE_JSON="$XCODE_JSON" OBSCURA_RELEASE_JSON="$OBSCURA_JSON" \
     AXIOM_COMMIT_JSON="$AXIOM_JSON" \
     AXIOM_PLUGIN_JSON="$AXIOM_PLUGIN_JSON" \
+    OPENWIKI_NPM_VERSION="$OPENWIKI_VERSION" \
     OBSCURA_ARCHIVES_DIR="${OBSCURA_ARCHIVES_DIR:-}" "$UPDATE_SCRIPT" "$@"
 }
 
@@ -141,6 +144,17 @@ EOF
 
   [ "$status" -eq 0 ]
   run jq -e '.tools["code-review-graph"].version == "9.9.9"' "$MANIFEST"
+  [ "$status" -eq 0 ]
+}
+
+@test "managed tool pin updater applies an OpenWiki release" {
+  write_current_release
+  OPENWIKI_VERSION="9.9.9"
+
+  run run_updater --apply
+
+  [ "$status" -eq 0 ]
+  run jq -e '.tools.openwiki.version == "9.9.9"' "$MANIFEST"
   [ "$status" -eq 0 ]
 }
 

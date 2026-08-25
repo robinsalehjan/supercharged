@@ -32,3 +32,9 @@ Keep tool-specific behavior in the tool-specific config files; keep cross-agent 
 - Be concise and direct.
 - State assumptions when they affect behavior or risk.
 - Call out commands that were not run when verification is incomplete.
+
+## OpenWiki
+
+- When a repository contains `openwiki/`, read its `INSTRUCTIONS.md` and the relevant wiki pages before broad codebase exploration.
+- Run `openwiki --init` or `openwiki --update` only when the user explicitly asks to generate or refresh repository documentation. These commands update the repository’s `openwiki/` content and their managed blocks in root `AGENTS.md` and `CLAUDE.md`.
+- OpenWiki provider configuration and credentials stay local in `~/.openwiki/.env`; never add them to a repository or backup.
