@@ -25,6 +25,8 @@ echo "  npm run install:codex-plugins  - Install or refresh managed Codex plugin
 echo "  npm run install:codex-plugins -- --dry-run - Preview managed Codex plugin changes"
 echo "  npm run install:managed-tools - Reconcile all exact-pinned agent tools"
 echo "  npm run install:managed-tools -- --dry-run - Check managed agent-tool drift"
+echo "  npm run install:openwiki      - Install or update OpenWiki for agent documentation"
+echo "  npm run install:openwiki -- --dry-run - Preview OpenWiki installation"
 echo "  npm run install:plannotator    - Install or update the pinned Plannotator binary"
 echo "  npm run install:plannotator -- --dry-run - Check the pinned Plannotator binary"
 echo "  npm run install:skills         - Install, update, or safely prune shared git skills"

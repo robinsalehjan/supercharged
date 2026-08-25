@@ -410,6 +410,10 @@ main() {
     # Reshim to ensure all binaries are available
     asdf reshim
 
+    # Install OpenWiki after the managed Node.js runtime is active. It is an
+    # npm-distributed CLI that creates documentation intended for coding agents.
+    setup_openwiki
+
     # Install Claude Code if requested
     if [[ "${INSTALL_CLAUDE_CODE:-Y}" =~ ^[Yy] ]]; then
         log_with_level "INFO" "Installing Claude Code..."

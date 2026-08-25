@@ -1,6 +1,11 @@
 {
   "version": 2,
   "tools": {
+    "openwiki": {
+      "policy": "exact-npm",
+      "version": "0.3.3",
+      "package": "openwiki"
+    },
     "plannotator": {
       "policy": "exact-release",
       "version": "v0.27.4",

@@ -15,6 +15,72 @@ teardown() {
 
 # --- setup_rtk tests ---
 
+@test "setup_openwiki installs the global npm CLI" {
+    _ensure_mock_bin_dir
+    calls="$TEST_TEMP_DIR/npm-calls"
+    cat > "$MOCK_BIN_DIR/npm" <<EOF
+#!/bin/sh
+if [ "\$1" = "list" ]; then
+  if [ -e "$calls" ]; then
+    printf '%s\\n' '{"dependencies":{"openwiki":{"version":"0.3.3"}}}'
+  else
+    printf '%s\\n' '{}'
+  fi
+  exit 0
+fi
+printf '%s\\n' "\$*" >> "$calls"
+exit 0
+EOF
+    cat > "$MOCK_BIN_DIR/openwiki" <<'EOF'
+#!/bin/sh
+[ "$1" = "--help" ] && exit 0
+exit 1
+EOF
+    chmod +x "$MOCK_BIN_DIR/npm" "$MOCK_BIN_DIR/openwiki"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_openwiki
+    "
+
+    [[ "$status" -eq 0 ]]
+    grep -Fx 'install --global openwiki@0.3.3' "$calls"
+    [[ "$output" == *"OpenWiki 0.3.3 installed successfully"* ]]
+}
+
+@test "setup_openwiki fails clearly when npm is unavailable" {
+    run zsh -c "
+        export HOME='$HOME' PATH='/usr/bin:/bin'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_openwiki
+    "
+
+    [[ "$status" -ne 0 ]]
+    [[ "$output" == *"npm is required"* ]]
+}
+
+@test "setup_openwiki dry-run does not invoke npm" {
+    _ensure_mock_bin_dir
+    calls="$TEST_TEMP_DIR/npm-calls"
+    cat > "$MOCK_BIN_DIR/npm" <<EOF
+#!/bin/sh
+printf '%s\\n' "\$*" >> "$calls"
+exit 0
+EOF
+    chmod +x "$MOCK_BIN_DIR/npm"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_openwiki --dry-run
+    "
+
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"Would install managed OpenWiki 0.3.3"* ]]
+    [[ ! -e "$calls" ]]
+}
+
 @test "setup_rtk skips when rtk not installed" {
     run zsh -c "
         export HOME='$HOME' PATH='/usr/bin:/bin'

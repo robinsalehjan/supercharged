@@ -171,6 +171,11 @@ run_zsh_func() {
   [ "$status" -eq 0 ]
 }
 
+@test "fresh setup installs OpenWiki after the managed Node.js runtime" {
+  run grep -F 'setup_openwiki' "$PROJECT_ROOT/scripts/mac.sh"
+  [ "$status" -eq 0 ]
+}
+
 @test "build_brewfile excludes Codex desktop app when INSTALL_CODEX_APP=n" {
   run zsh -c "
     export INSTALL_CODEX_APP=n

@@ -79,6 +79,54 @@ install_asdf_version() {
     log_with_level "SUCCESS" "asdf: $plugin set to version $version"
 }
 
+# Install OpenWiki, which maintains repository documentation designed for
+# coding agents. Its provider credentials remain local in ~/.openwiki/.env.
+setup_openwiki() {
+    local dry_run=false
+    [ "${1:-}" = "--dry-run" ] && dry_run=true
+
+    if ! command_exists npm; then
+        log_with_level "ERROR" "npm is required to install OpenWiki"
+        return 1
+    fi
+
+    local manifest="${MANAGED_TOOLS_MANIFEST:-$UTILS_PROJECT_ROOT/agent_config/managed_tools.json}"
+    local managed_version package managed_spec installed_version
+    managed_version=$(jq -er '.tools.openwiki.version' "$manifest" 2>/dev/null) || managed_version=""
+    package=$(jq -er '.tools.openwiki.package' "$manifest" 2>/dev/null) || package=""
+    if [[ ! "$managed_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || [ "$package" != "openwiki" ]; then
+        log_with_level "ERROR" "Invalid OpenWiki pin in $manifest"
+        return 1
+    fi
+    managed_spec="${package}@${managed_version}"
+
+    if $dry_run; then
+        log_with_level "INFO" "Would install managed OpenWiki $managed_version"
+        return 0
+    fi
+
+    installed_version=$(npm list --global --depth=0 --json "$package" 2>/dev/null | jq -r '.dependencies.openwiki.version // empty' 2>/dev/null) || installed_version=""
+    if [ "$installed_version" = "$managed_version" ] && command_exists openwiki; then
+        log_with_level "INFO" "OpenWiki $managed_version already installed"
+    else
+        log_with_level "INFO" "Installing managed OpenWiki $managed_version..."
+    fi
+
+    if [ "$installed_version" != "$managed_version" ] && ! npm install --global "$managed_spec"; then
+        log_with_level "ERROR" "Failed to install OpenWiki $managed_version"
+        return 1
+    fi
+
+    installed_version=$(npm list --global --depth=0 --json "$package" 2>/dev/null | jq -r '.dependencies.openwiki.version // empty' 2>/dev/null) || installed_version=""
+    if [ "$installed_version" = "$managed_version" ] && command_exists openwiki && openwiki --help >/dev/null 2>&1; then
+        log_with_level "SUCCESS" "OpenWiki $managed_version installed successfully"
+        log_with_level "INFO" "Run 'openwiki --init' from a repository when you are ready to create its agent wiki"
+    else
+        log_with_level "ERROR" "Failed to verify managed OpenWiki $managed_version"
+        return 1
+    fi
+}
+
 # Setup RTK (Rust Token Killer) for Claude Code
 setup_rtk() {
     if ! command_exists rtk; then

@@ -17,6 +17,7 @@ npm run restore:all -- --force # Force the all-in-one restore
 npm run backup:all            # Backup Claude and Codex config
 npm run install:skills        # Install, update, or safely prune shared git skills
 npm run install:managed-tools # Reconcile exact-pinned local agent tools
+npm run install:openwiki    # Install or update OpenWiki for agent documentation
 npm run install:plannotator   # Reconcile the checksum-pinned Plannotator binary
 npm run update:tool-pins      # Check upstream releases against managed pins
 npm test                      # Run BATS tests
@@ -66,7 +67,7 @@ The Homebrew Bundle baseline is defined by `build_brewfile` in `scripts/mac.sh`.
 
 - Package and shell tooling: `bash`, `coreutils`, `git`, `curl`, `asdf`, `keychain`, `tmux`, `ripgrep`, `tree`, `aria2`.
 - Development utilities: `gh`, `jq`, `shellcheck`, `actionlint`, `bats-core`, `duckdb`, `sqlite`, `btop`, `htop`, `mas`, `pipx`, `uv`, `hey`, `watch`, build libraries, and database client libraries mirrored from the personal machine.
-- AI and agent tools: `codex`, `ollama`, `omlx`, `replicate`, `rtk`, and `worktrunk`. ChatGPT and CodexBar are included when `INSTALL_CODEX_APP=Y`.
+- AI and agent tools: `codex`, `ollama`, `omlx`, `replicate`, `rtk`, `worktrunk`, and OpenWiki. ChatGPT and CodexBar are included when `INSTALL_CODEX_APP=Y`.
 - Applications: Visual Studio Code, Slack, Raycast, Reveal, Spotify, Mullvad VPN.
 - Fonts: JetBrainsMono Nerd Font.
 - Mac App Store apps: AdBlock, DaisyDisk, and Numbers.
@@ -76,7 +77,7 @@ The Homebrew Bundle baseline is defined by `build_brewfile` in `scripts/mac.sh`.
 
 The `omlx` CLI above is scripted via its own tap. Its optional menu bar app (`oMLX.app`) has no Homebrew cask — download the `.dmg` for your macOS version from [github.com/jundot/omlx/releases](https://github.com/jundot/omlx/releases) and drag it into `/Applications` manually. If its installer offers to add a shell PATH entry for its bundled CLI shim, decline it — the Homebrew-installed `omlx` is already on PATH and having two competing binaries just causes ambiguity.
 
-Conditional Brewfile groups add iOS, container, cloud (`hashicorp/tap/terraform`), network, and extra application tooling according to the setup preferences above. Dedicated setup helpers install Claude Code and the exact-pinned Plannotator, code-review-graph, XcodeBuildMCP, and Obscura. `agent_config/managed_tools.json` is their desired-state source. Release archives verify architecture-specific SHA-256 values before installation; code-review-graph uses an exact PyPI version. XcodeBuildMCP installs under `~/.local/share/supercharged/` and removes the superseded Homebrew formula so a later `brew upgrade` cannot shadow the pin. Run `npm run install:managed-tools` to reconcile the installed set or add `-- --dry-run` to inspect drift.
+Conditional Brewfile groups add iOS, container, cloud (`hashicorp/tap/terraform`), network, and extra application tooling according to the setup preferences above. Dedicated setup helpers install Claude Code and the exact-pinned OpenWiki, Plannotator, code-review-graph, XcodeBuildMCP, and Obscura. OpenWiki installs from npm after the managed Node.js runtime is active. `agent_config/managed_tools.json` is the desired-state source for the exact-pinned tools, including OpenWiki. Release archives verify architecture-specific SHA-256 values before installation; code-review-graph and OpenWiki use exact package versions. XcodeBuildMCP installs under `~/.local/share/supercharged/` and removes the superseded Homebrew formula so a later `brew upgrade` cannot shadow the pin. Run `npm run install:openwiki` or `npm run install:managed-tools` to reconcile the relevant pinned tools; add `-- --dry-run` to inspect drift.
 
 asdf-managed tools are listed in `dot_files/.tool-versions`, including Node.js, Python, Ruby, Bundler, gcloud, Firebase CLI, and optional JVM pins.
 
@@ -87,6 +88,8 @@ Shared git-cloned skills are declared in `agent_config/installed_skills.json`. A
 ### Shared Agent Capabilities
 
 The four graph skills live canonically in `agent_config/skills/<name>/SKILL.md`. `restore:codex` restores those directories directly into Codex; `.claude/skills/*.md` is a generated one-way Claude compatibility mirror and `scripts/generate-claude-skill-mirrors.sh --check` detects drift. Git-cloned skills in `agent_config/installed_skills.json` are also installed into both agent homes. Claude plugins and Codex plugins can contribute additional tool-specific skills, so the complete runtime skill lists are intentionally not identical.
+
+OpenWiki is available as the `openwiki` CLI. From a repository root, run `openwiki --init` to create its `openwiki/` agent wiki, then `openwiki --update` when a refresh is explicitly wanted. It maintains marked guidance blocks in the root `AGENTS.md` and `CLAUDE.md`; all other content remains user-managed. Its interactive first run stores the selected provider and credentials in `~/.openwiki/.env`, which is local-only and must never be committed or backed up. Agents use an existing repository wiki as context but do not generate or update one without an explicit user request.
 
 The canonical MCP inventory is: shared code-review-graph and OpenAI Developer Docs; Codex-native Axiom plugin; the `xcode` bridge in the Apple profile; XcodeBuildMCP in the headless Apple profile; and optional disabled Computer Use. Claude user-local MCP entries are preserved during restore and never imported by backup. Local MCP executables are exact-pinned where this repository controls installation. The hosted OpenAI Developer Docs MCP has no local executable to pin; native Xcode MCP follows the selected Xcode installation.
 
