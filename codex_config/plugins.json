@@ -4,13 +4,13 @@
     {
       "name": "axiom-marketplace",
       "source": "CharlesWiltgen/Axiom",
-      "ref": "69ffef661136778a872b3e5959306992bb5648a0"
+      "ref": "beff15fd7d86f610157706bdd1f56537ea77c837"
     }
   ],
   "plugins": [
     {
       "id": "axiom@axiom-marketplace",
-      "version": "27.0.0-beta.47",
+      "version": "27.0.0-beta.52",
       "required": true,
       "enabled": true
     }
