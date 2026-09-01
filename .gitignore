@@ -3,8 +3,9 @@
 .AppleDouble
 .LSOverride
 
-# Logs
+# Logs (including rotated generations, e.g. .supercharged_install.log.1)
 *.log
+*.log.[0-9]
 
 # Backup files
 *.backup

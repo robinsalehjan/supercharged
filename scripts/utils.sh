@@ -31,6 +31,14 @@ UTILS_LOG_FILE="$UTILS_PROJECT_ROOT/.supercharged_install.log"
 # Constants (exported for submodules)
 export BACKUP_RETENTION_COUNT=5
 
+# Network options for managed downloads and metadata fetches. Without an
+# explicit timeout a stalled mirror hangs an unattended `npm run setup`
+# indefinitely with no output.
+# shellcheck disable=SC2034  # Used by submodules and scripts via source
+CURL_DOWNLOAD_OPTS=(--connect-timeout 10 --max-time 300 --retry 3 --retry-delay 2 --retry-connrefused)
+# shellcheck disable=SC2034  # Used by submodules and scripts via source
+CURL_METADATA_OPTS=(--connect-timeout 10 --max-time 60 --retry 3 --retry-delay 2 --retry-connrefused)
+
 # Shared list of dotfiles for backup/restore/copy operations
 # Note: array export only works in zsh; all consumers source utils.sh in-process so this is fine
 # shellcheck disable=SC2034  # Used by submodules (backup.sh, restore.sh) via source

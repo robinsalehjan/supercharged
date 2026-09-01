@@ -825,3 +825,55 @@ EOF
     [[ "$output" == *"installed"* ]]
     [ "$(readlink "$bin_dir/xcodebuildmcp")" != "$broken_target/bin/xcodebuildmcp" ]
 }
+
+# --- download robustness ---
+
+@test "managed downloads pass explicit curl timeout and retry options" {
+    _ensure_mock_bin_dir
+    calls="$TEST_TEMP_DIR/curl-opts"
+    cat > "$MOCK_BIN_DIR/curl" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >> "$calls"
+exit 1
+EOF
+    chmod +x "$MOCK_BIN_DIR/curl"
+    write_plannotator_manifest "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        export PLANNOTATOR_ARCH=arm64
+        export PLANNOTATOR_MANIFEST='$PLANNOTATOR_TEST_MANIFEST'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_plannotator
+    "
+
+    [[ "$status" -ne 0 ]]
+    grep -F -- '--connect-timeout 10' "$calls"
+    grep -F -- '--max-time 300' "$calls"
+    grep -F -- '--retry 3' "$calls"
+}
+
+@test "an interrupted managed download leaves no staging directory behind" {
+    _ensure_mock_bin_dir
+    # Interrupt the install mid-download the way Ctrl-C would.
+    cat > "$MOCK_BIN_DIR/curl" <<'EOF'
+#!/bin/sh
+kill -INT "$PPID"
+sleep 5
+EOF
+    chmod +x "$MOCK_BIN_DIR/curl"
+    write_plannotator_manifest "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    mkdir -p "$HOME/.local/bin"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        export PLANNOTATOR_ARCH=arm64
+        export PLANNOTATOR_MANIFEST='$PLANNOTATOR_TEST_MANIFEST'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_plannotator
+    "
+
+    # The signal must not be reported as a successful install.
+    [[ "$status" -ne 0 ]]
+    [ "$(find "$HOME/.local/bin" -maxdepth 1 -type d -name '.plannotator.*' | wc -l | tr -d ' ')" -eq 0 ]
+}

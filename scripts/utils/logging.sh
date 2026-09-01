@@ -6,6 +6,22 @@ if [[ -z "${UTILS_LOG_FILE:-}" ]]; then
     return 1
 fi
 
+# Every script run appends to UTILS_LOG_FILE and nothing ever truncated it, so
+# the log grew without bound. Rotate once per load (not per log line) whenever
+# the active log passes the size cap, keeping a single previous generation.
+UTILS_LOG_MAX_BYTES="${UTILS_LOG_MAX_BYTES:-1048576}"
+
+rotate_log_if_large() {
+    local size
+    [ -f "$UTILS_LOG_FILE" ] || return 0
+    size=$(wc -c < "$UTILS_LOG_FILE" 2>/dev/null | tr -d ' ') || return 0
+    [ -n "$size" ] || return 0
+    [ "$size" -gt "$UTILS_LOG_MAX_BYTES" ] || return 0
+    mv -f "$UTILS_LOG_FILE" "$UTILS_LOG_FILE.1" 2>/dev/null || return 0
+}
+
+rotate_log_if_large
+
 # Colored output for better user experience
 fancy_echo() {
     printf "\n\033[1;32m==> %s\033[0m\n" "$1"
