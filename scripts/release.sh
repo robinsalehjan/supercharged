@@ -6,6 +6,9 @@
 #   ./scripts/release.sh --dry-run <bump>            # preview only
 #   ./scripts/release.sh --yes <bump>                # skip confirmations (for non-TTY)
 #
+# The README Quick Start pins a tag in its clone command; it is rewritten to the
+# new tag as part of the release commit.
+#
 # After push, the GitHub Actions release workflow creates the GitHub Release.
 
 set -e
@@ -113,6 +116,16 @@ confirm "Cut release $TAG? [y/N]: " || { log_with_level "INFO" "Aborted."; exit 
 
 # Bump package.json + package-lock.json without auto-tagging (we tag explicitly).
 npm version "$NEW" --no-git-tag-version >/dev/null
+
+# The README Quick Start clones a pinned tag. Left alone it keeps advertising
+# the previous release, so it moves with the version bump.
+README="$REPO_ROOT/README.md"
+if [[ -f "$README" ]] && grep -qE '^git clone --branch v[0-9]+\.[0-9]+\.[0-9]+ ' "$README"; then
+    sed -i '' -E "s|^git clone --branch v[0-9]+\.[0-9]+\.[0-9]+ |git clone --branch $TAG |" "$README"
+    git add "$README"
+else
+    log_with_level "WARN" "README Quick Start clone pin not found; leaving README unchanged"
+fi
 
 git add package.json package-lock.json
 git commit -m "chore(release): $TAG"
