@@ -4,4 +4,6 @@
 #   SC2296 - Parameter expansions can't start with (% — zsh prompt syntax ${(%):-%x}
 #   SC1091 - Not following sourced file (intentional dynamic sources)
 #   SC2001 - See if you can use ${variable//search/replace} instead (sed is clearer here)
-disable=SC1071,SC2296,SC1091,SC2001
+#   SC2329 - Function never invoked (test mock helpers are called by bats)
+#   SC2016 - Expressions don't expand in single quotes (intentional literals)
+disable=SC1071,SC2296,SC1091,SC2001,SC2329,SC2016

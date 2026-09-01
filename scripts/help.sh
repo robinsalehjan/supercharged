@@ -36,6 +36,8 @@ echo "  npm run update                 - Sync dotfiles/skills, then update depen
 echo "  npm run update:with-backup     - Capture live agent config, then run the safe update"
 echo "  npm run update:tool-pins       - Check upstream releases against managed tool pins"
 echo "  npm run update:tool-pins -- --apply - Update managed tool pins and checksums"
+echo "  npm run update:asdf-pins       - Check upstream releases against asdf runtime pins"
+echo "  npm run update:asdf-pins -- --apply - Update asdf runtime pins within their tracked lines"
 echo "  npm run update:dry-run         - Preview updates without making changes"
 echo "  npm run update:only -- <comp>  - Sync dotfiles/skills, then update one component"
 echo ""
