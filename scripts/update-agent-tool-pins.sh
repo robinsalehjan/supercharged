@@ -20,7 +20,7 @@ fetch_json() {
     elif command -v gh >/dev/null 2>&1; then
         gh api "$endpoint"
     else
-        curl -fsSL "https://api.github.com/$endpoint"
+        curl -fsSL "${CURL_METADATA_OPTS[@]}" "https://api.github.com/$endpoint"
     fi
 }
 
@@ -35,7 +35,7 @@ axiom_json=$(fetch_json "${AXIOM_COMMIT_JSON:-}" "repos/CharlesWiltgen/Axiom/com
 if [ -n "${CRG_PYPI_JSON:-}" ]; then
     crg_json=$(<"$CRG_PYPI_JSON")
 else
-    crg_json=$(curl -fsSL https://pypi.org/pypi/code-review-graph/json)
+    crg_json=$(curl -fsSL "${CURL_METADATA_OPTS[@]}" https://pypi.org/pypi/code-review-graph/json)
 fi
 if [ -n "${OPENWIKI_NPM_VERSION:-}" ]; then
     openwiki_version="$OPENWIKI_NPM_VERSION"
@@ -63,7 +63,7 @@ axiom_commit=$(jq -er '.sha | select(test("^[0-9a-f]{40}$"))' <<<"$axiom_json")
 if [ -n "${AXIOM_PLUGIN_JSON:-}" ]; then
     axiom_plugin_json=$(<"$AXIOM_PLUGIN_JSON")
 else
-    axiom_plugin_json=$(curl -fsSL "https://raw.githubusercontent.com/CharlesWiltgen/Axiom/$axiom_commit/axiom-codex/.codex-plugin/plugin.json")
+    axiom_plugin_json=$(curl -fsSL "${CURL_METADATA_OPTS[@]}" "https://raw.githubusercontent.com/CharlesWiltgen/Axiom/$axiom_commit/axiom-codex/.codex-plugin/plugin.json")
 fi
 axiom_version=$(jq -er '.version | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+([.-][0-9A-Za-z.-]+)?$"))' <<<"$axiom_plugin_json")
 
@@ -114,7 +114,7 @@ if [ "$(jq -r '.tools.obscura.version' "$MANIFEST")" != "$obscura_version" ] || 
         if [ -n "${OBSCURA_ARCHIVES_DIR:-}" ]; then
             cp "$OBSCURA_ARCHIVES_DIR/$asset_name" "$archive"
         else
-            curl -fsSL "https://github.com/$obscura_repo/releases/download/$obscura_version/$asset_name" -o "$archive"
+            curl -fsSL "${CURL_DOWNLOAD_OPTS[@]}" "https://github.com/$obscura_repo/releases/download/$obscura_version/$asset_name" -o "$archive"
         fi
         mkdir -p "$obscura_tmp/$arch"
         tar -xzf "$archive" -C "$obscura_tmp/$arch"

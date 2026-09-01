@@ -635,12 +635,23 @@ setup_plannotator() {
         log_with_level "ERROR" "Failed to create a temporary Plannotator install directory"
         return 1
     fi
-    _plannotator_cleanup() { rm -rf "$tmp_dir"; }
+    # LOCAL_TRAPS scopes these traps to this function. EXIT covers every return
+    # path; zsh does not run it for a signal, so INT and TERM clean up and then
+    # re-raise with the default disposition, which keeps the 130/143 exit status
+    # instead of reporting a successful install. An interrupted download can no
+    # longer leave a staging directory beside the installed binary.
+    setopt local_traps
+    # shellcheck disable=SC2064  # $tmp_dir is function-local and already out of
+    # scope when the trap fires, so it must be expanded (and ${(q)}-quoted) now.
+    trap "rm -rf ${(q)tmp_dir}" EXIT
+    # shellcheck disable=SC2064
+    trap "rm -rf ${(q)tmp_dir}; trap - INT; kill -INT $$" INT
+    # shellcheck disable=SC2064
+    trap "rm -rf ${(q)tmp_dir}; trap - TERM; kill -TERM $$" TERM
 
     local curl_err
-    if ! curl_err=$(curl -fsSL -o "$tmp_dir/${binary_name}" "$binary_url" 2>&1); then
+    if ! curl_err=$(curl -fsSL "${CURL_DOWNLOAD_OPTS[@]}" -o "$tmp_dir/${binary_name}" "$binary_url" 2>&1); then
         log_with_level "ERROR" "Failed to download plannotator binary ($binary_url): $curl_err"
-        _plannotator_cleanup
         return 1
     fi
 
@@ -648,7 +659,6 @@ setup_plannotator() {
     downloaded_sha=$(shasum -a 256 "$tmp_dir/${binary_name}" 2>/dev/null | awk '{print $1}') || downloaded_sha=""
     if [ "$downloaded_sha" != "$expected_sha" ]; then
         log_with_level "ERROR" "Plannotator checksum verification failed (expected $expected_sha, found ${downloaded_sha:-unavailable})"
-        _plannotator_cleanup
         return 1
     fi
 
@@ -657,11 +667,9 @@ setup_plannotator() {
     if ! chmod +x "$tmp_dir/${binary_name}" || \
        ! mv "$tmp_dir/${binary_name}" "$install_path"; then
         log_with_level "ERROR" "Failed to install plannotator binary to $install_path"
-        _plannotator_cleanup
         return 1
     fi
 
-    _plannotator_cleanup
     log_with_level "SUCCESS" "Plannotator $version installed successfully"
 }
 
@@ -724,24 +732,28 @@ setup_xcodebuildmcp() {
     mkdir -p "$install_root" "$bin_dir" || return 1
     tmp_dir=$(mktemp -d "$install_root/.xcodebuildmcp.XXXXXX") || return 1
     archive="$tmp_dir/$asset_name"
-    _xcodebuildmcp_cleanup() { rm -rf "$tmp_dir"; }
+    setopt local_traps
+    # shellcheck disable=SC2064  # $tmp_dir is function-local and already out of
+    # scope when the trap fires, so it must be expanded (and ${(q)}-quoted) now.
+    trap "rm -rf ${(q)tmp_dir}" EXIT
+    # shellcheck disable=SC2064
+    trap "rm -rf ${(q)tmp_dir}; trap - INT; kill -INT $$" INT
+    # shellcheck disable=SC2064
+    trap "rm -rf ${(q)tmp_dir}; trap - TERM; kill -TERM $$" TERM
 
-    if ! curl -fsSL "https://github.com/$repository/releases/download/$version/$asset_name" -o "$archive"; then
+    if ! curl -fsSL "${CURL_DOWNLOAD_OPTS[@]}" "https://github.com/$repository/releases/download/$version/$asset_name" -o "$archive"; then
         log_with_level "ERROR" "Failed to download XcodeBuildMCP $version"
-        _xcodebuildmcp_cleanup
         return 1
     fi
     downloaded_sha=$(shasum -a 256 "$archive" 2>/dev/null | awk '{print $1}') || downloaded_sha=""
     if [ "$downloaded_sha" != "$expected_sha" ]; then
         log_with_level "ERROR" "XcodeBuildMCP checksum verification failed"
-        _xcodebuildmcp_cleanup
         return 1
     fi
     mkdir -p "$tmp_dir/extracted"
     if ! tar -xzf "$archive" -C "$tmp_dir/extracted" --strip-components=1 || \
        [ ! -x "$tmp_dir/extracted/bin/xcodebuildmcp" ]; then
         log_with_level "ERROR" "XcodeBuildMCP archive is malformed"
-        _xcodebuildmcp_cleanup
         return 1
     fi
 
@@ -750,10 +762,7 @@ setup_xcodebuildmcp() {
         target_dir="${target_dir}-${EPOCHSECONDS}"
     fi
     if [ ! -d "$target_dir" ]; then
-        mv "$tmp_dir/extracted" "$target_dir" || {
-            _xcodebuildmcp_cleanup
-            return 1
-        }
+        mv "$tmp_dir/extracted" "$target_dir" || return 1
     fi
     ln -sfn "$target_dir/bin/xcodebuildmcp" "$bin_dir/xcodebuildmcp"
     ln -sfn "$target_dir/bin/xcodebuildmcp-doctor" "$bin_dir/xcodebuildmcp-doctor"
@@ -763,7 +772,6 @@ setup_xcodebuildmcp() {
         log_with_level "INFO" "Removing the superseded Homebrew XcodeBuildMCP installation"
         brew uninstall xcodebuildmcp >/dev/null 2>&1 || brew unlink xcodebuildmcp >/dev/null 2>&1 || true
     fi
-    _xcodebuildmcp_cleanup
     if ! _mcp_server_healthy apple-headless XcodeBuildMCP "$bin_dir"; then
         log_with_level "ERROR" "XcodeBuildMCP fails the MCP initialize handshake after installation"
         return 1
@@ -819,14 +827,20 @@ setup_obscura() {
     local tmp_dir
     mkdir -p "$install_dir" || return 1
     tmp_dir=$(mktemp -d "$install_dir/.obscura.XXXXXX") || return 1
-    _obscura_cleanup() { rm -rf "$tmp_dir"; }
+    setopt local_traps
+    # shellcheck disable=SC2064  # $tmp_dir is function-local and already out of
+    # scope when the trap fires, so it must be expanded (and ${(q)}-quoted) now.
+    trap "rm -rf ${(q)tmp_dir}" EXIT
+    # shellcheck disable=SC2064
+    trap "rm -rf ${(q)tmp_dir}; trap - INT; kill -INT $$" INT
+    # shellcheck disable=SC2064
+    trap "rm -rf ${(q)tmp_dir}; trap - TERM; kill -TERM $$" TERM
 
     local download_err
-    if ! download_err=$(curl -fsSL \
+    if ! download_err=$(curl -fsSL "${CURL_DOWNLOAD_OPTS[@]}" \
             "https://github.com/$repository/releases/download/$version/$asset_name" \
             -o "$tmp_dir/$asset_name" 2>&1); then
         log_with_level "ERROR" "Failed to download $asset_name from $repository: $download_err"
-        _obscura_cleanup
         return 1
     fi
 
@@ -834,14 +848,12 @@ setup_obscura() {
     downloaded_archive_sha=$(shasum -a 256 "$tmp_dir/$asset_name" | awk '{print $1}') || downloaded_archive_sha=""
     if [ "$downloaded_archive_sha" != "$expected_archive_sha" ]; then
         log_with_level "ERROR" "Obscura archive checksum verification failed"
-        _obscura_cleanup
         return 1
     fi
 
     local tar_err
     if ! tar_err=$(tar -xzf "$tmp_dir/$asset_name" -C "$tmp_dir" 2>&1); then
         log_with_level "ERROR" "Failed to extract Obscura archive: $tar_err"
-        _obscura_cleanup
         return 1
     fi
 
@@ -850,7 +862,6 @@ setup_obscura() {
     worker_bin=$(find "$tmp_dir" -type f -name obscura-worker -perm -u+x 2>/dev/null | head -1)
     if [ -z "$obscura_bin" ] || [ -z "$worker_bin" ]; then
         log_with_level "ERROR" "Obscura archive missing expected binaries (obscura, obscura-worker)"
-        _obscura_cleanup
         return 1
     fi
 
@@ -859,19 +870,28 @@ setup_obscura() {
     worker_sha=$(shasum -a 256 "$worker_bin" | awk '{print $1}')
     if [ "$obscura_sha" != "$expected_obscura_sha" ] || [ "$worker_sha" != "$expected_worker_sha" ]; then
         log_with_level "ERROR" "Obscura binary checksum verification failed"
-        _obscura_cleanup
         return 1
     fi
 
+    # Stage both binaries beside their destinations first, so the pair is
+    # published by two same-directory renames. A failure before that point
+    # leaves the previously installed pair untouched rather than pairing a new
+    # obscura with a stale obscura-worker.
     if ! chmod +x "$obscura_bin" "$worker_bin" || \
-       ! mv "$obscura_bin" "$install_dir/obscura" || \
-       ! mv "$worker_bin" "$install_dir/obscura-worker"; then
-        log_with_level "ERROR" "Failed to install Obscura binaries to $install_dir"
-        _obscura_cleanup
+       ! mv "$obscura_bin" "$install_dir/.obscura.staged" || \
+       ! mv "$worker_bin" "$install_dir/.obscura-worker.staged"; then
+        log_with_level "ERROR" "Failed to stage Obscura binaries in $install_dir"
+        rm -f "$install_dir/.obscura.staged" "$install_dir/.obscura-worker.staged"
         return 1
     fi
 
-    _obscura_cleanup
+    if ! mv "$install_dir/.obscura.staged" "$install_dir/obscura" || \
+       ! mv "$install_dir/.obscura-worker.staged" "$install_dir/obscura-worker"; then
+        log_with_level "ERROR" "Failed to install Obscura binaries to $install_dir"
+        rm -f "$install_dir/.obscura.staged" "$install_dir/.obscura-worker.staged"
+        return 1
+    fi
+
     log_with_level "SUCCESS" "Obscura $version installed to $install_dir"
     log_with_level "INFO" "Test with: obscura fetch https://example.com --eval 'document.title'"
 }

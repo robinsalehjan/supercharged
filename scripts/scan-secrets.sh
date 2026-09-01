@@ -16,9 +16,12 @@ fi
 
 patterns=(
     'sk-[A-Za-z0-9_-]{20,}'
-    'ghp_[A-Za-z0-9_]{20,}'
+    'gh[pousr]_[A-Za-z0-9_]{20,}'
     'github_pat_[A-Za-z0-9_]{20,}'
     'AKIA[0-9A-Z]{16}'
+    'AIza[0-9A-Za-z_-]{35}'
+    'xox[baprs]-[A-Za-z0-9-]{10,}'
+    'npm_[A-Za-z0-9]{36}'
     '-----BEGIN (RSA |OPENSSH |EC |DSA )?PRIVATE KEY-----'
     "(?i)(api[_-]?key|secret|token|password)[A-Za-z0-9_ -]{0,20}[:=][[:space:]]*[\"']?[A-Za-z0-9_./+=-]{24,}"
 )
@@ -41,6 +44,7 @@ for pattern in "${patterns[@]}"; do
         --glob '!node_modules/**' \
         --glob '!package-lock.json' \
         --glob '!*.log' \
+        --glob '!*.log.[0-9]' \
         --glob '!tests/fixtures/**' \
         --glob '!SECURITY.md' \
         --glob '!scripts/scan-secrets.sh' \

@@ -65,3 +65,28 @@ teardown() {
   [[ "$output" == *"Potential secrets found"* ]]
   [[ "$output" == *"password="* ]]
 }
+
+@test "scan-secrets.sh flags every tracked credential prefix" {
+  mkdir -p "$TEST_TEMP_DIR/prefixes"
+
+  pad() { printf "$1%.0s" $(seq 1 "$2"); }
+
+  # Prefixes are concatenated at runtime so this test file never contains a
+  # literal token that the scanner would flag when it scans the repository.
+  local -a samples=(
+    "gho_$(pad a 24)"
+    "ghs_$(pad b 24)"
+    "ghu_$(pad c 24)"
+    "ghr_$(pad d 24)"
+    "AIza$(pad e 35)"
+    "xoxb-$(pad 1 20)"
+    "npm_$(pad f 36)"
+  )
+
+  for sample in "${samples[@]}"; do
+    printf '%s\n' "$sample" > "$TEST_TEMP_DIR/prefixes/candidate.txt"
+    run "$SCAN_SCRIPT" "$TEST_TEMP_DIR/prefixes"
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"Potential secrets found"* ]]
+  done
+}

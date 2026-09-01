@@ -17,12 +17,14 @@ teardown() {
 
 @test "setup_openwiki installs the global npm CLI" {
     _ensure_mock_bin_dir
+    local version
+    version="$(managed_tool_pin '.tools.openwiki.version')"
     calls="$TEST_TEMP_DIR/npm-calls"
     cat > "$MOCK_BIN_DIR/npm" <<EOF
 #!/bin/sh
 if [ "\$1" = "list" ]; then
   if [ -e "$calls" ]; then
-    printf '%s\\n' '{"dependencies":{"openwiki":{"version":"0.3.3"}}}'
+    printf '%s\\n' '{"dependencies":{"openwiki":{"version":"$version"}}}'
   else
     printf '%s\\n' '{}'
   fi
@@ -45,8 +47,8 @@ EOF
     "
 
     [[ "$status" -eq 0 ]]
-    grep -Fx 'install --global openwiki@0.3.3' "$calls"
-    [[ "$output" == *"OpenWiki 0.3.3 installed successfully"* ]]
+    grep -Fx "install --global openwiki@$version" "$calls"
+    [[ "$output" == *"OpenWiki $version installed successfully"* ]]
 }
 
 @test "setup_openwiki fails clearly when npm is unavailable" {
@@ -62,6 +64,8 @@ EOF
 
 @test "setup_openwiki dry-run does not invoke npm" {
     _ensure_mock_bin_dir
+    local version
+    version="$(managed_tool_pin '.tools.openwiki.version')"
     calls="$TEST_TEMP_DIR/npm-calls"
     cat > "$MOCK_BIN_DIR/npm" <<EOF
 #!/bin/sh
@@ -77,7 +81,7 @@ EOF
     "
 
     [[ "$status" -eq 0 ]]
-    [[ "$output" == *"Would install managed OpenWiki 0.3.3"* ]]
+    [[ "$output" == *"Would install managed OpenWiki $version"* ]]
     [[ ! -e "$calls" ]]
 }
 
@@ -206,6 +210,8 @@ RTKEOF
 @test "code-review-graph setup installs the exact managed pipx version when stale" {
     mock_pipx
     mock_code_review_graph
+    local spec
+    spec="$(managed_tool_pin '.tools["code-review-graph"] | "\(.package)[\(.extras | join(","))]==\(.version)"')"
     calls="$TEST_TEMP_DIR/pipx-calls"
     cat > "$MOCK_BIN_DIR/code-review-graph" <<'EOF'
 #!/bin/sh
@@ -228,24 +234,26 @@ EOF
     run zsh -c "export HOME='$HOME' PATH='$PATH'; source '$PROJECT_ROOT/scripts/utils.sh'; setup_code_review_graph"
 
     [[ "$status" -eq 0 ]]
-    grep -F 'install --force code-review-graph[embeddings,communities]==2.3.7' "$calls"
+    grep -F "install --force $spec" "$calls"
 }
 
 @test "code-review-graph setup repairs an installed server that cannot initialize" {
     _ensure_mock_bin_dir
+    local version
+    version="$(managed_tool_pin '.tools["code-review-graph"].version')"
     marker="$TEST_TEMP_DIR/crg-repaired"
     calls="$TEST_TEMP_DIR/pipx-calls"
     cat > "$MOCK_BIN_DIR/code-review-graph" <<EOF
 #!/bin/sh
 if [ "\$1" = "--version" ]; then
-    echo "code-review-graph 2.3.7"
+    echo "code-review-graph $version"
 elif [ "\$1" = "serve" ]; then
     if [ ! -f "$marker" ]; then
         echo "ImportError: cannot import name FastMCP" >&2
         exit 1
     fi
     IFS= read -r request
-    printf '%s\\n' '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{},"serverInfo":{"name":"code-review-graph","version":"2.3.7"}}}'
+    printf '%s\\n' '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{},"serverInfo":{"name":"code-review-graph","version":"$version"}}}'
 fi
 EOF
     cat > "$MOCK_BIN_DIR/pipx" <<EOF
@@ -816,4 +824,56 @@ EOF
     [[ "$output" == *"MCP handshake failed"* ]]
     [[ "$output" == *"installed"* ]]
     [ "$(readlink "$bin_dir/xcodebuildmcp")" != "$broken_target/bin/xcodebuildmcp" ]
+}
+
+# --- download robustness ---
+
+@test "managed downloads pass explicit curl timeout and retry options" {
+    _ensure_mock_bin_dir
+    calls="$TEST_TEMP_DIR/curl-opts"
+    cat > "$MOCK_BIN_DIR/curl" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >> "$calls"
+exit 1
+EOF
+    chmod +x "$MOCK_BIN_DIR/curl"
+    write_plannotator_manifest "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        export PLANNOTATOR_ARCH=arm64
+        export PLANNOTATOR_MANIFEST='$PLANNOTATOR_TEST_MANIFEST'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_plannotator
+    "
+
+    [[ "$status" -ne 0 ]]
+    grep -F -- '--connect-timeout 10' "$calls"
+    grep -F -- '--max-time 300' "$calls"
+    grep -F -- '--retry 3' "$calls"
+}
+
+@test "an interrupted managed download leaves no staging directory behind" {
+    _ensure_mock_bin_dir
+    # Interrupt the install mid-download the way Ctrl-C would.
+    cat > "$MOCK_BIN_DIR/curl" <<'EOF'
+#!/bin/sh
+kill -INT "$PPID"
+sleep 5
+EOF
+    chmod +x "$MOCK_BIN_DIR/curl"
+    write_plannotator_manifest "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    mkdir -p "$HOME/.local/bin"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        export PLANNOTATOR_ARCH=arm64
+        export PLANNOTATOR_MANIFEST='$PLANNOTATOR_TEST_MANIFEST'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_plannotator
+    "
+
+    # The signal must not be reported as a successful install.
+    [[ "$status" -ne 0 ]]
+    [ "$(find "$HOME/.local/bin" -maxdepth 1 -type d -name '.plannotator.*' | wc -l | tr -d ' ')" -eq 0 ]
 }

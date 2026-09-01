@@ -51,3 +51,80 @@ prefix_rule(
     justification = "Do not force-push from agent sessions.",
     match = ["git push --force"],
 )
+
+# Flag-order and long-form variants of the rules above. Prefix rules match a
+# literal token sequence, so each spelling an agent could reach for needs its
+# own rule.
+
+prefix_rule(
+    pattern = ["rm", "-fr"],
+    decision = "forbidden",
+    justification = "Do not run destructive recursive removals.",
+    match = ["rm -fr build"],
+    not_match = ["rm -f build"],
+)
+
+prefix_rule(
+    pattern = ["rm", "-r", "-f"],
+    decision = "forbidden",
+    justification = "Do not run destructive recursive removals.",
+    match = ["rm -r -f build"],
+    not_match = ["rm -r build"],
+)
+
+prefix_rule(
+    pattern = ["rm", "-f", "-r"],
+    decision = "forbidden",
+    justification = "Do not run destructive recursive removals.",
+    match = ["rm -f -r build"],
+    not_match = ["rm -f build"],
+)
+
+prefix_rule(
+    pattern = ["rm", "--recursive", "--force"],
+    decision = "forbidden",
+    justification = "Do not run destructive recursive removals.",
+    match = ["rm --recursive --force build"],
+)
+
+prefix_rule(
+    pattern = ["rm", "--force", "--recursive"],
+    decision = "forbidden",
+    justification = "Do not run destructive recursive removals.",
+    match = ["rm --force --recursive build"],
+)
+
+prefix_rule(
+    pattern = ["git", "push", "-f"],
+    decision = "forbidden",
+    justification = "Do not force-push from agent sessions.",
+    match = ["git push -f origin main"],
+)
+
+prefix_rule(
+    pattern = ["git", "clean", "-fd"],
+    decision = "forbidden",
+    justification = "Do not delete untracked files destructively.",
+    match = ["git clean -fd"],
+)
+
+prefix_rule(
+    pattern = ["git", "clean", "-df"],
+    decision = "forbidden",
+    justification = "Do not delete untracked files destructively.",
+    match = ["git clean -df"],
+)
+
+prefix_rule(
+    pattern = ["git", "clean", "-xdf"],
+    decision = "forbidden",
+    justification = "Do not delete untracked files destructively.",
+    match = ["git clean -xdf"],
+)
+
+prefix_rule(
+    pattern = ["git", "clean", "--force"],
+    decision = "forbidden",
+    justification = "Do not delete untracked files destructively.",
+    match = ["git clean --force"],
+)

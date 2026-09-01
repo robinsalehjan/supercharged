@@ -417,7 +417,7 @@ main() {
     # Install Claude Code if requested
     if [[ "${INSTALL_CLAUDE_CODE:-Y}" =~ ^[Yy] ]]; then
         log_with_level "INFO" "Installing Claude Code..."
-        install_script=$(curl -fsSL https://claude.ai/install.sh) || {
+        install_script=$(curl -fsSL "${CURL_DOWNLOAD_OPTS[@]}" https://claude.ai/install.sh) || {
             log_with_level "ERROR" "Failed to download Claude Code installer"
             exit 1
         }
