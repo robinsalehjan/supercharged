@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "plugins": {
+    "nodejs": {
+      "policy": "track-line",
+      "line": "24",
+      "match": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "reason": "Active LTS line. A new LTS major is a manual decision, so only patches inside the line move automatically."
+    },
+    "python": {
+      "policy": "track-line",
+      "line": "3.14",
+      "match": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "reason": "Plain CPython builds only. `asdf latest python` resolves to the freethreaded `t` variant, which is not what setup should install."
+    },
+    "ruby": {
+      "policy": "track-line",
+      "line": "3.4",
+      "match": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "reason": "Held on the 3.4 line until the 4.0 line is validated against the tracked gems."
+    },
+    "bundler": {
+      "policy": "latest",
+      "match": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "gcloud": {
+      "policy": "latest",
+      "match": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "firebase": {
+      "policy": "latest",
+      "match": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "java": {
+      "policy": "hold",
+      "reason": "Pinned for the Firebase emulator suite (Firestore rules tests need a JDK 11+ runtime). Move only after validating the emulators."
+    }
+  }
+}

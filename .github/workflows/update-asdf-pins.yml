@@ -1,0 +1,64 @@
+name: Update asdf pins
+
+on:
+  schedule:
+    - cron: '30 8 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-asdf-pins:
+    runs-on: macos-15
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install asdf and the tracked plugins
+        run: |
+          set -euo pipefail
+          brew install asdf
+          # Only the plugin is needed; `asdf list all` never installs a runtime.
+          jq -r '.plugins | keys[]' agent_config/asdf_policy.json | while read -r plugin; do
+            asdf plugin add "$plugin" || true
+          done
+
+      - name: Update asdf pins
+        run: ./scripts/update-asdf-pins.sh --apply
+
+      - name: Open update pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- dot_files/.tool-versions; then
+            echo "asdf pins are current"
+            exit 0
+          fi
+
+          pin_id=$(shasum -a 256 dot_files/.tool-versions | cut -c1-12)
+          branch="chore/update-asdf-pins-${pin_id}"
+          if [ "$(gh pr list --head "$branch" --state all --limit 1 --json number --jq 'length')" != "0" ]; then
+            echo "An asdf pin update pull request already exists"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add dot_files/.tool-versions
+          git commit -m "chore(asdf): refresh stable tool pins"
+          gh auth setup-git
+          git push --set-upstream origin "$branch"
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "chore(asdf): refresh stable tool pins" \
+            --body "Moves asdf runtime pins within the lines declared in \`agent_config/asdf_policy.json\`. Line changes (a new Node.js LTS major, the Ruby 4.x line) and held plugins such as Java stay manual so they move only after validation."

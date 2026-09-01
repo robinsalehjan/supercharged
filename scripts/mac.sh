@@ -91,7 +91,7 @@ install_homebrew() {
             log_with_level "ERROR" "Failed to install Homebrew"
             exit 1
         }
-        eval "$($HOMEBREW_PREFIX/bin/brew shellenv)"
+        eval "$("$HOMEBREW_PREFIX/bin/brew" shellenv)"
     else
         log_with_level "INFO" "Homebrew already installed"
     fi

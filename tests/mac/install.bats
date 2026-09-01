@@ -373,17 +373,22 @@ run_zsh_func() {
 # =============================================================================
 
 @test "parse_tool_versions reads tools from .tool-versions" {
-  run zsh -c "
-    source '$PROJECT_ROOT/scripts/utils.sh'
-    parse_tool_versions '$PROJECT_ROOT/dot_files/.tool-versions'
-    echo \"python=\${TOOL_VERSIONS[python]}\"
-    echo \"nodejs=\${TOOL_VERSIONS[nodejs]}\"
-    echo \"ruby=\${TOOL_VERSIONS[ruby]}\"
-  "
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"python=3.14.7"* ]]
-  [[ "$output" == *"nodejs=24.19.0"* ]]
-  [[ "$output" == *"ruby=3.4.10"* ]]
+  tracked="$PROJECT_ROOT/dot_files/.tool-versions"
+
+  # Read the expected pins from the file under test so a routine pin bump
+  # cannot fail this test.
+  for tool in python nodejs ruby; do
+    pinned=$(awk -v t="$tool" '$1 == t { print $2; exit }' "$tracked")
+    [ -n "$pinned" ]
+
+    run zsh -c "
+      source '$PROJECT_ROOT/scripts/utils.sh'
+      parse_tool_versions '$tracked'
+      echo \"$tool=\${TOOL_VERSIONS[$tool]}\"
+    "
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"$tool=$pinned"* ]]
+  done
 }
 
 @test "parse_tool_versions skips comment lines" {
