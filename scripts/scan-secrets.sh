@@ -41,6 +41,7 @@ for pattern in "${patterns[@]}"; do
         --glob '!node_modules/**' \
         --glob '!package-lock.json' \
         --glob '!*.log' \
+        --glob '!*.log.[0-9]' \
         --glob '!tests/fixtures/**' \
         --glob '!SECURITY.md' \
         --glob '!scripts/scan-secrets.sh' \

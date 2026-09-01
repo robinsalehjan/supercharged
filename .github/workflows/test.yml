@@ -37,11 +37,22 @@ jobs:
     - name: Install test dependencies
       run: |
         set -euo pipefail
-        # Only install what isn't already present on the runner image
+        # Only install what isn't already present on the runner image.
+        # A transient Homebrew/network failure previously turned main red, so
+        # each install gets a bounded retry before the job fails.
         for pkg in actionlint bats-core jq ripgrep shellcheck; do
-          if ! brew list --formula --versions "$pkg" >/dev/null 2>&1; then
-            brew install "$pkg"
+          if brew list --formula --versions "$pkg" >/dev/null 2>&1; then
+            continue
           fi
+          for attempt in 1 2 3; do
+            if brew install "$pkg"; then
+              continue 2
+            fi
+            echo "brew install $pkg failed (attempt $attempt/3)"
+            sleep $(( attempt * 10 ))
+          done
+          echo "::error::Failed to install $pkg after 3 attempts"
+          exit 1
         done
 
     - name: Run shellcheck
