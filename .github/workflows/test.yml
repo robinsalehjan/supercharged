@@ -47,6 +47,9 @@ jobs:
     - name: Run shellcheck
       run: npm run lint
 
+    - name: Audit npm dependencies
+      run: npm run audit:deps
+
     - name: Run secret scan
       run: npm run scan:secrets
 
