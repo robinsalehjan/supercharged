@@ -50,6 +50,7 @@ npm run release -- patch   # Cut a release (patch|minor|major|x.y.z)
 npm test                   # Run all BATS tests
 npm run lint               # ShellCheck, zsh syntax checks, and actionlint
 npm run scan:secrets       # Scan repository paths for likely secrets
+npm run audit:deps         # Fail on high/critical npm advisories
 npm run help               # Show all commands
 ```
 

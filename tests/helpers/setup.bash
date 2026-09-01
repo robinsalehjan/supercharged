@@ -52,3 +52,13 @@ load_fixture() {
   mkdir -p "$(dirname "$destination")"
   cp "$FIXTURE_DIR/$fixture_name" "$destination"
 }
+
+# Read a pin from the repository's managed tool manifest so tests follow
+# version bumps instead of hardcoding them.
+managed_tool_pin() {
+  local filter="$1"
+  local repo_root manifest
+  repo_root="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
+  manifest="$repo_root/agent_config/managed_tools.json"
+  jq -er "$filter" "$manifest"
+}

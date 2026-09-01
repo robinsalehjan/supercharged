@@ -148,17 +148,19 @@ unmock_pipx() {
     [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/pipx"
 }
 
-# Mock code-review-graph
+# Mock code-review-graph. Reports the managed pin by default so the mock stays
+# in sync with agent_config/managed_tools.json; pass a version to override.
 mock_code_review_graph() {
     _ensure_mock_bin_dir
+    local version="${1:-$(managed_tool_pin '.tools["code-review-graph"].version')}"
     if [ -n "${MOCK_BIN_DIR:-}" ]; then
-        cat > "$MOCK_BIN_DIR/code-review-graph" <<'CRGEOF'
+        cat > "$MOCK_BIN_DIR/code-review-graph" <<CRGEOF
 #!/bin/sh
-if [ "$1" = "--version" ]; then
-    echo "code-review-graph 2.3.7"
-elif [ "$1" = "serve" ]; then
+if [ "\$1" = "--version" ]; then
+    echo "code-review-graph $version"
+elif [ "\$1" = "serve" ]; then
     IFS= read -r request
-    printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{},"serverInfo":{"name":"code-review-graph","version":"2.3.7"}}}'
+    printf '%s\\n' '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{},"serverInfo":{"name":"code-review-graph","version":"$version"}}}'
 fi
 exit 0
 CRGEOF
