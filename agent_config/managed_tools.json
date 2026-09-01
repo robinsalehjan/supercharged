@@ -3,21 +3,21 @@
   "tools": {
     "openwiki": {
       "policy": "exact-npm",
-      "version": "0.4.3",
+      "version": "0.5.0",
       "package": "openwiki"
     },
     "plannotator": {
       "policy": "exact-release",
-      "version": "v0.27.9",
+      "version": "v0.27.10",
       "repository": "backnotprop/plannotator",
       "assets": {
         "darwin-arm64": {
           "name": "plannotator-darwin-arm64",
-          "sha256": "3caf0e63ba91f9af454ddb40ebfb05f68da0d9ba588beffed974e98b3e33aef5"
+          "sha256": "35ee0a1c4b5bd26b44ff986b644d14b373d7f612cb05ee8b66a9b02ee2f7f5b2"
         },
         "darwin-x64": {
           "name": "plannotator-darwin-x64",
-          "sha256": "f3fc8dbb481b2c78cd623122aee89aeb4d7a86ad0437a07faf045fb859f6711f"
+          "sha256": "1f4e69db1e8101b9f89e6b8f1282dcd52e35cc9d95e8ef61a75f5eed7cf5bc19"
         }
       }
     },
