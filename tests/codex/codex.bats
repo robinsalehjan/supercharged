@@ -362,6 +362,46 @@ EOF
   [ "$status" -eq 0 ]
 }
 
+@test "codex_config denies flag-order and long-form destructive variants" {
+  rules="$PROJECT_ROOT/codex_config/rules/supercharged.rules"
+
+  # Prefix rules match a literal token sequence, so each reachable spelling of
+  # a destructive command needs its own rule.
+  for pattern in \
+    '["rm", "-fr"]' \
+    '["rm", "-r", "-f"]' \
+    '["rm", "-f", "-r"]' \
+    '["rm", "--recursive", "--force"]' \
+    '["rm", "--force", "--recursive"]' \
+    '["git", "push", "-f"]' \
+    '["git", "clean", "-fd"]' \
+    '["git", "clean", "-df"]' \
+    '["git", "clean", "-xdf"]' \
+    '["git", "clean", "--force"]'; do
+    run grep -F "pattern = $pattern" "$rules"
+    [ "$status" -eq 0 ]
+  done
+}
+
+@test "Claude deny list mirrors the destructive-command variants" {
+  settings="$PROJECT_ROOT/claude_config/settings.json"
+
+  for rule in \
+    'Bash(rm -fr :*)' \
+    'Bash(rm -r -f :*)' \
+    'Bash(rm -f -r :*)' \
+    'Bash(rm --recursive --force :*)' \
+    'Bash(rm --force --recursive :*)' \
+    'Bash(git push *-f *)' \
+    'Bash(git clean *-f*)' \
+    'Bash(curl *|sh)' \
+    'Bash(bash -c *curl *)' \
+    'Bash(zsh -c *wget *)'; do
+    run jq -e --arg rule "$rule" '.permissions.deny | index($rule) != null' "$settings"
+    [ "$status" -eq 0 ]
+  done
+}
+
 @test "translated Codex command deny rules block representative commands when codex is available" {
   if ! command -v codex >/dev/null 2>&1; then
     skip "codex CLI not installed"

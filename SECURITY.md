@@ -7,14 +7,22 @@ This repository is designed to run safely on both personal and work machines. Se
 | Layer | Where | Purpose |
 | --- | --- | --- |
 | Secret scanner | `scripts/scan-secrets.sh` | Flags likely secrets in tracked repository paths. |
+| Dependency audit | `npm run audit:deps` | Fails on high or critical advisories in the npm lockfile. |
 | Shell linting | `npm run lint` | Runs ShellCheck over scripts and test helpers. |
 | BATS tests | `npm test` | Exercises backup, restore, install, validation, and safety behavior. |
-| GitHub Actions | `.github/workflows/test.yml` | Runs lint, secret scan, and BATS on pushes and pull requests. |
+| GitHub Actions | `.github/workflows/test.yml` | Runs lint, dependency audit, secret scan, and BATS on pushes and pull requests. |
 | Codex command rules | `codex_config/rules/*.rules` | Blocks destructive or policy-violating commands in Codex sessions. |
 | Codex hooks | `codex_config/hooks/` and `codex_config/hooks.json` | Restores managed Codex hook behavior, including RTK command rewriting. |
 | Claude plugin config | `claude_config/installed_plugins.json` and `claude_config/settings.json` | Restores Claude Code plugin settings, including Hookify when installed. |
 
 Claude Code Hookify may be installed as part of the backed-up Claude configuration, but this repository does not track local Hookify rule files.
+
+Destructive-command denies are spelled out per variant. Claude permission
+patterns and Codex `prefix_rule` patterns both match literal token sequences, so
+`rm -rf`, `rm -fr`, `rm -r -f`, `rm -f -r`, and the `--recursive`/`--force` long
+forms each carry their own rule, as do `git push --force`/`-f` and the
+`git clean` force spellings. Curl- and wget-to-shell denies cover both the
+spaced and unspaced pipe forms plus the `sh -c "$(curl ...)"` substitution form.
 
 The secret scanner exempts ordinary code-to-code assignments such as `token=args.token`; it continues to flag credential-shaped literal values assigned to API-key, secret, token, and password fields. This keeps generated or vendored implementation code scannable without weakening checks for actual embedded credentials.
 
@@ -58,6 +66,7 @@ npm run scan:secrets
 - Use placeholders in templates (`YOUR_API_KEY_HERE`)
 - Run `npm run lint` before committing
 - Run `npm run scan:secrets` before committing
+- Run `npm run audit:deps` after changing `package.json` or the lockfile
 - Run `npm test` for script or restore-flow changes
 - Follow conventional commits (`feat(scope): message`)
 - Never commit real credentials or large files

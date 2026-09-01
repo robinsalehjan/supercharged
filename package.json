@@ -29,6 +29,7 @@
     "install:plannotator": "./scripts/install-plannotator.sh",
     "install:skills": "./scripts/install-skills.sh",
     "audit:agents": "./scripts/audit-agents.sh",
+    "audit:deps": "npm audit --package-lock-only --audit-level=high",
     "check:mcps": "./scripts/check-mcps.py",
     "lint": "shellcheck --shell=bash --severity=warning scripts/*.sh scripts/utils/*.sh tests/helpers/*.bash codex_config/hooks/*.sh && zsh -n scripts/*.sh scripts/utils/*.sh dot_files/.zshrc dot_files/.zprofile dot_files/.p10k.zsh && actionlint",
     "scan:secrets": "./scripts/scan-secrets.sh",
