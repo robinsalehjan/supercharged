@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "cleanupPeriodDays": 30,
   "env": {
     "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet",
@@ -6,10 +7,13 @@
     "CLAUDE_CODE_ENABLE_TELEMETRY": "0",
     "CLAUDE_CODE_ENABLE_AUTO_MODE": "1",
     "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32000",
-    "ENABLE_TOOL_SEARCH": "true",
-    "MAX_THINKING_TOKENS": "64000"
+    "ENABLE_TOOL_SEARCH": "true"
   },
   "permissions": {
+    "additionalDirectories": [
+      "~/Repositories"
+    ],
+    "blockReadsOutsideWorkingDirectories": true,
     "deny": [
       "Bash(rm -rf :*)",
       "Bash(rm -fr :*)",
@@ -43,10 +47,12 @@
       "Bash(sh -c *wget *)",
       "Bash(bash -c *wget *)",
       "Bash(zsh -c *wget *)",
-      "Read(.env*)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
       "Read(**/.secrets)",
       "Read(**/.secrets/**)",
-      "Edit(.env*)",
+      "Edit(**/.env)",
+      "Edit(**/.env.*)",
       "Edit(**/.secrets)",
       "Edit(**/.secrets/**)"
     ]
@@ -89,13 +95,8 @@
   "effortLevel": "high",
   "tui": "fullscreen",
   "showThinkingSummaries": true,
-  "skipDangerousModePermissionPrompt": true,
   "agentPushNotifEnabled": true,
-  "skipAutoPermissionPrompt": true,
   "autoMode": {
     "classifyAllShell": true
-  },
-  "additionalDirectories": [
-    "~/Repositories"
-  ]
+  }
 }

@@ -114,7 +114,20 @@ sanitize_settings() {
 
   set -o pipefail
   jq "${jq_args[@]}" \
-    "(. + {enabledPlugins: (.enabledPlugins | $plugin_filter)}) | del(.mcpServers, .statusLine) | del(.env[\"GITHUB_PERSONAL_ACCESS_TOKEN\"])" \
+    "(. + {enabledPlugins: (.enabledPlugins | $plugin_filter)}) |
+    .[\"\$schema\"] = \"https://json.schemastore.org/claude-code-settings.json\" |
+    if has(\"additionalDirectories\") then
+      .permissions.additionalDirectories = .additionalDirectories |
+      del(.additionalDirectories)
+    else . end |
+    del(
+      .mcpServers,
+      .statusLine,
+      .skipDangerousModePermissionPrompt,
+      .skipAutoPermissionPrompt,
+      .env.MAX_THINKING_TOKENS
+    ) |
+    del(.env[\"GITHUB_PERSONAL_ACCESS_TOKEN\"])" \
     "$input_file" | sed "s|$ORIGINAL_HOME|\$HOME|g" > "$output_file"
   local result=$?
   set +o pipefail
@@ -299,6 +312,29 @@ sanitize_settings() {
   sanitize_settings "$TEMP_CLAUDE/settings.json" "$TEMP_REPO_CONFIG/settings.json" "${TEST_SANITIZE_MARKETPLACES[@]}"
 
   assert_json_field "$TEMP_REPO_CONFIG/settings.json" 'has("statusLine")' "false"
+}
+
+@test "normalizes durable Claude settings and removes transient state" {
+  load_fixture "claude-backup/settings-full.json" "$TEMP_CLAUDE/settings.json"
+  jq '
+    .additionalDirectories = ["~/Repositories"] |
+    .skipDangerousModePermissionPrompt = true |
+    .skipAutoPermissionPrompt = true |
+    .env.MAX_THINKING_TOKENS = "64000"
+  ' "$TEMP_CLAUDE/settings.json" > "$TEMP_CLAUDE/settings.json.tmp"
+  mv "$TEMP_CLAUDE/settings.json.tmp" "$TEMP_CLAUDE/settings.json"
+
+  sanitize_settings "$TEMP_CLAUDE/settings.json" "$TEMP_REPO_CONFIG/settings.json" "${TEST_SANITIZE_MARKETPLACES[@]}"
+
+  run jq -e '
+    .["$schema"] == "https://json.schemastore.org/claude-code-settings.json" and
+    .permissions.additionalDirectories == ["~/Repositories"] and
+    (has("additionalDirectories") | not) and
+    (has("skipDangerousModePermissionPrompt") | not) and
+    (has("skipAutoPermissionPrompt") | not) and
+    ((.env // {}) | has("MAX_THINKING_TOKENS") | not)
+  ' "$TEMP_REPO_CONFIG/settings.json"
+  [ "$status" -eq 0 ]
 }
 
 @test "handles all vend-plugins removed scenario" {

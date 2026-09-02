@@ -263,9 +263,31 @@ EOF
   ! grep -F '[mcp_servers.XcodeBuildMCP]' "$apple_config"
   ! grep -F '[mcp_servers.xcode]' "$apple_headless_config"
   ! grep -F '[mcp_servers.cupertino]' "$apple_config"
+  grep -F 'model_reasoning_effort = "medium"' "$config"
   grep -F 'model_reasoning_effort = "xhigh"' "$review_config"
   grep -F 'memories = false' "$config"
   grep -F 'web_search = "live"' "$config"
+}
+
+@test "tracked Claude settings use current durable defaults" {
+  settings="$PROJECT_ROOT/claude_config/settings.json"
+
+  run jq -e '
+    .["$schema"] == "https://json.schemastore.org/claude-code-settings.json" and
+    .permissions.additionalDirectories == ["~/Repositories"] and
+    .permissions.blockReadsOutsideWorkingDirectories == true and
+    ([
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Edit(**/.env)",
+      "Edit(**/.env.*)"
+    ] - .permissions.deny | length == 0) and
+    (has("additionalDirectories") | not) and
+    (has("skipDangerousModePermissionPrompt") | not) and
+    (has("skipAutoPermissionPrompt") | not) and
+    ((.env // {}) | has("MAX_THINKING_TOKENS") | not)
+  ' "$settings"
+  [ "$status" -eq 0 ]
 }
 
 @test "tracked Claude configuration retains only language-server fallback plugins" {
