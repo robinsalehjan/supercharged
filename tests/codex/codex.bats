@@ -461,6 +461,25 @@ EOF
   [ "$status" -eq 0 ]
 }
 
+@test "shared AGENTS.md defines the OpenWiki verification hierarchy" {
+  instructions="$PROJECT_ROOT/agent_config/AGENTS.md"
+
+  run grep -F 'Treat an existing `openwiki/` directory as an opt-in repository knowledge layer' "$instructions"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'Use OpenWiki as a secondary verification source, not as a substitute for current source and tests' "$instructions"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'current source and tests are authoritative' "$instructions"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'do not initialize one automatically' "$instructions"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'recommend an update without running it' "$instructions"
+  [ "$status" -eq 0 ]
+}
+
 @test "restore_shared_agent_skills copies canonical skills into Codex" {
   mkdir -p "$TEST_TEMP_DIR/agent_config/skills/review-changes" "$TEST_TEMP_DIR/.codex/skills"
   cat > "$TEST_TEMP_DIR/agent_config/skills/review-changes/SKILL.md" <<'EOF'
