@@ -8,6 +8,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 CODEX_CONFIG_DIR="$PROJECT_ROOT/codex_config"
+CLAUDE_CONFIG_DIR="$PROJECT_ROOT/claude_config"
 AGENT_CONFIG_DIR="$PROJECT_ROOT/agent_config"
 JSON_OUTPUT=false
 REPO_ONLY=false
@@ -154,7 +155,7 @@ if validate_toml_shape "$CODEX_CONFIG_DIR/config.toml" && \
    validate_toml_shape "$CODEX_CONFIG_DIR/apple-headless.config.toml" && \
    validate_toml_shape "$CODEX_CONFIG_DIR/review.config.toml" && \
    rg -q '^web_search = "live"$' "$CODEX_CONFIG_DIR/config.toml" && \
-   rg -q '^model_reasoning_effort = "high"$' "$CODEX_CONFIG_DIR/config.toml" && \
+   rg -q '^model_reasoning_effort = "medium"$' "$CODEX_CONFIG_DIR/config.toml" && \
    rg -q '^hooks = true$' "$CODEX_CONFIG_DIR/config.toml" && \
    rg -q '^memories = false$' "$CODEX_CONFIG_DIR/config.toml" && \
    [ "$base_mcp_names" = "code-review-graph computer-use openaiDeveloperDocs " ] && \
@@ -164,6 +165,26 @@ if validate_toml_shape "$CODEX_CONFIG_DIR/config.toml" && \
     pass "Tracked Codex base, Apple, headless Apple, and review TOML profiles parse with the intended scoped inventory"
 else
     fail "Tracked Codex TOML is malformed, deprecated, or has an invalid profile inventory"
+fi
+
+if jq -e '
+    .["$schema"] == "https://json.schemastore.org/claude-code-settings.json" and
+    .permissions.additionalDirectories == ["~/Repositories"] and
+    .permissions.blockReadsOutsideWorkingDirectories == true and
+    ([
+        "Read(**/.env)",
+        "Read(**/.env.*)",
+        "Edit(**/.env)",
+        "Edit(**/.env.*)"
+    ] - .permissions.deny | length == 0) and
+    (has("additionalDirectories") | not) and
+    (has("skipDangerousModePermissionPrompt") | not) and
+    (has("skipAutoPermissionPrompt") | not) and
+    ((.env // {}) | has("MAX_THINKING_TOKENS") | not)
+' "$CLAUDE_CONFIG_DIR/settings.json" >/dev/null 2>&1; then
+    pass "Tracked Claude settings use the current durable permission and reasoning shape"
+else
+    fail "Tracked Claude settings contain stale, transient, or unsafe defaults"
 fi
 
 if ! rg -q 'web_search = "cached"|js_repl|node_repl|NODE_REPL_TRUSTED' "$CODEX_CONFIG_DIR"; then

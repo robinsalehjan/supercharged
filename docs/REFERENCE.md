@@ -183,7 +183,7 @@ vadimcn.vscode-lldb
 vscode-icons-team.vscode-icons
 ```
 
-The current Codex baseline selects `gpt-5.6-sol`, high reasoning effort, the pragmatic personality, live web search, disabled memories, the `supercharged` permission profile, and the configured status line. Its lean base MCP inventory contains code-review-graph, OpenAI Developer Docs, and disabled Computer Use. Use `codex -p apple` for Apple’s native `xcode` bridge, `codex -p apple-headless` for XcodeBuildMCP outside an open Xcode project, or `codex -p review` for xhigh review reasoning. Axiom is installed only through `npm run install:codex-plugins`, not as a duplicate MCP server. Codex asks for a one-time trust review before Axiom’s bundled hooks can run.
+The current Codex baseline selects `gpt-5.6-sol`, medium reasoning effort, the pragmatic personality, live web search, disabled memories, the `supercharged` permission profile, and the configured status line. Its lean base MCP inventory contains code-review-graph, OpenAI Developer Docs, and disabled Computer Use. Use `codex -p apple` for Apple’s native `xcode` bridge, `codex -p apple-headless` for XcodeBuildMCP outside an open Xcode project, or `codex -p review` for xhigh review reasoning. Axiom is installed only through `npm run install:codex-plugins`, not as a duplicate MCP server. Codex asks for a one-time trust review before Axiom’s bundled hooks can run.
 
 Run `npm run audit:agents` for a local health check, `npm run audit:agents -- --json` for machine-readable output, or `npm run audit:agents -- --repo-only` for deterministic tracked-config validation. Check the native bridge with `npm run audit:agents -- --profile apple`, or XcodeBuildMCP with `npm run audit:agents -- --profile apple-headless`.
 

@@ -72,11 +72,11 @@
   "compatibility": {
     "codex": {
       "minimum_version": "0.148.0",
-      "tested_version": "0.148.0"
+      "tested_version": "0.152.1"
     },
     "claude": {
-      "minimum_version": "2.1.234",
-      "tested_version": "2.1.234"
+      "minimum_version": "2.1.257",
+      "tested_version": "2.1.258"
     },
     "rtk": {
       "minimum_version": "0.45.0",

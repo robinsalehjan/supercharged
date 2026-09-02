@@ -61,17 +61,30 @@ if [ -f "$CLAUDE_HOME/settings.json" ]; then
         env_del_filter="${env_del_filter} | del(.env[\"${env_var}\"])"
     done
 
-    # Preserve all fields except enabledPlugins, then apply sanitized enabledPlugins,
-    # strip sanitized marketplaces, deprecated statusline configuration, and sensitive env vars.
+    # Preserve durable fields, normalize the current settings shape, then strip
+    # machine-managed prompts, deprecated configuration, and sensitive env vars.
     # Write to temp file first to avoid corrupting output on pipeline failure
-    if ! jq -a --argjson plugins "$filtered_plugins" "(. + {enabledPlugins: \$plugins}) | del(.mcpServers, .statusLine)${marketplace_del_filter}${env_del_filter}" <<< "$settings_json" | \
+    if ! jq -a --argjson plugins "$filtered_plugins" "
+        (. + {enabledPlugins: \$plugins}) |
+        .[\"\$schema\"] = \"https://json.schemastore.org/claude-code-settings.json\" |
+        if has(\"additionalDirectories\") then
+            .permissions.additionalDirectories = .additionalDirectories |
+            del(.additionalDirectories)
+        else . end |
+        del(
+            .mcpServers,
+            .statusLine,
+            .skipDangerousModePermissionPrompt,
+            .skipAutoPermissionPrompt,
+            .env.MAX_THINKING_TOKENS
+        )${marketplace_del_filter}${env_del_filter}" <<< "$settings_json" | \
         make_path_portable > "$CLAUDE_CONFIG_DIR/settings.json.tmp"; then
         rm -f "$CLAUDE_CONFIG_DIR/settings.json.tmp"
         log_with_level "ERROR" "Failed to sanitize settings.json - backup aborted"
         exit 1
     fi
     mv "$CLAUDE_CONFIG_DIR/settings.json.tmp" "$CLAUDE_CONFIG_DIR/settings.json"
-    log_with_level "SUCCESS" "Backed up settings.json (sanitized ${#SANITIZE_MARKETPLACES[@]} marketplace(s), removed unmanaged statusLine, stripped ${#SANITIZE_ENV_VARS[@]} env var(s), paths made portable)"
+    log_with_level "SUCCESS" "Backed up settings.json (normalized durable settings, sanitized ${#SANITIZE_MARKETPLACES[@]} marketplace(s), stripped ${#SANITIZE_ENV_VARS[@]} env var(s), paths made portable)"
 else
     log_with_level "WARN" "settings.json not found"
 fi
