@@ -9,7 +9,7 @@ Prerequisites: macOS 12.0+, Xcode Command Line Tools, Oh My Zsh, Node.js 20+ wit
 
 ```bash
 # Clone the latest release (recommended)
-git clone --branch v2.0.0 --depth 1 git@github.com:robinsalehjan/supercharged.git
+git clone --branch v2.1.0 --depth 1 git@github.com:robinsalehjan/supercharged.git
 cd supercharged && npm run setup
 ```
 
