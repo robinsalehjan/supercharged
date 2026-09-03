@@ -673,6 +673,34 @@ setup_plannotator() {
     log_with_level "SUCCESS" "Plannotator $version installed successfully"
 }
 
+# Remove the obsolete Homebrew installation only after the managed release is
+# healthy. The tool remains installed under ~/.local; this removes the competing
+# formula and the tap that is no longer its source of truth.
+cleanup_superseded_xcodebuildmcp_homebrew() {
+    [ "${XCODEBUILDMCP_SKIP_BREW_CLEANUP:-0}" != "1" ] || return 0
+    command_exists brew || return 0
+
+    if brew list --formula xcodebuildmcp >/dev/null 2>&1; then
+        log_with_level "INFO" "Removing the superseded Homebrew XcodeBuildMCP installation"
+        brew uninstall xcodebuildmcp >/dev/null 2>&1 || \
+            brew unlink xcodebuildmcp >/dev/null 2>&1 || true
+    fi
+
+    if brew list --formula xcodebuildmcp >/dev/null 2>&1; then
+        log_with_level "WARN" "Kept superseded Homebrew XcodeBuildMCP because it could not be removed"
+        return 0
+    fi
+
+    brew untrust --formula getsentry/xcodebuildmcp/xcodebuildmcp >/dev/null 2>&1 || true
+    if brew tap 2>/dev/null | grep -Fxq "getsentry/xcodebuildmcp"; then
+        if brew untap getsentry/xcodebuildmcp >/dev/null 2>&1; then
+            log_with_level "SUCCESS" "Removed superseded Homebrew tap: getsentry/xcodebuildmcp"
+        else
+            log_with_level "WARN" "Could not remove superseded Homebrew tap: getsentry/xcodebuildmcp"
+        fi
+    fi
+}
+
 # Setup XcodeBuildMCP from an exact, checksummed upstream release archive.
 setup_xcodebuildmcp() {
     local dry_run=false
@@ -708,11 +736,7 @@ setup_xcodebuildmcp() {
     installed_sha=$(cat "$install_root/.active-archive-sha256" 2>/dev/null || true)
     if [ "$installed_version" = "${version#v}" ] && [ "$installed_sha" = "$expected_sha" ]; then
         if _mcp_server_healthy apple-headless XcodeBuildMCP "$bin_dir"; then
-            if ! $dry_run && [ "${XCODEBUILDMCP_SKIP_BREW_CLEANUP:-0}" != "1" ] && \
-               command_exists brew && brew list --formula xcodebuildmcp >/dev/null 2>&1; then
-                log_with_level "INFO" "Removing the superseded Homebrew XcodeBuildMCP installation"
-                brew uninstall xcodebuildmcp >/dev/null 2>&1 || brew unlink xcodebuildmcp >/dev/null 2>&1 || true
-            fi
+            $dry_run || cleanup_superseded_xcodebuildmcp_homebrew
             log_with_level "INFO" "XcodeBuildMCP $version already installed"
             return 0
         fi
@@ -767,15 +791,11 @@ setup_xcodebuildmcp() {
     ln -sfn "$target_dir/bin/xcodebuildmcp" "$bin_dir/xcodebuildmcp"
     ln -sfn "$target_dir/bin/xcodebuildmcp-doctor" "$bin_dir/xcodebuildmcp-doctor"
     printf '%s\n' "$expected_sha" > "$install_root/.active-archive-sha256"
-    if [ "${XCODEBUILDMCP_SKIP_BREW_CLEANUP:-0}" != "1" ] && \
-       command_exists brew && brew list --formula xcodebuildmcp >/dev/null 2>&1; then
-        log_with_level "INFO" "Removing the superseded Homebrew XcodeBuildMCP installation"
-        brew uninstall xcodebuildmcp >/dev/null 2>&1 || brew unlink xcodebuildmcp >/dev/null 2>&1 || true
-    fi
     if ! _mcp_server_healthy apple-headless XcodeBuildMCP "$bin_dir"; then
         log_with_level "ERROR" "XcodeBuildMCP fails the MCP initialize handshake after installation"
         return 1
     fi
+    cleanup_superseded_xcodebuildmcp_homebrew
     log_with_level "SUCCESS" "XcodeBuildMCP $version installed"
 }
 

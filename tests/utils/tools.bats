@@ -722,6 +722,38 @@ CURLEOF
 
 # --- exact XcodeBuildMCP pin ---
 
+@test "XcodeBuildMCP cleanup removes only the superseded Homebrew source" {
+    export BREW_CALLS_FILE="$TEST_TEMP_DIR/brew-calls"
+
+    run zsh -c '
+        export BREW_CALLS_FILE="'"$BREW_CALLS_FILE"'"
+        xcodebrew_installed=true
+        brew() {
+            if [ "$1" = tap ] && [ "$#" -eq 1 ]; then
+                printf "%s\n" getsentry/xcodebuildmcp
+                return 0
+            fi
+            printf "%s\n" "$*" >> "$BREW_CALLS_FILE"
+            if [ "$1 $2 $3" = "list --formula xcodebuildmcp" ]; then
+                $xcodebrew_installed
+                return
+            fi
+            if [ "$1 $2" = "uninstall xcodebuildmcp" ]; then
+                xcodebrew_installed=false
+            fi
+            return 0
+        }
+        source "'"$PROJECT_ROOT"'/scripts/utils.sh"
+        cleanup_superseded_xcodebuildmcp_homebrew
+    '
+
+    [ "$status" -eq 0 ]
+    grep -Fxq 'list --formula xcodebuildmcp' "$BREW_CALLS_FILE"
+    grep -Fxq 'uninstall xcodebuildmcp' "$BREW_CALLS_FILE"
+    grep -Fxq 'untrust --formula getsentry/xcodebuildmcp/xcodebuildmcp' "$BREW_CALLS_FILE"
+    grep -Fxq 'untap getsentry/xcodebuildmcp' "$BREW_CALLS_FILE"
+}
+
 @test "setup_xcodebuildmcp verifies and installs the exact release archive" {
     archive="$TEST_TEMP_DIR/xcodebuildmcp.tar.gz"
     staging="$TEST_TEMP_DIR/xcodebuildmcp-9.9.9-darwin-arm64"
