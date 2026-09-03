@@ -22,7 +22,7 @@ teardown() {
   [ -x "$SCRIPT" ]
 }
 
-@test "install-plugins.sh fails when claude CLI is missing" {
+@test "install-plugins.sh previews without requiring the Claude CLI" {
   # Ensure no claude in PATH; mock jq so we get past the jq check
   _ensure_mock_bin_dir
   rm -f "$MOCK_BIN_DIR/claude"
@@ -30,8 +30,8 @@ teardown() {
   # Strip system claude from PATH for this test
   run env PATH="$MOCK_BIN_DIR:/usr/bin:/bin" "$SCRIPT" --dry-run
 
-  [ "$status" -ne 0 ]
-  [[ "$output" == *"claude CLI not found"* ]]
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Would install plugin"* ]]
 }
 
 @test "install-plugins.sh --dry-run completes successfully" {
@@ -42,6 +42,14 @@ teardown() {
   [ "$status" -eq 0 ]
   [[ "$output" == *"[dry-run]"* ]]
   [[ "$output" == *"Plugin installation complete"* ]]
+}
+
+@test "install-plugins.sh documents its dry-run contract" {
+  run "$SCRIPT" --help
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Usage:"* ]]
+  [[ "$output" == *"--dry-run"* ]]
 }
 
 @test "install-plugins.sh --dry-run does not call claude" {
@@ -75,11 +83,11 @@ teardown() {
   [[ "$output" == *"Would install plugin"* ]]
 }
 
-@test "install-plugins.sh warns on unknown flag but does not exit" {
+@test "install-plugins.sh rejects an unknown flag" {
   mock_claude
 
   run "$SCRIPT" --bogus-flag --dry-run
-  [ "$status" -eq 0 ]
+  [ "$status" -eq 2 ]
   [[ "$output" == *"Unknown option"* ]]
   [[ "$output" == *"--bogus-flag"* ]]
 }

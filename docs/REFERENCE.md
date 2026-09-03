@@ -15,6 +15,7 @@ npm run restore               # Restore from latest backup
 npm run restore:all           # Restore Claude, Codex, and dotfiles
 npm run restore:all -- --force # Force the all-in-one restore
 npm run backup:all            # Backup Claude and Codex config
+npm run install:agent-tooling # Reconcile shared tooling and both native plugin sets
 npm run install:skills        # Install, update, or safely prune shared git skills
 npm run install:managed-tools # Reconcile exact-pinned local agent tools
 npm run install:openwiki    # Install or update OpenWiki for agent documentation
@@ -23,6 +24,7 @@ npm run update:tool-pins      # Check upstream releases against managed pins
 npm test                      # Run BATS tests
 npm run lint                  # ShellCheck, zsh syntax checks, and actionlint
 npm run scan:secrets          # Scan repository paths for likely secrets
+npm run check:agent-tooling   # Report shared capabilities and detect harness drift
 ```
 
 Run `npm run help` for the complete command list.
@@ -92,6 +94,8 @@ The four graph skills live canonically in `agent_config/skills/<name>/SKILL.md`.
 OpenWiki is available as the `openwiki` CLI. From a repository root, run `openwiki --init` to create its `openwiki/` agent wiki, then `openwiki --update` when a refresh is explicitly wanted. It maintains marked guidance blocks in the root `AGENTS.md` and `CLAUDE.md`; all other content remains user-managed. Its interactive first run stores the selected provider and credentials in `~/.openwiki/.env`, which is local-only and must never be committed or backed up. An existing wiki is an opt-in secondary verification layer for architecture, terminology, invariants, and intended workflows; agents corroborate material claims against current source, tests, and a fresh code-review-graph, report conflicts as stale documentation, and treat source and tests as authoritative. Repositories without `openwiki/` continue normally, and agents do not generate or update a wiki without an explicit user request.
 
 The canonical MCP inventory is: shared code-review-graph and OpenAI Developer Docs; Codex-native Axiom plugin; the `xcode` bridge in the Apple profile; XcodeBuildMCP in the headless Apple profile; and optional disabled Computer Use. Claude user-local MCP entries are preserved during restore and never imported by backup. Local MCP executables are exact-pinned where this repository controls installation. The hosted OpenAI Developer Docs MCP has no local executable to pin; native Xcode MCP follows the selected Xcode installation.
+
+`npm run install:agent-tooling` is the harness-neutral reconciliation entry point. It installs the shared host CLIs and shared skills first, then invokes the native Claude and Codex marketplace installers when those harnesses are available. Its dry-run previews both desired plugin sets even when a client is not installed; use `-- --harness claude` or `-- --harness codex` to target one adapter. `npm run check:agent-tooling` reports the composed inventory and fails when shared MCP definitions or generated Claude skill mirrors drift from their canonical definitions. Harness-native plugins remain intentionally different.
 
 The weekly `update-managed-tool-pins.yml` workflow checks exact releases and immutable remote refs, then opens one reviewable pull request when they change. Run `npm run update:tool-pins` locally to check, or add `-- --apply` to update the tracked pins. Compatibility floors move manually only after the newer clients have passed this repository’s validation.
 

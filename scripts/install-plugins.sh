@@ -11,8 +11,7 @@
 #   ./install-plugins.sh          # Install all marketplaces and plugins
 #   ./install-plugins.sh --dry-run  # Show what would be installed
 
-set -e
-set -o pipefail
+set -euo pipefail
 
 source "$(dirname "$0")/utils.sh"
 
@@ -21,6 +20,12 @@ CLAUDE_CONFIG_DIR="$PROJECT_ROOT/claude_config"
 CLAUDE_HOME="${CLAUDE_HOME:-$HOME/.claude}"
 DRY_RUN=false
 
+show_help() {
+    echo "Usage: $(basename "$0") [--dry-run]"
+    echo ""
+    echo "Install or verify managed Claude marketplaces and plugins."
+}
+
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -28,15 +33,20 @@ while [[ $# -gt 0 ]]; do
             DRY_RUN=true
             shift
             ;;
+        -h|--help)
+            show_help
+            exit 0
+            ;;
         *)
-            log_with_level "WARN" "Unknown option: $1"
-            shift
+            log_with_level "ERROR" "Unknown option: $1"
+            show_help
+            exit 2
             ;;
     esac
 done
 
 # Verify prerequisites
-if ! command_exists claude; then
+if [ "$DRY_RUN" = false ] && ! command_exists claude; then
     log_with_level "ERROR" "claude CLI not found — install Claude Code first"
     exit 1
 fi

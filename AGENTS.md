@@ -53,7 +53,7 @@ npm run setup                 # Fresh install (interactive)
 npm run restore:dotfiles         # Copy managed dotfiles to $HOME; reapply Worktrunk integration
 
 # Updates
-# npm run update runs: restore:dotfiles → install:skills → install:codex-plugins → update.sh
+# npm run update runs: restore:dotfiles → install:agent-tooling → update.sh
 npm run update                    # Update all components (brew, asdf, zsh, npm, pip)
 npm run update:dry-run            # Preview outdated brew/npm packages (read-only)
 npm run update:only -- <comp>     # Sync dotfiles/skills + update one component (brew, asdf, zsh, npm, pip)
@@ -62,6 +62,7 @@ npm run update:only -- <comp>     # Sync dotfiles/skills + update one component 
 npm run validate              # Verify all tools installed correctly
 npm run check:mcps            # Complete initialize handshake for enabled base MCPs
 npm run check:mcps -- --profile apple-headless # Include profile-specific MCPs
+npm run check:agent-tooling   # Report shared capabilities and detect harness drift
 npm run restore               # Restore from latest backup
 
 # Claude Code Configuration
@@ -78,6 +79,8 @@ npm run install:plugins           # Install all marketplaces and plugins via cla
 npm run install:plugins -- --dry-run # Preview what would be installed
 npm run install:codex-plugins     # Install or refresh Axiom through the Codex plugin marketplace
 npm run install:codex-plugins -- --dry-run # Preview managed Codex plugin work
+npm run install:agent-tooling     # Reconcile shared CLIs/skills and both native plugin sets
+npm run install:agent-tooling -- --dry-run # Preview complete agent tooling reconciliation
 npm run install:managed-tools     # Reconcile exact-pinned local agent tools
 npm run install:managed-tools -- --dry-run # Inspect managed tool drift
 npm run install:plannotator       # Install/update the checksum-pinned Plannotator binary

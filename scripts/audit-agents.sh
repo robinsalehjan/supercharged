@@ -204,6 +204,13 @@ else
     fail "Shared MCP inventory has duplicate, misplaced, or malformed servers"
 fi
 
+if [ -x "$SCRIPT_DIR/check-agent-tooling.py" ] && \
+   "$SCRIPT_DIR/check-agent-tooling.py" --json | jq -e '.ok == true' >/dev/null 2>&1; then
+    pass "Shared agent CLIs, MCP adapters, and skills compose without harness drift"
+else
+    fail "Shared agent tooling adapters have drifted; run npm run check:agent-tooling"
+fi
+
 if [ -x "$SCRIPT_DIR/check-mcps.py" ] && \
    [ "$(jq -r '.scripts["check:mcps"]' "$PROJECT_ROOT/package.json")" = "./scripts/check-mcps.py" ]; then
     pass "MCP initialize health checker is executable and exposed through npm"
