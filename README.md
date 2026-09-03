@@ -38,7 +38,9 @@ npm run restore:dotfiles   # Copy dotfiles and reapply Worktrunk shell integrati
 npm run backup:all         # Backup Claude Code and Codex config
 npm run backup:claude      # Backup Claude Code config
 npm run backup:codex       # Backup Codex config, hooks, RTK, and skills
+npm run install:agent-tooling # Reconcile shared tooling and both native plugin sets
 npm run install:plugins    # Install all Claude Code plugins
+npm run install:codex-plugins # Install or refresh managed Codex plugins
 npm run install:managed-tools # Reconcile exact-pinned local agent tools
 npm run install:openwiki    # Install or update OpenWiki for agent documentation
 npm run install:plannotator # Install or update the checksum-pinned Plannotator binary
@@ -52,6 +54,7 @@ npm test                   # Run all BATS tests
 npm run lint               # ShellCheck, zsh syntax checks, and actionlint
 npm run scan:secrets       # Scan repository paths for likely secrets
 npm run audit:deps         # Fail on high/critical npm advisories
+npm run check:agent-tooling # Report shared capabilities and detect harness drift
 npm run help               # Show all commands
 ```
 

@@ -14,20 +14,18 @@ teardown() {
   teardown_test_env
 }
 
-@test "normal update paths reconcile retired shared skills" {
+@test "normal update paths reconcile complete agent tooling" {
   update_script=$(jq -r '.scripts.update' "$PROJECT_ROOT/package.json")
   update_only_script=$(jq -r '.scripts["update:only"]' "$PROJECT_ROOT/package.json")
 
-  [[ "$update_script" == *"npm run install:skills"* ]]
-  [[ "$update_only_script" == *"npm run install:skills"* ]]
-  [[ "$update_script" == *"npm run install:managed-tools"* ]]
-  [[ "$update_only_script" == *"npm run install:managed-tools"* ]]
+  [[ "$update_script" == *"npm run install:agent-tooling"* ]]
+  [[ "$update_only_script" == *"npm run install:agent-tooling"* ]]
 }
 
 @test "update dry-run checks managed tools without changing them" {
   update_script=$(jq -r '.scripts["update:dry-run"]' "$PROJECT_ROOT/package.json")
 
-  [[ "$update_script" == *"npm run install:managed-tools -- --dry-run"* ]]
+  [[ "$update_script" == *"npm run install:agent-tooling -- --dry-run"* ]]
 }
 
 @test "managed tool pins have a dedicated update command" {

@@ -15,6 +15,7 @@ fi
 typeset -a setup_args
 $DRY_RUN && setup_args=(--dry-run) || setup_args=()
 
+setup_openwiki "${setup_args[@]}"
 setup_plannotator "${setup_args[@]}"
 setup_code_review_graph "${setup_args[@]}"
 
