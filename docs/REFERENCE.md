@@ -68,7 +68,7 @@ Setup stores interactive choices in `~/.supercharged_preferences`.
 The Homebrew Bundle baseline is defined by `build_brewfile` in `scripts/mac.sh`. Its always-installed core includes:
 
 - Package and shell tooling: `bash`, `coreutils`, `git`, `curl`, `asdf`, `keychain`, `tmux`, `ripgrep`, `tree`, `aria2`.
-- Development utilities: `gh`, `jq`, `shellcheck`, `actionlint`, `bats-core`, `duckdb`, `sqlite`, `btop`, `htop`, `mas`, `pipx`, `uv`, `hey`, `watch`, build libraries, and database client libraries mirrored from the personal machine.
+- Development utilities: `gh`, `jq`, `shellcheck`, `actionlint`, `bats-core`, Danger JS, Danger Swift, `duckdb`, `sqlite`, `btop`, `htop`, `mas`, `pipx`, `uv`, `hey`, `watch`, build libraries, and database client libraries mirrored from the personal machine.
 - AI and agent tools: `codex`, `ollama`, `omlx`, `replicate`, `rtk`, `worktrunk`, and OpenWiki. ChatGPT and CodexBar are included when `INSTALL_CODEX_APP=Y`.
 - Applications: Visual Studio Code, Slack, Raycast, Reveal, Spotify, Mullvad VPN.
 - Fonts: JetBrainsMono Nerd Font.
@@ -79,7 +79,7 @@ The Homebrew Bundle baseline is defined by `build_brewfile` in `scripts/mac.sh`.
 
 The `omlx` CLI above is scripted via its own tap. Its optional menu bar app (`oMLX.app`) has no Homebrew cask — download the `.dmg` for your macOS version from [github.com/jundot/omlx/releases](https://github.com/jundot/omlx/releases) and drag it into `/Applications` manually. If its installer offers to add a shell PATH entry for its bundled CLI shim, decline it — the Homebrew-installed `omlx` is already on PATH and having two competing binaries just causes ambiguity.
 
-Conditional Brewfile groups add iOS, container, cloud (`hashicorp/tap/terraform`), network, and extra application tooling according to the setup preferences above. Dedicated setup helpers install Claude Code and the exact-pinned OpenWiki, Plannotator, code-review-graph, XcodeBuildMCP, and Obscura. OpenWiki installs from npm after the managed Node.js runtime is active. `agent_config/managed_tools.json` is the desired-state source for the exact-pinned tools, including OpenWiki. Release archives verify architecture-specific SHA-256 values before installation; code-review-graph and OpenWiki use exact package versions. XcodeBuildMCP installs under `~/.local/share/supercharged/` and removes the superseded Homebrew formula so a later `brew upgrade` cannot shadow the pin. Run `npm run install:openwiki` or `npm run install:managed-tools` to reconcile the relevant pinned tools; add `-- --dry-run` to inspect drift.
+Conditional Brewfile groups add iOS, container, cloud (`hashicorp/tap/terraform`), network, and extra application tooling according to the setup preferences above. Third-party Homebrew entries grant formula-level trust only; setup and updates also remove known retired taps when they no longer provide an installed item. Dedicated setup helpers install Claude Code and the exact-pinned OpenWiki, Plannotator, code-review-graph, XcodeBuildMCP, and Obscura. OpenWiki installs from npm after the managed Node.js runtime is active. `agent_config/managed_tools.json` is the desired-state source for the exact-pinned tools, including OpenWiki. Release archives verify architecture-specific SHA-256 values before installation; code-review-graph and OpenWiki use exact package versions. XcodeBuildMCP installs under `~/.local/share/supercharged/` and removes its superseded Homebrew formula and tap only after the managed release passes its MCP health check, so a later `brew upgrade` cannot shadow the pin. Run `npm run install:openwiki` or `npm run install:managed-tools` to reconcile the relevant pinned tools; add `-- --dry-run` to inspect drift.
 
 asdf-managed tools are listed in `dot_files/.tool-versions`, including Node.js, Python, Ruby, Bundler, gcloud, Firebase CLI, and optional JVM pins.
 
@@ -261,7 +261,7 @@ Edit `dot_files/.zshrc`, `dot_files/.tmux.conf`, and `dot_files/.p10k.zsh` for s
 
 Edit `agent_config/AGENTS.md` for shared Claude/Codex instructions. Keep the tracked Claude user registry empty unless a compatibility requirement warrants a sanitized entry. For shared project servers, edit `.mcp.json` and add the compatible Codex entry together; put Apple-only servers in the appropriate `codex_config/apple*.config.toml` profile.
 
-`npm run update:dry-run` is non-mutating: it suppresses Homebrew auto-update, skips `brew update`, and skips cleanup. It reports outdated Homebrew formulae, casks, and global npm packages, then exits before asdf, zsh, npm, or pip updates.
+`npm run update:dry-run` is non-mutating: it suppresses Homebrew auto-update, reports the tap trust and retirement actions it would take, skips `brew update` and cleanup, and reports outdated Homebrew formulae, casks, and global npm packages before exiting ahead of asdf, zsh, npm, or pip updates.
 
 ## Terminal Font
 
