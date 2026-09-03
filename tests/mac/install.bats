@@ -131,6 +131,9 @@ run_zsh_func() {
   [[ "$output" == *'cask "codexbar"'* ]]
   [[ "$output" == *'tap "replicate/tap"'* ]]
   [[ "$output" == *'brew "replicate/tap/replicate"'* ]]
+  [[ "$output" == *'tap "danger/tap", trusted: { formulae: ["danger-js", "danger-swift"] }'* ]]
+  [[ "$output" == *'brew "danger/tap/danger-js"'* ]]
+  [[ "$output" == *'brew "danger/tap/danger-swift"'* ]]
   [[ "$output" != *'cupertino'* ]]
   [[ "$output" == *'tap "jundot/omlx", "https://github.com/jundot/omlx"'* ]]
   [[ "$output" == *'cask "ollama"'* ]]
@@ -203,6 +206,9 @@ run_zsh_func() {
   [[ "$output" == *'swiftformat'* ]]
   [[ "$output" == *'ios-deploy'* ]]
   [[ "$output" == *'periphery'* ]]
+  [[ "$output" == *'tap "xcodesorg/made", trusted: { formula: "xcodes" }'* ]]
+  [[ "$output" != *'tap "peripheryapp/periphery"'* ]]
+  [[ "$output" != *'tap "thoughtbot/formulae"'* ]]
   [[ "$output" != *'xcodebuildmcp'* ]]
   run rg -F 'setup_xcodebuildmcp' "$PROJECT_ROOT/scripts/mac.sh"
   [ "$status" -eq 0 ]
@@ -254,7 +260,7 @@ run_zsh_func() {
     build_brewfile
   "
   [ "$status" -eq 0 ]
-  [[ "$output" == *'tap "hashicorp/tap"'* ]]
+  [[ "$output" == *'tap "hashicorp/tap", trusted: { formula: "terraform" }'* ]]
   [[ "$output" == *'hashicorp/tap/terraform'* ]]
 }
 
@@ -266,6 +272,7 @@ run_zsh_func() {
     build_brewfile
   "
   [ "$status" -eq 0 ]
+  [[ "$output" != *'tap "hashicorp/tap"'* ]]
   [[ "$output" != *'hashicorp/tap/terraform'* ]]
 }
 

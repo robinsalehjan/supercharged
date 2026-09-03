@@ -128,6 +128,10 @@ main() {
     # Check internet connectivity before attempting updates
     require_internet || exit 1
 
+    if ! $SKIP_BREW || ! $SKIP_CASK; then
+        reconcile_homebrew_taps "$DRY_RUN"
+    fi
+
     # Show outdated packages report
     log_with_level "INFO" "Checking for outdated packages..."
     echo ""

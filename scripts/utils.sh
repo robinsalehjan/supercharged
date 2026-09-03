@@ -57,6 +57,7 @@ _source_submodule() {
 
 _source_submodule "$UTILS_SCRIPT_DIR/utils/logging.sh" || return 1
 _source_submodule "$UTILS_SCRIPT_DIR/utils/json.sh" || return 1
+_source_submodule "$UTILS_SCRIPT_DIR/utils/homebrew.sh" || return 1
 _source_submodule "$UTILS_SCRIPT_DIR/utils/codex.sh" || return 1
 _source_submodule "$UTILS_SCRIPT_DIR/utils/validation.sh" || return 1
 _source_submodule "$UTILS_SCRIPT_DIR/utils/backup.sh" || return 1

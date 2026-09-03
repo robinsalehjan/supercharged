@@ -101,10 +101,9 @@ build_brewfile() {
     # Note: homebrew/services and homebrew/bundle are now built into core brew,
     # so they no longer need to be tapped explicitly. Tapping them produces
     # deprecation warnings on brew 5.1.11+.
-    local content='tap "thoughtbot/formulae"
-tap "replicate/tap"
-tap "jundot/omlx", "https://github.com/jundot/omlx"
-tap "hashicorp/tap"
+    local content='tap "danger/tap", trusted: { formulae: ["danger-js", "danger-swift"] }
+tap "replicate/tap", trusted: { formula: "replicate" }
+tap "jundot/omlx", "https://github.com/jundot/omlx", trusted: { formula: "omlx" }
 
 brew "bash"
 brew "coreutils"
@@ -140,7 +139,9 @@ brew "tree"
 brew "ripgrep"
 brew "tmux"
 brew "gh"
-brew "replicate/tap/replicate", trusted: true
+brew "danger/tap/danger-js"
+brew "danger/tap/danger-swift"
+brew "replicate/tap/replicate"
 brew "shellcheck"
 brew "actionlint"
 brew "jq"
@@ -154,7 +155,7 @@ brew "htop"
 # its bundled CLI onto PATH, so `brew "ollama"` is not needed alongside it
 # (both would try to own the same `ollama` binary symlink).
 cask "ollama"
-brew "jundot/omlx/omlx", trusted: true
+brew "jundot/omlx/omlx"
 cask "codex"
 brew "pipx"
 brew "uv"
@@ -171,19 +172,18 @@ cask \"codexbar\""
 
     if [[ "${INSTALL_IOS_TOOLS:-Y}" =~ ^[Yy] ]]; then
         content="$content
-tap \"xcodesorg/made\"
-brew \"xcodesorg/made/xcodes\", trusted: true
+tap \"xcodesorg/made\", trusted: { formula: \"xcodes\" }
+brew \"xcodesorg/made/xcodes\"
 brew \"xcode-build-server\"
 brew \"xcbeautify\"
 brew \"swiftlint\"
 brew \"swift-format\"
 brew \"swiftformat\"
 brew \"ios-deploy\"
-tap \"peripheryapp/periphery\"
 # Formula only — do NOT also install \`brew install --cask periphery\`. The cask
 # ships an older standalone build and its presence prevents \`brew\` from linking
 # the formula's \`periphery\` binary into /opt/homebrew/bin, breaking PATH lookup.
-brew \"periphery\", trusted: true"
+brew \"periphery\""
     fi
 
     if [[ "${INSTALL_DEV_TOOLS:-Y}" =~ ^[Yy] ]]; then
@@ -196,7 +196,8 @@ brew \"kubernetes-cli\""
 
     if [[ "${INSTALL_CLOUD_TOOLS:-Y}" =~ ^[Yy] ]]; then
         content="$content
-brew \"hashicorp/tap/terraform\", trusted: true"
+tap \"hashicorp/tap\", trusted: { formula: \"terraform\" }
+brew \"hashicorp/tap/terraform\""
     fi
 
     content="$content
@@ -307,6 +308,7 @@ main() {
     check_version "python3" "$python_version"
 
     install_homebrew
+    reconcile_homebrew_taps
 
     log_with_level "INFO" "Updating Homebrew formulae..."
     brew update --force # https://github.com/Homebrew/brew/issues/1151
