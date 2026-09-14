@@ -3,21 +3,21 @@
   "tools": {
     "openwiki": {
       "policy": "exact-npm",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "package": "openwiki"
     },
     "plannotator": {
       "policy": "exact-release",
-      "version": "v0.27.10",
+      "version": "v0.27.14",
       "repository": "backnotprop/plannotator",
       "assets": {
         "darwin-arm64": {
           "name": "plannotator-darwin-arm64",
-          "sha256": "35ee0a1c4b5bd26b44ff986b644d14b373d7f612cb05ee8b66a9b02ee2f7f5b2"
+          "sha256": "1e9f70f454d393028f2d6fe12da8aaab931b3591fd341aad34280ff1981ea4d0"
         },
         "darwin-x64": {
           "name": "plannotator-darwin-x64",
-          "sha256": "1f4e69db1e8101b9f89e6b8f1282dcd52e35cc9d95e8ef61a75f5eed7cf5bc19"
+          "sha256": "8c6c93abee26e814af4b9d1d7720ca93b133eb824b8acd984ddd9c3141c61479"
         }
       }
     },
@@ -47,23 +47,23 @@
     },
     "obscura": {
       "policy": "exact-release",
-      "version": "v0.2.1",
+      "version": "v0.2.2",
       "repository": "h4ckf0r0day/obscura",
       "assets": {
         "darwin-arm64": {
           "name": "obscura-aarch64-macos.tar.gz",
-          "sha256": "5233da6426ec16667d7e4374b824189c6dfb3b325e5cf3fb5f04c7bc48b52a0f",
+          "sha256": "607471654d0c23799abd3bf45d1f4afd314a11fdbe1ee376e29018f32a2dfab9",
           "binaries": {
-            "obscura": "6d07bced7d92f52f955b1407e817100bd649bcf08481d056f80fa4863a0b515a",
-            "obscura-worker": "c1c012a69f840f93b68aad925229b5a5d8cac5bf5d1010b980dd686132595ba2"
+            "obscura": "9e14e821fca149698b7dbf21c4e61a727b1032469660f2459792f18bbc2b2b4b",
+            "obscura-worker": "58dda6dca9c9031eb406380f09880027e19129c72dfd89437a1c11a65669bd96"
           }
         },
         "darwin-x64": {
           "name": "obscura-x86_64-macos.tar.gz",
-          "sha256": "e6d0f8719998fa4460bccc712b20a1e524717d5c54e943f345227bd893ec9620",
+          "sha256": "a60ad71a9e8d6ab1b8f51d3ddca8e043178b9c03c704719d6e717f77ead3ee43",
           "binaries": {
-            "obscura": "0c98b5a5742ce912ec01483f58a53b366e3761c91258f518be4016dcb996f41c",
-            "obscura-worker": "96f9b1819a9fe811b0bf972e5af32a5b4ef5c9751fa53f83b216224a08871e35"
+            "obscura": "a012754c8ed86721315eaaadb32c67562fe191bc78478fc89d5e3c9208e1d149",
+            "obscura-worker": "9fca0b8eadcab9ffa774eaf60e98e0e016490cf4ca79c79616a3658d222c9437"
           }
         }
       }
