@@ -3,27 +3,27 @@
   "tools": {
     "openwiki": {
       "policy": "exact-npm",
-      "version": "0.5.0",
+      "version": "0.5.2",
       "package": "openwiki"
     },
     "plannotator": {
       "policy": "exact-release",
-      "version": "v0.27.10",
+      "version": "v0.27.16",
       "repository": "backnotprop/plannotator",
       "assets": {
         "darwin-arm64": {
           "name": "plannotator-darwin-arm64",
-          "sha256": "35ee0a1c4b5bd26b44ff986b644d14b373d7f612cb05ee8b66a9b02ee2f7f5b2"
+          "sha256": "85506f4ecb46529278e27dd535663391dac44ade6e35cf638e5655ce13a0ac03"
         },
         "darwin-x64": {
           "name": "plannotator-darwin-x64",
-          "sha256": "1f4e69db1e8101b9f89e6b8f1282dcd52e35cc9d95e8ef61a75f5eed7cf5bc19"
+          "sha256": "7dca4543cbb907010947c32ceb1c81d34522622dea9a1e61e89bafc2eb88b974"
         }
       }
     },
     "code-review-graph": {
       "policy": "exact-pypi",
-      "version": "2.3.8",
+      "version": "2.3.9",
       "package": "code-review-graph",
       "extras": [
         "embeddings",
@@ -47,23 +47,23 @@
     },
     "obscura": {
       "policy": "exact-release",
-      "version": "v0.2.1",
+      "version": "v0.2.3",
       "repository": "h4ckf0r0day/obscura",
       "assets": {
         "darwin-arm64": {
           "name": "obscura-aarch64-macos.tar.gz",
-          "sha256": "5233da6426ec16667d7e4374b824189c6dfb3b325e5cf3fb5f04c7bc48b52a0f",
+          "sha256": "45653cfad226f1c9b415603a2ed59477fcbd6335c742338ce133c05de0bdd056",
           "binaries": {
-            "obscura": "6d07bced7d92f52f955b1407e817100bd649bcf08481d056f80fa4863a0b515a",
-            "obscura-worker": "c1c012a69f840f93b68aad925229b5a5d8cac5bf5d1010b980dd686132595ba2"
+            "obscura": "00147fbb440acc0272cf1726e2291c748df1a23c90dfc430097d76f87c377711",
+            "obscura-worker": "070ec6ad01e8f1dbb8e066cde5d47302f7a240daaef78e55c7aa7e08745f0c4e"
           }
         },
         "darwin-x64": {
           "name": "obscura-x86_64-macos.tar.gz",
-          "sha256": "e6d0f8719998fa4460bccc712b20a1e524717d5c54e943f345227bd893ec9620",
+          "sha256": "d7c48122debc2ad9b24842df44560860dba765ea928b3f636b7f053225245116",
           "binaries": {
-            "obscura": "0c98b5a5742ce912ec01483f58a53b366e3761c91258f518be4016dcb996f41c",
-            "obscura-worker": "96f9b1819a9fe811b0bf972e5af32a5b4ef5c9751fa53f83b216224a08871e35"
+            "obscura": "9dc2aa87cd49dd31cd12318d68b8a903f2a18c0bc8be9a3a0a6251dc98d075d1",
+            "obscura-worker": "e54255471833819c2d83c548c0db8ec70b5c9f5456dc66b521e3c970ed8c1c51"
           }
         }
       }
