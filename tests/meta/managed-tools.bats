@@ -24,6 +24,8 @@ write_other_fixtures() {
   xv=$(jq -r '.tools.xcodebuildmcp.version' "$MANIFEST")
   ov=$(jq -r '.tools.obscura.version' "$MANIFEST")
   wv=$(jq -r '.tools.openwiki.version' "$MANIFEST")
+  pwv=$(jq -r '.tools["playwright-cli"].version' "$MANIFEST")
+  pmv=$(jq -r '.tools["playwright-mcp"].version' "$MANIFEST")
   ac=$(jq -r '.marketplaces[0].ref' "$PLUGIN_REGISTRY")
   av=$(jq -r '.plugins[0].version' "$PLUGIN_REGISTRY")
   printf '{"info":{"version":"%s"}}\n' "$crg" > "$CRG_JSON"
@@ -42,6 +44,8 @@ write_other_fixtures() {
   printf '{"sha":"%s"}\n' "$ac" > "$AXIOM_JSON"
   printf '{"version":"%s"}\n' "$av" > "$AXIOM_PLUGIN_JSON"
   OPENWIKI_VERSION="$wv"
+  PLAYWRIGHT_CLI_VERSION="$pwv"
+  PLAYWRIGHT_MCP_VERSION="$pmv"
 }
 
 run_updater() {
@@ -51,6 +55,8 @@ run_updater() {
     AXIOM_COMMIT_JSON="$AXIOM_JSON" \
     AXIOM_PLUGIN_JSON="$AXIOM_PLUGIN_JSON" \
     OPENWIKI_NPM_VERSION="$OPENWIKI_VERSION" \
+    PLAYWRIGHT_CLI_NPM_VERSION="$PLAYWRIGHT_CLI_VERSION" \
+    PLAYWRIGHT_MCP_NPM_VERSION="$PLAYWRIGHT_MCP_VERSION" \
     OBSCURA_ARCHIVES_DIR="${OBSCURA_ARCHIVES_DIR:-}" "$UPDATE_SCRIPT" "$@"
 }
 
@@ -155,6 +161,28 @@ EOF
 
   [ "$status" -eq 0 ]
   run jq -e '.tools.openwiki.version == "9.9.9"' "$MANIFEST"
+  [ "$status" -eq 0 ]
+}
+
+@test "managed tool pin updater applies a Playwright CLI release" {
+  write_current_release
+  PLAYWRIGHT_CLI_VERSION="9.9.9"
+
+  run run_updater --apply
+
+  [ "$status" -eq 0 ]
+  run jq -e '.tools["playwright-cli"].version == "9.9.9"' "$MANIFEST"
+  [ "$status" -eq 0 ]
+}
+
+@test "managed tool pin updater applies a Playwright MCP release" {
+  write_current_release
+  PLAYWRIGHT_MCP_VERSION="9.9.9"
+
+  run run_updater --apply
+
+  [ "$status" -eq 0 ]
+  run jq -e '.tools["playwright-mcp"].version == "9.9.9"' "$MANIFEST"
   [ "$status" -eq 0 ]
 }
 

@@ -54,6 +54,11 @@ args = ["mcp"]
 cwd = "."
 enabled = false
 
+[mcp_servers.playwright]
+command = "playwright-mcp"
+args = ["--headless"]
+enabled = false
+
 [tui]
 status_line = ["model-with-reasoning", "current-dir", "git-branch", "branch-changes", "context-remaining"]
 status_line_use_colors = true

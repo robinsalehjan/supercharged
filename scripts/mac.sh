@@ -173,6 +173,7 @@ cask \"codexbar\""
     if [[ "${INSTALL_IOS_TOOLS:-Y}" =~ ^[Yy] ]]; then
         content="$content
 tap \"xcodesorg/made\", trusted: { formula: \"xcodes\" }
+tap \"mobai-app/tap\", trusted: { formula: \"simslim\" }
 brew \"xcodesorg/made/xcodes\"
 brew \"xcode-build-server\"
 brew \"xcbeautify\"
@@ -180,6 +181,7 @@ brew \"swiftlint\"
 brew \"swift-format\"
 brew \"swiftformat\"
 brew \"ios-deploy\"
+brew \"mobai-app/tap/simslim\"
 # Formula only — do NOT also install \`brew install --cask periphery\`. The cask
 # ships an older standalone build and its presence prevents \`brew\` from linking
 # the formula's \`periphery\` binary into /opt/homebrew/bin, breaking PATH lookup.
@@ -415,6 +417,8 @@ main() {
     # Install OpenWiki after the managed Node.js runtime is active. It is an
     # npm-distributed CLI that creates documentation intended for coding agents.
     setup_openwiki
+    setup_playwright_cli
+    setup_playwright_mcp
 
     # Install Claude Code if requested
     if [[ "${INSTALL_CLAUDE_CODE:-Y}" =~ ^[Yy] ]]; then

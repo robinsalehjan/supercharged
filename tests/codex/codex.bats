@@ -252,6 +252,11 @@ EOF
   run grep -F '[mcp_servers.openaiDeveloperDocs]' "$config"
   [ "$status" -eq 0 ]
 
+  run grep -F '[mcp_servers.playwright]' "$config"
+  [ "$status" -eq 0 ]
+  run grep -F 'command = "playwright-mcp"' "$config"
+  [ "$status" -eq 0 ]
+
   run grep -F '[mcp_servers.XcodeBuildMCP]' "$apple_headless_config"
   [ "$status" -eq 0 ]
 
@@ -262,6 +267,8 @@ EOF
   ! grep -F '[mcp_servers.XcodeBuildMCP]' "$config"
   ! grep -F '[mcp_servers.XcodeBuildMCP]' "$apple_config"
   ! grep -F '[mcp_servers.xcode]' "$apple_headless_config"
+  ! grep -F '[mcp_servers.playwright]' "$apple_config"
+  ! grep -F '[mcp_servers.playwright]' "$apple_headless_config"
   ! grep -F '[mcp_servers.cupertino]' "$apple_config"
   grep -F 'model_reasoning_effort = "medium"' "$config"
   grep -F 'model_reasoning_effort = "xhigh"' "$review_config"
@@ -451,7 +458,13 @@ EOF
   run grep -F 'RTK wrappers' "$instructions"
   [ "$status" -eq 0 ]
 
+  run grep -F 'Use Playwright CLI or Playwright MCP for browser-based web verification' "$instructions"
+  [ "$status" -eq 0 ]
+
   run grep -F 'XcodeBuildMCP tools' "$instructions"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'Use SimSlim for iOS simulator resource trimming' "$instructions"
   [ "$status" -eq 0 ]
 
   run grep -F 'Use Worktrunk (`wt`) for isolated feature/fix work' "$instructions"

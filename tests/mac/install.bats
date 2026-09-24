@@ -179,6 +179,16 @@ run_zsh_func() {
   [ "$status" -eq 0 ]
 }
 
+@test "fresh setup installs Playwright CLI after the managed Node.js runtime" {
+  run grep -F 'setup_playwright_cli' "$PROJECT_ROOT/scripts/mac.sh"
+  [ "$status" -eq 0 ]
+}
+
+@test "fresh setup installs Playwright MCP after the managed Node.js runtime" {
+  run grep -F 'setup_playwright_mcp' "$PROJECT_ROOT/scripts/mac.sh"
+  [ "$status" -eq 0 ]
+}
+
 @test "build_brewfile excludes Codex desktop app when INSTALL_CODEX_APP=n" {
   run zsh -c "
     export INSTALL_CODEX_APP=n
@@ -205,8 +215,11 @@ run_zsh_func() {
   [[ "$output" == *'swift-format'* ]]
   [[ "$output" == *'swiftformat'* ]]
   [[ "$output" == *'ios-deploy'* ]]
+  [[ "$output" == *'simslim'* ]]
   [[ "$output" == *'periphery'* ]]
   [[ "$output" == *'tap "xcodesorg/made", trusted: { formula: "xcodes" }'* ]]
+  [[ "$output" == *'tap "mobai-app/tap", trusted: { formula: "simslim" }'* ]]
+  [[ "$output" == *'brew "mobai-app/tap/simslim"'* ]]
   [[ "$output" != *'tap "peripheryapp/periphery"'* ]]
   [[ "$output" != *'tap "thoughtbot/formulae"'* ]]
   [[ "$output" != *'xcodebuildmcp'* ]]
@@ -224,6 +237,7 @@ run_zsh_func() {
   [ "$status" -eq 0 ]
   [[ "$output" != *'xcodes'* ]]
   [[ "$output" != *'swiftlint'* ]]
+  [[ "$output" != *'simslim'* ]]
   [[ "$output" != *'periphery'* ]]
   [[ "$output" != *'xcodebuildmcp'* ]]
 }

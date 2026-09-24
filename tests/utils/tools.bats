@@ -85,6 +85,157 @@ EOF
     [[ ! -e "$calls" ]]
 }
 
+@test "setup_playwright_cli installs the global npm CLI and skills" {
+    _ensure_mock_bin_dir
+    local version
+    version="$(managed_tool_pin '.tools["playwright-cli"].version')"
+    npm_calls="$TEST_TEMP_DIR/npm-calls"
+    playwright_calls="$TEST_TEMP_DIR/playwright-calls"
+    cat > "$MOCK_BIN_DIR/npm" <<EOF
+#!/bin/sh
+if [ "\$1" = "list" ]; then
+  if [ -e "$npm_calls" ]; then
+    printf '%s\\n' '{"dependencies":{"@playwright/cli":{"version":"$version"}}}'
+  else
+    printf '%s\\n' '{}'
+  fi
+  exit 0
+fi
+printf '%s\\n' "\$*" >> "$npm_calls"
+exit 0
+EOF
+    cat > "$MOCK_BIN_DIR/playwright-cli" <<EOF
+#!/bin/sh
+printf '%s\\n' "\$*" >> "$playwright_calls"
+case "\$1" in
+  --help) exit 0 ;;
+  install) exit 0 ;;
+  *) exit 1 ;;
+esac
+EOF
+    chmod +x "$MOCK_BIN_DIR/npm" "$MOCK_BIN_DIR/playwright-cli"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_playwright_cli
+    "
+
+    [[ "$status" -eq 0 ]]
+    grep -Fx "install --global @playwright/cli@$version" "$npm_calls"
+    grep -Fx -- "--help" "$playwright_calls"
+    grep -Fx "install --skills=claude -g" "$playwright_calls"
+    grep -Fx "install --skills=agents -g" "$playwright_calls"
+    [[ "$output" == *"Playwright CLI $version installed successfully"* ]]
+}
+
+@test "setup_playwright_cli fails clearly when npm is unavailable" {
+    run zsh -c "
+        export HOME='$HOME' PATH='/usr/bin:/bin'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_playwright_cli
+    "
+
+    [[ "$status" -ne 0 ]]
+    [[ "$output" == *"npm is required"* ]]
+}
+
+@test "setup_playwright_cli dry-run does not invoke npm" {
+    _ensure_mock_bin_dir
+    local version
+    version="$(managed_tool_pin '.tools["playwright-cli"].version')"
+    calls="$TEST_TEMP_DIR/npm-calls"
+    cat > "$MOCK_BIN_DIR/npm" <<EOF
+#!/bin/sh
+printf '%s\\n' "\$*" >> "$calls"
+exit 0
+EOF
+    chmod +x "$MOCK_BIN_DIR/npm"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_playwright_cli --dry-run
+    "
+
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"Would install managed Playwright CLI $version"* ]]
+    [[ ! -e "$calls" ]]
+}
+
+@test "setup_playwright_mcp installs the global npm MCP server" {
+    _ensure_mock_bin_dir
+    local version
+    version="$(managed_tool_pin '.tools["playwright-mcp"].version')"
+    npm_calls="$TEST_TEMP_DIR/npm-calls"
+    mcp_calls="$TEST_TEMP_DIR/playwright-mcp-calls"
+    cat > "$MOCK_BIN_DIR/npm" <<EOF
+#!/bin/sh
+if [ "\$1" = "list" ]; then
+  if [ -e "$npm_calls" ]; then
+    printf '%s\\n' '{"dependencies":{"@playwright/mcp":{"version":"$version"}}}'
+  else
+    printf '%s\\n' '{}'
+  fi
+  exit 0
+fi
+printf '%s\\n' "\$*" >> "$npm_calls"
+exit 0
+EOF
+    cat > "$MOCK_BIN_DIR/playwright-mcp" <<EOF
+#!/bin/sh
+printf '%s\\n' "\$*" >> "$mcp_calls"
+[ "\$1" = "--help" ] && exit 0
+exit 1
+EOF
+    chmod +x "$MOCK_BIN_DIR/npm" "$MOCK_BIN_DIR/playwright-mcp"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_playwright_mcp
+    "
+
+    [[ "$status" -eq 0 ]]
+    grep -Fx "install --global @playwright/mcp@$version" "$npm_calls"
+    grep -Fx -- "--help" "$mcp_calls"
+    [[ "$output" == *"Playwright MCP $version installed successfully"* ]]
+}
+
+@test "setup_playwright_mcp fails clearly when npm is unavailable" {
+    run zsh -c "
+        export HOME='$HOME' PATH='/usr/bin:/bin'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_playwright_mcp
+    "
+
+    [[ "$status" -ne 0 ]]
+    [[ "$output" == *"npm is required"* ]]
+}
+
+@test "setup_playwright_mcp dry-run does not invoke npm" {
+    _ensure_mock_bin_dir
+    local version
+    version="$(managed_tool_pin '.tools["playwright-mcp"].version')"
+    calls="$TEST_TEMP_DIR/npm-calls"
+    cat > "$MOCK_BIN_DIR/npm" <<EOF
+#!/bin/sh
+printf '%s\\n' "\$*" >> "$calls"
+exit 0
+EOF
+    chmod +x "$MOCK_BIN_DIR/npm"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_playwright_mcp --dry-run
+    "
+
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"Would install managed Playwright MCP $version"* ]]
+    [[ ! -e "$calls" ]]
+}
+
 @test "setup_rtk skips when rtk not installed" {
     run zsh -c "
         export HOME='$HOME' PATH='/usr/bin:/bin'
