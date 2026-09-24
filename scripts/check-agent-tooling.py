@@ -69,16 +69,6 @@ def main() -> int:
 
     canonical_dir = root / "agent_config/skills"
     canonical_skills = skill_names(canonical_dir, "*/SKILL.md")
-    claude_mirror_dir = root / ".claude/skills"
-    claude_mirrors = sorted(path.stem for path in claude_mirror_dir.glob("*.md"))
-    if canonical_skills != claude_mirrors:
-        errors.append("Claude shared-skill mirror inventory differs from the canonical inventory")
-    else:
-        for name in canonical_skills:
-            canonical = canonical_dir / name / "SKILL.md"
-            mirror = claude_mirror_dir / f"{name}.md"
-            if canonical.read_bytes() != mirror.read_bytes():
-                errors.append(f"Claude shared-skill mirror content differs for: {name}")
 
     installed_skills = json.loads(
         (root / "agent_config/installed_skills.json").read_text()
@@ -136,7 +126,7 @@ def main() -> int:
             for error in errors:
                 print(f"  - {error}", file=sys.stderr)
         else:
-            print("Shared MCP and skill adapters are in sync")
+            print("Shared MCP adapters are in sync")
 
     return 0 if not errors else 1
 

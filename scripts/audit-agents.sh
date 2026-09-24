@@ -1,7 +1,7 @@
 #!/bin/zsh
 
 # Codex-first health audit. `--repo-only` is deterministic and safe for CI: it
-# validates only tracked configuration, manifests, hook behavior, and mirrors.
+# validates only tracked configuration, manifests, hook behavior, and skills.
 
 set -euo pipefail
 
@@ -315,12 +315,6 @@ if jq -e '.skills // {} | to_entries | all(.value.ref | test("^[0-9a-f]{40}$"))'
     pass "Tracked git skills use immutable commit refs"
 else
     fail "Tracked git skills must use immutable 40-character commit refs"
-fi
-
-if "$SCRIPT_DIR/generate-claude-skill-mirrors.sh" --check >/dev/null 2>&1; then
-    pass "Canonical shared skills and Claude compatibility mirrors are in sync"
-else
-    fail "Canonical shared skills and Claude compatibility mirrors have drifted"
 fi
 
 if [ -d "$AGENT_CONFIG_DIR/skills" ] && [ "$(find "$AGENT_CONFIG_DIR/skills" -mindepth 2 -maxdepth 2 -type f -name 'SKILL.md' | wc -l | tr -d ' ')" -eq 4 ]; then

@@ -12,7 +12,6 @@ See [README.md](./README.md) and [docs/REFERENCE.md](./docs/REFERENCE.md) for us
 - `claude_config/` - Claude Code config backup
 - `agent_config/` - Shared global instructions and canonical graph skill directories restored to Codex
 - `codex_config/` - Codex CLI/IDE config backup
-- `.claude/skills/` - Generated flat Claude compatibility mirrors for canonical `agent_config/skills/`
 
 ## Code Conventions
 
@@ -31,7 +30,6 @@ See [README.md](./README.md) and [docs/REFERENCE.md](./docs/REFERENCE.md) for us
 **Skills**:
 - Shared graph skills live canonically in `agent_config/skills/<name>/SKILL.md`.
 - `npm run restore:codex` restores those directories directly into `~/.codex/skills/`.
-- Generate the tracked Claude compatibility mirror with `scripts/generate-claude-skill-mirrors.sh`; CI checks it with `--check`.
 - Tool-specific or unsupported skills stay in the tool-specific config (`claude_config/` or `codex_config/skills/`) instead of being forced into the shared path.
 
 **MCP servers**:
@@ -222,7 +220,7 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 - Managed agent tools: `agent_config/managed_tools.json` exact-pins local release/PyPI/npm tools and remote installer commits, and records tested compatibility floors; Axiom and shared git skills use immutable commits, while a weekly workflow proposes reviewed exact-pin bumps
 - Codex rules: `codex_config/rules/*.rules` restores repo-managed command deny rules that mirror the Claude hard-deny list where Codex prefix rules can express it; local approval rules in `~/.codex/rules/default.rules` remain local
 - Shared git skills: `agent_config/installed_skills.json` is installed into both `~/.claude/skills/*` and `~/.codex/skills/*` by `npm run install:skills`
-- Shared graph skills: `agent_config/skills/<name>/SKILL.md` is the canonical source; `restore:codex` restores those directories directly while `.claude/skills/*.md` is a generated compatibility mirror
+- Shared graph skills: `agent_config/skills/<name>/SKILL.md` is the canonical source; `restore:codex` restores those directories directly into Codex
 - Local-only state excluded: `auth.json`, history, logs, sessions, memories, SQLite databases, shell snapshots, and model caches
 - Machine-local tables preserved on restore include `[projects.*]`, `[tui.model_availability_nux]`, `[notice*]`, `[hooks.state*]`, `[desktop]`, marketplace/plugin/connector tables, and plugin-provided MCP tables
 - Project guidance: keep repo-specific behavior in `AGENTS.md`; keep cross-agent global preferences in `agent_config/AGENTS.md`
@@ -266,7 +264,7 @@ Plugins are auto-installed during restore. `install:plugins` merges repo configs
 | Update Codex defaults | Edit `codex_config/config.toml`, then run `npm run restore:codex` |
 | Update Codex command deny rules | Edit `codex_config/rules/*.rules`, then run `npm run restore:codex` |
 | Update managed agent-tool pins | Run `npm run update:tool-pins -- --apply`, review release checksums and commit refs, then run `npm run install:managed-tools -- --dry-run` |
-| Add shared project skill rule | Create/edit `agent_config/skills/<name>/SKILL.md`, run `scripts/generate-claude-skill-mirrors.sh`, then run `npm run restore:codex` |
+| Add shared project skill rule | Create/edit `agent_config/skills/<name>/SKILL.md`, then run `npm run restore:codex` |
 | Add shared MCP server | Add compatible entries to `.mcp.json` and `codex_config/config.toml`; skip Codex if unsupported |
 | Update security policy | Edit `SECURITY.md`, `scripts/scan-secrets.sh`, `codex_config/rules/*.rules`, or `codex_config/hooks/` as appropriate |
 | Test security checks | Run `npm run lint`, `npm run scan:secrets`, and `npm test` |

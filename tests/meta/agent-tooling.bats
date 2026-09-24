@@ -83,7 +83,7 @@ run_installer() {
   fixture="$TEST_TEMP_DIR/repo"
   mkdir -p "$fixture"
   cp -R "$PROJECT_ROOT/agent_config" "$PROJECT_ROOT/claude_config" \
-    "$PROJECT_ROOT/codex_config" "$PROJECT_ROOT/.claude" "$fixture/"
+    "$PROJECT_ROOT/codex_config" "$fixture/"
   cp "$PROJECT_ROOT/.mcp.json" "$fixture/.mcp.json"
   jq '.mcpServers["code-review-graph"].args = ["different"]' \
     "$fixture/.mcp.json" > "$fixture/.mcp.json.tmp"
