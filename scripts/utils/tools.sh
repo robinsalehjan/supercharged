@@ -127,6 +127,123 @@ setup_openwiki() {
     fi
 }
 
+# Install Playwright's agent-oriented CLI and its global skills. Browser
+# binaries are intentionally left to `playwright-cli install-browser` or first
+# use so setup does not download large browser payloads unprompted.
+setup_playwright_cli() {
+    local dry_run=false
+    [ "${1:-}" = "--dry-run" ] && dry_run=true
+
+    if ! command_exists npm; then
+        log_with_level "ERROR" "npm is required to install Playwright CLI"
+        return 1
+    fi
+
+    local manifest="${MANAGED_TOOLS_MANIFEST:-$UTILS_PROJECT_ROOT/agent_config/managed_tools.json}"
+    local managed_version package command_name managed_spec installed_version
+    managed_version=$(jq -er '.tools["playwright-cli"].version' "$manifest" 2>/dev/null) || managed_version=""
+    package=$(jq -er '.tools["playwright-cli"].package' "$manifest" 2>/dev/null) || package=""
+    command_name=$(jq -er '.tools["playwright-cli"].command' "$manifest" 2>/dev/null) || command_name=""
+    if [[ ! "$managed_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || \
+       [ "$package" != "@playwright/cli" ] || [ "$command_name" != "playwright-cli" ]; then
+        log_with_level "ERROR" "Invalid Playwright CLI pin in $manifest"
+        return 1
+    fi
+    managed_spec="${package}@${managed_version}"
+
+    if $dry_run; then
+        log_with_level "INFO" "Would install managed Playwright CLI $managed_version"
+        log_with_level "INFO" "Would install global Playwright CLI skills for Claude and generic agents"
+        return 0
+    fi
+
+    installed_version=$(npm list --global --depth=0 --json "$package" 2>/dev/null | \
+        jq -r --arg package "$package" '.dependencies[$package].version // empty' 2>/dev/null) || installed_version=""
+    if [ "$installed_version" = "$managed_version" ] && command_exists "$command_name"; then
+        log_with_level "INFO" "Playwright CLI $managed_version already installed"
+    else
+        log_with_level "INFO" "Installing managed Playwright CLI $managed_version..."
+        if ! npm install --global "$managed_spec"; then
+            log_with_level "ERROR" "Failed to install Playwright CLI $managed_version"
+            return 1
+        fi
+    fi
+
+    installed_version=$(npm list --global --depth=0 --json "$package" 2>/dev/null | \
+        jq -r --arg package "$package" '.dependencies[$package].version // empty' 2>/dev/null) || installed_version=""
+    if [ "$installed_version" != "$managed_version" ] || ! command_exists "$command_name" || \
+       ! "$command_name" --help >/dev/null 2>&1; then
+        log_with_level "ERROR" "Failed to verify managed Playwright CLI $managed_version"
+        return 1
+    fi
+
+    if "$command_name" install --skills=claude -g >/dev/null 2>&1; then
+        log_with_level "SUCCESS" "Playwright CLI Claude skills installed"
+    else
+        log_with_level "WARN" "Could not install Playwright CLI Claude skills"
+    fi
+    if "$command_name" install --skills=agents -g >/dev/null 2>&1; then
+        log_with_level "SUCCESS" "Playwright CLI agent skills installed"
+    else
+        log_with_level "WARN" "Could not install Playwright CLI agent skills"
+    fi
+
+    log_with_level "SUCCESS" "Playwright CLI $managed_version installed successfully"
+    log_with_level "INFO" "Run 'playwright-cli install-browser' when you want to prefetch browser binaries"
+}
+
+# Install the Playwright MCP server as a local pinned binary for Codex's
+# disabled browser-automation MCP entry. Browser binaries are installed by the
+# MCP server on demand or through Playwright CLI's browser installer.
+setup_playwright_mcp() {
+    local dry_run=false
+    [ "${1:-}" = "--dry-run" ] && dry_run=true
+
+    if ! command_exists npm; then
+        log_with_level "ERROR" "npm is required to install Playwright MCP"
+        return 1
+    fi
+
+    local manifest="${MANAGED_TOOLS_MANIFEST:-$UTILS_PROJECT_ROOT/agent_config/managed_tools.json}"
+    local managed_version package command_name managed_spec installed_version
+    managed_version=$(jq -er '.tools["playwright-mcp"].version' "$manifest" 2>/dev/null) || managed_version=""
+    package=$(jq -er '.tools["playwright-mcp"].package' "$manifest" 2>/dev/null) || package=""
+    command_name=$(jq -er '.tools["playwright-mcp"].command' "$manifest" 2>/dev/null) || command_name=""
+    if [[ ! "$managed_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || \
+       [ "$package" != "@playwright/mcp" ] || [ "$command_name" != "playwright-mcp" ]; then
+        log_with_level "ERROR" "Invalid Playwright MCP pin in $manifest"
+        return 1
+    fi
+    managed_spec="${package}@${managed_version}"
+
+    if $dry_run; then
+        log_with_level "INFO" "Would install managed Playwright MCP $managed_version"
+        return 0
+    fi
+
+    installed_version=$(npm list --global --depth=0 --json "$package" 2>/dev/null | \
+        jq -r --arg package "$package" '.dependencies[$package].version // empty' 2>/dev/null) || installed_version=""
+    if [ "$installed_version" = "$managed_version" ] && command_exists "$command_name"; then
+        log_with_level "INFO" "Playwright MCP $managed_version already installed"
+    else
+        log_with_level "INFO" "Installing managed Playwright MCP $managed_version..."
+        if ! npm install --global "$managed_spec"; then
+            log_with_level "ERROR" "Failed to install Playwright MCP $managed_version"
+            return 1
+        fi
+    fi
+
+    installed_version=$(npm list --global --depth=0 --json "$package" 2>/dev/null | \
+        jq -r --arg package "$package" '.dependencies[$package].version // empty' 2>/dev/null) || installed_version=""
+    if [ "$installed_version" != "$managed_version" ] || ! command_exists "$command_name" || \
+       ! "$command_name" --help >/dev/null 2>&1; then
+        log_with_level "ERROR" "Failed to verify managed Playwright MCP $managed_version"
+        return 1
+    fi
+
+    log_with_level "SUCCESS" "Playwright MCP $managed_version installed successfully"
+}
+
 # Setup RTK (Rust Token Killer) for Claude Code
 setup_rtk() {
     if ! command_exists rtk; then

@@ -15,6 +15,7 @@ reconcile_homebrew_taps() {
         "danger/tap/danger-swift"
         "hashicorp/tap/terraform"
         "jundot/omlx/omlx"
+        "mobai-app/tap/simslim"
         "replicate/tap/replicate"
         "xcodesorg/made/xcodes"
     )

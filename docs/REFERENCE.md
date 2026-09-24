@@ -53,7 +53,7 @@ Setup stores interactive choices in `~/.supercharged_preferences`.
 
 | Preference | Default | Installs |
 | --- | --- | --- |
-| `INSTALL_IOS_TOOLS` | `Y` | Xcode CLI helpers, Swift formatters, iOS deployment tools, XcodeBuildMCP |
+| `INSTALL_IOS_TOOLS` | `Y` | Xcode CLI helpers, Swift formatters, iOS deployment/simulator tools, XcodeBuildMCP |
 | `INSTALL_DATA_SCIENCE` | `N` | Jupyter, pandas, numpy, matplotlib, scikit-learn |
 | `INSTALL_DEV_TOOLS` | `Y` | Docker CLI, Docker Compose, Colima, kubectl |
 | `INSTALL_CLAUDE_CODE` | `Y` | Claude Code and related agent tooling |
@@ -69,7 +69,7 @@ The Homebrew Bundle baseline is defined by `build_brewfile` in `scripts/mac.sh`.
 
 - Package and shell tooling: `bash`, `coreutils`, `git`, `curl`, `asdf`, `keychain`, `tmux`, `ripgrep`, `tree`, `aria2`.
 - Development utilities: `gh`, `jq`, `shellcheck`, `actionlint`, `bats-core`, Danger JS, Danger Swift, `duckdb`, `sqlite`, `btop`, `htop`, `mas`, `pipx`, `uv`, `hey`, `watch`, build libraries, and database client libraries mirrored from the personal machine.
-- AI and agent tools: `codex`, `ollama`, `omlx`, `replicate`, `rtk`, `worktrunk`, and OpenWiki. ChatGPT and CodexBar are included when `INSTALL_CODEX_APP=Y`.
+- AI and agent tools: `codex`, `ollama`, `omlx`, `replicate`, `rtk`, `worktrunk`, OpenWiki, Playwright CLI, and Playwright MCP. ChatGPT and CodexBar are included when `INSTALL_CODEX_APP=Y`.
 - Applications: Visual Studio Code, Slack, Raycast, Reveal, Spotify, Mullvad VPN.
 - Fonts: JetBrainsMono Nerd Font.
 - Mac App Store apps: AdBlock, DaisyDisk, and Numbers.
@@ -79,7 +79,7 @@ The Homebrew Bundle baseline is defined by `build_brewfile` in `scripts/mac.sh`.
 
 The `omlx` CLI above is scripted via its own tap. Its optional menu bar app (`oMLX.app`) has no Homebrew cask — download the `.dmg` for your macOS version from [github.com/jundot/omlx/releases](https://github.com/jundot/omlx/releases) and drag it into `/Applications` manually. If its installer offers to add a shell PATH entry for its bundled CLI shim, decline it — the Homebrew-installed `omlx` is already on PATH and having two competing binaries just causes ambiguity.
 
-Conditional Brewfile groups add iOS, container, cloud (`hashicorp/tap/terraform`), network, and extra application tooling according to the setup preferences above. Third-party Homebrew entries grant formula-level trust only; setup and updates also remove known retired taps when they no longer provide an installed item. Dedicated setup helpers install Claude Code and the exact-pinned OpenWiki, Plannotator, code-review-graph, XcodeBuildMCP, and Obscura. OpenWiki installs from npm after the managed Node.js runtime is active. `agent_config/managed_tools.json` is the desired-state source for the exact-pinned tools, including OpenWiki. Release archives verify architecture-specific SHA-256 values before installation; code-review-graph and OpenWiki use exact package versions. XcodeBuildMCP installs under `~/.local/share/supercharged/` and removes its superseded Homebrew formula and tap only after the managed release passes its MCP health check, so a later `brew upgrade` cannot shadow the pin. Run `npm run install:openwiki` or `npm run install:managed-tools` to reconcile the relevant pinned tools; add `-- --dry-run` to inspect drift.
+Conditional Brewfile groups add iOS, container, cloud (`hashicorp/tap/terraform`), network, and extra application tooling according to the setup preferences above. The iOS group includes SimSlim for simulator resource trimming alongside the Xcode and Swift command-line tools. Third-party Homebrew entries grant formula-level trust only; setup and updates also remove known retired taps when they no longer provide an installed item. Dedicated setup helpers install Claude Code and the exact-pinned OpenWiki, Playwright CLI, Playwright MCP, Plannotator, code-review-graph, XcodeBuildMCP, and Obscura. OpenWiki, Playwright CLI, and Playwright MCP install from npm after the managed Node.js runtime is active; Playwright browser binaries are left to `playwright-cli install-browser` or first use. `agent_config/managed_tools.json` is the desired-state source for the exact-pinned tools, including OpenWiki, Playwright CLI, and Playwright MCP. Release archives verify architecture-specific SHA-256 values before installation; code-review-graph uses an exact PyPI package version, while OpenWiki, Playwright CLI, and Playwright MCP use exact npm package versions. XcodeBuildMCP installs under `~/.local/share/supercharged/` and removes its superseded Homebrew formula and tap only after the managed release passes its MCP health check, so a later `brew upgrade` cannot shadow the pin. Run `npm run install:openwiki` or `npm run install:managed-tools` to reconcile the relevant pinned tools; add `-- --dry-run` to inspect drift.
 
 asdf-managed tools are listed in `dot_files/.tool-versions`, including Node.js, Python, Ruby, Bundler, gcloud, Firebase CLI, and optional JVM pins.
 
@@ -93,7 +93,7 @@ The four graph skills live canonically in `agent_config/skills/<name>/SKILL.md`.
 
 OpenWiki is available as the `openwiki` CLI. From a repository root, run `openwiki --init` to create its `openwiki/` agent wiki, then `openwiki --update` when a refresh is explicitly wanted. It maintains marked guidance blocks in the root `AGENTS.md` and `CLAUDE.md`; all other content remains user-managed. Its interactive first run stores the selected provider and credentials in `~/.openwiki/.env`, which is local-only and must never be committed or backed up. An existing wiki is an opt-in secondary verification layer for architecture, terminology, invariants, and intended workflows; agents corroborate material claims against current source, tests, and a fresh code-review-graph, report conflicts as stale documentation, and treat source and tests as authoritative. Repositories without `openwiki/` continue normally, and agents do not generate or update a wiki without an explicit user request.
 
-The canonical MCP inventory is: shared code-review-graph and OpenAI Developer Docs; Codex-native Axiom plugin; the `xcode` bridge in the Apple profile; XcodeBuildMCP in the headless Apple profile; and optional disabled Computer Use. Claude user-local MCP entries are preserved during restore and never imported by backup. Local MCP executables are exact-pinned where this repository controls installation. The hosted OpenAI Developer Docs MCP has no local executable to pin; native Xcode MCP follows the selected Xcode installation.
+The canonical MCP inventory is: shared code-review-graph and OpenAI Developer Docs; Codex-native Axiom plugin; the `xcode` bridge in the Apple profile; XcodeBuildMCP in the headless Apple profile; and optional disabled Computer Use and Playwright MCP bridges. Claude user-local MCP entries are preserved during restore and never imported by backup. Local MCP executables are exact-pinned where this repository controls installation. The hosted OpenAI Developer Docs MCP has no local executable to pin; native Xcode MCP follows the selected Xcode installation.
 
 `npm run install:agent-tooling` is the harness-neutral reconciliation entry point. It installs the shared host CLIs and shared skills first, then invokes the native Claude and Codex marketplace installers when those harnesses are available. Its dry-run previews both desired plugin sets even when a client is not installed; use `-- --harness claude` or `-- --harness codex` to target one adapter. `npm run check:agent-tooling` reports the composed inventory and fails when shared MCP definitions or generated Claude skill mirrors drift from their canonical definitions. Harness-native plugins remain intentionally different.
 
@@ -105,6 +105,7 @@ Version policy depends on the integration boundary:
 | --- | --- |
 | Plannotator Stop-hook binary | Exact release and SHA-256 per macOS architecture |
 | code-review-graph local MCP | Exact PyPI version with required extras |
+| OpenWiki, Playwright CLI, and Playwright MCP | Exact npm package versions |
 | XcodeBuildMCP and Obscura | Exact release archive and SHA-256 per macOS architecture; Obscura binaries are verified after extraction |
 | Axiom | Immutable Codex marketplace commit plus expected plugin version |
 | Claude plugins | Native marketplace installation verified against tracked plugin versions |
@@ -187,7 +188,7 @@ vadimcn.vscode-lldb
 vscode-icons-team.vscode-icons
 ```
 
-The current Codex baseline selects `gpt-5.6-sol`, medium reasoning effort, the pragmatic personality, live web search, disabled memories, the `supercharged` permission profile, and the configured status line. Its lean base MCP inventory contains code-review-graph, OpenAI Developer Docs, and disabled Computer Use. Use `codex -p apple` for Apple’s native `xcode` bridge, `codex -p apple-headless` for XcodeBuildMCP outside an open Xcode project, or `codex -p review` for xhigh review reasoning. Axiom is installed only through `npm run install:codex-plugins`, not as a duplicate MCP server. Codex asks for a one-time trust review before Axiom’s bundled hooks can run.
+The current Codex baseline selects `gpt-5.6-sol`, medium reasoning effort, the pragmatic personality, live web search, disabled memories, the `supercharged` permission profile, and the configured status line. Its lean base MCP inventory contains code-review-graph, OpenAI Developer Docs, disabled Computer Use, and disabled Playwright MCP. Use `codex -p apple` for Apple’s native `xcode` bridge, `codex -p apple-headless` for XcodeBuildMCP outside an open Xcode project, or `codex -p review` for xhigh review reasoning. Axiom is installed only through `npm run install:codex-plugins`, not as a duplicate MCP server. Codex asks for a one-time trust review before Axiom’s bundled hooks can run.
 
 Run `npm run audit:agents` for a local health check, `npm run audit:agents -- --json` for machine-readable output, or `npm run audit:agents -- --repo-only` for deterministic tracked-config validation. Check the native bridge with `npm run audit:agents -- --profile apple`, or XcodeBuildMCP with `npm run audit:agents -- --profile apple-headless`.
 

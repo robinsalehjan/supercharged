@@ -252,6 +252,11 @@ EOF
   run grep -F '[mcp_servers.openaiDeveloperDocs]' "$config"
   [ "$status" -eq 0 ]
 
+  run grep -F '[mcp_servers.playwright]' "$config"
+  [ "$status" -eq 0 ]
+  run grep -F 'command = "playwright-mcp"' "$config"
+  [ "$status" -eq 0 ]
+
   run grep -F '[mcp_servers.XcodeBuildMCP]' "$apple_headless_config"
   [ "$status" -eq 0 ]
 
@@ -262,6 +267,8 @@ EOF
   ! grep -F '[mcp_servers.XcodeBuildMCP]' "$config"
   ! grep -F '[mcp_servers.XcodeBuildMCP]' "$apple_config"
   ! grep -F '[mcp_servers.xcode]' "$apple_headless_config"
+  ! grep -F '[mcp_servers.playwright]' "$apple_config"
+  ! grep -F '[mcp_servers.playwright]' "$apple_headless_config"
   ! grep -F '[mcp_servers.cupertino]' "$apple_config"
   grep -F 'model_reasoning_effort = "medium"' "$config"
   grep -F 'model_reasoning_effort = "xhigh"' "$review_config"

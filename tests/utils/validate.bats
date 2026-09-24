@@ -101,6 +101,33 @@ teardown() {
   [ "$output" = "installed" ]
 }
 
+@test "extract_tool_version recognizes Playwright CLI without a version flag" {
+  source "$PROJECT_ROOT/scripts/utils.sh"
+
+  run extract_tool_version playwright-cli
+
+  [ "$status" -eq 0 ]
+  [ "$output" = "installed" ]
+}
+
+@test "extract_tool_version recognizes Playwright MCP without a version flag" {
+  source "$PROJECT_ROOT/scripts/utils.sh"
+
+  run extract_tool_version playwright-mcp
+
+  [ "$status" -eq 0 ]
+  [ "$output" = "installed" ]
+}
+
+@test "extract_tool_version recognizes SimSlim without a version flag" {
+  source "$PROJECT_ROOT/scripts/utils.sh"
+
+  run extract_tool_version simslim
+
+  [ "$status" -eq 0 ]
+  [ "$output" = "installed" ]
+}
+
 @test "validate_installation function exists in utils.sh" {
   # Arrange
   source "$PROJECT_ROOT/scripts/utils.sh"

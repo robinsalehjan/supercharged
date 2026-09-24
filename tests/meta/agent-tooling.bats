@@ -73,7 +73,7 @@ run_installer() {
     .ok == true and
     (.shared.mcp_servers == ["code-review-graph", "openaiDeveloperDocs"]) and
     (.native_adapters.claude_plugins | index("swift-lsp@claude-plugins-official")) and
-    (.native_adapters.codex_mcp_servers == ["XcodeBuildMCP", "computer-use", "xcode"]) and
+    (.native_adapters.codex_mcp_servers == ["XcodeBuildMCP", "computer-use", "playwright", "xcode"]) and
     (.native_adapters.codex_plugins == ["axiom@axiom-marketplace"])
   ' <<<"$output"
   [ "$status" -eq 0 ]

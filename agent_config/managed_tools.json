@@ -6,6 +6,18 @@
       "version": "0.5.0",
       "package": "openwiki"
     },
+    "playwright-cli": {
+      "policy": "exact-npm",
+      "version": "0.1.21",
+      "package": "@playwright/cli",
+      "command": "playwright-cli"
+    },
+    "playwright-mcp": {
+      "policy": "exact-npm",
+      "version": "0.0.82",
+      "package": "@playwright/mcp",
+      "command": "playwright-mcp"
+    },
     "plannotator": {
       "policy": "exact-release",
       "version": "v0.27.10",

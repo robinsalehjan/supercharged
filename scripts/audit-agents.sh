@@ -158,7 +158,7 @@ if validate_toml_shape "$CODEX_CONFIG_DIR/config.toml" && \
    rg -q '^model_reasoning_effort = "medium"$' "$CODEX_CONFIG_DIR/config.toml" && \
    rg -q '^hooks = true$' "$CODEX_CONFIG_DIR/config.toml" && \
    rg -q '^memories = false$' "$CODEX_CONFIG_DIR/config.toml" && \
-   [ "$base_mcp_names" = "code-review-graph computer-use openaiDeveloperDocs " ] && \
+   [ "$base_mcp_names" = "code-review-graph computer-use openaiDeveloperDocs playwright " ] && \
    [ "$apple_mcp_names" = "xcode " ] && \
    [ "$apple_headless_mcp_names" = "XcodeBuildMCP " ] && \
    rg -q '^model_reasoning_effort = "xhigh"$' "$CODEX_CONFIG_DIR/review.config.toml"; then
@@ -269,7 +269,7 @@ fi
 MANAGED_TOOLS_MANIFEST="${MANAGED_TOOLS_MANIFEST:-$AGENT_CONFIG_DIR/managed_tools.json}"
 if jq -e '
     .version == 2 and
-    (.tools | keys | sort) == ["code-review-graph", "obscura", "openwiki", "plannotator", "xcodebuildmcp"] and
+    (.tools | keys | sort) == ["code-review-graph", "obscura", "openwiki", "plannotator", "playwright-cli", "playwright-mcp", "xcodebuildmcp"] and
     (.tools.plannotator.version | test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")) and
     .tools.plannotator.repository == "backnotprop/plannotator" and
     ([.tools.plannotator.assets["darwin-arm64"], .tools.plannotator.assets["darwin-x64"]] | all(
@@ -283,6 +283,14 @@ if jq -e '
     .tools.openwiki.policy == "exact-npm" and
     .tools.openwiki.package == "openwiki" and
     (.tools.openwiki.version | test("^[0-9]+\\.[0-9]+\\.[0-9]+$")) and
+    .tools["playwright-cli"].policy == "exact-npm" and
+    .tools["playwright-cli"].package == "@playwright/cli" and
+    .tools["playwright-cli"].command == "playwright-cli" and
+    (.tools["playwright-cli"].version | test("^[0-9]+\\.[0-9]+\\.[0-9]+$")) and
+    .tools["playwright-mcp"].policy == "exact-npm" and
+    .tools["playwright-mcp"].package == "@playwright/mcp" and
+    .tools["playwright-mcp"].command == "playwright-mcp" and
+    (.tools["playwright-mcp"].version | test("^[0-9]+\\.[0-9]+\\.[0-9]+$")) and
     ([.tools.xcodebuildmcp, .tools.obscura] | all(
         .policy == "exact-release" and
         (.version | test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")) and
@@ -327,6 +335,8 @@ if [ "$REPO_ONLY" = false ]; then
     require_command rtk "RTK is installed"
     require_command code-review-graph "code-review-graph is installed"
     require_command openwiki "OpenWiki is installed"
+    require_command playwright-cli "Playwright CLI is installed"
+    require_command playwright-mcp "Playwright MCP is installed"
 
     audit_compatibility_tool codex codex
     audit_compatibility_tool claude claude
@@ -339,6 +349,22 @@ if [ "$REPO_ONLY" = false ]; then
         pass "OpenWiki $openwiki_version matches the managed npm pin"
     else
         fail "OpenWiki differs from managed version $openwiki_version; run npm run install:openwiki"
+    fi
+
+    playwright_cli_version=$(jq -r '.tools["playwright-cli"].version' "$MANAGED_TOOLS_MANIFEST")
+    playwright_cli_installed_version=$(npm list --global --depth=0 --json @playwright/cli 2>/dev/null | jq -r '.dependencies["@playwright/cli"].version // empty') || playwright_cli_installed_version=""
+    if [ "$playwright_cli_installed_version" = "$playwright_cli_version" ]; then
+        pass "Playwright CLI $playwright_cli_version matches the managed npm pin"
+    else
+        fail "Playwright CLI differs from managed version $playwright_cli_version; run npm run install:managed-tools"
+    fi
+
+    playwright_mcp_version=$(jq -r '.tools["playwright-mcp"].version' "$MANAGED_TOOLS_MANIFEST")
+    playwright_mcp_installed_version=$(npm list --global --depth=0 --json @playwright/mcp 2>/dev/null | jq -r '.dependencies["@playwright/mcp"].version // empty') || playwright_mcp_installed_version=""
+    if [ "$playwright_mcp_installed_version" = "$playwright_mcp_version" ]; then
+        pass "Playwright MCP $playwright_mcp_version matches the managed npm pin"
+    else
+        fail "Playwright MCP differs from managed version $playwright_mcp_version; run npm run install:managed-tools"
     fi
 
     plannotator_arch=$(uname -m)
