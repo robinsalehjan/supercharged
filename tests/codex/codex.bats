@@ -458,7 +458,13 @@ EOF
   run grep -F 'RTK wrappers' "$instructions"
   [ "$status" -eq 0 ]
 
+  run grep -F 'Use Playwright CLI or Playwright MCP for browser-based web verification' "$instructions"
+  [ "$status" -eq 0 ]
+
   run grep -F 'XcodeBuildMCP tools' "$instructions"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'Use SimSlim for iOS simulator resource trimming' "$instructions"
   [ "$status" -eq 0 ]
 
   run grep -F 'Use Worktrunk (`wt`) for isolated feature/fix work' "$instructions"

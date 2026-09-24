@@ -24,7 +24,9 @@ Keep tool-specific behavior in the tool-specific config files; keep cross-agent 
 - Prefer RTK wrappers for noisy shell output when practical, such as `rtk git`, `rtk test`, `rtk npm`, `rtk pytest`, and `rtk tsc`.
 - Use `rtk proxy <cmd>` or the raw command when full unfiltered output is required for correctness.
 - Clean up completed Worktrunk worktrees with `wt remove` or `wt merge`.
+- Use Playwright CLI or Playwright MCP for browser-based web verification when UI behavior matters.
 - Use XcodeBuildMCP tools for iOS, macOS, simulator, Swift package, and Xcode project work when Apple development tools are configured and available. Its build/test structured results are schema version 3; request an explicit configuration when Debug is required.
+- Use SimSlim for iOS simulator resource trimming and simulator fleet checks when iOS tools are installed.
 - Use OpenAI Docs MCP for current OpenAI API, Codex, model, and platform documentation when available.
 
 ## Communication
