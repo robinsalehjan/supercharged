@@ -28,6 +28,4 @@ if command_exists xcodebuildmcp || [[ "${INSTALL_IOS_TOOLS:-}" =~ ^[Yy] ]]; then
     setup_xcodebuildmcp "${setup_args[@]}"
 fi
 
-if command_exists claude; then
-    setup_obscura "${setup_args[@]}"
-fi
+setup_obscura "${setup_args[@]}"

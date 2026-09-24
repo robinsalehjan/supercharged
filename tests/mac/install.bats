@@ -189,6 +189,19 @@ run_zsh_func() {
   [ "$status" -eq 0 ]
 }
 
+@test "fresh setup installs Obscura independently of the Claude preference" {
+  run python3 - "$PROJECT_ROOT/scripts/mac.sh" <<'PYTEST'
+from pathlib import Path
+import sys
+
+lines = Path(sys.argv[1]).read_text().splitlines()
+obscura = lines.index("    setup_obscura")
+claude_guard = lines.index("    # Install Claude Code if requested")
+assert obscura < claude_guard
+PYTEST
+  [ "$status" -eq 0 ]
+}
+
 @test "build_brewfile excludes Codex desktop app when INSTALL_CODEX_APP=n" {
   run zsh -c "
     export INSTALL_CODEX_APP=n

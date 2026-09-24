@@ -35,7 +35,7 @@ write_compatibility_mocks() {
 @test "agent audit has deterministic human and JSON repo-only output" {
   run "$AUDIT" --repo-only
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Tracked Codex base, Apple, headless Apple, and review TOML profiles parse"* ]]
+  [[ "$output" == *"Tracked Codex base, Apple, headless Apple, and review TOML profiles parse with the intended MCP states"* ]]
   [[ "$output" == *"RTK hook rewrites a command without blocking it"* ]]
   [[ "$output" == *"Managed tool manifest pins exact tools and compatibility floors"* ]]
 

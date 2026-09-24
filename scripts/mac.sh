@@ -419,6 +419,7 @@ main() {
     setup_openwiki
     setup_playwright_cli
     setup_playwright_mcp
+    setup_obscura
 
     # Install Claude Code if requested
     if [[ "${INSTALL_CLAUDE_CODE:-Y}" =~ ^[Yy] ]]; then
@@ -437,9 +438,6 @@ main() {
 
         # Setup Plannotator for visual plan annotation
         setup_plannotator
-
-        # Setup Obscura (Rust-based headless browser for AI agents / web scraping)
-        setup_obscura
 
         # Restore Claude configuration from repository if available
         if [ -x "$UTILS_SCRIPT_DIR/restore-claude.sh" ]; then

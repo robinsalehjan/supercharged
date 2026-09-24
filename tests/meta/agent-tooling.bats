@@ -32,6 +32,18 @@ run_installer() {
     "$INSTALLER" "$@"
 }
 
+@test "managed tooling reconciles Obscura without Claude" {
+  run python3 - "$PROJECT_ROOT/scripts/install-managed-tools.sh" <<'PYTEST'
+from pathlib import Path
+import sys
+
+text = Path(sys.argv[1]).read_text()
+assert 'setup_obscura "${setup_args[@]}"' in text
+assert 'if command_exists claude; then' not in text
+PYTEST
+  [ "$status" -eq 0 ]
+}
+
 @test "agent tooling reconciler previews shared tooling and both harnesses" {
   run_installer --dry-run
 

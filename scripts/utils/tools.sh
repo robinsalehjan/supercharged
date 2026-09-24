@@ -193,7 +193,7 @@ setup_playwright_cli() {
 }
 
 # Install the Playwright MCP server as a local pinned binary for Codex's
-# disabled browser-automation MCP entry. Browser binaries are installed by the
+# enabled browser-automation MCP entry. Browser binaries are installed by the
 # MCP server on demand or through Playwright CLI's browser installer.
 setup_playwright_mcp() {
     local dry_run=false

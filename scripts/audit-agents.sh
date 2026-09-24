@@ -150,6 +150,8 @@ validate_toml_shape() {
 base_mcp_names=$(sed -n 's/^\[mcp_servers\.\([^].]*\)\]$/\1/p' "$CODEX_CONFIG_DIR/config.toml" | LC_ALL=C sort | tr '\n' ' ')
 apple_mcp_names=$(sed -n 's/^\[mcp_servers\.\([^].]*\)\]$/\1/p' "$CODEX_CONFIG_DIR/apple.config.toml" | LC_ALL=C sort | tr '\n' ' ')
 apple_headless_mcp_names=$(sed -n 's/^\[mcp_servers\.\([^].]*\)\]$/\1/p' "$CODEX_CONFIG_DIR/apple-headless.config.toml" | LC_ALL=C sort | tr '\n' ' ')
+computer_use_enabled=$(awk '/^\[mcp_servers\.computer-use\]$/{inside=1; next} inside && /^\[/{exit} inside && /^enabled = /{print $3; exit}' "$CODEX_CONFIG_DIR/config.toml")
+playwright_enabled=$(awk '/^\[mcp_servers\.playwright\]$/{inside=1; next} inside && /^\[/{exit} inside && /^enabled = /{print $3; exit}' "$CODEX_CONFIG_DIR/config.toml")
 if validate_toml_shape "$CODEX_CONFIG_DIR/config.toml" && \
    validate_toml_shape "$CODEX_CONFIG_DIR/apple.config.toml" && \
    validate_toml_shape "$CODEX_CONFIG_DIR/apple-headless.config.toml" && \
@@ -159,10 +161,12 @@ if validate_toml_shape "$CODEX_CONFIG_DIR/config.toml" && \
    rg -q '^hooks = true$' "$CODEX_CONFIG_DIR/config.toml" && \
    rg -q '^memories = false$' "$CODEX_CONFIG_DIR/config.toml" && \
    [ "$base_mcp_names" = "code-review-graph computer-use openaiDeveloperDocs playwright " ] && \
+   [ "$computer_use_enabled" = false ] && \
+   [ "$playwright_enabled" = true ] && \
    [ "$apple_mcp_names" = "xcode " ] && \
    [ "$apple_headless_mcp_names" = "XcodeBuildMCP " ] && \
    rg -q '^model_reasoning_effort = "xhigh"$' "$CODEX_CONFIG_DIR/review.config.toml"; then
-    pass "Tracked Codex base, Apple, headless Apple, and review TOML profiles parse with the intended scoped inventory"
+    pass "Tracked Codex base, Apple, headless Apple, and review TOML profiles parse with the intended MCP states and scoped inventory"
 else
     fail "Tracked Codex TOML is malformed, deprecated, or has an invalid profile inventory"
 fi
