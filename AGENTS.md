@@ -10,7 +10,7 @@ See [README.md](./README.md) and [docs/REFERENCE.md](./docs/REFERENCE.md) for us
 - `scripts/` - Shell scripts (mac.sh, update.sh, utils.sh, restore.sh, setup-profile.sh, help.sh, install-plugins.sh; backup-claude.sh/restore-claude.sh for Claude config)
 - `dot_files/` - Dotfiles copied to `$HOME`
 - `claude_config/` - Claude Code config backup
-- `agent_config/` - Shared global instructions and canonical graph skill directories restored to Codex
+- `agent_config/` - Shared global instructions, managed agent-tool pins, and canonical graph skill directories restored to Codex
 - `codex_config/` - Codex CLI/IDE config backup
 
 ## Code Conventions
@@ -31,6 +31,11 @@ See [README.md](./README.md) and [docs/REFERENCE.md](./docs/REFERENCE.md) for us
 - Shared graph skills live canonically in `agent_config/skills/<name>/SKILL.md`.
 - `npm run restore:codex` restores those directories directly into `~/.codex/skills/`.
 - Tool-specific or unsupported skills stay in the tool-specific config (`claude_config/` or `codex_config/skills/`) instead of being forced into the shared path.
+
+**Knowledge and graph tooling**:
+- [code-review-graph](https://github.com/tirth8205/code-review-graph) is the preferred live-source layer for navigation, impact analysis, debugging, and review when its graph is current and covers the code in question. Shared selection and freshness rules live in `agent_config/AGENTS.md`; the graph-backed skills live in `agent_config/skills/`.
+- [OpenWiki](https://github.com/langchain-ai/openwiki) is an opt-in repository knowledge layer for architecture, terminology, invariants, and intended workflows. Agents use an existing `openwiki/` as secondary context, verify material claims against current source and tests, and do not initialize or update it without an explicit user request.
+- Both CLIs are exact-pinned in `agent_config/managed_tools.json` and reconciled by `npm run install:agent-tooling`. OpenWiki provider configuration and credentials remain machine-local in `~/.openwiki/.env`.
 
 **MCP servers**:
 - Keep repo-managed user-scoped Claude MCP servers in `claude_config/mcp_servers.json` and compatible Codex entries in `codex_config/config.toml`; backup never imports live user MCP definitions into the tracked registry.
@@ -81,6 +86,8 @@ npm run install:agent-tooling     # Reconcile shared CLIs/skills and both native
 npm run install:agent-tooling -- --dry-run # Preview complete agent tooling reconciliation
 npm run install:managed-tools     # Reconcile exact-pinned local agent tools
 npm run install:managed-tools -- --dry-run # Inspect managed tool drift
+npm run install:openwiki          # Install or update the exact-pinned OpenWiki CLI
+npm run install:openwiki -- --dry-run # Preview OpenWiki installation
 npm run install:plannotator       # Install/update the checksum-pinned Plannotator binary
 npm run install:skills            # Install/update/prune shared git skills for Claude and Codex
 npm run install:skills -- --dry-run # Preview installs, updates, and safe removals
@@ -215,9 +222,9 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 **Codex backup/restore** (`scripts/backup-codex.sh`, `scripts/restore-codex.sh`):
 - Shared instructions: `agent_config/AGENTS.md` is restored to both `~/.codex/AGENTS.md` and `~/.claude/AGENTS.md`
 - Codex settings: `codex_config/config.toml` restores lean durable defaults such as model, personality, live web search, disabled memories, base MCP settings, hook enablement, instruction discovery, and a permission profile that denies `.env*`/`.secrets` paths; `apple.config.toml`, `apple-headless.config.toml`, and `review.config.toml` provide `codex -p apple`, `codex -p apple-headless`, and `codex -p review` overlays
-- Codex hooks and skills: `codex_config/hooks.json`, `codex_config/RTK.md`, and `codex_config/skills/plannotator-*` restore the non-blocking RTK rewrite hook, Plannotator Stop-hook review, Plannotator skills, and the Codex-only RTK instruction include; code-review-graph stays current through its launchd watcher and explicit audits
+- Codex hooks and skills: `codex_config/hooks.json`, `codex_config/RTK.md`, and `codex_config/skills/plannotator-*` restore the non-blocking RTK rewrite hook, Plannotator Stop-hook review, Plannotator skills, and the Codex-only RTK instruction include
 - Codex plugins: `codex_config/plugins.json` is a sanitized desired-state registry; `npm run install:codex-plugins` uses the Codex CLI to manage Axiom while marketplace snapshots, plugin caches, credentials, and hook trust state stay local
-- Managed agent tools: `agent_config/managed_tools.json` exact-pins local release/PyPI/npm tools and remote installer commits, and records tested compatibility floors; Axiom and shared git skills use immutable commits, while a weekly workflow proposes reviewed exact-pin bumps
+- Managed agent tools: `agent_config/managed_tools.json` exact-pins local release/PyPI/npm tools—including code-review-graph and OpenWiki—and remote installer commits, and records tested compatibility floors; code-review-graph stays current through its launchd watcher and explicit audits; Axiom and shared git skills use immutable commits; a weekly workflow proposes reviewed exact-pin bumps
 - Codex rules: `codex_config/rules/*.rules` restores repo-managed command deny rules that mirror the Claude hard-deny list where Codex prefix rules can express it; local approval rules in `~/.codex/rules/default.rules` remain local
 - Shared git skills: `agent_config/installed_skills.json` is installed into both `~/.claude/skills/*` and `~/.codex/skills/*` by `npm run install:skills`
 - Shared graph skills: `agent_config/skills/<name>/SKILL.md` is the canonical source; `restore:codex` restores those directories directly into Codex
@@ -254,6 +261,8 @@ Plugins are auto-installed during restore. `install:plugins` merges repo configs
 |---|---|
 | Add ZSH alias | `dot_files/.zshrc` aliases section |
 | Onboard a repo to code-review-graph | `cd <repo> && crg-here` (registers + builds; the launchd watcher picks it up automatically). For opt-in nested-repo discovery, configure `~/.code-review-graph/watcher-config.json`. |
+| Refresh a stale code-review-graph graph | From the repository, run `code-review-graph update`; use `code-review-graph status` to check availability and freshness first. |
+| Initialize or refresh OpenWiki | Only when explicitly requested, run `openwiki --init` or `openwiki --update` from the target repository; review the generated `openwiki/` content and managed instruction blocks before committing. |
 | Add Homebrew tap | `BREWFILE_CONTENT` in `scripts/mac.sh`: `tap "owner/repo"` before packages |
 | Change log format | `log_with_level()` in `scripts/utils/logging.sh` (preserve timestamp + level) |
 | Add utility function | Appropriate file in `scripts/utils/` (logging, backup, validation, tools, json) |
