@@ -14,14 +14,14 @@ ruby 3.4.10
 
 # Package Managers
 # Bundler - Ruby package manager, minimum 2.2.0 for lockfile improvements
-bundler 4.0.19
+bundler 4.0.20
 
 # Cloud and DevOps Tools
 # Google Cloud SDK - Latest stable, minimum 400.0.0 for gke-gcloud-auth-plugin
 gcloud 583.0.0
 
 # Firebase CLI - Latest stable, minimum 12.0.0 for modern deployment features
-firebase 15.28.2
+firebase 15.29.0
 
 # JVM toolchain (java, kotlin) is opt-in via INSTALL_JVM_TOOLS=Y.
 # By default setup resolves `asdf latest java openjdk` and `asdf latest kotlin`.
