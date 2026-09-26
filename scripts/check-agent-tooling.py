@@ -83,7 +83,7 @@ def main() -> int:
     codex_plugins = codex_registry["plugins"]
     codex_specific_skills = skill_names(root / "codex_config/skills", "*/SKILL.md")
     codex_profile_mcp: set[str] = set(codex_mcp) - set(claude_mcp)
-    for profile in ("apple.config.toml", "apple-headless.config.toml"):
+    for profile in ("apple.config.toml",):
         codex_profile_mcp.update(load_codex_mcp(root / "codex_config" / profile))
 
     report = {

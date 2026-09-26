@@ -871,144 +871,177 @@ CURLEOF
     [[ ! -e "$HOME/.local/bin/obscura" ]]
 }
 
-# --- exact XcodeBuildMCP pin ---
+# --- native Xcode MCP and retired integration cleanup ---
 
-@test "XcodeBuildMCP cleanup removes only the superseded Homebrew source" {
-    export BREW_CALLS_FILE="$TEST_TEMP_DIR/brew-calls"
-
-    run zsh -c '
-        export BREW_CALLS_FILE="'"$BREW_CALLS_FILE"'"
-        xcodebrew_installed=true
-        brew() {
-            if [ "$1" = tap ] && [ "$#" -eq 1 ]; then
-                printf "%s\n" getsentry/xcodebuildmcp
-                return 0
-            fi
-            printf "%s\n" "$*" >> "$BREW_CALLS_FILE"
-            if [ "$1 $2 $3" = "list --formula xcodebuildmcp" ]; then
-                $xcodebrew_installed
-                return
-            fi
-            if [ "$1 $2" = "uninstall xcodebuildmcp" ]; then
-                xcodebrew_installed=false
-            fi
-            return 0
-        }
-        source "'"$PROJECT_ROOT"'/scripts/utils.sh"
-        cleanup_superseded_xcodebuildmcp_homebrew
-    '
-
-    [ "$status" -eq 0 ]
-    grep -Fxq 'list --formula xcodebuildmcp' "$BREW_CALLS_FILE"
-    grep -Fxq 'uninstall xcodebuildmcp' "$BREW_CALLS_FILE"
-    grep -Fxq 'untrust --formula getsentry/xcodebuildmcp/xcodebuildmcp' "$BREW_CALLS_FILE"
-    grep -Fxq 'untap getsentry/xcodebuildmcp' "$BREW_CALLS_FILE"
-}
-
-@test "setup_xcodebuildmcp verifies and installs the exact release archive" {
-    archive="$TEST_TEMP_DIR/xcodebuildmcp.tar.gz"
-    staging="$TEST_TEMP_DIR/xcodebuildmcp-9.9.9-darwin-arm64"
-    mkdir -p "$staging/bin" "$staging/libexec"
-    cat > "$staging/bin/xcodebuildmcp" <<'EOF'
-#!/bin/sh
-if [ "$1" = "--version" ]; then
-    echo 9.9.9
-elif [ "$1" = "mcp" ]; then
-    IFS= read -r request
-    printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{},"serverInfo":{"name":"xcodebuildmcp","version":"9.9.9"}}}'
-fi
-EOF
-    printf '#!/bin/sh\nexit 0\n' > "$staging/bin/xcodebuildmcp-doctor"
-    chmod +x "$staging/bin/xcodebuildmcp" "$staging/bin/xcodebuildmcp-doctor"
-    tar -czf "$archive" -C "$TEST_TEMP_DIR" "$(basename "$staging")"
-    sha=$(shasum -a 256 "$archive" | awk '{print $1}')
-    manifest="$TEST_TEMP_DIR/xcode-manifest.json"
-    printf '{"tools":{"xcodebuildmcp":{"version":"v9.9.9","repository":"example/xcode","assets":{"darwin-arm64":{"name":"xcodebuildmcp.tar.gz","sha256":"%s"}}}}}\n' "$sha" > "$manifest"
+write_native_xcode_mocks() {
     _ensure_mock_bin_dir
-    cat > "$MOCK_BIN_DIR/curl" <<'EOF'
+    export XCODE_MCP_CALLS="$TEST_TEMP_DIR/xcode-mcp-calls"
+    cat > "$MOCK_BIN_DIR/xcodebuild" <<'EOF'
 #!/bin/sh
-while [ $# -gt 0 ]; do
-  [ "$1" = -o ] && { cp "$XCODE_TEST_ARCHIVE" "$2"; exit 0; }
-  shift
-done
-exit 1
+printf 'Xcode %s\nBuild version TEST\n' "${XCODE_TEST_VERSION:-27.0}"
 EOF
-    chmod +x "$MOCK_BIN_DIR/curl"
-
-    run env HOME="$HOME" PATH="$PATH" MANAGED_TOOLS_MANIFEST="$manifest" \
-      XCODE_TEST_ARCHIVE="$archive" XCODEBUILDMCP_ARCH=arm64 \
-      XCODEBUILDMCP_SKIP_BREW_CLEANUP=1 \
-      XCODEBUILDMCP_INSTALL_ROOT="$TEST_TEMP_DIR/xcode-install" \
-      XCODEBUILDMCP_BIN_DIR="$HOME/.local/bin" \
-      zsh -c "source '$PROJECT_ROOT/scripts/utils.sh'; setup_xcodebuildmcp"
-
-    [ "$status" -eq 0 ]
-    short_sha="${sha:0:12}"
-    [ -x "$TEST_TEMP_DIR/xcode-install/v9.9.9-$short_sha/bin/xcodebuildmcp" ]
-    [ -L "$HOME/.local/bin/xcodebuildmcp" ]
-    [ "$(cat "$TEST_TEMP_DIR/xcode-install/.active-archive-sha256")" = "$sha" ]
+    cat > "$MOCK_BIN_DIR/xcrun" <<'EOF'
+#!/bin/sh
+printf '%s\n' "$*" >> "$XCODE_MCP_CALLS"
+if [ "$1" = "--find" ]; then
+  [ "$2" = "mcpbridge" ] || [ "$2" = "mcp-server" ]
+elif [ "$1 $2" = "mcp-server status" ]; then
+  printf '%s\n' "${XCODE_MCP_STATUS:-Permission: disabled}"
+elif [ "$1 $2" = "mcp-server start" ]; then
+  exit "${XCODE_MCP_START_EXIT:-0}"
+fi
+EOF
+    cat > "$MOCK_BIN_DIR/sudo" <<'EOF'
+#!/bin/sh
+printf 'sudo %s\n' "$*" >> "$XCODE_MCP_CALLS"
+exit "${XCODE_MCP_ENABLE_EXIT:-0}"
+EOF
+    chmod +x "$MOCK_BIN_DIR/xcodebuild" "$MOCK_BIN_DIR/xcrun" "$MOCK_BIN_DIR/sudo"
 }
 
-@test "setup_xcodebuildmcp replaces a checksummed binary that cannot initialize" {
-    archive="$TEST_TEMP_DIR/xcodebuildmcp-repair.tar.gz"
-    staging="$TEST_TEMP_DIR/xcodebuildmcp-repair-9.9.9-darwin-arm64"
-    mkdir -p "$staging/bin"
-    cat > "$staging/bin/xcodebuildmcp" <<'EOF'
-#!/bin/sh
-if [ "$1" = "--version" ]; then
-    echo 9.9.9
-elif [ "$1" = "mcp" ]; then
-    IFS= read -r request
-    printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{},"serverInfo":{"name":"xcodebuildmcp","version":"9.9.9"}}}'
-fi
-EOF
-    printf '#!/bin/sh\nexit 0\n' > "$staging/bin/xcodebuildmcp-doctor"
-    chmod +x "$staging/bin/xcodebuildmcp" "$staging/bin/xcodebuildmcp-doctor"
-    tar -czf "$archive" -C "$TEST_TEMP_DIR" "$(basename "$staging")"
-    sha=$(shasum -a 256 "$archive" | awk '{print $1}')
-    short_sha="${sha:0:12}"
-    install_root="$TEST_TEMP_DIR/xcode-repair-install"
-    broken_target="$install_root/v9.9.9-$short_sha"
-    bin_dir="$HOME/.local/bin"
-    mkdir -p "$broken_target/bin" "$bin_dir"
-    cat > "$broken_target/bin/xcodebuildmcp" <<'EOF'
-#!/bin/sh
-if [ "$1" = "--version" ]; then
-    echo 9.9.9
-else
-    echo 'dyld: missing dependency' >&2
-    exit 1
-fi
-EOF
-    chmod +x "$broken_target/bin/xcodebuildmcp"
-    ln -s "$broken_target/bin/xcodebuildmcp" "$bin_dir/xcodebuildmcp"
-    printf '%s\n' "$sha" > "$install_root/.active-archive-sha256"
-    manifest="$TEST_TEMP_DIR/xcode-repair-manifest.json"
-    printf '{"tools":{"xcodebuildmcp":{"version":"v9.9.9","repository":"example/xcode","assets":{"darwin-arm64":{"name":"xcodebuildmcp-repair.tar.gz","sha256":"%s"}}}}}\n' "$sha" > "$manifest"
+@test "setup_xcode_mcp warns without aborting when Xcode is missing" {
+    run zsh -c "
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        command_exists() { [ \"\$1\" != xcodebuild ]; }
+        setup_xcode_mcp
+    "
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Xcode is not installed"* ]]
+}
+
+@test "setup_xcode_mcp warns without aborting for Xcode older than 26.3" {
+    write_native_xcode_mocks
+    run env HOME="$HOME" PATH="$PATH" XCODE_TEST_VERSION=26.2 XCODE_MCP_CALLS="$XCODE_MCP_CALLS" \
+      zsh -c "source '$PROJECT_ROOT/scripts/utils.sh'; setup_xcode_mcp"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"requires Xcode 26.3 or later"* ]]
+}
+
+@test "setup_xcode_mcp treats Xcode 26.3 through 26.x as attached-only" {
+    write_native_xcode_mocks
+    run env HOME="$HOME" PATH="$PATH" XCODE_TEST_VERSION=26.4 XCODE_MCP_CALLS="$XCODE_MCP_CALLS" \
+      zsh -c "source '$PROJECT_ROOT/scripts/utils.sh'; setup_xcode_mcp"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"attached mode is available"* ]]
+    [[ "$output" == *"attached MCP only"* ]]
+    ! grep -Fq 'mcp-server status' "$XCODE_MCP_CALLS"
+}
+
+@test "setup_xcode_mcp starts an already-enabled Xcode 27 service" {
+    write_native_xcode_mocks
+    run env HOME="$HOME" PATH="$PATH" XCODE_TEST_VERSION=27.0 \
+      XCODE_MCP_STATUS='Permission: enabled' XCODE_MCP_CALLS="$XCODE_MCP_CALLS" \
+      zsh -c "source '$PROJECT_ROOT/scripts/utils.sh'; setup_xcode_mcp"
+    [ "$status" -eq 0 ]
+    grep -Fxq 'mcp-server status' "$XCODE_MCP_CALLS"
+    grep -Fxq 'mcp-server start' "$XCODE_MCP_CALLS"
+    [[ "$output" == *"enabled and started"* ]]
+}
+
+@test "setup_xcode_mcp enables Xcode 27 headless mode after interactive consent" {
+    write_native_xcode_mocks
+    run sh -c "printf 'y\n' | env HOME='$HOME' PATH='$PATH' XCODE_TEST_VERSION=27.0 \
+      XCODE_MCP_SETUP_INTERACTIVE=1 XCODE_MCP_CALLS='$XCODE_MCP_CALLS' \
+      zsh -c \"source '$PROJECT_ROOT/scripts/utils.sh'; setup_xcode_mcp\""
+    [ "$status" -eq 0 ]
+    grep -Fxq 'sudo xcrun mcp-server enable' "$XCODE_MCP_CALLS"
+    grep -Fxq 'mcp-server start' "$XCODE_MCP_CALLS"
+    ! grep -Fq -- '--unsafe-always-allow-all-agents' "$XCODE_MCP_CALLS"
+}
+
+@test "setup_xcode_mcp decline preserves attached mode and prints manual commands" {
+    write_native_xcode_mocks
+    run sh -c "printf 'n\n' | env HOME='$HOME' PATH='$PATH' XCODE_TEST_VERSION=27.0 \
+      XCODE_MCP_SETUP_INTERACTIVE=1 XCODE_MCP_CALLS='$XCODE_MCP_CALLS' \
+      zsh -c \"source '$PROJECT_ROOT/scripts/utils.sh'; setup_xcode_mcp\""
+    [ "$status" -eq 0 ]
+    ! grep -Fq 'sudo xcrun mcp-server enable' "$XCODE_MCP_CALLS"
+    [[ "$output" == *"enablement declined"* ]]
+    [[ "$output" == *"sudo xcrun mcp-server enable"* ]]
+}
+
+@test "retire_legacy_xcode_mcps removes known installs and is idempotent" {
     _ensure_mock_bin_dir
-    cat > "$MOCK_BIN_DIR/curl" <<'EOF'
+    managed_root="$HOME/.local/share/supercharged"
+    managed_bin="$HOME/.local/bin"
+    mkdir -p "$managed_root/xcodebuildmcp" "$managed_root/mobilebuildmcp" "$managed_bin"
+    touch "$managed_bin/xcodebuildmcp" "$managed_bin/xcodebuildmcp-doctor"
+    touch "$managed_bin/mobilebuildmcp" "$managed_bin/mobilebuildmcp-doctor"
+    export RETIRED_BREW_STATE="$TEST_TEMP_DIR/brew-state"
+    export RETIRED_TAP_STATE="$TEST_TEMP_DIR/tap-state"
+    export RETIRED_NPM_STATE="$TEST_TEMP_DIR/npm-state"
+    printf '%s\n' xcodebuildmcp mobilebuildmcp > "$RETIRED_BREW_STATE"
+    printf '%s\n' getsentry/xcodebuildmcp > "$RETIRED_TAP_STATE"
+    printf '%s\n' xcodebuildmcp mobilebuildmcp > "$RETIRED_NPM_STATE"
+    cat > "$MOCK_BIN_DIR/brew" <<'EOF'
 #!/bin/sh
-while [ $# -gt 0 ]; do
-  [ "$1" = -o ] && { cp "$XCODE_TEST_ARCHIVE" "$2"; exit 0; }
-  shift
-done
-exit 1
+if [ "$1 $2" = "list --formula" ]; then grep -Fxq "$3" "$RETIRED_BREW_STATE"; exit; fi
+if [ "$1" = uninstall ]; then grep -Fxv "$2" "$RETIRED_BREW_STATE" > "$RETIRED_BREW_STATE.tmp" || true; mv "$RETIRED_BREW_STATE.tmp" "$RETIRED_BREW_STATE"; exit; fi
+if [ "$1" = tap ] && [ "$#" -eq 1 ]; then cat "$RETIRED_TAP_STATE"; exit; fi
+if [ "$1 $2" = "untap getsentry/xcodebuildmcp" ]; then : > "$RETIRED_TAP_STATE"; exit; fi
+exit 0
 EOF
-    chmod +x "$MOCK_BIN_DIR/curl"
+    cat > "$MOCK_BIN_DIR/npm" <<'EOF'
+#!/bin/sh
+package="${6:-}"
+if [ "$1" = list ]; then
+  [ -z "$package" ] && package="${5:-}"
+  if grep -Fxq "$package" "$RETIRED_NPM_STATE"; then printf '{"dependencies":{"%s":{"version":"1.0.0"}}}\n' "$package"; else printf '{}\n'; fi
+  exit 0
+fi
+if [ "$1 $2" = "uninstall --global" ]; then grep -Fxv "$3" "$RETIRED_NPM_STATE" > "$RETIRED_NPM_STATE.tmp" || true; mv "$RETIRED_NPM_STATE.tmp" "$RETIRED_NPM_STATE"; fi
+EOF
+    chmod +x "$MOCK_BIN_DIR/brew" "$MOCK_BIN_DIR/npm"
 
-    run env HOME="$HOME" PATH="$PATH" MANAGED_TOOLS_MANIFEST="$manifest" \
-      XCODE_TEST_ARCHIVE="$archive" XCODEBUILDMCP_ARCH=arm64 \
-      XCODEBUILDMCP_SKIP_BREW_CLEANUP=1 \
-      XCODEBUILDMCP_INSTALL_ROOT="$install_root" \
-      XCODEBUILDMCP_BIN_DIR="$bin_dir" \
-      zsh -c "source '$PROJECT_ROOT/scripts/utils.sh'; setup_xcodebuildmcp"
-
+    run env HOME="$HOME" PATH="$PATH" RETIRED_BREW_STATE="$RETIRED_BREW_STATE" \
+      RETIRED_TAP_STATE="$RETIRED_TAP_STATE" RETIRED_NPM_STATE="$RETIRED_NPM_STATE" \
+      zsh -c "source '$PROJECT_ROOT/scripts/utils.sh'; retire_legacy_xcode_mcps; retire_legacy_xcode_mcps"
     [ "$status" -eq 0 ]
-    [[ "$output" == *"MCP handshake failed"* ]]
-    [[ "$output" == *"installed"* ]]
-    [ "$(readlink "$bin_dir/xcodebuildmcp")" != "$broken_target/bin/xcodebuildmcp" ]
+    [ ! -e "$managed_root/xcodebuildmcp" ]
+    [ ! -e "$managed_root/mobilebuildmcp" ]
+    [ ! -e "$managed_bin/xcodebuildmcp" ]
+    [ ! -s "$RETIRED_BREW_STATE" ]
+    [ ! -s "$RETIRED_TAP_STATE" ]
+    [ ! -s "$RETIRED_NPM_STATE" ]
 }
 
+@test "retire_legacy_xcode_mcps dry-run preserves installs" {
+    managed_root="$HOME/.local/share/supercharged"
+    mkdir -p "$managed_root/xcodebuildmcp"
+    run env HOME="$HOME" PATH="/usr/bin:/bin" \
+      zsh -c "source '$PROJECT_ROOT/scripts/utils.sh'; retire_legacy_xcode_mcps --dry-run"
+    [ "$status" -eq 0 ]
+    [ -d "$managed_root/xcodebuildmcp" ]
+    [[ "$output" == *"Would remove retired managed Apple MCP path"* ]]
+}
+
+@test "retire_legacy_xcode_mcps reports package removal failures" {
+    _ensure_mock_bin_dir
+    cat > "$MOCK_BIN_DIR/brew" <<'EOF'
+#!/bin/sh
+if [ "$1 $2 $3" = "list --formula xcodebuildmcp" ]; then exit 0; fi
+if [ "$1 $2" = "list --formula" ]; then exit 1; fi
+if [ "$1" = uninstall ]; then exit 1; fi
+if [ "$1" = tap ]; then exit 0; fi
+EOF
+    chmod +x "$MOCK_BIN_DIR/brew"
+    run env HOME="$HOME" PATH="$PATH" zsh -c "source '$PROJECT_ROOT/scripts/utils.sh'; retire_legacy_xcode_mcps"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Could not uninstall retired Homebrew formula: xcodebuildmcp"* ]]
+}
+
+@test "retire_legacy_xcode_mcps reports but preserves unknown manual binaries" {
+    _ensure_mock_bin_dir
+    manual_dir="$TEST_TEMP_DIR/manual-bin"
+    mkdir -p "$manual_dir"
+    printf '#!/bin/sh\nexit 0\n' > "$manual_dir/xcodebuildmcp"
+    chmod +x "$manual_dir/xcodebuildmcp"
+    run env HOME="$HOME" PATH="$manual_dir:/usr/bin:/bin" RETIRED_XCODE_MCP_BIN_DIR="$HOME/.local/bin" \
+      zsh -c "source '$PROJECT_ROOT/scripts/utils.sh'; retire_legacy_xcode_mcps"
+    [ "$status" -eq 0 ]
+    [ -x "$manual_dir/xcodebuildmcp" ]
+    [[ "$output" == *"unknown/manual path: $manual_dir/xcodebuildmcp"* ]]
+}
 # --- download robustness ---
 
 @test "managed downloads pass explicit curl timeout and retry options" {

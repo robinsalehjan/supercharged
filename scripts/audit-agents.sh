@@ -22,7 +22,7 @@ cleanup() {
 trap cleanup EXIT
 
 show_help() {
-    echo "Usage: $(basename "$0") [--json] [--repo-only] [--profile apple|apple-headless|review]"
+    echo "Usage: $(basename "$0") [--json] [--repo-only] [--profile apple|review]"
     echo ""
     echo "Audit managed Codex configuration, plugins, MCP intent, skills, RTK, and CRG."
 }
@@ -39,8 +39,8 @@ while [[ $# -gt 0 ]]; do
             ;;
         --profile)
             PROFILE="${2:-}"
-            if [[ "$PROFILE" != "apple" && "$PROFILE" != "apple-headless" && "$PROFILE" != "review" ]]; then
-                echo "--profile must be apple, apple-headless, or review" >&2
+            if [[ "$PROFILE" != "apple" && "$PROFILE" != "review" ]]; then
+                echo "--profile must be apple or review" >&2
                 exit 2
             fi
             shift 2
@@ -149,12 +149,10 @@ validate_toml_shape() {
 # machines and macOS CI runners with different locale defaults.
 base_mcp_names=$(sed -n 's/^\[mcp_servers\.\([^].]*\)\]$/\1/p' "$CODEX_CONFIG_DIR/config.toml" | LC_ALL=C sort | tr '\n' ' ')
 apple_mcp_names=$(sed -n 's/^\[mcp_servers\.\([^].]*\)\]$/\1/p' "$CODEX_CONFIG_DIR/apple.config.toml" | LC_ALL=C sort | tr '\n' ' ')
-apple_headless_mcp_names=$(sed -n 's/^\[mcp_servers\.\([^].]*\)\]$/\1/p' "$CODEX_CONFIG_DIR/apple-headless.config.toml" | LC_ALL=C sort | tr '\n' ' ')
 computer_use_enabled=$(awk '/^\[mcp_servers\.computer-use\]$/{inside=1; next} inside && /^\[/{exit} inside && /^enabled = /{print $3; exit}' "$CODEX_CONFIG_DIR/config.toml")
 playwright_enabled=$(awk '/^\[mcp_servers\.playwright\]$/{inside=1; next} inside && /^\[/{exit} inside && /^enabled = /{print $3; exit}' "$CODEX_CONFIG_DIR/config.toml")
 if validate_toml_shape "$CODEX_CONFIG_DIR/config.toml" && \
    validate_toml_shape "$CODEX_CONFIG_DIR/apple.config.toml" && \
-   validate_toml_shape "$CODEX_CONFIG_DIR/apple-headless.config.toml" && \
    validate_toml_shape "$CODEX_CONFIG_DIR/review.config.toml" && \
    rg -q '^web_search = "live"$' "$CODEX_CONFIG_DIR/config.toml" && \
    rg -q '^model_reasoning_effort = "medium"$' "$CODEX_CONFIG_DIR/config.toml" && \
@@ -164,9 +162,8 @@ if validate_toml_shape "$CODEX_CONFIG_DIR/config.toml" && \
    [ "$computer_use_enabled" = false ] && \
    [ "$playwright_enabled" = true ] && \
    [ "$apple_mcp_names" = "xcode " ] && \
-   [ "$apple_headless_mcp_names" = "XcodeBuildMCP " ] && \
    rg -q '^model_reasoning_effort = "xhigh"$' "$CODEX_CONFIG_DIR/review.config.toml"; then
-    pass "Tracked Codex base, Apple, headless Apple, and review TOML profiles parse with the intended MCP states and scoped inventory"
+    pass "Tracked Codex base, native Apple, and review TOML profiles parse with the intended MCP states and scoped inventory"
 else
     fail "Tracked Codex TOML is malformed, deprecated, or has an invalid profile inventory"
 fi
@@ -273,7 +270,7 @@ fi
 MANAGED_TOOLS_MANIFEST="${MANAGED_TOOLS_MANIFEST:-$AGENT_CONFIG_DIR/managed_tools.json}"
 if jq -e '
     .version == 2 and
-    (.tools | keys | sort) == ["code-review-graph", "obscura", "openwiki", "plannotator", "playwright-cli", "playwright-mcp", "xcodebuildmcp"] and
+    (.tools | keys | sort) == ["code-review-graph", "obscura", "openwiki", "plannotator", "playwright-cli", "playwright-mcp"] and
     (.tools.plannotator.version | test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")) and
     .tools.plannotator.repository == "backnotprop/plannotator" and
     ([.tools.plannotator.assets["darwin-arm64"], .tools.plannotator.assets["darwin-x64"]] | all(
@@ -295,11 +292,9 @@ if jq -e '
     .tools["playwright-mcp"].package == "@playwright/mcp" and
     .tools["playwright-mcp"].command == "playwright-mcp" and
     (.tools["playwright-mcp"].version | test("^[0-9]+\\.[0-9]+\\.[0-9]+$")) and
-    ([.tools.xcodebuildmcp, .tools.obscura] | all(
-        .policy == "exact-release" and
-        (.version | test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")) and
-        ([.assets["darwin-arm64"], .assets["darwin-x64"]] | all(.sha256 | test("^[0-9a-f]{64}$")))
-    )) and
+    .tools.obscura.policy == "exact-release" and
+    (.tools.obscura.version | test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")) and
+    ([.tools.obscura.assets["darwin-arm64"], .tools.obscura.assets["darwin-x64"]] | all(.sha256 | test("^[0-9a-f]{64}$"))) and
     (.tools.obscura.assets | [."darwin-arm64", ."darwin-x64"] | all(
         (.binaries.obscura | test("^[0-9a-f]{64}$")) and
         (.binaries["obscura-worker"] | test("^[0-9a-f]{64}$"))
@@ -419,10 +414,9 @@ if [ "$REPO_ONLY" = false ]; then
     if command -v codex >/dev/null 2>&1; then
         audit_codex_home="$AUDIT_TMP_DIR/codex-home"
         mkdir -p "$audit_codex_home"
-        cp "$CODEX_CONFIG_DIR/config.toml" "$CODEX_CONFIG_DIR/apple.config.toml" "$CODEX_CONFIG_DIR/apple-headless.config.toml" "$CODEX_CONFIG_DIR/review.config.toml" "$audit_codex_home/"
+        cp "$CODEX_CONFIG_DIR/config.toml" "$CODEX_CONFIG_DIR/apple.config.toml" "$CODEX_CONFIG_DIR/review.config.toml" "$audit_codex_home/"
         if CODEX_HOME="$audit_codex_home" codex --strict-config --help >/dev/null 2>&1 && \
            CODEX_HOME="$audit_codex_home" codex --strict-config --profile apple --help >/dev/null 2>&1 && \
-           CODEX_HOME="$audit_codex_home" codex --strict-config --profile apple-headless --help >/dev/null 2>&1 && \
            CODEX_HOME="$audit_codex_home" codex --strict-config --profile review --help >/dev/null 2>&1; then
             pass "Codex CLI strictly parses the tracked base and profile configuration"
         else
@@ -495,24 +489,11 @@ if [ "$REPO_ONLY" = false ]; then
 
     case "$PROFILE" in
         apple)
-            require_command xcrun "Apple profile: xcrun MCP bridge is available"
-            ;;
-        apple-headless)
-            require_command xcodebuildmcp "Headless Apple profile: XcodeBuildMCP is installed"
-            xcodebuildmcp_expected=$(jq -r '.tools.xcodebuildmcp.version | sub("^v"; "")' "$MANAGED_TOOLS_MANIFEST")
-            case "$(uname -m)" in
-                arm64|aarch64) xcodebuildmcp_asset="darwin-arm64" ;;
-                x86_64) xcodebuildmcp_asset="darwin-x64" ;;
-                *) xcodebuildmcp_asset="" ;;
-            esac
-            xcodebuildmcp_expected_sha=$(jq -r --arg asset "$xcodebuildmcp_asset" '.tools.xcodebuildmcp.assets[$asset].sha256 // ""' "$MANAGED_TOOLS_MANIFEST")
-            xcodebuildmcp_installed_sha=$(cat "$HOME/.local/share/supercharged/xcodebuildmcp/.active-archive-sha256" 2>/dev/null || true)
-            xcodebuildmcp_installed=$(xcodebuildmcp --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-            if [ "$xcodebuildmcp_installed" = "$xcodebuildmcp_expected" ] && \
-               [ "$xcodebuildmcp_installed_sha" = "$xcodebuildmcp_expected_sha" ]; then
-                pass "XcodeBuildMCP $xcodebuildmcp_installed matches the exact release checksum"
+            require_command xcrun "Apple profile: xcrun is available"
+            if command -v xcrun >/dev/null 2>&1 && xcrun --find mcpbridge >/dev/null 2>&1; then
+                pass "Apple profile: native xcrun mcpbridge is available"
             else
-                fail "XcodeBuildMCP differs from exact pin $xcodebuildmcp_expected; run npm run install:managed-tools"
+                fail "Apple profile requires Xcode 26.3 or later with native mcpbridge"
             fi
             ;;
         *)

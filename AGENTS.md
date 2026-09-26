@@ -64,7 +64,7 @@ npm run update:only -- <comp>     # Sync dotfiles/skills + update one component 
 # Validation and Recovery
 npm run validate              # Verify all tools installed correctly
 npm run check:mcps            # Complete initialize handshake for enabled base MCPs
-npm run check:mcps -- --profile apple-headless # Include profile-specific MCPs
+npm run check:mcps -- --profile apple          # Include native Xcode MCP
 npm run check:agent-tooling   # Report shared capabilities and detect harness drift
 npm run restore               # Restore from latest backup
 
@@ -221,7 +221,7 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 
 **Codex backup/restore** (`scripts/backup-codex.sh`, `scripts/restore-codex.sh`):
 - Shared instructions: `agent_config/AGENTS.md` is restored to both `~/.codex/AGENTS.md` and `~/.claude/AGENTS.md`
-- Codex settings: `codex_config/config.toml` restores lean durable defaults such as model, personality, live web search, disabled memories, base MCP settings, hook enablement, instruction discovery, and a permission profile that denies `.env*`/`.secrets` paths; `apple.config.toml`, `apple-headless.config.toml`, and `review.config.toml` provide `codex -p apple`, `codex -p apple-headless`, and `codex -p review` overlays
+- Codex settings: `codex_config/config.toml` restores lean durable defaults such as model, personality, live web search, disabled memories, base MCP settings, hook enablement, instruction discovery, and a permission profile that denies `.env*`/`.secrets` paths; `apple.config.toml` provides native Xcode MCP for attached and headless use with `codex -p apple`, while `review.config.toml` provides the `codex -p review` overlay
 - Codex hooks and skills: `codex_config/hooks.json`, `codex_config/RTK.md`, and `codex_config/skills/plannotator-*` restore the non-blocking RTK rewrite hook, Plannotator Stop-hook review, Plannotator skills, and the Codex-only RTK instruction include
 - Codex plugins: `codex_config/plugins.json` is a sanitized desired-state registry; `npm run install:codex-plugins` uses the Codex CLI to manage Axiom while marketplace snapshots, plugin caches, credentials, and hook trust state stay local
 - Managed agent tools: `agent_config/managed_tools.json` exact-pins local release/PyPI/npm tools—including code-review-graph and OpenWiki—and remote installer commits, and records tested compatibility floors; code-review-graph stays current through its launchd watcher and explicit audits; Axiom and shared git skills use immutable commits; a weekly workflow proposes reviewed exact-pin bumps
@@ -231,6 +231,8 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 - Local-only state excluded: `auth.json`, history, logs, sessions, memories, SQLite databases, shell snapshots, and model caches
 - Machine-local tables preserved on restore include `[projects.*]`, `[tui.model_availability_nux]`, `[notice*]`, `[hooks.state*]`, `[desktop]`, marketplace/plugin/connector tables, and plugin-provided MCP tables
 - Project guidance: keep repo-specific behavior in `AGENTS.md`; keep cross-agent global preferences in `agent_config/AGENTS.md`
+
+For Apple-platform work, prefer native Xcode MCP tools for Xcode, Swift, simulator, device, build, test, preview, and debugging tasks when configured and available. Xcode 26.3+ supports attached mode; Xcode 27+ also supports headless mode through the same `codex -p apple` profile.
 
 **Post-Restore Steps** (after `npm run restore:claude` or `npm run restore:claude -- --force`):
 1. Enable work plugins (@vend-plugins) manually if on work machine — these are sanitized from backups for security

@@ -255,7 +255,9 @@ PYTEST
   [[ "$output" != *'tap "peripheryapp/periphery"'* ]]
   [[ "$output" != *'tap "thoughtbot/formulae"'* ]]
   [[ "$output" != *'xcodebuildmcp'* ]]
-  run rg -F 'setup_xcodebuildmcp' "$PROJECT_ROOT/scripts/mac.sh"
+  run rg -F 'setup_xcode_mcp' "$PROJECT_ROOT/scripts/mac.sh"
+  [ "$status" -eq 0 ]
+  run rg -F 'retire_legacy_xcode_mcps' "$PROJECT_ROOT/scripts/mac.sh"
   [ "$status" -eq 0 ]
 }
 

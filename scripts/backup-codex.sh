@@ -14,7 +14,7 @@ PROJECT_ROOT="$UTILS_PROJECT_ROOT"
 CODEX_CONFIG_DIR="$PROJECT_ROOT/codex_config"
 AGENT_CONFIG_DIR="$PROJECT_ROOT/agent_config"
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
-typeset -a CODEX_PROFILES=(apple apple-headless review)
+typeset -a CODEX_PROFILES=(apple review)
 
 filter_shared_codex_config() {
     local skip=false
@@ -169,7 +169,6 @@ main() {
     echo "📦 Backed up files:"
     echo "   - codex_config/config.toml"
     echo "   - codex_config/apple.config.toml"
-    echo "   - codex_config/apple-headless.config.toml"
     echo "   - codex_config/review.config.toml"
     echo "   - codex_config/hooks.json"
     echo "   - codex_config/RTK.md"

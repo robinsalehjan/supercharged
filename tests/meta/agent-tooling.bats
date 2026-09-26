@@ -39,6 +39,7 @@ import sys
 
 text = Path(sys.argv[1]).read_text()
 assert 'setup_obscura "${setup_args[@]}"' in text
+assert 'retire_legacy_xcode_mcps "${setup_args[@]}"' in text
 assert 'if command_exists claude; then' not in text
 PYTEST
   [ "$status" -eq 0 ]
@@ -85,7 +86,7 @@ PYTEST
     .ok == true and
     (.shared.mcp_servers == ["code-review-graph", "openaiDeveloperDocs"]) and
     (.native_adapters.claude_plugins | index("swift-lsp@claude-plugins-official")) and
-    (.native_adapters.codex_mcp_servers == ["XcodeBuildMCP", "computer-use", "playwright", "xcode"]) and
+    (.native_adapters.codex_mcp_servers == ["computer-use", "playwright", "xcode"]) and
     (.native_adapters.codex_plugins == ["axiom@axiom-marketplace"])
   ' <<<"$output"
   [ "$status" -eq 0 ]

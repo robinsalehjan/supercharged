@@ -301,7 +301,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--profile",
-        choices=("base", "apple", "apple-headless", "review"),
+        choices=("base", "apple", "review"),
         default="base",
     )
     parser.add_argument("--server", action="append", dest="servers", help="Probe only this server")

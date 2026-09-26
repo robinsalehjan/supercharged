@@ -458,8 +458,9 @@ main() {
         fi
     fi
 
+    retire_legacy_xcode_mcps
     if [[ "${INSTALL_IOS_TOOLS:-Y}" =~ ^[Yy] ]]; then
-        setup_xcodebuildmcp
+        setup_xcode_mcp
     fi
 
     # Restore Codex configuration independently of the Claude preference.
