@@ -82,6 +82,12 @@ def main() -> int:
     codex_registry = json.loads((root / "codex_config/plugins.json").read_text())
     codex_plugins = codex_registry["plugins"]
     codex_specific_skills = skill_names(root / "codex_config/skills", "*/SKILL.md")
+    expected_profiles = {"apple.config.toml", "review.config.toml"}
+    tracked_profiles = {
+        path.name for path in (root / "codex_config").glob("*.config.toml")
+    }
+    for profile in sorted(tracked_profiles - expected_profiles):
+        errors.append(f"Unexpected tracked Codex profile: {profile}")
     codex_profile_mcp: set[str] = set(codex_mcp) - set(claude_mcp)
     for profile in ("apple.config.toml",):
         codex_profile_mcp.update(load_codex_mcp(root / "codex_config" / profile))

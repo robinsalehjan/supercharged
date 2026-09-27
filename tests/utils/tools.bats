@@ -1030,6 +1030,29 @@ EOF
     [[ "$output" == *"Could not uninstall retired Homebrew formula: xcodebuildmcp"* ]]
 }
 
+@test "retire_legacy_xcode_mcps reports an npm install it cannot inspect without jq" {
+    _ensure_mock_bin_dir
+    npm_root="$TEST_TEMP_DIR/npm-root"
+    mkdir -p "$npm_root/xcodebuildmcp"
+    cat > "$MOCK_BIN_DIR/npm" <<EOF
+#!/bin/sh
+if [ "\$1 \$2" = "root --global" ]; then printf '%s\n' "$npm_root"; fi
+EOF
+    chmod +x "$MOCK_BIN_DIR/npm"
+
+    run env HOME="$HOME" PATH="$PATH" zsh -c "
+      source '$PROJECT_ROOT/scripts/utils.sh'
+      command_exists() {
+        [ \"\$1\" = jq ] && return 1
+        command -v \"\$1\" >/dev/null 2>&1
+      }
+      retire_legacy_xcode_mcps
+    "
+
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Retired global npm package detected but jq is unavailable: xcodebuildmcp"* ]]
+}
+
 @test "retire_legacy_xcode_mcps reports but preserves unknown manual binaries" {
     _ensure_mock_bin_dir
     manual_dir="$TEST_TEMP_DIR/manual-bin"

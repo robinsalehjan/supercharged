@@ -895,6 +895,20 @@ retire_legacy_xcode_mcps() {
                 fi
             fi
         done
+    elif command_exists npm; then
+        local npm_root
+        npm_root=$(npm root --global 2>/dev/null || true)
+        if [ -z "$npm_root" ]; then
+            log_with_level "ERROR" "Could not inspect retired global npm packages: npm root --global failed"
+            failed=true
+        else
+            for package in xcodebuildmcp mobilebuildmcp; do
+                if [ -e "$npm_root/$package" ] || [ -L "$npm_root/$package" ]; then
+                    log_with_level "ERROR" "Retired global npm package detected but jq is unavailable: $package"
+                    failed=true
+                fi
+            done
+        fi
     fi
 
     if ! $dry_run; then

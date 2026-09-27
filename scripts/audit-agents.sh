@@ -7,7 +7,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-CODEX_CONFIG_DIR="$PROJECT_ROOT/codex_config"
+CODEX_CONFIG_DIR="${CODEX_CONFIG_DIR:-$PROJECT_ROOT/codex_config}"
 CLAUDE_CONFIG_DIR="$PROJECT_ROOT/claude_config"
 AGENT_CONFIG_DIR="$PROJECT_ROOT/agent_config"
 JSON_OUTPUT=false
@@ -149,11 +149,14 @@ validate_toml_shape() {
 # machines and macOS CI runners with different locale defaults.
 base_mcp_names=$(sed -n 's/^\[mcp_servers\.\([^].]*\)\]$/\1/p' "$CODEX_CONFIG_DIR/config.toml" | LC_ALL=C sort | tr '\n' ' ')
 apple_mcp_names=$(sed -n 's/^\[mcp_servers\.\([^].]*\)\]$/\1/p' "$CODEX_CONFIG_DIR/apple.config.toml" | LC_ALL=C sort | tr '\n' ' ')
+codex_profile_names=$(find "$CODEX_CONFIG_DIR" -maxdepth 1 \( -type f -o -type l \) \
+    -name '*.config.toml' -exec basename {} \; | LC_ALL=C sort | tr '\n' ' ')
 computer_use_enabled=$(awk '/^\[mcp_servers\.computer-use\]$/{inside=1; next} inside && /^\[/{exit} inside && /^enabled = /{print $3; exit}' "$CODEX_CONFIG_DIR/config.toml")
 playwright_enabled=$(awk '/^\[mcp_servers\.playwright\]$/{inside=1; next} inside && /^\[/{exit} inside && /^enabled = /{print $3; exit}' "$CODEX_CONFIG_DIR/config.toml")
 if validate_toml_shape "$CODEX_CONFIG_DIR/config.toml" && \
    validate_toml_shape "$CODEX_CONFIG_DIR/apple.config.toml" && \
    validate_toml_shape "$CODEX_CONFIG_DIR/review.config.toml" && \
+   [ "$codex_profile_names" = "apple.config.toml review.config.toml " ] && \
    rg -q '^web_search = "live"$' "$CODEX_CONFIG_DIR/config.toml" && \
    rg -q '^model_reasoning_effort = "medium"$' "$CODEX_CONFIG_DIR/config.toml" && \
    rg -q '^hooks = true$' "$CODEX_CONFIG_DIR/config.toml" && \
