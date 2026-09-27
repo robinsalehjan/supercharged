@@ -230,6 +230,7 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 - Shared graph skills: `agent_config/skills/<name>/SKILL.md` is the canonical source; `restore:codex` restores those directories directly into Codex
 - Local-only state excluded: `auth.json`, history, logs, sessions, memories, SQLite databases, shell snapshots, and model caches
 - Machine-local tables preserved on restore include `[projects.*]`, `[tui.model_availability_nux]`, `[notice*]`, `[hooks.state*]`, `[desktop]`, marketplace/plugin/connector tables, and plugin-provided MCP tables
+- Profile migration: `restore:codex` preserves a stale `~/.codex/apple-headless.config.toml` in the pre-restore snapshot, removes it locally, and directs users to `codex -p apple`
 - Project guidance: keep repo-specific behavior in `AGENTS.md`; keep cross-agent global preferences in `agent_config/AGENTS.md`
 
 For Apple-platform work, prefer native Xcode MCP tools for Xcode, Swift, simulator, device, build, test, preview, and debugging tasks when configured and available. Xcode 26.3+ supports attached mode; Xcode 27+ also supports headless mode through the same `codex -p apple` profile.
