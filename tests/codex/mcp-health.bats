@@ -56,17 +56,16 @@ EOF
 
 @test "MCP checker includes the selected profile inventory" {
     printf '%s\n' '# base config' > "$CONFIG_DIR/config.toml"
-    cat > "$CONFIG_DIR/apple-headless.config.toml" <<EOF
-[mcp_servers.XcodeBuildMCP]
+    cat > "$CONFIG_DIR/apple.config.toml" <<EOF
+[mcp_servers.xcode]
 command = "$TEST_TEMP_DIR/bin/healthy-mcp"
-args = ["mcp"]
 EOF
 
-    run "$CHECKER" --config-dir "$CONFIG_DIR" --profile apple-headless \
-        --server XcodeBuildMCP --json --timeout 2
+    run "$CHECKER" --config-dir "$CONFIG_DIR" --profile apple \
+        --server xcode --json --timeout 2
 
     [ "$status" -eq 0 ]
-    run jq -e 'length == 1 and .[0].name == "XcodeBuildMCP" and .[0].status == "pass"' <<<"$output"
+    run jq -e 'length == 1 and .[0].name == "xcode" and .[0].status == "pass"' <<<"$output"
     [ "$status" -eq 0 ]
 }
 

@@ -261,6 +261,15 @@ vscode \"vscode-icons-team.vscode-icons\""
     echo "$content"
 }
 
+check_bootstrap_versions() {
+    local python_version="$1"
+
+    # Homebrew/asdf below install the managed versions, so older bootstrap
+    # tools should warn without aborting setup under `set -e`.
+    check_version "git" "2.49.0" || true
+    check_version "python3" "$python_version" || true
+}
+
 main() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -306,8 +315,7 @@ main() {
     kotlin_version="${TOOL_VERSIONS[kotlin]:-}"
 
     # Version checks
-    check_version "git" "2.49.0"
-    check_version "python3" "$python_version"
+    check_bootstrap_versions "$python_version"
 
     install_homebrew
     reconcile_homebrew_taps
@@ -450,8 +458,9 @@ main() {
         fi
     fi
 
+    retire_legacy_xcode_mcps
     if [[ "${INSTALL_IOS_TOOLS:-Y}" =~ ^[Yy] ]]; then
-        setup_xcodebuildmcp
+        setup_xcode_mcp
     fi
 
     # Restore Codex configuration independently of the Claude preference.

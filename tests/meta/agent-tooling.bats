@@ -39,6 +39,7 @@ import sys
 
 text = Path(sys.argv[1]).read_text()
 assert 'setup_obscura "${setup_args[@]}"' in text
+assert 'retire_legacy_xcode_mcps "${setup_args[@]}"' in text
 assert 'if command_exists claude; then' not in text
 PYTEST
   [ "$status" -eq 0 ]
@@ -85,7 +86,7 @@ PYTEST
     .ok == true and
     (.shared.mcp_servers == ["code-review-graph", "openaiDeveloperDocs"]) and
     (.native_adapters.claude_plugins | index("swift-lsp@claude-plugins-official")) and
-    (.native_adapters.codex_mcp_servers == ["XcodeBuildMCP", "computer-use", "playwright", "xcode"]) and
+    (.native_adapters.codex_mcp_servers == ["computer-use", "playwright", "xcode"]) and
     (.native_adapters.codex_plugins == ["axiom@axiom-marketplace"])
   ' <<<"$output"
   [ "$status" -eq 0 ]
@@ -105,5 +106,22 @@ PYTEST
 
   [ "$status" -ne 0 ]
   run jq -e '.errors | index("Shared MCP configuration differs for: code-review-graph")' <<<"$output"
+  [ "$status" -eq 0 ]
+}
+
+@test "agent tooling parity report rejects an unexpected Codex profile" {
+  fixture="$TEST_TEMP_DIR/repo"
+  mkdir -p "$fixture"
+  cp -R "$PROJECT_ROOT/agent_config" "$PROJECT_ROOT/claude_config" \
+    "$PROJECT_ROOT/codex_config" "$fixture/"
+  cp "$PROJECT_ROOT/.mcp.json" "$fixture/.mcp.json"
+  printf '%s\n' '[mcp_servers.XcodeBuildMCP]' \
+    'command = "xcodebuildmcp"' > "$fixture/codex_config/apple-headless.config.toml"
+
+  run env SUPERCHARGED_PROJECT_ROOT="$fixture" "$CHECKER" --json
+
+  [ "$status" -ne 0 ]
+  run jq -e '.errors | index("Unexpected tracked Codex profile: apple-headless.config.toml")' \
+    <<<"$output"
   [ "$status" -eq 0 ]
 }

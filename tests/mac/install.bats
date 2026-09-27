@@ -202,6 +202,25 @@ PYTEST
   [ "$status" -eq 0 ]
 }
 
+@test "fresh setup keeps Git and Python version checks advisory under set -e" {
+  run zsh -c "
+    set -e
+    source '$PROJECT_ROOT/scripts/utils.sh'
+    check_version() {
+      log_with_level WARN \"\$1 version warning\"
+      return 1
+    }
+    source '$PROJECT_ROOT/scripts/mac.sh'
+    check_bootstrap_versions 3.14.0
+    echo continued
+  "
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"git version warning"* ]]
+  [[ "$output" == *"python3 version warning"* ]]
+  [[ "$output" == *"continued"* ]]
+}
+
 @test "build_brewfile excludes Codex desktop app when INSTALL_CODEX_APP=n" {
   run zsh -c "
     export INSTALL_CODEX_APP=n
@@ -236,7 +255,9 @@ PYTEST
   [[ "$output" != *'tap "peripheryapp/periphery"'* ]]
   [[ "$output" != *'tap "thoughtbot/formulae"'* ]]
   [[ "$output" != *'xcodebuildmcp'* ]]
-  run rg -F 'setup_xcodebuildmcp' "$PROJECT_ROOT/scripts/mac.sh"
+  run rg -F 'setup_xcode_mcp' "$PROJECT_ROOT/scripts/mac.sh"
+  [ "$status" -eq 0 ]
+  run rg -F 'retire_legacy_xcode_mcps' "$PROJECT_ROOT/scripts/mac.sh"
   [ "$status" -eq 0 ]
 }
 

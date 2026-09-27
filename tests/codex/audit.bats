@@ -35,13 +35,25 @@ write_compatibility_mocks() {
 @test "agent audit has deterministic human and JSON repo-only output" {
   run "$AUDIT" --repo-only
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Tracked Codex base, Apple, headless Apple, and review TOML profiles parse with the intended MCP states"* ]]
+  [[ "$output" == *"Tracked Codex base, native Apple, and review TOML profiles parse with the intended MCP states"* ]]
   [[ "$output" == *"RTK hook rewrites a command without blocking it"* ]]
   [[ "$output" == *"Managed tool manifest pins exact tools and compatibility floors"* ]]
 
   run "$AUDIT" --repo-only --json
   [ "$status" -eq 0 ]
   run jq -e '.ok == true and .repo_only == true and (.failures | length == 0)' <<<"$output"
+  [ "$status" -eq 0 ]
+}
+
+@test "agent audit rejects the retired Apple headless profile" {
+  codex_fixture="$TEST_TEMP_DIR/codex-config"
+  cp -R "$PROJECT_ROOT/codex_config" "$codex_fixture"
+  printf '%s\n' '[mcp_servers.XcodeBuildMCP]' > "$codex_fixture/apple-headless.config.toml"
+
+  run env CODEX_CONFIG_DIR="$codex_fixture" "$AUDIT" --repo-only --json
+
+  [ "$status" -ne 0 ]
+  run jq -e '.failures | any(contains("invalid profile inventory"))' <<<"$output"
   [ "$status" -eq 0 ]
 }
 

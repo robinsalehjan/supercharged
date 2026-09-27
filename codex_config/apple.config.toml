@@ -1,5 +1,5 @@
-# Native Xcode profile. Start Codex with `codex -p apple` when connecting to an
-# Xcode project through Apple's MCP bridge.
+# Native Xcode profile. Start Codex with `codex -p apple` for attached Xcode
+# 26.3+ or the Xcode 27+ headless MCP service.
 
 [mcp_servers.xcode]
 command = "xcrun"

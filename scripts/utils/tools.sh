@@ -790,130 +790,223 @@ setup_plannotator() {
     log_with_level "SUCCESS" "Plannotator $version installed successfully"
 }
 
-# Remove the obsolete Homebrew installation only after the managed release is
-# healthy. The tool remains installed under ~/.local; this removes the competing
-# formula and the tap that is no longer its source of truth.
-cleanup_superseded_xcodebuildmcp_homebrew() {
-    [ "${XCODEBUILDMCP_SKIP_BREW_CLEANUP:-0}" != "1" ] || return 0
-    command_exists brew || return 0
-
-    if brew list --formula xcodebuildmcp >/dev/null 2>&1; then
-        log_with_level "INFO" "Removing the superseded Homebrew XcodeBuildMCP installation"
-        brew uninstall xcodebuildmcp >/dev/null 2>&1 || \
-            brew unlink xcodebuildmcp >/dev/null 2>&1 || true
-    fi
-
-    if brew list --formula xcodebuildmcp >/dev/null 2>&1; then
-        log_with_level "WARN" "Kept superseded Homebrew XcodeBuildMCP because it could not be removed"
-        return 0
-    fi
-
-    brew untrust --formula getsentry/xcodebuildmcp/xcodebuildmcp >/dev/null 2>&1 || true
-    if brew tap 2>/dev/null | grep -Fxq "getsentry/xcodebuildmcp"; then
-        if brew untap getsentry/xcodebuildmcp >/dev/null 2>&1; then
-            log_with_level "SUCCESS" "Removed superseded Homebrew tap: getsentry/xcodebuildmcp"
-        else
-            log_with_level "WARN" "Could not remove superseded Homebrew tap: getsentry/xcodebuildmcp"
-        fi
-    fi
-}
-
-# Setup XcodeBuildMCP from an exact, checksummed upstream release archive.
-setup_xcodebuildmcp() {
+# Remove repository-managed and package-manager installations of the retired
+# third-party Apple MCPs. Executables at any other path are reported only.
+retire_legacy_xcode_mcps() {
     local dry_run=false
     [ "${1:-}" = "--dry-run" ] && dry_run=true
 
-    local manifest="${MANAGED_TOOLS_MANIFEST:-$UTILS_PROJECT_ROOT/agent_config/managed_tools.json}"
-    local install_root="${XCODEBUILDMCP_INSTALL_ROOT:-$HOME/.local/share/supercharged/xcodebuildmcp}"
-    local bin_dir="${XCODEBUILDMCP_BIN_DIR:-$HOME/.local/bin}"
-    local arch_uname="${XCODEBUILDMCP_ARCH:-$(uname -m)}" asset_key
-    case "$arch_uname" in
-        arm64|aarch64) asset_key="darwin-arm64" ;;
-        x86_64) asset_key="darwin-x64" ;;
-        *)
-            log_with_level "WARN" "Unsupported architecture for XcodeBuildMCP: $arch_uname — skipping"
-            return 0
-            ;;
-    esac
+    local managed_root="${RETIRED_XCODE_MCP_INSTALL_ROOT:-$HOME/.local/share/supercharged}"
+    local bin_dir="${RETIRED_XCODE_MCP_BIN_DIR:-$HOME/.local/bin}"
+    local failed=false retired_path formula package executable resolved npm_state installed_taps
+    local -a managed_paths
+    managed_paths=(
+        "$managed_root/xcodebuildmcp"
+        "$managed_root/mobilebuildmcp"
+        "$bin_dir/xcodebuildmcp"
+        "$bin_dir/xcodebuildmcp-doctor"
+        "$bin_dir/mobilebuildmcp"
+        "$bin_dir/mobilebuildmcp-doctor"
+    )
 
-    local version repository asset_name expected_sha installed_version="" installed_sha="" force_install=false
-    version=$(jq -er '.tools.xcodebuildmcp.version' "$manifest" 2>/dev/null) || version=""
-    repository=$(jq -er '.tools.xcodebuildmcp.repository' "$manifest" 2>/dev/null) || repository=""
-    asset_name=$(jq -er --arg asset "$asset_key" '.tools.xcodebuildmcp.assets[$asset].name' "$manifest" 2>/dev/null) || asset_name=""
-    expected_sha=$(jq -er --arg asset "$asset_key" '.tools.xcodebuildmcp.assets[$asset].sha256' "$manifest" 2>/dev/null) || expected_sha=""
-    if [[ ! "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || [ -z "$repository" ] || \
-       [ -z "$asset_name" ] || [[ ! "$expected_sha" =~ ^[0-9a-f]{64}$ ]]; then
-        log_with_level "ERROR" "Invalid XcodeBuildMCP pin in $manifest"
-        return 1
-    fi
-
-    if [ -x "$bin_dir/xcodebuildmcp" ]; then
-        installed_version=$("$bin_dir/xcodebuildmcp" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1) || installed_version=""
-    fi
-    installed_sha=$(cat "$install_root/.active-archive-sha256" 2>/dev/null || true)
-    if [ "$installed_version" = "${version#v}" ] && [ "$installed_sha" = "$expected_sha" ]; then
-        if _mcp_server_healthy apple-headless XcodeBuildMCP "$bin_dir"; then
-            $dry_run || cleanup_superseded_xcodebuildmcp_homebrew
-            log_with_level "INFO" "XcodeBuildMCP $version already installed"
-            return 0
-        fi
+    for retired_path in "${managed_paths[@]}"; do
+        [ -e "$retired_path" ] || [ -L "$retired_path" ] || continue
         if $dry_run; then
-            log_with_level "INFO" "Would repair XcodeBuildMCP $version because its MCP handshake fails"
-            return 0
+            log_with_level "INFO" "Would remove retired managed Apple MCP path: $retired_path"
+            continue
         fi
-        log_with_level "WARN" "XcodeBuildMCP MCP handshake failed; reinstalling its managed release"
-        force_install=true
+        case "$retired_path" in
+            "$managed_root"/*|"$bin_dir"/*) ;;
+            *)
+                log_with_level "ERROR" "Refusing to remove unexpected retired Apple MCP path: $retired_path"
+                failed=true
+                continue
+                ;;
+        esac
+        if [ -d "$retired_path" ] && [ ! -L "$retired_path" ]; then
+            if ! rm -rf "$retired_path"; then
+                log_with_level "ERROR" "Could not remove retired managed Apple MCP path: $retired_path"
+                failed=true
+                continue
+            fi
+        else
+            if ! rm -f "$retired_path"; then
+                log_with_level "ERROR" "Could not remove retired managed Apple MCP path: $retired_path"
+                failed=true
+                continue
+            fi
+        fi
+        if [ -e "$retired_path" ] || [ -L "$retired_path" ]; then
+            log_with_level "ERROR" "Could not remove retired managed Apple MCP path: $retired_path"
+            failed=true
+        else
+            log_with_level "SUCCESS" "Removed retired managed Apple MCP path: $retired_path"
+        fi
+    done
+
+    if command_exists brew; then
+        for formula in xcodebuildmcp mobilebuildmcp; do
+            if brew list --formula "$formula" >/dev/null 2>&1; then
+                if $dry_run; then
+                    log_with_level "INFO" "Would uninstall retired Homebrew formula: $formula"
+                elif ! brew uninstall "$formula" >/dev/null 2>&1 || \
+                     brew list --formula "$formula" >/dev/null 2>&1; then
+                    log_with_level "ERROR" "Could not uninstall retired Homebrew formula: $formula"
+                    failed=true
+                else
+                    log_with_level "SUCCESS" "Uninstalled retired Homebrew formula: $formula"
+                fi
+            fi
+        done
+
+        installed_taps=$(brew tap 2>/dev/null || true)
+        if printf '%s\n' "$installed_taps" | grep -Fxq "getsentry/xcodebuildmcp"; then
+            if $dry_run; then
+                log_with_level "INFO" "Would remove retired Homebrew tap: getsentry/xcodebuildmcp"
+            elif ! brew untap getsentry/xcodebuildmcp >/dev/null 2>&1 || \
+                 brew tap 2>/dev/null | grep -Fxq "getsentry/xcodebuildmcp"; then
+                log_with_level "ERROR" "Could not remove retired Homebrew tap: getsentry/xcodebuildmcp"
+                failed=true
+            else
+                log_with_level "SUCCESS" "Removed retired Homebrew tap: getsentry/xcodebuildmcp"
+            fi
+        fi
     fi
-    if $dry_run; then
-        log_with_level "INFO" "Would install XcodeBuildMCP $version"
+
+    if command_exists npm && command_exists jq; then
+        for package in xcodebuildmcp mobilebuildmcp; do
+            npm_state=$(npm list --global --depth=0 --json "$package" 2>/dev/null || true)
+            if jq -e --arg package "$package" '.dependencies[$package] != null' \
+                <<<"$npm_state" >/dev/null 2>&1; then
+                if $dry_run; then
+                    log_with_level "INFO" "Would uninstall retired global npm package: $package"
+                elif ! npm uninstall --global "$package" >/dev/null 2>&1; then
+                    log_with_level "ERROR" "Could not uninstall retired global npm package: $package"
+                    failed=true
+                else
+                    npm_state=$(npm list --global --depth=0 --json "$package" 2>/dev/null || true)
+                    if jq -e --arg package "$package" '.dependencies[$package] != null' \
+                        <<<"$npm_state" >/dev/null 2>&1; then
+                        log_with_level "ERROR" "Retired global npm package remains installed: $package"
+                        failed=true
+                    else
+                        log_with_level "SUCCESS" "Uninstalled retired global npm package: $package"
+                    fi
+                fi
+            fi
+        done
+    elif command_exists npm; then
+        local npm_root
+        npm_root=$(npm root --global 2>/dev/null || true)
+        if [ -z "$npm_root" ]; then
+            log_with_level "ERROR" "Could not inspect retired global npm packages: npm root --global failed"
+            failed=true
+        else
+            for package in xcodebuildmcp mobilebuildmcp; do
+                if [ -e "$npm_root/$package" ] || [ -L "$npm_root/$package" ]; then
+                    log_with_level "ERROR" "Retired global npm package detected but jq is unavailable: $package"
+                    failed=true
+                fi
+            done
+        fi
+    fi
+
+    if ! $dry_run; then
+        rehash 2>/dev/null || true
+    fi
+    for executable in xcodebuildmcp xcodebuildmcp-doctor mobilebuildmcp mobilebuildmcp-doctor; do
+        resolved=$(command -v "$executable" 2>/dev/null || true)
+        if [ -n "$resolved" ] && [ "$resolved" != "$bin_dir/$executable" ]; then
+            log_with_level "WARN" "Retired $executable remains at unknown/manual path: $resolved (remove it manually)"
+        fi
+    done
+
+    $failed && return 1
+    return 0
+}
+
+_print_native_xcode_mcp_manual_steps() {
+    log_with_level "INFO" "To enable native headless Xcode MCP later, run:"
+    log_with_level "INFO" "  sudo xcrun mcp-server enable"
+    log_with_level "INFO" "  xcrun mcp-server start"
+}
+
+# Configure Apple's native Xcode MCP. Xcode 26.3+ supports attached mode via
+# mcpbridge; Xcode 27+ additionally supports the headless mcp-server service.
+setup_xcode_mcp() {
+    local dry_run=false interactive=false
+    [ "${1:-}" = "--dry-run" ] && dry_run=true
+    [[ -t 0 ]] && interactive=true
+    [ "${XCODE_MCP_SETUP_INTERACTIVE:-0}" = "1" ] && interactive=true
+
+    if ! command_exists xcodebuild || ! command_exists xcrun; then
+        log_with_level "WARN" "Native Xcode MCP requires Xcode 26.3 or later; Xcode is not installed"
         return 0
     fi
 
-    local target_dir="$install_root/${version}-${expected_sha[1,12]}" tmp_dir archive downloaded_sha
-    mkdir -p "$install_root" "$bin_dir" || return 1
-    tmp_dir=$(mktemp -d "$install_root/.xcodebuildmcp.XXXXXX") || return 1
-    archive="$tmp_dir/$asset_name"
-    setopt local_traps
-    # shellcheck disable=SC2064  # $tmp_dir is function-local and already out of
-    # scope when the trap fires, so it must be expanded (and ${(q)}-quoted) now.
-    trap "rm -rf ${(q)tmp_dir}" EXIT
-    # shellcheck disable=SC2064
-    trap "rm -rf ${(q)tmp_dir}; trap - INT; kill -INT $$" INT
-    # shellcheck disable=SC2064
-    trap "rm -rf ${(q)tmp_dir}; trap - TERM; kill -TERM $$" TERM
-
-    if ! curl -fsSL "${CURL_DOWNLOAD_OPTS[@]}" "https://github.com/$repository/releases/download/$version/$asset_name" -o "$archive"; then
-        log_with_level "ERROR" "Failed to download XcodeBuildMCP $version"
-        return 1
+    local version service_status response
+    version=$(xcodebuild -version 2>/dev/null | awk '/^Xcode / { print $2; exit }')
+    if [ -z "$version" ] || ! version_gte "$version" "26.3"; then
+        log_with_level "WARN" "Native Xcode MCP requires Xcode 26.3 or later (found: ${version:-unknown})"
+        return 0
     fi
-    downloaded_sha=$(shasum -a 256 "$archive" 2>/dev/null | awk '{print $1}') || downloaded_sha=""
-    if [ "$downloaded_sha" != "$expected_sha" ]; then
-        log_with_level "ERROR" "XcodeBuildMCP checksum verification failed"
-        return 1
-    fi
-    mkdir -p "$tmp_dir/extracted"
-    if ! tar -xzf "$archive" -C "$tmp_dir/extracted" --strip-components=1 || \
-       [ ! -x "$tmp_dir/extracted/bin/xcodebuildmcp" ]; then
-        log_with_level "ERROR" "XcodeBuildMCP archive is malformed"
-        return 1
+    if ! xcrun --find mcpbridge >/dev/null 2>&1; then
+        log_with_level "WARN" "Xcode $version does not expose xcrun mcpbridge; attached MCP is unavailable"
+        return 0
     fi
 
-    if [ -d "$target_dir" ] && { $force_install || \
-       [ "$("$target_dir/bin/xcodebuildmcp" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)" != "${version#v}" ]; }; then
-        target_dir="${target_dir}-${EPOCHSECONDS}"
+    log_with_level "SUCCESS" "Native Xcode MCP attached mode is available with Xcode $version"
+    if ! version_gte "$version" "27.0"; then
+        log_with_level "INFO" "Xcode $version supports attached MCP only; Xcode 27 or later is required for headless MCP"
+        return 0
     fi
-    if [ ! -d "$target_dir" ]; then
-        mv "$tmp_dir/extracted" "$target_dir" || return 1
+    if ! xcrun --find mcp-server >/dev/null 2>&1; then
+        log_with_level "WARN" "Xcode $version does not expose xcrun mcp-server; attached mode remains available"
+        _print_native_xcode_mcp_manual_steps
+        return 0
     fi
-    ln -sfn "$target_dir/bin/xcodebuildmcp" "$bin_dir/xcodebuildmcp"
-    ln -sfn "$target_dir/bin/xcodebuildmcp-doctor" "$bin_dir/xcodebuildmcp-doctor"
-    printf '%s\n' "$expected_sha" > "$install_root/.active-archive-sha256"
-    if ! _mcp_server_healthy apple-headless XcodeBuildMCP "$bin_dir"; then
-        log_with_level "ERROR" "XcodeBuildMCP fails the MCP initialize handshake after installation"
-        return 1
+
+    service_status=$(xcrun mcp-server status 2>&1 || true)
+    if printf '%s\n' "$service_status" | grep -Eiq 'Permission:[[:space:]]*enabled|"permission"[[:space:]]*:[[:space:]]*"enabled"'; then
+        if $dry_run; then
+            log_with_level "INFO" "Would start the enabled native Xcode MCP service"
+        elif xcrun mcp-server start >/dev/null 2>&1; then
+            log_with_level "SUCCESS" "Native Xcode MCP headless service is enabled and started"
+        else
+            log_with_level "WARN" "Could not start native Xcode MCP headless service; attached mode remains available"
+            _print_native_xcode_mcp_manual_steps
+        fi
+        return 0
     fi
-    cleanup_superseded_xcodebuildmcp_homebrew
-    log_with_level "SUCCESS" "XcodeBuildMCP $version installed"
+
+    if $dry_run; then
+        log_with_level "INFO" "Would prompt to enable the native Xcode MCP headless service"
+        _print_native_xcode_mcp_manual_steps
+        return 0
+    fi
+    if ! $interactive; then
+        log_with_level "WARN" "Native Xcode MCP headless service is not enabled; attached mode remains available"
+        _print_native_xcode_mcp_manual_steps
+        return 0
+    fi
+
+    read -r "response?Enable native Xcode MCP headless service (requires sudo)? [y/N]: "
+    if [[ ! "$response" =~ ^[Yy]$ ]]; then
+        log_with_level "INFO" "Native Xcode MCP headless enablement declined; attached mode remains available"
+        _print_native_xcode_mcp_manual_steps
+        return 0
+    fi
+    if ! sudo xcrun mcp-server enable; then
+        log_with_level "WARN" "Could not enable native Xcode MCP headless service; attached mode remains available"
+        _print_native_xcode_mcp_manual_steps
+        return 0
+    fi
+    if ! xcrun mcp-server start; then
+        log_with_level "WARN" "Native Xcode MCP was enabled but could not be started"
+        _print_native_xcode_mcp_manual_steps
+        return 0
+    fi
+    log_with_level "SUCCESS" "Native Xcode MCP headless service is enabled and started"
 }
 
 # Setup Obscura (Rust-based headless browser for AI agents and web scraping)

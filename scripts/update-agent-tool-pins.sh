@@ -25,11 +25,9 @@ fetch_json() {
 }
 
 plannotator_repo=$(jq -r '.tools.plannotator.repository' "$MANIFEST")
-xcodebuildmcp_repo=$(jq -r '.tools.xcodebuildmcp.repository' "$MANIFEST")
 obscura_repo=$(jq -r '.tools.obscura.repository' "$MANIFEST")
 
 plannotator_json=$(fetch_json "${PLANNOTATOR_RELEASE_JSON:-}" "repos/$plannotator_repo/releases/latest")
-xcodebuildmcp_json=$(fetch_json "${XCODEBUILDMCP_RELEASE_JSON:-}" "repos/$xcodebuildmcp_repo/releases/latest")
 obscura_json=$(fetch_json "${OBSCURA_RELEASE_JSON:-}" "repos/$obscura_repo/releases/latest")
 axiom_json=$(fetch_json "${AXIOM_COMMIT_JSON:-}" "repos/CharlesWiltgen/Axiom/commits/main")
 if [ -n "${CRG_PYPI_JSON:-}" ]; then
@@ -60,12 +58,6 @@ crg_version=$(jq -er '.info.version | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))
 openwiki_version=$(printf '%s' "$openwiki_version" | jq -Rer 'select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))')
 playwright_cli_version=$(printf '%s' "$playwright_cli_version" | jq -Rer 'select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))')
 playwright_mcp_version=$(printf '%s' "$playwright_mcp_version" | jq -Rer 'select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))')
-xcodebuildmcp_version=$(jq -er '.tag_name | select(test("^v[0-9]+\\.[0-9]+\\.[0-9]+$"))' <<<"$xcodebuildmcp_json")
-xcodebuildmcp_plain="${xcodebuildmcp_version#v}"
-xcodebuildmcp_arm_name="xcodebuildmcp-${xcodebuildmcp_plain}-darwin-arm64.tar.gz"
-xcodebuildmcp_x64_name="xcodebuildmcp-${xcodebuildmcp_plain}-darwin-x64.tar.gz"
-xcodebuildmcp_arm_sha=$(jq -er --arg name "$xcodebuildmcp_arm_name" '.assets[] | select(.name == $name) | .digest | sub("^sha256:"; "") | select(test("^[0-9a-f]{64}$"))' <<<"$xcodebuildmcp_json")
-xcodebuildmcp_x64_sha=$(jq -er --arg name "$xcodebuildmcp_x64_name" '.assets[] | select(.name == $name) | .digest | sub("^sha256:"; "") | select(test("^[0-9a-f]{64}$"))' <<<"$xcodebuildmcp_json")
 obscura_version=$(jq -er '.tag_name | select(test("^v[0-9]+\\.[0-9]+\\.[0-9]+$"))' <<<"$obscura_json")
 obscura_arm_name="obscura-aarch64-macos.tar.gz"
 obscura_x64_name="obscura-x86_64-macos.tar.gz"
@@ -87,9 +79,6 @@ updates=$(jq -n \
     --arg w_current "$(jq -r '.tools.openwiki.version' "$MANIFEST")" --arg w_latest "$openwiki_version" \
     --arg pw_current "$(jq -r '.tools["playwright-cli"].version' "$MANIFEST")" --arg pw_latest "$playwright_cli_version" \
     --arg pm_current "$(jq -r '.tools["playwright-mcp"].version' "$MANIFEST")" --arg pm_latest "$playwright_mcp_version" \
-    --arg x_current "$(jq -r '.tools.xcodebuildmcp.version' "$MANIFEST")" --arg x_latest "$xcodebuildmcp_version" \
-    --arg x_arm_current "$(jq -r '.tools.xcodebuildmcp.assets["darwin-arm64"].sha256' "$MANIFEST")" --arg x_arm_latest "$xcodebuildmcp_arm_sha" \
-    --arg x_x64_current "$(jq -r '.tools.xcodebuildmcp.assets["darwin-x64"].sha256' "$MANIFEST")" --arg x_x64_latest "$xcodebuildmcp_x64_sha" \
     --arg o_current "$(jq -r '.tools.obscura.version' "$MANIFEST")" --arg o_latest "$obscura_version" \
     --arg o_arm_current "$(jq -r '.tools.obscura.assets["darwin-arm64"].sha256' "$MANIFEST")" --arg o_arm_latest "$obscura_arm_sha" \
     --arg o_x64_current "$(jq -r '.tools.obscura.assets["darwin-x64"].sha256' "$MANIFEST")" --arg o_x64_latest "$obscura_x64_sha" \
@@ -101,7 +90,6 @@ updates=$(jq -n \
       (select($w_current != $w_latest) | "OpenWiki: \($w_current) -> \($w_latest)"),
       (select($pw_current != $pw_latest) | "Playwright CLI: \($pw_current) -> \($pw_latest)"),
       (select($pm_current != $pm_latest) | "Playwright MCP: \($pm_current) -> \($pm_latest)"),
-      (select($x_current != $x_latest or $x_arm_current != $x_arm_latest or $x_x64_current != $x_x64_latest) | "XcodeBuildMCP: \($x_current) -> \($x_latest)"),
       (select($o_current != $o_latest or $o_arm_current != $o_arm_latest or $o_x64_current != $o_x64_latest) | "Obscura: \($o_current) -> \($o_latest)"),
       (select($a_current != $a_latest or $av_current != $av_latest) | "Axiom marketplace commit changed")
     ]')
@@ -151,7 +139,6 @@ jq \
   --arg wv "$openwiki_version" \
   --arg pwv "$playwright_cli_version" \
   --arg pmv "$playwright_mcp_version" \
-  --arg xv "$xcodebuildmcp_version" --arg xan "$xcodebuildmcp_arm_name" --arg xas "$xcodebuildmcp_arm_sha" --arg xxn "$xcodebuildmcp_x64_name" --arg xxs "$xcodebuildmcp_x64_sha" \
   --arg ov "$obscura_version" --arg oan "$obscura_arm_name" --arg oas "$obscura_arm_sha" --arg oab "$obscura_arm_bin" --arg oaw "$obscura_arm_worker" \
   --arg oxn "$obscura_x64_name" --arg oxs "$obscura_x64_sha" --arg oxb "$obscura_x64_bin" --arg oxw "$obscura_x64_worker" '
     .tools.plannotator.version = $pv |
@@ -161,9 +148,6 @@ jq \
     .tools.openwiki.version = $wv |
     .tools["playwright-cli"].version = $pwv |
     .tools["playwright-mcp"].version = $pmv |
-    .tools.xcodebuildmcp.version = $xv |
-    .tools.xcodebuildmcp.assets["darwin-arm64"] = {name: $xan, sha256: $xas} |
-    .tools.xcodebuildmcp.assets["darwin-x64"] = {name: $xxn, sha256: $xxs} |
     .tools.obscura.version = $ov |
     .tools.obscura.assets["darwin-arm64"] = {name: $oan, sha256: $oas, binaries: {obscura: $oab, "obscura-worker": $oaw}} |
     .tools.obscura.assets["darwin-x64"] = {name: $oxn, sha256: $oxs, binaries: {obscura: $oxb, "obscura-worker": $oxw}}

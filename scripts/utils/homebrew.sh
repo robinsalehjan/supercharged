@@ -30,13 +30,6 @@ reconcile_homebrew_taps() {
 
     installed_taps=$(brew tap 2>/dev/null || true)
 
-    # Keep the legacy Homebrew formula updateable until the checksummed managed
-    # replacement is healthy enough for setup_xcodebuildmcp to remove it.
-    if printf '%s\n' "$installed_taps" | grep -Fxq "getsentry/xcodebuildmcp" && \
-       brew list --formula xcodebuildmcp >/dev/null 2>&1; then
-        trusted_formulae+=("getsentry/xcodebuildmcp/xcodebuildmcp")
-    fi
-
     for formula in "${trusted_formulae[@]}"; do
         tap="${formula%/*}"
         if ! printf '%s\n' "$installed_taps" | grep -Fxq "$tap"; then

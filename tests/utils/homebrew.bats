@@ -30,7 +30,7 @@ teardown() {
   [ "$status" -eq 0 ]
   grep -Fxq 'trust --formula danger/tap/danger-js' "$BREW_CALLS_FILE"
   grep -Fxq 'trust --formula danger/tap/danger-swift' "$BREW_CALLS_FILE"
-  grep -Fxq 'trust --formula getsentry/xcodebuildmcp/xcodebuildmcp' "$BREW_CALLS_FILE"
+  ! grep -Fq 'trust --formula getsentry/xcodebuildmcp/xcodebuildmcp' "$BREW_CALLS_FILE"
   grep -Fxq 'trust --formula mobai-app/tap/simslim' "$BREW_CALLS_FILE"
   grep -Fxq 'trust --formula xcodesorg/made/xcodes' "$BREW_CALLS_FILE"
   grep -Fxq 'untap finn/brew' "$BREW_CALLS_FILE"

@@ -16,12 +16,10 @@ setup() {
 
 write_other_fixtures() {
   CRG_JSON="$TEST_TEMP_DIR/crg.json"
-  XCODE_JSON="$TEST_TEMP_DIR/xcode.json"
   OBSCURA_JSON="$TEST_TEMP_DIR/obscura.json"
   AXIOM_JSON="$TEST_TEMP_DIR/axiom.json"
   AXIOM_PLUGIN_JSON="$TEST_TEMP_DIR/axiom-plugin.json"
   crg=$(jq -r '.tools["code-review-graph"].version' "$MANIFEST")
-  xv=$(jq -r '.tools.xcodebuildmcp.version' "$MANIFEST")
   ov=$(jq -r '.tools.obscura.version' "$MANIFEST")
   wv=$(jq -r '.tools.openwiki.version' "$MANIFEST")
   pwv=$(jq -r '.tools["playwright-cli"].version' "$MANIFEST")
@@ -29,12 +27,6 @@ write_other_fixtures() {
   ac=$(jq -r '.marketplaces[0].ref' "$PLUGIN_REGISTRY")
   av=$(jq -r '.plugins[0].version' "$PLUGIN_REGISTRY")
   printf '{"info":{"version":"%s"}}\n' "$crg" > "$CRG_JSON"
-  jq -n --arg tag "$xv" \
-    --arg an "$(jq -r '.tools.xcodebuildmcp.assets["darwin-arm64"].name' "$MANIFEST")" \
-    --arg as "$(jq -r '.tools.xcodebuildmcp.assets["darwin-arm64"].sha256' "$MANIFEST")" \
-    --arg xn "$(jq -r '.tools.xcodebuildmcp.assets["darwin-x64"].name' "$MANIFEST")" \
-    --arg xs "$(jq -r '.tools.xcodebuildmcp.assets["darwin-x64"].sha256' "$MANIFEST")" \
-    '{tag_name:$tag,assets:[{name:$an,digest:("sha256:"+$as)},{name:$xn,digest:("sha256:"+$xs)}]}' > "$XCODE_JSON"
   jq -n --arg tag "$ov" \
     --arg an "$(jq -r '.tools.obscura.assets["darwin-arm64"].name' "$MANIFEST")" \
     --arg as "$(jq -r '.tools.obscura.assets["darwin-arm64"].sha256' "$MANIFEST")" \
@@ -51,7 +43,7 @@ write_other_fixtures() {
 run_updater() {
   env MANAGED_TOOLS_MANIFEST="$MANIFEST" CODEX_PLUGIN_REGISTRY="$PLUGIN_REGISTRY" \
     PLANNOTATOR_RELEASE_JSON="$RELEASE_JSON" CRG_PYPI_JSON="$CRG_JSON" \
-    XCODEBUILDMCP_RELEASE_JSON="$XCODE_JSON" OBSCURA_RELEASE_JSON="$OBSCURA_JSON" \
+    OBSCURA_RELEASE_JSON="$OBSCURA_JSON" \
     AXIOM_COMMIT_JSON="$AXIOM_JSON" \
     AXIOM_PLUGIN_JSON="$AXIOM_PLUGIN_JSON" \
     OPENWIKI_NPM_VERSION="$OPENWIKI_VERSION" \
@@ -186,31 +178,6 @@ EOF
   [ "$status" -eq 0 ]
 }
 
-@test "managed tool pin updater applies an XcodeBuildMCP release and checksums" {
-  write_current_release
-  local arm64_sha="cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
-  local x64_sha="dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
-  jq -n --arg arm64 "$arm64_sha" --arg x64 "$x64_sha" '{
-    tag_name: "v9.9.9",
-    assets: [
-      {name: "xcodebuildmcp-9.9.9-darwin-arm64.tar.gz", digest: ("sha256:" + $arm64)},
-      {name: "xcodebuildmcp-9.9.9-darwin-x64.tar.gz", digest: ("sha256:" + $x64)}
-    ]
-  }' > "$XCODE_JSON"
-
-  run run_updater --apply
-
-  [ "$status" -eq 0 ]
-  run jq -e --arg arm64 "$arm64_sha" --arg x64 "$x64_sha" '
-    .tools.xcodebuildmcp.version == "v9.9.9" and
-    .tools.xcodebuildmcp.assets["darwin-arm64"] == {
-      name: "xcodebuildmcp-9.9.9-darwin-arm64.tar.gz", sha256: $arm64
-    } and
-    .tools.xcodebuildmcp.assets["darwin-x64"] == {
-      name: "xcodebuildmcp-9.9.9-darwin-x64.tar.gz", sha256: $x64
-    }' "$MANIFEST"
-  [ "$status" -eq 0 ]
-}
 
 @test "managed tool pin updater applies an Obscura release and derived binary checksums" {
   write_current_release

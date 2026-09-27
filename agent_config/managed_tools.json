@@ -42,21 +42,6 @@
         "communities"
       ]
     },
-    "xcodebuildmcp": {
-      "policy": "exact-release",
-      "version": "v2.7.0",
-      "repository": "getsentry/XcodeBuildMCP",
-      "assets": {
-        "darwin-arm64": {
-          "name": "xcodebuildmcp-2.7.0-darwin-arm64.tar.gz",
-          "sha256": "bd724a2c0e6ffe027b3f46257e66d626149a64cd045f4867124bd683b3cf081a"
-        },
-        "darwin-x64": {
-          "name": "xcodebuildmcp-2.7.0-darwin-x64.tar.gz",
-          "sha256": "f62522c07591a0871601b9fe0c30666bcbe3b1d93dc458eb295c8998ac4fa304"
-        }
-      }
-    },
     "obscura": {
       "policy": "exact-release",
       "version": "v0.2.1",
