@@ -45,12 +45,35 @@ fi
 # installed under a versioned name (e.g. via `xcodes` as Xcode-X.Y.Z.app).
 # Always resolves at shell init — no hardcoded path. Survives `xcodes select`.
 if command -v xcode-select >/dev/null 2>&1; then
-    _xcode_developer_dir=$(xcode-select -p 2>/dev/null)
+    # Ignore an inherited override so the system selection remains authoritative.
+    _xcode_developer_dir=$(env -u DEVELOPER_DIR xcode-select -p 2>/dev/null)
     if [ -n "$_xcode_developer_dir" ] && [ -d "$_xcode_developer_dir" ]; then
         export DEVELOPER_DIR="$_xcode_developer_dir"
     fi
     unset _xcode_developer_dir
 fi
+
+# Launch the Xcode app selected by xcode-select, including versioned xcodes installs.
+xcode() {
+    local developer_dir xcode_app
+
+    developer_dir=$(env -u DEVELOPER_DIR xcode-select -p 2>/dev/null) || {
+        print -u2 "No active Xcode installation found"
+        return 1
+    }
+    xcode_app=${developer_dir%/Contents/Developer}
+
+    if [ ! -d "$xcode_app" ]; then
+        print -u2 "Selected Xcode app not found: $xcode_app"
+        return 1
+    fi
+
+    if [ "$#" -gt 0 ]; then
+        open -a "$xcode_app" "$@"
+    else
+        open "$xcode_app"
+    fi
+}
 
 # Function to deduplicate PATH (O(n) using associative array)
 deduplicate_path() {
