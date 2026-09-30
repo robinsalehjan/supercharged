@@ -59,3 +59,43 @@ teardown() {
   [[ "$output" == *'Would trust managed Homebrew formula: mobai-app/tap/simslim'* ]]
   [[ "$output" == *'Would remove unused Homebrew tap: finn/brew'* ]]
 }
+
+@test "upgrade_homebrew_formulae uses the xcodes bottle and upgrades other formulae normally" {
+  run zsh -c '
+    export BREW_CALLS_FILE="'"$BREW_CALLS_FILE"'"
+    brew() {
+      printf "%s\n" "$*" >> "$BREW_CALLS_FILE"
+      if [ "$1 $2 $3" = "outdated --formula --quiet" ]; then
+        printf "%s\n" readline xcodes jq
+      fi
+    }
+    source "'"$PROJECT_ROOT"'/scripts/utils.sh"
+    upgrade_homebrew_formulae
+  '
+
+  [ "$status" -eq 0 ]
+  grep -Fxq 'upgrade --formula --force-bottle --dry-run xcodesorg/made/xcodes' "$BREW_CALLS_FILE"
+  grep -Fxq 'upgrade --formula --force-bottle xcodesorg/made/xcodes' "$BREW_CALLS_FILE"
+  grep -Fxq 'upgrade --formula readline jq' "$BREW_CALLS_FILE"
+  ! grep -Fxq 'upgrade' "$BREW_CALLS_FILE"
+}
+
+@test "upgrade_homebrew_formulae skips xcodes when its tap has no usable bottle" {
+  run zsh -c '
+    export BREW_CALLS_FILE="'"$BREW_CALLS_FILE"'"
+    brew() {
+      printf "%s\n" "$*" >> "$BREW_CALLS_FILE"
+      if [ "$1 $2 $3" = "outdated --formula --quiet" ]; then
+        printf "%s\n" xcodes
+      elif [ "$1 $2 $3 $4" = "upgrade --formula --force-bottle --dry-run" ]; then
+        return 1
+      fi
+    }
+    source "'"$PROJECT_ROOT"'/scripts/utils.sh"
+    upgrade_homebrew_formulae
+  '
+
+  [ "$status" -eq 0 ]
+  [ "$(grep -c '^upgrade ' "$BREW_CALLS_FILE")" -eq 1 ]
+  [[ "$output" == *'tap has no usable bottle'* ]]
+}

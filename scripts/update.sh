@@ -188,7 +188,7 @@ main() {
         # Fix wireshark symlinks and remove deprecated cask
         fix_wireshark_symlinks
 
-        brew upgrade
+        upgrade_homebrew_formulae
     fi
 
     if ! $SKIP_CASK; then

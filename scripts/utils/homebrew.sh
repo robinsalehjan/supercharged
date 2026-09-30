@@ -60,3 +60,36 @@ reconcile_homebrew_taps() {
         fi
     done
 }
+
+# On newer macOS releases the Xcodes tap can fall back to a quiet Swift source
+# build, which can appear to hang after printing Xcode/CLT compatibility
+# warnings. Use its bottle only when Homebrew confirms one is usable, and keep
+# the remaining formulae on Homebrew's normal upgrade path.
+upgrade_homebrew_formulae() {
+    local formula
+    local -a regular_formulae
+
+    regular_formulae=()
+    while IFS= read -r formula; do
+        [ -n "$formula" ] || continue
+        case "$formula" in
+            xcodes|xcodesorg/made/xcodes)
+                if brew upgrade --formula --force-bottle --dry-run xcodesorg/made/xcodes >/dev/null 2>&1; then
+                    log_with_level "INFO" "Updating xcodes from its prebuilt Homebrew bottle..."
+                    if brew upgrade --formula --force-bottle xcodesorg/made/xcodes; then
+                        log_with_level "SUCCESS" "Updated xcodes from its prebuilt bottle"
+                    else
+                        log_with_level "WARN" "Could not update xcodes from its prebuilt bottle; skipped the slow source build"
+                    fi
+                else
+                    log_with_level "WARN" "Skipping xcodes update because its tap has no usable bottle; run 'brew upgrade xcodesorg/made/xcodes' manually to allow a source build"
+                fi
+                ;;
+            *) regular_formulae+=("$formula") ;;
+        esac
+    done <<< "$(brew outdated --formula --quiet)"
+
+    if [ "${#regular_formulae[@]}" -gt 0 ]; then
+        brew upgrade --formula "${regular_formulae[@]}"
+    fi
+}

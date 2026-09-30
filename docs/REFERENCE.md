@@ -266,6 +266,8 @@ Edit `agent_config/AGENTS.md` for shared Claude/Codex instructions. Keep the tra
 
 `npm run update -- --dry-run` is non-mutating: it suppresses Homebrew auto-update, reports the tap trust and retirement actions it would take, skips `brew update` and cleanup, and reports outdated Homebrew formulae, casks, and global npm packages before exiting ahead of asdf, zsh, npm, or pip updates.
 
+Normal updates install `xcodes` only when Homebrew can use the tap's prebuilt bottle. This avoids Homebrew silently falling back to a long Swift source build on newer macOS releases after printing outdated Xcode or Command Line Tools warnings; if no usable bottle is available, the update warns and leaves `xcodes` unchanged.
+
 ## Terminal Font
 
 Setup installs JetBrainsMono Nerd Font for the tmux/Catppuccin status bar. After install, set your terminal profile font to `JetBrainsMono Nerd Font Mono`.
