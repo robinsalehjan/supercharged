@@ -103,7 +103,6 @@ build_brewfile() {
     # deprecation warnings on brew 5.1.11+.
     local content='tap "danger/tap", trusted: { formulae: ["danger-js", "danger-swift"] }
 tap "replicate/tap", trusted: { formula: "replicate" }
-tap "jundot/omlx", "https://github.com/jundot/omlx", trusted: { formula: "omlx" }
 
 brew "bash"
 brew "coreutils"
@@ -155,7 +154,6 @@ brew "htop"
 # its bundled CLI onto PATH, so `brew "ollama"` is not needed alongside it
 # (both would try to own the same `ollama` binary symlink).
 cask "ollama"
-brew "jundot/omlx/omlx"
 cask "codex"
 brew "pipx"
 brew "uv"

@@ -17,7 +17,7 @@ teardown() {
     export BREW_CALLS_FILE="'"$BREW_CALLS_FILE"'"
     brew() {
       if [ "$1" = tap ] && [ "$#" -eq 1 ]; then
-        printf "%s\n" danger/tap finn/brew getsentry/xcodebuildmcp mobai-app/tap thoughtbot/formulae xcodesorg/made
+        printf "%s\n" danger/tap finn/brew getsentry/xcodebuildmcp jundot/omlx mobai-app/tap thoughtbot/formulae xcodesorg/made
         return 0
       fi
       printf "%s\n" "$*" >> "$BREW_CALLS_FILE"
@@ -34,6 +34,7 @@ teardown() {
   grep -Fxq 'trust --formula mobai-app/tap/simslim' "$BREW_CALLS_FILE"
   grep -Fxq 'trust --formula xcodesorg/made/xcodes' "$BREW_CALLS_FILE"
   grep -Fxq 'untap finn/brew' "$BREW_CALLS_FILE"
+  grep -Fxq 'untap jundot/omlx' "$BREW_CALLS_FILE"
   grep -Fxq 'untap thoughtbot/formulae' "$BREW_CALLS_FILE"
   [[ "$output" == *'Kept Homebrew tap getsentry/xcodebuildmcp because it still provides an installed item'* ]]
   ! grep -Fq -- '--force' "$BREW_CALLS_FILE"
@@ -44,7 +45,7 @@ teardown() {
     export BREW_CALLS_FILE="'"$BREW_CALLS_FILE"'"
     brew() {
       if [ "$1" = tap ] && [ "$#" -eq 1 ]; then
-        printf "%s\n" danger/tap finn/brew mobai-app/tap
+        printf "%s\n" danger/tap finn/brew jundot/omlx mobai-app/tap
         return 0
       fi
       printf "%s\n" "$*" >> "$BREW_CALLS_FILE"
@@ -58,6 +59,7 @@ teardown() {
   [[ "$output" == *'Would trust managed Homebrew formula: danger/tap/danger-js'* ]]
   [[ "$output" == *'Would trust managed Homebrew formula: mobai-app/tap/simslim'* ]]
   [[ "$output" == *'Would remove unused Homebrew tap: finn/brew'* ]]
+  [[ "$output" == *'Would remove unused Homebrew tap: jundot/omlx'* ]]
 }
 
 @test "upgrade_homebrew_formulae uses the xcodes bottle and upgrades other formulae normally" {

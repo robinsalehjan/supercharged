@@ -135,9 +135,8 @@ run_zsh_func() {
   [[ "$output" == *'brew "danger/tap/danger-js"'* ]]
   [[ "$output" == *'brew "danger/tap/danger-swift"'* ]]
   [[ "$output" != *'cupertino'* ]]
-  [[ "$output" == *'tap "jundot/omlx", "https://github.com/jundot/omlx"'* ]]
   [[ "$output" == *'cask "ollama"'* ]]
-  [[ "$output" == *'brew "jundot/omlx/omlx"'* ]]
+  [[ "$output" != *'omlx'* ]]
   [[ "$output" == *'mas "Numbers", id: 361304891'* ]]
   [[ "$output" == *'vscode "openai.chatgpt"'* ]]
 }

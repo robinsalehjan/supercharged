@@ -66,18 +66,6 @@ teardown() {
   [ "$status" -eq 0 ]
 }
 
-@test "extract_tool_version reads omlx version" {
-  source "$PROJECT_ROOT/scripts/utils.sh"
-  omlx() {
-    printf '%s\n' '0.5.3'
-  }
-
-  run extract_tool_version omlx
-
-  [ "$status" -eq 0 ]
-  [ "$output" = "0.5.3" ]
-}
-
 @test "extract_tool_version reads Ollama client version when daemon is stopped" {
   source "$PROJECT_ROOT/scripts/utils.sh"
   ollama() {
