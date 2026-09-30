@@ -7,6 +7,21 @@ setup() {
   setup_test_env
 
   PROJECT_ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
+  UPDATE_ORCHESTRATOR_DIR="$TEST_TEMP_DIR/update-orchestrator"
+  mkdir -p "$UPDATE_ORCHESTRATOR_DIR"
+  cp "$PROJECT_ROOT/scripts/update-all.sh" "$UPDATE_ORCHESTRATOR_DIR/update-all.sh"
+  chmod +x "$UPDATE_ORCHESTRATOR_DIR/update-all.sh"
+
+  cat > "$UPDATE_ORCHESTRATOR_DIR/utils.sh" <<'EOF'
+log_with_level() { :; }
+EOF
+  for script in backup-all.sh sync.sh install-agent-tooling.sh update.sh; do
+    cat > "$UPDATE_ORCHESTRATOR_DIR/$script" <<EOF
+#!/bin/zsh
+printf '%s %s\n' '$script' "\$*" >> "\$HOME/update-calls"
+EOF
+    chmod +x "$UPDATE_ORCHESTRATOR_DIR/$script"
+  done
 }
 
 teardown() {
@@ -14,18 +29,29 @@ teardown() {
   teardown_test_env
 }
 
-@test "normal update paths reconcile complete agent tooling" {
+@test "update command uses the consolidated orchestrator" {
   update_script=$(jq -r '.scripts.update' "$PROJECT_ROOT/package.json")
-  update_only_script=$(jq -r '.scripts["update:only"]' "$PROJECT_ROOT/package.json")
 
-  [[ "$update_script" == *"npm run install:agent-tooling"* ]]
-  [[ "$update_only_script" == *"npm run install:agent-tooling"* ]]
+  [ "$update_script" = "./scripts/update-all.sh" ]
 }
 
-@test "update dry-run checks managed tools without changing them" {
-  update_script=$(jq -r '.scripts["update:dry-run"]' "$PROJECT_ROOT/package.json")
+@test "normal update syncs dotfiles and reconciles complete agent tooling" {
+  run "$UPDATE_ORCHESTRATOR_DIR/update-all.sh" --only brew
 
-  [[ "$update_script" == *"npm run install:agent-tooling -- --dry-run"* ]]
+  [ "$status" -eq 0 ]
+  [ "$(sed -n '1p' "$HOME/update-calls")" = "sync.sh --only dotfiles" ]
+  [ "$(sed -n '2p' "$HOME/update-calls")" = "install-agent-tooling.sh " ]
+  [ "$(sed -n '3p' "$HOME/update-calls")" = "update.sh --only brew" ]
+}
+
+@test "update dry-run checks managed tools without changing configuration" {
+  run "$UPDATE_ORCHESTRATOR_DIR/update-all.sh" --dry-run
+
+  [ "$status" -eq 0 ]
+  ! grep -F 'sync.sh' "$HOME/update-calls"
+  ! grep -F 'backup-all.sh' "$HOME/update-calls"
+  grep -F 'install-agent-tooling.sh --dry-run' "$HOME/update-calls"
+  grep -F 'update.sh --dry-run' "$HOME/update-calls"
 }
 
 @test "managed tool pins have a dedicated update command" {
@@ -41,18 +67,28 @@ teardown() {
   [[ "$update_source" == *'JetBrainsMono Nerd Font could not be registered'* ]]
 }
 
-@test "safe update does not capture live agent configuration" {
-  update_script=$(jq -r '.scripts.update' "$PROJECT_ROOT/package.json")
+@test "standard update does not capture live agent configuration" {
+  run "$UPDATE_ORCHESTRATOR_DIR/update-all.sh"
 
-  [[ "$update_script" != *"backup:claude"* ]]
-  [[ "$update_script" != *"backup:codex"* ]]
-  [[ "$update_script" != *"backup:all"* ]]
+  [ "$status" -eq 0 ]
+  ! grep -F 'backup-all.sh' "$HOME/update-calls"
 }
 
-@test "update with backup is fail-fast capture then safe update" {
-  update_script=$(jq -r '.scripts["update:with-backup"]' "$PROJECT_ROOT/package.json")
+@test "update --backup captures config before syncing and updating" {
+  run "$UPDATE_ORCHESTRATOR_DIR/update-all.sh" --backup
 
-  [ "$update_script" = "npm run backup:all && npm run update" ]
+  [ "$status" -eq 0 ]
+  [ "$(sed -n '1p' "$HOME/update-calls")" = "backup-all.sh " ]
+  [ "$(sed -n '2p' "$HOME/update-calls")" = "sync.sh --only dotfiles" ]
+  [ "$(sed -n '3p' "$HOME/update-calls")" = "install-agent-tooling.sh " ]
+  [ "$(sed -n '4p' "$HOME/update-calls")" = "update.sh " ]
+}
+
+@test "update rejects a mutating backup during dry-run" {
+  run "$UPDATE_ORCHESTRATOR_DIR/update-all.sh" --backup --dry-run
+
+  [ "$status" -ne 0 ]
+  [ ! -e "$HOME/update-calls" ]
 }
 
 # =============================================================================

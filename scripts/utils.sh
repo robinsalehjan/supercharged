@@ -41,7 +41,7 @@ CURL_METADATA_OPTS=(--connect-timeout 10 --max-time 60 --retry 3 --retry-delay 2
 
 # Shared list of dotfiles for backup/restore/copy operations
 # Note: array export only works in zsh; all consumers source utils.sh in-process so this is fine
-# shellcheck disable=SC2034  # Used by submodules (backup.sh, restore.sh) via source
+# shellcheck disable=SC2034  # Used by submodules (backup.sh, rollback.sh) via source
 MANAGED_DOTFILES=(.zshrc .zprofile .gitconfig .gitignore_global .p10k.zsh .tool-versions .tmux.conf .supercharged_preferences)
 
 # Source submodules (logging must load first — all others call log_with_level)
@@ -89,8 +89,8 @@ standard_cleanup() {
 
         if [ -f "$HOME/.supercharged_last_backup" ]; then
             echo ""
-            echo "💡 You can restore your previous configuration with:"
-            echo "   npm run restore"
+            echo "💡 You can roll back to your previous configuration with:"
+            echo "   npm run rollback"
         fi
     fi
 

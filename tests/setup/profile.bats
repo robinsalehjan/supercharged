@@ -54,7 +54,7 @@ teardown() {
   [ "${#MANAGED_DOTFILES[@]}" -gt 0 ]
 }
 
-@test "restore:dotfiles does not restore agent config or initialize code-review-graph" {
+@test "dotfiles-only sync implementation does not apply agent config or initialize code-review-graph" {
   script="$PROJECT_ROOT/scripts/setup-profile.sh"
 
   run grep -E 'restore-(claude|codex)\.sh|setup_code_review_graph|setup_crg_watcher' "$script"

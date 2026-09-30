@@ -7,7 +7,7 @@ This file is the canonical reference for AI agents and contributors. See [README
 ## Project Structure
 
 See [README.md](./README.md) and [docs/REFERENCE.md](./docs/REFERENCE.md) for user-facing setup details. Key directories:
-- `scripts/` - Shell scripts (mac.sh, update.sh, utils.sh, restore.sh, setup-profile.sh, help.sh, install-plugins.sh; backup-claude.sh/restore-claude.sh for Claude config)
+- `scripts/` - Shell scripts (mac.sh, update-all.sh, update.sh, sync.sh, rollback.sh, utils.sh, setup-profile.sh, help.sh, install-plugins.sh; backup-claude.sh/restore-claude.sh for Claude config)
 - `dot_files/` - Dotfiles copied to `$HOME`
 - `claude_config/` - Claude Code config backup
 - `agent_config/` - Shared global instructions, managed agent-tool pins, and canonical graph skill directories restored to Codex
@@ -29,7 +29,7 @@ See [README.md](./README.md) and [docs/REFERENCE.md](./docs/REFERENCE.md) for us
 
 **Skills**:
 - Shared graph skills live canonically in `agent_config/skills/<name>/SKILL.md`.
-- `npm run restore:codex` restores those directories directly into `~/.codex/skills/`.
+- `npm run sync -- --only codex` restores those directories directly into `~/.codex/skills/`.
 - Tool-specific or unsupported skills stay in the tool-specific config (`claude_config/` or `codex_config/skills/`) instead of being forced into the shared path.
 
 **Knowledge and graph tooling**:
@@ -53,31 +53,31 @@ See [README.md](./README.md) and [docs/REFERENCE.md](./docs/REFERENCE.md) for us
 ```bash
 # Setup and Installation
 npm run setup                 # Fresh install (interactive)
-npm run restore:dotfiles         # Copy managed dotfiles to $HOME; reapply Worktrunk integration
+npm run sync -- --only dotfiles     # Apply managed dotfiles to $HOME; reapply Worktrunk integration
 
 # Updates
-# npm run update runs: restore:dotfiles → install:agent-tooling → update.sh
+# npm run update runs: sync dotfiles → install:agent-tooling → update.sh
 npm run update                    # Update all components (brew, asdf, zsh, npm, pip)
-npm run update:dry-run            # Preview outdated brew/npm packages (read-only)
-npm run update:only -- <comp>     # Sync dotfiles/skills + update one component (brew, asdf, zsh, npm, pip)
+npm run update -- --dry-run            # Preview outdated brew/npm packages (read-only)
+npm run update -- --only <comp>     # Sync dotfiles/skills + update one component (brew, asdf, zsh, npm, pip)
 
 # Validation and Recovery
 npm run validate              # Verify all tools installed correctly
 npm run check:mcps            # Complete initialize handshake for enabled base MCPs
 npm run check:mcps -- --profile apple          # Include native Xcode MCP
 npm run check:agent-tooling   # Report shared capabilities and detect harness drift
-npm run restore               # Restore from latest backup
+npm run rollback              # Roll back to latest configuration snapshot
 
 # Claude Code Configuration
-npm run backup:claude             # Backup Claude Code config to repo
-npm run restore:claude            # Restore Claude Code config (only if repo is newer)
-npm run restore:claude -- --force # Force restore Claude Code config (see Post-Restore Steps below)
-npm run backup:all                # Backup Claude Code config + Codex config in one step
-npm run backup:codex              # Backup Codex config to repo
-npm run restore:codex             # Restore Codex config (only if repo is newer)
-npm run restore:codex -- --force  # Force restore Codex config
-npm run restore:agents            # Restore Claude config + Codex config in one step
-npm run restore:all               # Restore Claude config + Codex config + dotfiles in one step
+npm run backup -- --only claude       # Capture Claude Code config in the repo
+npm run sync -- --only claude         # Apply Claude Code config (only if repo is newer)
+npm run sync -- --only claude --force # Force Claude Code config application
+npm run backup                      # Capture Claude Code + Codex config
+npm run backup -- --only codex        # Capture Codex config in the repo
+npm run sync -- --only codex          # Apply Codex config (only if repo is newer)
+npm run sync -- --only codex --force  # Force Codex config application
+npm run sync -- --only agents         # Apply Claude + Codex config
+npm run sync                          # Apply Claude + Codex config + dotfiles
 npm run install:plugins           # Install all marketplaces and plugins via claude CLI
 npm run install:plugins -- --dry-run # Preview what would be installed
 npm run install:codex-plugins     # Install or refresh Axiom through the Codex plugin marketplace
@@ -153,7 +153,7 @@ npm test -- --filter "pattern"    # Run specific tests
 - `tests/meta/help.bats` - Tests for help.sh output (includes drift check against `package.json` scripts)
 - `tests/meta/lint.bats` - Tests for ShellCheck lint script (validates `.shellcheckrc` rule set)
 - `tests/meta/secrets.bats` - Tests repository secret-scanner detection and exclusions
-- `tests/restore/restore.bats` - Tests for restore.sh (system backup restoration)
+- `tests/restore/restore.bats` - Tests for rollback.sh and configuration snapshot restoration
 - `tests/install-plugins/install-plugins.bats` - Smoke tests for `install-plugins.sh` (dry-run, prerequisites, arg parsing)
 - `tests/restore-claude/restore-claude.bats` - Smoke tests for `restore-claude.sh` helpers (`get_file_mtime`, `get_newest_mtime`)
 - `tests/helpers/setup.bash` - Test environment setup and teardown utilities
@@ -184,10 +184,10 @@ ShellCheck, secret scanning, and BATS tests run on push to main and pull request
 4. Verify logging matches existing patterns
 
 **Manual workflow**:
-1. `npm run restore:all` to restore agent configuration and dotfiles
+1. `npm run sync` to restore agent configuration and dotfiles
 2. `source ~/.zshrc` — verify no errors
 3. `npm run validate` — check installations
-4. If issues: `npm run restore`
+4. If issues: `npm run rollback`
 
 **Validation checks** (from `utils.sh`):
 Homebrew in PATH, ASDF plugins present, tool versions match `.tool-versions`, ZSH plugins cloned, dotfiles in `$HOME`, Claude Code config restored.
@@ -217,7 +217,7 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 - **Backed up files**: `settings.json`, `installed_plugins.json`, `known_marketplaces.json`, `CLAUDE.md`, plus any `*.md` files referenced from `CLAUDE.md` via `@filename` (e.g. `CRG.md`, `RTK.md`, `WORKTRUNK.md`, `PLANNOTATOR.md`, `CLAUDE-TOKEN-EFFICIENT.md`) — auto-detected
 - **Managed MCP registry**: `claude_config/mcp_servers.json` is restored to user scope but is not populated from live `~/.claude.json`; edit it intentionally so credentials and machine-specific paths cannot enter through backup
 - **Local-only configs**: Work plugins/marketplaces are saved to `.local.json` files (gitignored) during backup, and merged back during install
-- **Post-restore**: Plugins are auto-installed at the end of `restore:claude`. If auto-install fails, run `npm run install:plugins` manually.
+- **Post-sync**: Plugins are auto-installed when Claude config is applied. If auto-install fails, run `npm run install:plugins` manually.
 
 **Codex backup/restore** (`scripts/backup-codex.sh`, `scripts/restore-codex.sh`):
 - Shared instructions: `agent_config/AGENTS.md` is restored to both `~/.codex/AGENTS.md` and `~/.claude/AGENTS.md`
@@ -227,20 +227,20 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 - Managed agent tools: `agent_config/managed_tools.json` exact-pins local release/PyPI/npm tools—including code-review-graph and OpenWiki—and remote installer commits, and records tested compatibility floors; code-review-graph stays current through its launchd watcher and explicit audits; Axiom and shared git skills use immutable commits; a weekly workflow proposes reviewed exact-pin bumps
 - Codex rules: `codex_config/rules/*.rules` restores repo-managed command deny rules that mirror the Claude hard-deny list where Codex prefix rules can express it; local approval rules in `~/.codex/rules/default.rules` remain local
 - Shared git skills: `agent_config/installed_skills.json` is installed into both `~/.claude/skills/*` and `~/.codex/skills/*` by `npm run install:skills`
-- Shared graph skills: `agent_config/skills/<name>/SKILL.md` is the canonical source; `restore:codex` restores those directories directly into Codex
+- Shared graph skills: `agent_config/skills/<name>/SKILL.md` is the canonical source; `npm run sync -- --only codex` applies those directories directly to Codex
 - Local-only state excluded: `auth.json`, history, logs, sessions, memories, SQLite databases, shell snapshots, and model caches
 - Machine-local tables preserved on restore include `[projects.*]`, `[tui.model_availability_nux]`, `[notice*]`, `[hooks.state*]`, `[desktop]`, marketplace/plugin/connector tables, and plugin-provided MCP tables
-- Profile migration: `restore:codex` preserves a stale `~/.codex/apple-headless.config.toml` in the pre-restore snapshot, removes it locally, and directs users to `codex -p apple`
+- Profile migration: the Codex sync preserves a stale `~/.codex/apple-headless.config.toml` in the pre-sync snapshot, removes it locally, and directs users to `codex -p apple`
 - Project guidance: keep repo-specific behavior in `AGENTS.md`; keep cross-agent global preferences in `agent_config/AGENTS.md`
 
 For Apple-platform work, prefer native Xcode MCP tools for Xcode, Swift, simulator, device, build, test, preview, and debugging tasks when configured and available. Xcode 26.3+ supports attached mode; Xcode 27+ also supports headless mode through the same `codex -p apple` profile.
 
-**Post-Restore Steps** (after `npm run restore:claude` or `npm run restore:claude -- --force`):
+**Post-Sync Steps** (after `npm run sync -- --only claude` or `npm run sync -- --only claude --force`):
 1. Enable work plugins (@vend-plugins) manually if on work machine — these are sanitized from backups for security
 2. Run `/reload-plugins` in Claude Code to force registry rescan if plugins don't appear
 3. Verify with `/help` that skills and agents are available
 
-Plugins are auto-installed during restore. `install:plugins` merges repo configs with `.local.json` files (work plugins/marketplaces), so work-specific configs survive across machines without being committed.
+Plugins are auto-installed during sync. `install:plugins` merges repo configs with `.local.json` files (work plugins/marketplaces), so work-specific configs survive across machines without being committed.
 
 **Script organization**:
 - `mac.sh`: validate system → Homebrew → Brewfile (conditional on user prefs) → ZSH plugins → ASDF → optional tools
@@ -272,11 +272,11 @@ Plugins are auto-installed during restore. `install:plugins` merges repo configs
 | Add backup file | `create_restoration_point()` in `scripts/utils/backup.sh` |
 | Update Claude sanitization | `SANITIZE_MARKETPLACES` in `backup-claude.sh`, `PRESERVE_MARKETPLACES` in `restore-claude.sh`; sanitized entries auto-saved to `.local.json` files |
 | Add Claude backup file | Add backup/restore logic in `backup-claude.sh` and `restore-claude.sh` (follow `keybindings.json` pattern) |
-| Update shared agent instructions | Edit `agent_config/AGENTS.md`, then run `npm run restore:agents` |
-| Update Codex defaults | Edit `codex_config/config.toml`, then run `npm run restore:codex` |
-| Update Codex command deny rules | Edit `codex_config/rules/*.rules`, then run `npm run restore:codex` |
+| Update shared agent instructions | Edit `agent_config/AGENTS.md`, then run `npm run sync -- --only agents` |
+| Update Codex defaults | Edit `codex_config/config.toml`, then run `npm run sync -- --only codex` |
+| Update Codex command deny rules | Edit `codex_config/rules/*.rules`, then run `npm run sync -- --only codex` |
 | Update managed agent-tool pins | Run `npm run update:tool-pins -- --apply`, review release checksums and commit refs, then run `npm run install:managed-tools -- --dry-run` |
-| Add shared project skill rule | Create/edit `agent_config/skills/<name>/SKILL.md`, then run `npm run restore:codex` |
+| Add shared project skill rule | Create/edit `agent_config/skills/<name>/SKILL.md`, then run `npm run sync -- --only codex` |
 | Add shared MCP server | Add compatible entries to `.mcp.json` and `codex_config/config.toml`; skip Codex if unsupported |
 | Update security policy | Edit `SECURITY.md`, `scripts/scan-secrets.sh`, `codex_config/rules/*.rules`, or `codex_config/hooks/` as appropriate |
 | Test security checks | Run `npm run lint`, `npm run scan:secrets`, and `npm test` |

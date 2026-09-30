@@ -14,50 +14,32 @@ teardown() {
   teardown_test_env
 }
 
-@test "help.sh displays setup commands section" {
+@test "help.sh displays consolidated setup and configuration commands" {
   # Act
   run "$PROJECT_ROOT/scripts/help.sh"
 
   # Assert
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Setup Commands:"* ]]
+  [[ "$output" == *"Setup & Configuration Commands:"* ]]
   [[ "$output" == *"npm run setup"* ]]
-  [[ "$output" == *"npm run restore:dotfiles"* ]]
+  [[ "$output" == *"npm run sync"* ]]
+  [[ "$output" == *"npm run sync -- --only agents"* ]]
+  [[ "$output" == *"npm run sync -- --only dotfiles"* ]]
+  [[ "$output" == *"npm run backup"* ]]
+  [[ "$output" == *"npm run backup -- --only claude"* ]]
+  [[ "$output" == *"npm run rollback"* ]]
 }
 
-@test "help.sh displays backup and restore commands" {
-  # Act
-  run "$PROJECT_ROOT/scripts/help.sh"
-
-  # Assert
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"Backup & Restore Commands:"* ]]
-  [[ "$output" == *"npm run backup:all"* ]]
-  [[ "$output" == *"npm run backup:claude"* ]]
-  [[ "$output" == *"npm run backup:codex"* ]]
-  [[ "$output" == *"npm run restore:agents"* ]]
-  [[ "$output" == *"npm run restore:claude"* ]]
-  [[ "$output" == *"npm run restore:codex"* ]]
-  [[ "$output" == *"-- --force"* ]]
-}
-
-@test "restore:agents uses the single-snapshot orchestrator" {
+@test "package.json exposes only the consolidated configuration commands" {
   command -v jq >/dev/null || skip "jq not installed"
 
-  run jq -r '.scripts["restore:agents"]' "$PROJECT_ROOT/package.json"
+  run jq -r '[.scripts.sync, .scripts.backup, .scripts.rollback] | join(" ")' "$PROJECT_ROOT/package.json"
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"restore-all.sh --agents-only"* ]]
-}
+  [ "$output" = "./scripts/sync.sh ./scripts/backup-all.sh ./scripts/rollback.sh" ]
 
-@test "backup:all includes Claude and Codex backups" {
-  command -v jq >/dev/null || skip "jq not installed"
-
-  run jq -r '.scripts["backup:all"]' "$PROJECT_ROOT/package.json"
-
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"backup:claude"* ]]
-  [[ "$output" == *"backup:codex"* ]]
+  run jq -e '.scripts | has("restore") or has("restore:all") or has("restore:agents") or has("restore:claude") or has("restore:codex") or has("restore:dotfiles") or has("backup:all") or has("backup:claude") or has("backup:codex") or has("update:with-backup") or has("update:dry-run") or has("update:only")' "$PROJECT_ROOT/package.json"
+  [ "$status" -ne 0 ]
 }
 
 @test "help.sh displays update commands" {
@@ -68,9 +50,9 @@ teardown() {
   [ "$status" -eq 0 ]
   [[ "$output" == *"Update Commands:"* ]]
   [[ "$output" == *"npm run update"* ]]
-  [[ "$output" == *"npm run update:with-backup"* ]]
-  [[ "$output" == *"npm run update:dry-run"* ]]
-  [[ "$output" == *"npm run update:only"* ]]
+  [[ "$output" == *"npm run update -- --backup"* ]]
+  [[ "$output" == *"npm run update -- --dry-run"* ]]
+  [[ "$output" == *"npm run update -- --only"* ]]
 }
 
 @test "help.sh displays development commands" {
@@ -94,7 +76,6 @@ teardown() {
   [ "$status" -eq 0 ]
   [[ "$output" == *"Other Commands:"* ]]
   [[ "$output" == *"npm run validate"* ]]
-  [[ "$output" == *"npm run restore"* ]]
 }
 
 @test "help.sh script is executable" {
