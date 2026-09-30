@@ -6,15 +6,15 @@ This document covers installed tools, setup options, customization points, and c
 
 ```bash
 npm run setup                 # Fresh install
+npm run sync                  # Apply Claude, Codex, and dotfiles from the repository
+npm run sync -- --force       # Apply all managed config regardless of timestamps
+npm run backup                # Capture Claude and Codex config in the repository
 npm run update                # Sync dotfiles/skills, then update components
-npm run update:with-backup    # Capture live agent config, then update components
-npm run update:dry-run        # Read-only preview; does not update or clean Homebrew
-npm run update:only -- brew   # Sync dotfiles/skills, then update one component
+npm run update -- --backup    # Capture live agent config, then update components
+npm run update -- --dry-run   # Read-only preview; does not update or clean Homebrew
+npm run update -- --only brew # Sync dotfiles/skills, then update one component
 npm run validate              # Verify installed tools and configuration
-npm run restore               # Restore from latest backup
-npm run restore:all           # Restore Claude, Codex, and dotfiles
-npm run restore:all -- --force # Force the all-in-one restore
-npm run backup:all            # Backup Claude and Codex config
+npm run rollback              # Roll back to the latest configuration snapshot
 npm run install:agent-tooling # Reconcile shared tooling and both native plugin sets
 npm run install:skills        # Install, update, or safely prune shared git skills
 npm run install:managed-tools # Reconcile exact-pinned local agent tools
@@ -29,15 +29,15 @@ npm run check:agent-tooling   # Report shared capabilities and detect harness dr
 
 Run `npm run help` for the complete command list.
 
-### Existing Machine: Restore Configuration Only
+### Existing Machine: Sync Configuration Only
 
-Use the forced orchestrated restore when an existing machine should adopt the repository's Claude Code, Codex, and dotfile defaults even if its local agent configuration has newer modification times:
+Use a forced sync when an existing machine should adopt the repository's Claude Code, Codex, and dotfile defaults even if its local agent configuration has newer modification times:
 
 ```bash
-npm run restore:all -- --force
+npm run sync -- --force
 ```
 
-The orchestrator creates exactly one configuration-only snapshot, then passes an internal skip flag to each restore stage. It does not run `mac.sh`, Homebrew Bundle, or general dependency updates. Codex restore does reconcile the checksum-pinned Plannotator hook binary before its timestamp gate so a current configuration cannot retain an incompatible executable. Without `--force`, Claude and Codex configuration remains timestamp-gated.
+The orchestrator creates exactly one configuration-only snapshot, then passes an internal skip flag to each apply stage. It does not run `mac.sh`, Homebrew Bundle, or general dependency updates. Codex sync does reconcile the checksum-pinned Plannotator hook binary before its timestamp gate so a current configuration cannot retain an incompatible executable. Without `--force`, Claude and Codex configuration remains timestamp-gated.
 
 `~/.gitconfig` contains portable shared settings and includes `~/.gitconfig.local` for machine identity. Before the first replacement, existing `user.*` values are migrated when the local file does not yet exist. Interactive setup prompts for non-empty name and email on a new machine; restore-only commands never prompt and warn when identity is unset. Claude restore preserves `@vend-plugins` enabled/disabled values and the matching marketplace entry.
 
@@ -81,7 +81,7 @@ The `omlx` CLI above is scripted via its own tap. Its optional menu bar app (`oM
 
 Conditional Brewfile groups add iOS, container, cloud (`hashicorp/tap/terraform`), network, and extra application tooling according to the setup preferences above. The iOS group includes SimSlim for simulator resource trimming alongside the Xcode and Swift command-line tools. Third-party Homebrew entries grant formula-level trust only; setup and updates also remove known retired taps when they no longer provide an installed item. Dedicated setup helpers install Claude Code and the exact-pinned OpenWiki, Playwright CLI, Playwright MCP, Plannotator, code-review-graph, and Obscura. OpenWiki, Playwright CLI, and Playwright MCP install from npm after the managed Node.js runtime is active; Playwright browser binaries are left to `playwright-cli install-browser` or first use. `agent_config/managed_tools.json` is the desired-state source for the exact-pinned tools. Release archives verify architecture-specific SHA-256 values before installation; code-review-graph uses an exact PyPI package version, while OpenWiki, Playwright CLI, and Playwright MCP use exact npm package versions. Managed-tool reconciliation removes known repository-managed, Homebrew, and global npm installations of the retired XcodeBuildMCP and MobileBuildMCP integrations; executables at unknown manual paths are reported for manual cleanup. Run `npm run install:openwiki` or `npm run install:managed-tools` to reconcile the relevant tools; add `-- --dry-run` to inspect drift.
 
-As part of the profile migration, `npm run restore:codex` treats a local `~/.codex/apple-headless.config.toml` as restore drift even when normal timestamp gating would otherwise skip the restore. The command first preserves the retired profile in its rollback snapshot, then removes it; use `codex -p apple` afterward.
+As part of the profile migration, `npm run sync -- --only codex` treats a local `~/.codex/apple-headless.config.toml` as restore drift even when normal timestamp gating would otherwise skip the restore. The command first preserves the retired profile in its rollback snapshot, then removes it; use `codex -p apple` afterward.
 
 asdf-managed tools are listed in `dot_files/.tool-versions`, including Node.js, Python, Ruby, Bundler, gcloud, Firebase CLI, and optional JVM pins.
 
@@ -91,7 +91,7 @@ Shared git-cloned skills are declared in `agent_config/installed_skills.json`. A
 
 ### Shared Agent Capabilities
 
-The four graph skills live canonically in `agent_config/skills/<name>/SKILL.md`. `restore:codex` restores those directories directly into Codex. This repository does not maintain project-local Claude skills. Git-cloned skills in `agent_config/installed_skills.json` are also installed into both agent homes. Claude plugins and Codex plugins can contribute additional tool-specific skills, so the complete runtime skill lists are intentionally not identical.
+The four graph skills live canonically in `agent_config/skills/<name>/SKILL.md`. `npm run sync -- --only codex` applies those directories directly to Codex. This repository does not maintain project-local Claude skills. Git-cloned skills in `agent_config/installed_skills.json` are also installed into both agent homes. Claude plugins and Codex plugins can contribute additional tool-specific skills, so the complete runtime skill lists are intentionally not identical.
 
 OpenWiki is available as the `openwiki` CLI. From a repository root, run `openwiki --init` to create its `openwiki/` agent wiki, then `openwiki --update` when a refresh is explicitly wanted. It maintains marked guidance blocks in the root `AGENTS.md` and `CLAUDE.md`; all other content remains user-managed. Its interactive first run stores the selected provider and credentials in `~/.openwiki/.env`, which is local-only and must never be committed or backed up. An existing wiki is an opt-in secondary verification layer for architecture, terminology, invariants, and intended workflows; agents corroborate material claims against current source, tests, and a fresh code-review-graph, report conflicts as stale documentation, and treat source and tests as authoritative. Repositories without `openwiki/` continue normally, and agents do not generate or update a wiki without an explicit user request.
 
@@ -201,7 +201,7 @@ VS Code extensions are reproduced, but VS Code user `settings.json`, `keybinding
 To refresh the tracked agent configuration after intentionally changing the personal machine, run:
 
 ```bash
-npm run backup:all
+npm run backup
 npm run scan:secrets
 git diff --check
 ```
@@ -218,7 +218,7 @@ In the ChatGPT desktop app, use **Set up Remote** and follow the current [OpenAI
 
 ## Dotfiles
 
-`npm run restore:dotfiles` copies managed dotfiles from `dot_files/` to `$HOME`:
+`npm run sync -- --only dotfiles` copies managed dotfiles from `dot_files/` to `$HOME`:
 
 - `.zshrc`
 - `.zprofile`
@@ -231,7 +231,7 @@ In the ChatGPT desktop app, use **Set up Remote** and follow the current [OpenAI
 
 `~/.supercharged_preferences` is generated at setup time, not tracked in `dot_files/`.
 
-Restoring `.zshrc` can remove Worktrunk's generated shell integration, so `restore:dotfiles` reapplies that integration when `wt` is installed. It does not restore Claude/Codex configuration or initialize code-review-graph; use `restore:agents` or `restore:all` for agent configuration.
+Applying `.zshrc` can remove Worktrunk's generated shell integration, so `npm run sync -- --only dotfiles` reapplies that integration when `wt` is installed. It does not apply Claude/Codex configuration or initialize code-review-graph; use `npm run sync -- --only agents` or `npm run sync` for agent configuration.
 
 Secret templates live under `dot_files/.secrets/`, but real secrets are machine-local. Create `~/.secrets` or `~/.secrets/*.sh` locally when Claude restore or shell startup needs sensitive environment variables.
 
@@ -264,7 +264,7 @@ Edit `dot_files/.zshrc`, `dot_files/.tmux.conf`, and `dot_files/.p10k.zsh` for s
 
 Edit `agent_config/AGENTS.md` for shared Claude/Codex instructions. Keep the tracked Claude user registry empty unless a compatibility requirement warrants a sanitized entry. For shared project servers, edit `.mcp.json` and add the compatible Codex entry together; put Apple-only servers in the appropriate `codex_config/apple*.config.toml` profile.
 
-`npm run update:dry-run` is non-mutating: it suppresses Homebrew auto-update, reports the tap trust and retirement actions it would take, skips `brew update` and cleanup, and reports outdated Homebrew formulae, casks, and global npm packages before exiting ahead of asdf, zsh, npm, or pip updates.
+`npm run update -- --dry-run` is non-mutating: it suppresses Homebrew auto-update, reports the tap trust and retirement actions it would take, skips `brew update` and cleanup, and reports outdated Homebrew formulae, casks, and global npm packages before exiting ahead of asdf, zsh, npm, or pip updates.
 
 ## Terminal Font
 
@@ -289,7 +289,7 @@ For install failures:
 
 ```bash
 tail -f .supercharged_install.log
-npm run restore
+npm run rollback
 ```
 
 For validation failures:
@@ -333,7 +333,7 @@ The setup supports `id_ed25519`, `id_rsa`, and `id_ecdsa`, preferring ed25519 wh
 ## Reset
 
 ```bash
-npm run restore
+npm run rollback
 ```
 
 This restores from the latest backup recorded by the setup scripts.

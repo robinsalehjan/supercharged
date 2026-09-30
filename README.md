@@ -24,20 +24,20 @@ cd supercharged && npm run setup
 
 ```bash
 npm run setup              # Fresh install (interactive)
-npm run update             # Sync dotfiles/skills, then update all components
-npm run update:with-backup # Capture live agent config, then update
-npm run update:dry-run     # Read-only report of outdated brew/npm packages
-npm run update:only -- brew  # Sync dotfiles/skills, then update one component
-npm run validate           # Verify tools installed correctly
-npm run restore:all        # Restore Claude Code, Codex, and dotfiles
-npm run restore:all -- --force # Force the all-in-one restore
-npm run restore:agents     # Restore Claude Code and Codex agent config
-npm run restore:claude     # Restore Claude Code config
-npm run restore:codex      # Restore Codex config, rules, and shared skills
-npm run restore:dotfiles   # Copy dotfiles and reapply Worktrunk shell integration
-npm run backup:all         # Backup Claude Code and Codex config
-npm run backup:claude      # Backup Claude Code config
-npm run backup:codex       # Backup Codex config, hooks, RTK, and skills
+npm run sync                       # Apply Claude, Codex, and dotfiles from the repository
+npm run sync -- --force            # Apply all managed config regardless of timestamps
+npm run sync -- --only agents      # Apply Claude and Codex config only
+npm run sync -- --only claude      # Apply Claude config only
+npm run sync -- --only codex       # Apply Codex config, rules, and shared skills only
+npm run sync -- --only dotfiles    # Apply dotfiles and Worktrunk shell integration only
+npm run backup                     # Capture Claude and Codex config in the repository
+npm run backup -- --only claude    # Capture Claude config only
+npm run backup -- --only codex     # Capture Codex config, hooks, RTK, and skills only
+npm run update                     # Sync dotfiles/skills, then update all components
+npm run update -- --backup         # Capture live agent config, then update
+npm run update -- --dry-run        # Read-only report of outdated brew/npm packages
+npm run update -- --only brew      # Sync dotfiles/skills, then update one component
+npm run validate                   # Verify tools installed correctly
 npm run install:agent-tooling # Reconcile shared tooling and both native plugin sets
 npm run install:plugins    # Install all Claude Code plugins
 npm run install:codex-plugins # Install or refresh managed Codex plugins
@@ -47,7 +47,7 @@ npm run install:plannotator # Install or update the checksum-pinned Plannotator 
 npm run install:skills     # Install, update, or safely prune shared git skills
 npm run update:tool-pins   # Check for newer managed tool releases
 npm run update:asdf-pins   # Check for newer asdf runtime pins
-npm run restore            # Restore from last backup
+npm run rollback                   # Roll back to the latest configuration snapshot
 npm run version:show       # Print current version, commit, tag, branch
 npm run release -- patch   # Cut a release (patch|minor|major|x.y.z)
 npm test                   # Run all BATS tests
@@ -67,10 +67,10 @@ The repository is the portable source of truth for the audited personal-machine 
 To force the repository versions of Claude Code, Codex, and the managed dotfiles onto an existing machine, regardless of local modification times, run:
 
 ```bash
-npm run restore:all -- --force
+npm run sync -- --force
 ```
 
-This creates one configuration-only restoration point before changing Claude Code, Codex, or dotfiles. It does not run the setup installer, Homebrew Bundle, or package updates. Without `--force`, `restore:all` keeps timestamp gating for Claude and Codex while still taking the single pre-restore snapshot.
+This creates one configuration-only restoration point before changing Claude Code, Codex, or dotfiles. It does not run the setup installer, Homebrew Bundle, or package updates. Without `--force`, `sync` keeps timestamp gating for Claude and Codex while still taking the single pre-sync snapshot.
 
 Git identity is machine-local in `~/.gitconfig.local`. The first restore migrates existing `user.*` values before replacing `~/.gitconfig`; a new interactive setup prompts for name and email. Noninteractive restores leave missing identity unset and print the commands needed to configure it. Claude restore preserves enabled and explicitly disabled `@vend-plugins` entries plus the `vend-plugins` marketplace.
 

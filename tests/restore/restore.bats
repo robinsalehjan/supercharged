@@ -14,41 +14,41 @@ teardown() {
   teardown_test_env
 }
 
-@test "restore.sh script exists and is executable" {
+@test "rollback.sh script exists and is executable" {
   # Assert
-  [ -f "$PROJECT_ROOT/scripts/restore.sh" ]
-  [ -x "$PROJECT_ROOT/scripts/restore.sh" ]
+  [ -f "$PROJECT_ROOT/scripts/rollback.sh" ]
+  [ -x "$PROJECT_ROOT/scripts/rollback.sh" ]
 }
 
-@test "restore.sh sources utils.sh" {
+@test "rollback.sh sources utils.sh" {
   # Act
-  run grep "source.*utils.sh" "$PROJECT_ROOT/scripts/restore.sh"
+  run grep "source.*utils.sh" "$PROJECT_ROOT/scripts/rollback.sh"
 
   # Assert
   [ "$status" -eq 0 ]
   [[ "$output" == *"utils.sh"* ]]
 }
 
-@test "restore.sh calls restore_from_backup function" {
+@test "rollback.sh calls restore_from_backup function" {
   # Act
-  run grep "restore_from_backup" "$PROJECT_ROOT/scripts/restore.sh"
+  run grep "restore_from_backup" "$PROJECT_ROOT/scripts/rollback.sh"
 
   # Assert
   [ "$status" -eq 0 ]
 }
 
-@test "restore.sh has trap for cleanup" {
+@test "rollback.sh has trap for cleanup" {
   # Assert: trap is registered AND a cleanup wrapper invokes standard_cleanup
-  run grep "trap.*cleanup" "$PROJECT_ROOT/scripts/restore.sh"
+  run grep "trap.*cleanup" "$PROJECT_ROOT/scripts/rollback.sh"
   [ "$status" -eq 0 ]
 
-  run grep "standard_cleanup" "$PROJECT_ROOT/scripts/restore.sh"
+  run grep "standard_cleanup" "$PROJECT_ROOT/scripts/rollback.sh"
   [ "$status" -eq 0 ]
 }
 
-@test "restore.sh accepts backup directory argument" {
+@test "rollback.sh accepts backup directory argument" {
   # Arrange - check script comments/usage
-  run grep -A 3 "Usage:" "$PROJECT_ROOT/scripts/restore.sh"
+  run grep -A 3 "Usage:" "$PROJECT_ROOT/scripts/rollback.sh"
 
   # Assert - should mention backup_dir argument
   [ "$status" -eq 0 ]
@@ -64,27 +64,27 @@ teardown() {
   [ "$status" -eq 0 ]
 }
 
-@test "restore.sh uses set -euo pipefail for error handling" {
+@test "rollback.sh uses set -euo pipefail for error handling" {
   # Act
-  run head -10 "$PROJECT_ROOT/scripts/restore.sh"
+  run head -10 "$PROJECT_ROOT/scripts/rollback.sh"
 
   # Assert
   [ "$status" -eq 0 ]
   [[ "$output" == *"set -euo pipefail"* ]]
 }
 
-@test "restore command in package.json points to restore.sh" {
+@test "rollback command in package.json points to rollback.sh" {
   # Act
-  run grep '"restore"' "$PROJECT_ROOT/package.json"
+  run grep '"rollback"' "$PROJECT_ROOT/package.json"
 
   # Assert
   [ "$status" -eq 0 ]
-  [[ "$output" == *"./scripts/restore.sh"* ]]
+  [[ "$output" == *"./scripts/rollback.sh"* ]]
 }
 
-@test "restore.sh script has shebang for zsh" {
+@test "rollback.sh script has shebang for zsh" {
   # Act
-  run head -1 "$PROJECT_ROOT/scripts/restore.sh"
+  run head -1 "$PROJECT_ROOT/scripts/rollback.sh"
 
   # Assert
   [ "$status" -eq 0 ]

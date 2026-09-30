@@ -115,7 +115,7 @@ main() {
     if [ -f "$HOME/.supercharged_last_backup" ]; then
         echo "💡 Tip: Your previous configuration was backed up to:"
         echo "   $(cat "$HOME/.supercharged_last_backup")"
-        echo "   Run 'npm run restore' to restore if needed."
+        echo "   Run 'npm run rollback' to roll back if needed."
     fi
 }
 
