@@ -4,6 +4,7 @@ personality = "pragmatic"
 web_search = "live"
 project_doc_fallback_filenames = ["CLAUDE.md"]
 project_doc_max_bytes = 65536
+approval_policy = "on-request"
 default_permissions = "supercharged"
 tool_output_token_limit = 32000
 
