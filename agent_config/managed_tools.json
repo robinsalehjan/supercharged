@@ -3,39 +3,39 @@
   "tools": {
     "openwiki": {
       "policy": "exact-npm",
-      "version": "0.5.0",
+      "version": "0.7.2",
       "package": "openwiki"
     },
     "playwright-cli": {
       "policy": "exact-npm",
-      "version": "0.1.21",
+      "version": "0.1.22",
       "package": "@playwright/cli",
       "command": "playwright-cli"
     },
     "playwright-mcp": {
       "policy": "exact-npm",
-      "version": "0.0.82",
+      "version": "0.0.83",
       "package": "@playwright/mcp",
       "command": "playwright-mcp"
     },
     "plannotator": {
       "policy": "exact-release",
-      "version": "v0.27.10",
+      "version": "v0.28.16",
       "repository": "backnotprop/plannotator",
       "assets": {
         "darwin-arm64": {
           "name": "plannotator-darwin-arm64",
-          "sha256": "35ee0a1c4b5bd26b44ff986b644d14b373d7f612cb05ee8b66a9b02ee2f7f5b2"
+          "sha256": "4dc116a7d819c879d3020e7fa15594bd0dec895d5806943789af7909abe81f6d"
         },
         "darwin-x64": {
           "name": "plannotator-darwin-x64",
-          "sha256": "1f4e69db1e8101b9f89e6b8f1282dcd52e35cc9d95e8ef61a75f5eed7cf5bc19"
+          "sha256": "34af135ab6a01a49999bfb6923465bd2945026919313b7421e4fee3bd89db13c"
         }
       }
     },
     "code-review-graph": {
       "policy": "exact-pypi",
-      "version": "2.3.8",
+      "version": "2.3.9",
       "package": "code-review-graph",
       "extras": [
         "embeddings",
@@ -44,23 +44,23 @@
     },
     "obscura": {
       "policy": "exact-release",
-      "version": "v0.2.1",
+      "version": "v0.2.4",
       "repository": "h4ckf0r0day/obscura",
       "assets": {
         "darwin-arm64": {
           "name": "obscura-aarch64-macos.tar.gz",
-          "sha256": "5233da6426ec16667d7e4374b824189c6dfb3b325e5cf3fb5f04c7bc48b52a0f",
+          "sha256": "456210fe48e77324a064477fe450452a58709940a50e71678ae6638a3e5095ec",
           "binaries": {
-            "obscura": "6d07bced7d92f52f955b1407e817100bd649bcf08481d056f80fa4863a0b515a",
-            "obscura-worker": "c1c012a69f840f93b68aad925229b5a5d8cac5bf5d1010b980dd686132595ba2"
+            "obscura": "04c02e6b826cb96de2136ad3c6931c6ec3cf87b6912b3d50191a5d00dbecda13",
+            "obscura-worker": "99979d2700ca1b27aa23eda05a8401cef32a18ee4f75b39c68816dd5b32e7c18"
           }
         },
         "darwin-x64": {
           "name": "obscura-x86_64-macos.tar.gz",
-          "sha256": "e6d0f8719998fa4460bccc712b20a1e524717d5c54e943f345227bd893ec9620",
+          "sha256": "91b1b5e1f581e7572bdffd289195ad112cd5cf33069019e892b251c099bef015",
           "binaries": {
-            "obscura": "0c98b5a5742ce912ec01483f58a53b366e3761c91258f518be4016dcb996f41c",
-            "obscura-worker": "96f9b1819a9fe811b0bf972e5af32a5b4ef5c9751fa53f83b216224a08871e35"
+            "obscura": "48cf47b16e2e060a400a3be6c9b5165a89427f95794e579be022a59745720a00",
+            "obscura-worker": "6fd9b62b0aca17b6637d144e31a462eee55eae21e403dd5b5b1a878403b8e52d"
           }
         }
       }
