@@ -459,6 +459,7 @@ validate_installation() {
     validate_tool "tree" "" || ((warned++))
     validate_tool "rg" "" || ((warned++))  # ripgrep command is 'rg'
     validate_tool "tmux" "" || ((warned++))
+    validate_tool "watchexec" "" || ((warned++))
     validate_tool "btop" "" || true  # Optional, don't count if missing
     validate_tool "nmap" "" || ((warned++))
     validate_tool "aria2c" "" || ((warned++))

@@ -30,13 +30,10 @@
     "lint": "shellcheck --shell=bash --severity=info scripts/*.sh scripts/utils/*.sh tests/helpers/*.bash codex_config/hooks/*.sh && zsh -n scripts/*.sh scripts/utils/*.sh dot_files/.zshrc dot_files/.zprofile dot_files/.p10k.zsh && actionlint",
     "scan:secrets": "./scripts/scan-secrets.sh",
     "test": "bats -r tests",
-    "test:watch": "nodemon --watch tests --watch scripts --watch codex_config --ext sh,bats,md --exec 'npm test'",
+    "test:watch": "watchexec --shell=none --watch tests --watch scripts --watch codex_config --exts sh,bats,md -- npm test",
     "pretest": "command -v bats >/dev/null || (echo '❌ bats not found. Install with: brew install bats-core' && exit 1)"
   },
   "engines": {
     "node": ">=20"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.7"
   }
 }

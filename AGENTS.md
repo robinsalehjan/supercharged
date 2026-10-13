@@ -109,7 +109,7 @@ npm run scan:secrets              # Scan repository paths for likely secrets
 npm run audit:agents              # Check managed Codex configuration and local agent health
 npm run audit:agents -- --repo-only # Deterministic CI-safe tracked-config audit
 npm test                          # Run all BATS tests
-npm run test:watch                # Re-run tests on change (requires nodemon)
+npm run test:watch                # Re-run tests on change (requires Homebrew watchexec)
 bats tests/<suite>/*.bats         # Run a suite (claude, codex, utils, mac, update, setup, restore, meta)
 npm run help                      # Display all available commands
 ```

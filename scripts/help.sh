@@ -50,7 +50,7 @@ echo "  npm run scan:secrets           - Scan repository paths for likely secret
 echo "  npm run audit:deps             - Fail on high/critical npm advisories"
 echo "  npm test                       - Run all BATS tests"
 echo "  bats tests/<suite>/*.bats      - Run a suite (claude, codex, utils, mac, update, setup, restore, meta)"
-echo "  npm run test:watch             - Run tests continuously (uses nodemon)"
+echo "  npm run test:watch             - Run tests continuously (uses watchexec)"
 echo ""
 echo "Release Commands:"
 echo "  npm run version:show           - Print version, commit SHA, tag, and host"

@@ -69,7 +69,7 @@ Setup stores interactive choices in `~/.supercharged_preferences`.
 The Homebrew Bundle baseline is defined by `build_brewfile` in `scripts/mac.sh`. Its always-installed core includes:
 
 - Package and shell tooling: `bash`, `coreutils`, `git`, `curl`, `asdf`, `keychain`, `tmux`, `ripgrep`, `tree`, `aria2`.
-- Development utilities: `gh`, `jq`, `shellcheck`, `actionlint`, `bats-core`, Danger JS, Danger Swift, `duckdb`, `sqlite`, `btop`, `htop`, `mas`, `pipx`, `uv`, `hey`, `watch`, build libraries, and database client libraries mirrored from the personal machine.
+- Development utilities: `gh`, `jq`, `shellcheck`, `actionlint`, `bats-core`, Danger JS, Danger Swift, `duckdb`, `sqlite`, `btop`, `htop`, `mas`, `pipx`, `uv`, `hey`, `watch`, `watchexec` for `npm run test:watch`, build libraries, and database client libraries mirrored from the personal machine.
 - AI and agent tools: `codex`, `ollama`, `replicate`, `rtk`, `worktrunk`, OpenWiki, Playwright CLI, Playwright MCP, and Obscura. ChatGPT and CodexBar are included when `INSTALL_CODEX_APP=Y`.
 - Applications: Visual Studio Code, Slack, Raycast, Reveal, Spotify, Mullvad VPN.
 - Fonts: JetBrainsMono Nerd Font.

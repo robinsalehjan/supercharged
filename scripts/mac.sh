@@ -160,6 +160,7 @@ brew "uv"
 brew "rtk"
 brew "worktrunk"
 brew "hey"
+brew "watchexec"
 brew "watch"'
 
     if [[ "${INSTALL_CODEX_APP:-Y}" =~ ^[Yy] ]]; then
