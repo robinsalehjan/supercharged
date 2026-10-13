@@ -100,12 +100,15 @@ if [ "$only" != asdf ]; then
     [ -x "$HOME/.local/bin/obscura-worker" ] || obscura_version=""
     crg_version=$(installed_cli_version code-review-graph)
     openwiki_version=$(installed_npm_version openwiki)
+    firebase_version=$(installed_npm_version firebase-tools)
+    [ -n "$firebase_version" ] && [ "$(installed_cli_version firebase)" = "$firebase_version" ] || firebase_version=""
     playwright_cli_version=$(installed_npm_version @playwright/cli)
     playwright_mcp_version=$(installed_npm_version @playwright/mcp)
 
     for entry in \
         "plannotator:$plannotator_version" "obscura:$obscura_version" \
         "code-review-graph:$crg_version" "openwiki:$openwiki_version" \
+        "firebase:$firebase_version" \
         "playwright-cli:$playwright_cli_version" "playwright-mcp:$playwright_mcp_version"; do
         key="${entry%%:*}"
         version="${entry#*:}"
@@ -121,6 +124,7 @@ if [ "$only" != asdf ]; then
             obscura) obscura_version="$version" ;;
             code-review-graph) crg_version="$version" ;;
             openwiki) openwiki_version="$version" ;;
+            firebase) firebase_version="$version" ;;
             playwright-cli) playwright_cli_version="$version" ;;
             playwright-mcp) playwright_mcp_version="$version" ;;
         esac
@@ -144,6 +148,7 @@ if [ "$only" != asdf ]; then
     OBSCURA_RELEASE_JSON="$work_dir/obscura.json" \
     CRG_PYPI_JSON="$work_dir/crg.json" \
     OPENWIKI_NPM_VERSION="$openwiki_version" \
+    FIREBASE_NPM_VERSION="$firebase_version" \
     PLAYWRIGHT_CLI_NPM_VERSION="$playwright_cli_version" \
     PLAYWRIGHT_MCP_NPM_VERSION="$playwright_mcp_version" \
     SKIP_AXIOM_UPDATE=true \

@@ -75,3 +75,49 @@ EOF
   run jq -e '.tools.openwiki.version == "9.9.9"' "$MANIFEST"
   [ "$status" -eq 0 ]
 }
+
+@test "local promotion captures a working Firebase npm installation" {
+  cat > "$MOCK_BIN/npm" <<'EOF'
+#!/bin/sh
+case "$*" in
+  *firebase-tools*) printf '{"dependencies":{"firebase-tools":{"version":"15.29.0"}}}\n' ;;
+  *) printf '{"dependencies":{}}\n' ;;
+esac
+EOF
+  chmod +x "$MOCK_BIN/npm"
+  cat > "$MOCK_BIN/firebase" <<'EOF'
+#!/bin/sh
+printf '15.29.0\n'
+EOF
+  chmod +x "$MOCK_BIN/firebase"
+
+  run env PATH="$MOCK_BIN:$PATH" MANAGED_TOOLS_MANIFEST="$MANIFEST" \
+    CODEX_PLUGIN_REGISTRY="$PLUGINS" "$SCRIPT" --only agents --apply
+
+  [ "$status" -eq 0 ]
+  run jq -e '.tools.firebase.version == "15.29.0"' "$MANIFEST"
+  [ "$status" -eq 0 ]
+}
+
+@test "local promotion skips a Firebase package whose command cannot run" {
+  cat > "$MOCK_BIN/npm" <<'EOF'
+#!/bin/sh
+case "$*" in
+  *firebase-tools*) printf '{"dependencies":{"firebase-tools":{"version":"15.29.0"}}}\n' ;;
+  *) printf '{"dependencies":{}}\n' ;;
+esac
+EOF
+  cat > "$MOCK_BIN/firebase" <<'EOF'
+#!/bin/sh
+exit 1
+EOF
+  chmod +x "$MOCK_BIN/npm" "$MOCK_BIN/firebase"
+
+  run env PATH="$MOCK_BIN:$PATH" MANAGED_TOOLS_MANIFEST="$MANIFEST" \
+    CODEX_PLUGIN_REGISTRY="$PLUGINS" "$SCRIPT" --only agents --apply
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Skipping firebase: no local installation detected"* ]]
+  run jq -e '.tools.firebase.version == "15.28.2"' "$MANIFEST"
+  [ "$status" -eq 0 ]
+}

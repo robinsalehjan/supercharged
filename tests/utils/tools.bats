@@ -15,6 +15,71 @@ teardown() {
 
 # --- setup_rtk tests ---
 
+@test "setup_firebase installs the exact npm pin and retires the legacy asdf plugin" {
+    _ensure_mock_bin_dir
+    local version calls npm_prefix
+    version="$(managed_tool_pin '.tools.firebase.version')"
+    calls="$TEST_TEMP_DIR/firebase-calls"
+    npm_prefix="$TEST_TEMP_DIR/npm-prefix"
+    mkdir -p "$npm_prefix/bin"
+    cat > "$MOCK_BIN_DIR/npm" <<EOF
+#!/bin/sh
+case "\$1" in
+  prefix) printf '%s\\n' '$npm_prefix' ;;
+  list)
+    if [ -x '$npm_prefix/bin/firebase' ]; then
+      printf '%s\\n' '{"dependencies":{"firebase-tools":{"version":"$version"}}}'
+    else
+      printf '%s\\n' '{"dependencies":{}}'
+    fi ;;
+  install)
+    printf '%s\\n' "\$*" >> '$calls'
+    printf '#!/bin/sh\\nprintf "%%s\\n" "$version"\\n' > '$npm_prefix/bin/firebase'
+    chmod +x '$npm_prefix/bin/firebase' ;;
+esac
+EOF
+    cat > "$MOCK_BIN_DIR/asdf" <<EOF
+#!/bin/sh
+printf 'asdf %s\\n' "\$*" >> '$calls'
+case "\$*" in
+  'plugin list') printf 'firebase\\n' ;;
+esac
+EOF
+    chmod +x "$MOCK_BIN_DIR/npm" "$MOCK_BIN_DIR/asdf"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_firebase
+    "
+
+    [ "$status" -eq 0 ]
+    grep -Fx "install --global firebase-tools@$version" "$calls"
+    grep -Fx 'asdf plugin remove firebase' "$calls"
+    grep -Fx 'asdf reshim' "$calls"
+    [[ "$output" == *"Firebase CLI $version installed from npm"* ]]
+}
+
+@test "setup_firebase dry-run does not install or remove anything" {
+    _ensure_mock_bin_dir
+    calls="$TEST_TEMP_DIR/firebase-calls"
+    cat > "$MOCK_BIN_DIR/npm" <<EOF
+#!/bin/sh
+printf '%s\\n' "\$*" >> '$calls'
+EOF
+    chmod +x "$MOCK_BIN_DIR/npm"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_firebase --dry-run
+    "
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Would install Firebase CLI"* ]]
+    [ ! -e "$calls" ]
+}
+
 @test "setup_openwiki installs the global npm CLI" {
     _ensure_mock_bin_dir
     local version

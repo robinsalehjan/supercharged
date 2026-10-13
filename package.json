@@ -19,6 +19,7 @@
     "install:codex-plugins": "./scripts/install-codex-plugins.sh",
     "install:agent-tooling": "./scripts/install-agent-tooling.sh",
     "install:managed-tools": "./scripts/install-managed-tools.sh",
+    "install:firebase": "./scripts/install-firebase.sh",
     "install:openwiki": "./scripts/install-openwiki.sh",
     "install:plannotator": "./scripts/install-plannotator.sh",
     "install:skills": "./scripts/install-skills.sh",

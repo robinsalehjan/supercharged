@@ -38,6 +38,7 @@ write_other_fixtures() {
   OPENWIKI_VERSION="$wv"
   PLAYWRIGHT_CLI_VERSION="$pwv"
   PLAYWRIGHT_MCP_VERSION="$pmv"
+  FIREBASE_VERSION=$(jq -r '.tools.firebase.version' "$MANIFEST")
 }
 
 run_updater() {
@@ -48,6 +49,7 @@ run_updater() {
     AXIOM_COMMIT_JSON="$AXIOM_JSON" \
     AXIOM_PLUGIN_JSON="$AXIOM_PLUGIN_JSON" \
     OPENWIKI_NPM_VERSION="$OPENWIKI_VERSION" \
+    FIREBASE_NPM_VERSION="$FIREBASE_VERSION" \
     PLAYWRIGHT_CLI_NPM_VERSION="$PLAYWRIGHT_CLI_VERSION" \
     PLAYWRIGHT_MCP_NPM_VERSION="$PLAYWRIGHT_MCP_VERSION" \
     OBSCURA_ARCHIVES_DIR="${OBSCURA_ARCHIVES_DIR:-}" "$UPDATE_SCRIPT" "$@"
@@ -160,6 +162,17 @@ EOF
 
   [ "$status" -eq 0 ]
   run jq -e '.tools.openwiki.version == "9.9.9"' "$MANIFEST"
+  [ "$status" -eq 0 ]
+}
+
+@test "managed tool pin updater applies a Firebase npm release" {
+  write_current_release
+  FIREBASE_VERSION="15.29.0"
+
+  run run_updater --apply
+
+  [ "$status" -eq 0 ]
+  run jq -e '.tools.firebase.version == "15.29.0"' "$MANIFEST"
   [ "$status" -eq 0 ]
 }
 

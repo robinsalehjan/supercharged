@@ -46,6 +46,11 @@ if [ -n "${OPENWIKI_NPM_VERSION:-}" ]; then
 else
     openwiki_version=$(npm view openwiki version)
 fi
+if [ -n "${FIREBASE_NPM_VERSION:-}" ]; then
+    firebase_version="$FIREBASE_NPM_VERSION"
+else
+    firebase_version=$(npm view firebase-tools version)
+fi
 if [ -n "${PLAYWRIGHT_CLI_NPM_VERSION:-}" ]; then
     playwright_cli_version="$PLAYWRIGHT_CLI_NPM_VERSION"
 else
@@ -62,6 +67,7 @@ plannotator_arm_sha=$(jq -er '.assets[] | select(.name == "plannotator-darwin-ar
 plannotator_x64_sha=$(jq -er '.assets[] | select(.name == "plannotator-darwin-x64") | .digest | sub("^sha256:"; "") | select(test("^[0-9a-f]{64}$"))' <<<"$plannotator_json")
 crg_version=$(jq -er '.info.version | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))' <<<"$crg_json")
 openwiki_version=$(printf '%s' "$openwiki_version" | jq -Rer 'select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))')
+firebase_version=$(printf '%s' "$firebase_version" | jq -Rer 'select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))')
 playwright_cli_version=$(printf '%s' "$playwright_cli_version" | jq -Rer 'select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))')
 playwright_mcp_version=$(printf '%s' "$playwright_mcp_version" | jq -Rer 'select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))')
 obscura_version=$(jq -er '.tag_name | select(test("^v[0-9]+\\.[0-9]+\\.[0-9]+$"))' <<<"$obscura_json")
@@ -88,6 +94,7 @@ updates=$(jq -n \
     --arg p_x64_current "$(jq -r '.tools.plannotator.assets["darwin-x64"].sha256' "$MANIFEST")" --arg p_x64_latest "$plannotator_x64_sha" \
     --arg c_current "$(jq -r '.tools["code-review-graph"].version' "$MANIFEST")" --arg c_latest "$crg_version" \
     --arg w_current "$(jq -r '.tools.openwiki.version' "$MANIFEST")" --arg w_latest "$openwiki_version" \
+    --arg f_current "$(jq -r '.tools.firebase.version' "$MANIFEST")" --arg f_latest "$firebase_version" \
     --arg pw_current "$(jq -r '.tools["playwright-cli"].version' "$MANIFEST")" --arg pw_latest "$playwright_cli_version" \
     --arg pm_current "$(jq -r '.tools["playwright-mcp"].version' "$MANIFEST")" --arg pm_latest "$playwright_mcp_version" \
     --arg o_current "$(jq -r '.tools.obscura.version' "$MANIFEST")" --arg o_latest "$obscura_version" \
@@ -99,6 +106,7 @@ updates=$(jq -n \
       (select($p_current != $p_latest or $p_arm_current != $p_arm_latest or $p_x64_current != $p_x64_latest) | "Plannotator: \($p_current) -> \($p_latest)"),
       (select($c_current != $c_latest) | "code-review-graph: \($c_current) -> \($c_latest)"),
       (select($w_current != $w_latest) | "OpenWiki: \($w_current) -> \($w_latest)"),
+      (select($f_current != $f_latest) | "Firebase CLI: \($f_current) -> \($f_latest)"),
       (select($pw_current != $pw_latest) | "Playwright CLI: \($pw_current) -> \($pw_latest)"),
       (select($pm_current != $pm_latest) | "Playwright MCP: \($pm_current) -> \($pm_latest)"),
       (select($o_current != $o_latest or $o_arm_current != $o_arm_latest or $o_x64_current != $o_x64_latest) | "Obscura: \($o_current) -> \($o_latest)"),
@@ -148,6 +156,7 @@ jq \
   --arg pv "$plannotator_version" --arg pas "$plannotator_arm_sha" --arg pxs "$plannotator_x64_sha" \
   --arg cv "$crg_version" \
   --arg wv "$openwiki_version" \
+  --arg fv "$firebase_version" \
   --arg pwv "$playwright_cli_version" \
   --arg pmv "$playwright_mcp_version" \
   --arg ov "$obscura_version" --arg oan "$obscura_arm_name" --arg oas "$obscura_arm_sha" --arg oab "$obscura_arm_bin" --arg oaw "$obscura_arm_worker" \
@@ -157,6 +166,7 @@ jq \
     .tools.plannotator.assets["darwin-x64"].sha256 = $pxs |
     .tools["code-review-graph"].version = $cv |
     .tools.openwiki.version = $wv |
+    .tools.firebase.version = $fv |
     .tools["playwright-cli"].version = $pwv |
     .tools["playwright-mcp"].version = $pmv |
     .tools.obscura.version = $ov |

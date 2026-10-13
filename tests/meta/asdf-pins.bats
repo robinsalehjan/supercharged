@@ -16,7 +16,6 @@ setup() {
   printf '%s\n' 3.4.9 3.4.10 4.0.6 > "$FIXTURES/ruby.txt"
   printf '%s\n' 4.0.18 4.0.19 > "$FIXTURES/bundler.txt"
   printf '%s\n' 581.0.0 583.0.0 > "$FIXTURES/gcloud.txt"
-  printf '%s\n' 15.28.1 15.28.2 > "$FIXTURES/firebase.txt"
   printf '%s\n' openjdk-26.0.2.1 openjdk-27 > "$FIXTURES/java.txt"
 
   TOOL_VERSIONS="$TEST_TEMP_DIR/.tool-versions"
@@ -31,7 +30,6 @@ ruby 3.4.10
 bundler 4.0.19
 
 gcloud 581.0.0
-firebase 15.28.1
 java openjdk-26.0.2.1
 EOF
 }
@@ -88,7 +86,6 @@ run_updater() {
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"gcloud: 581.0.0 -> 583.0.0"* ]]
-  [[ "$output" == *"firebase: 15.28.1 -> 15.28.2"* ]]
   [ "$(cat "$TOOL_VERSIONS")" = "$before" ]
 }
 
@@ -100,7 +97,6 @@ run_updater() {
   [ "$status" -eq 0 ]
   grep -Fxq 'nodejs 24.20.0' "$TOOL_VERSIONS"
   grep -Fxq 'gcloud 583.0.0' "$TOOL_VERSIONS"
-  grep -Fxq 'firebase 15.28.2' "$TOOL_VERSIONS"
   # Held and line-tracked pins are untouched.
   grep -Fxq 'java openjdk-26.0.2.1' "$TOOL_VERSIONS"
   grep -Fxq 'ruby 3.4.10' "$TOOL_VERSIONS"

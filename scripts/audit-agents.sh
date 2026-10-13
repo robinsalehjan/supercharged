@@ -273,7 +273,11 @@ fi
 MANAGED_TOOLS_MANIFEST="${MANAGED_TOOLS_MANIFEST:-$AGENT_CONFIG_DIR/managed_tools.json}"
 if jq -e '
     .version == 2 and
-    (.tools | keys | sort) == ["code-review-graph", "obscura", "openwiki", "plannotator", "playwright-cli", "playwright-mcp"] and
+    (.tools | keys | sort) == ["code-review-graph", "firebase", "obscura", "openwiki", "plannotator", "playwright-cli", "playwright-mcp"] and
+    .tools.firebase.policy == "exact-npm" and
+    .tools.firebase.package == "firebase-tools" and
+    .tools.firebase.command == "firebase" and
+    (.tools.firebase.version | test("^[0-9]+\\.[0-9]+\\.[0-9]+$")) and
     (.tools.plannotator.version | test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")) and
     .tools.plannotator.repository == "backnotprop/plannotator" and
     ([.tools.plannotator.assets["darwin-arm64"], .tools.plannotator.assets["darwin-x64"]] | all(

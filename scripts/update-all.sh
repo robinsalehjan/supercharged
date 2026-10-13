@@ -81,14 +81,16 @@ main() {
         "$SCRIPT_DIR/backup-all.sh"
     fi
 
-    if [ "$DRY_RUN" = true ]; then
-        "$SCRIPT_DIR/install-agent-tooling.sh" --dry-run
-    else
+    if [ "$DRY_RUN" != true ]; then
         "$SCRIPT_DIR/sync.sh" --only dotfiles
-        "$SCRIPT_DIR/install-agent-tooling.sh"
     fi
 
     "$SCRIPT_DIR/update.sh" "${UPDATE_ARGS[@]}"
+    if [ "$DRY_RUN" = true ]; then
+        "$SCRIPT_DIR/install-agent-tooling.sh" --dry-run
+    else
+        "$SCRIPT_DIR/install-agent-tooling.sh"
+    fi
 }
 
 main "$@"

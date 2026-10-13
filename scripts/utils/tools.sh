@@ -79,6 +79,65 @@ install_asdf_version() {
     log_with_level "SUCCESS" "asdf: $plugin set to version $version"
 }
 
+# Firebase's standalone macOS binary is Intel-only. Install the exact npm
+# package with the managed Node.js runtime, then retire the old asdf shim so
+# the `firebase` command resolves to the working npm executable.
+setup_firebase() {
+    local dry_run=false
+    [ "${1:-}" = "--dry-run" ] && dry_run=true
+
+    local manifest="${MANAGED_TOOLS_MANIFEST:-$UTILS_PROJECT_ROOT/agent_config/managed_tools.json}"
+    local version package command_name installed_version npm_executable
+    version=$(jq -er '.tools.firebase.version' "$manifest" 2>/dev/null) || version=""
+    package=$(jq -er '.tools.firebase.package' "$manifest" 2>/dev/null) || package=""
+    command_name=$(jq -er '.tools.firebase.command' "$manifest" 2>/dev/null) || command_name=""
+    if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ||
+       [ "$package" != "firebase-tools" ] || [ "$command_name" != "firebase" ]; then
+        log_with_level "ERROR" "Invalid Firebase pin in $manifest"
+        return 1
+    fi
+    if ! command_exists npm; then
+        log_with_level "ERROR" "npm is required to install Firebase CLI"
+        return 1
+    fi
+    if $dry_run; then
+        log_with_level "INFO" "Would install Firebase CLI $version from npm and retire the asdf Firebase plugin"
+        return 0
+    fi
+
+    npm_executable="$(npm prefix --global)/bin/firebase"
+    installed_version=$(npm list --global --depth=0 --json "$package" 2>/dev/null |
+        jq -r --arg package "$package" '.dependencies[$package].version // empty' 2>/dev/null) || installed_version=""
+    if [ "$installed_version" != "$version" ] || [ ! -x "$npm_executable" ] ||
+       [ "$("$npm_executable" --version 2>/dev/null)" != "$version" ]; then
+        log_with_level "INFO" "Installing Firebase CLI $version from npm..."
+        if ! npm install --global "${package}@${version}"; then
+            log_with_level "ERROR" "Failed to install Firebase CLI $version"
+            return 1
+        fi
+    fi
+
+    # The asdf shim takes precedence over npm's executable on the managed PATH.
+    # Remove its plugin and installed standalone binaries after npm succeeds.
+    if command_exists asdf && asdf plugin list 2>/dev/null | grep -Fxq firebase; then
+        log_with_level "INFO" "Retiring the asdf Firebase plugin and standalone binaries..."
+        if ! asdf plugin remove firebase || ! asdf reshim; then
+            log_with_level "ERROR" "Could not retire the asdf Firebase plugin"
+            return 1
+        fi
+        rehash
+    fi
+
+    installed_version=$(npm list --global --depth=0 --json "$package" 2>/dev/null |
+        jq -r --arg package "$package" '.dependencies[$package].version // empty' 2>/dev/null) || installed_version=""
+    if [ "$installed_version" != "$version" ] || [ ! -x "$npm_executable" ] ||
+       [ "$("$npm_executable" --version 2>/dev/null)" != "$version" ]; then
+        log_with_level "ERROR" "Failed to verify Firebase CLI $version"
+        return 1
+    fi
+    log_with_level "SUCCESS" "Firebase CLI $version installed from npm"
+}
+
 # Install OpenWiki, which maintains repository documentation designed for
 # coding agents. Its provider credentials remain local in ~/.openwiki/.env.
 setup_openwiki() {

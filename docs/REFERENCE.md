@@ -18,6 +18,7 @@ npm run rollback              # Roll back to the latest configuration snapshot
 npm run install:agent-tooling # Reconcile shared tooling and both native plugin sets
 npm run install:skills        # Install, update, or safely prune shared git skills
 npm run install:managed-tools # Reconcile exact-pinned local agent tools
+npm run install:firebase     # Install pinned Firebase CLI from npm
 npm run install:openwiki    # Install or update OpenWiki for agent documentation
 npm run install:plannotator   # Reconcile the checksum-pinned Plannotator binary
 npm run update:tool-pins      # Check upstream releases against managed pins
@@ -60,7 +61,7 @@ Setup stores interactive choices in `~/.supercharged_preferences`.
 | `INSTALL_CODEX_APP` | `Y` | ChatGPT desktop app and CodexBar for desktop/mobile Codex access |
 | `INSTALL_JVM_TOOLS` | `N` | Java and Kotlin via asdf |
 | `INSTALL_EXTRA_APPS` | `N` | Postman and Google Chrome |
-| `INSTALL_CLOUD_TOOLS` | `Y` | gcloud and Firebase CLI via asdf, Terraform via Homebrew |
+| `INSTALL_CLOUD_TOOLS` | `Y` | gcloud via asdf, Firebase CLI via exact-pinned npm package, Terraform via Homebrew |
 | `INSTALL_NETWORK_TOOLS` | `Y` | Wireshark, mitmproxy, Proxyman |
 
 ## Installed Tools
@@ -77,11 +78,11 @@ The Homebrew Bundle baseline is defined by `build_brewfile` in `scripts/mac.sh`.
 
 `ollama` above is installed as `cask "ollama"`, not a formula — it installs the `Ollama.app` menu bar GUI and symlinks its bundled CLI onto PATH, so no separate formula is needed (or wanted: a `brew "ollama"` formula alongside it would fight over the same `ollama` binary symlink).
 
-Conditional Brewfile groups add iOS, container, cloud (`hashicorp/tap/terraform`), network, and extra application tooling according to the setup preferences above. The iOS group includes SimSlim for simulator resource trimming alongside the Xcode and Swift command-line tools. Third-party Homebrew entries grant formula-level trust only; setup and updates also remove known retired taps when they no longer provide an installed item. Dedicated setup helpers install Claude Code and the exact-pinned OpenWiki, Playwright CLI, Playwright MCP, Plannotator, code-review-graph, and Obscura. OpenWiki, Playwright CLI, and Playwright MCP install from npm after the managed Node.js runtime is active; Playwright browser binaries are left to `playwright-cli install-browser` or first use. `agent_config/managed_tools.json` is the desired-state source for the exact-pinned tools. Release archives verify architecture-specific SHA-256 values before installation; code-review-graph uses an exact PyPI package version, while OpenWiki, Playwright CLI, and Playwright MCP use exact npm package versions. Managed-tool reconciliation removes known repository-managed, Homebrew, and global npm installations of the retired XcodeBuildMCP and MobileBuildMCP integrations; executables at unknown manual paths are reported for manual cleanup. Run `npm run install:openwiki` or `npm run install:managed-tools` to reconcile the relevant tools; add `-- --dry-run` to inspect drift.
+Conditional Brewfile groups add iOS, container, cloud (`hashicorp/tap/terraform`), network, and extra application tooling according to the setup preferences above. The iOS group includes SimSlim for simulator resource trimming alongside the Xcode and Swift command-line tools. Third-party Homebrew entries grant formula-level trust only; setup and updates also remove known retired taps when they no longer provide an installed item. Dedicated setup helpers install Claude Code and the exact-pinned Firebase CLI, OpenWiki, Playwright CLI, Playwright MCP, Plannotator, code-review-graph, and Obscura. Firebase CLI, OpenWiki, Playwright CLI, and Playwright MCP install from npm after the managed Node.js runtime is active; Playwright browser binaries are left to `playwright-cli install-browser` or first use. `agent_config/managed_tools.json` is the desired-state source for the exact-pinned tools. Release archives verify architecture-specific SHA-256 values before installation; code-review-graph uses an exact PyPI package version, while Firebase CLI, OpenWiki, Playwright CLI, and Playwright MCP use exact npm package versions. Managed-tool reconciliation removes known repository-managed, Homebrew, and global npm installations of the retired XcodeBuildMCP and MobileBuildMCP integrations; executables at unknown manual paths are reported for manual cleanup. Run `npm run install:firebase`, `npm run install:openwiki`, or `npm run install:managed-tools` to reconcile the relevant tools; add `-- --dry-run` to inspect drift.
 
 As part of the profile migration, `npm run sync -- --only codex` treats a local `~/.codex/apple-headless.config.toml` as restore drift even when normal timestamp gating would otherwise skip the restore. The command first preserves the retired profile in its rollback snapshot, then removes it; use `codex -p apple` afterward.
 
-asdf-managed tools are listed in `dot_files/.tool-versions`, including Node.js, Python, Ruby, Bundler, gcloud, Firebase CLI, and optional JVM pins.
+asdf-managed tools are listed in `dot_files/.tool-versions`, including Node.js, Python, Ruby, Bundler, gcloud, and optional JVM pins. Firebase CLI is pinned as `firebase-tools` in `agent_config/managed_tools.json` and installed through the selected Node.js runtime when cloud tools are enabled. Setup removes the retired asdf Firebase plugin after npm installation succeeds so its Intel-only shim cannot mask the working CLI. Run `npm run install:firebase` to reconcile Firebase separately.
 
 Claude Code configuration is backed up under `claude_config/`. Codex configuration is backed up under `codex_config/`. Shared cross-agent instructions live in `agent_config/AGENTS.md`.
 
@@ -99,7 +100,7 @@ Use `codex -p apple` for both native Xcode MCP modes. Xcode 26.3 through 26.x re
 
 `npm run install:agent-tooling` is the harness-neutral reconciliation entry point. It installs the shared host CLIs and shared skills first, then invokes the native Claude and Codex marketplace installers when those harnesses are available. Its dry-run previews both desired plugin sets even when a client is not installed; use `-- --harness claude` or `-- --harness codex` to target one adapter. `npm run check:agent-tooling` reports the composed inventory and fails when shared MCP definitions differ between harnesses. Harness-native plugins remain intentionally different.
 
-Pin updates follow the personal machine. Run `npm run update:tool-pins` or `npm run update:asdf-pins` to inspect upstream candidates without changing tracked files. Install and validate the chosen versions on this machine, then run `npm run promote:pins` to preview the resulting pin changes and `npm run promote:pins -- --apply` to write them. Use `-- --only asdf` or `-- --only agents` to limit promotion. The promoter reads active, installed asdf versions within `agent_config/asdf_policy.json`, global npm package versions, and installed agent CLI versions; release binaries must match published checksums. Missing tools are skipped. Axiom plugin refs and Codex, Claude, RTK, and Worktrunk compatibility versions remain manual after local validation. CI checks repository changes but never proposes new pins.
+Pin updates follow the personal machine. Run `npm run update:tool-pins` or `npm run update:asdf-pins` to inspect upstream candidates without changing tracked files. Install and validate the chosen versions on this machine, then run `npm run promote:pins` to preview the resulting pin changes and `npm run promote:pins -- --apply` to write them. Use `-- --only asdf` or `-- --only agents` to limit promotion. The promoter reads active, installed asdf versions within `agent_config/asdf_policy.json`, global npm package versions (including Firebase CLI), and installed agent CLI versions; release binaries must match published checksums, and the Firebase command must run at its installed package version. Missing tools are skipped. Axiom plugin refs and Codex, Claude, RTK, and Worktrunk compatibility versions remain manual after local validation. CI checks repository changes but never proposes new pins.
 
 Version policy depends on the integration boundary:
 
@@ -107,7 +108,7 @@ Version policy depends on the integration boundary:
 | --- | --- |
 | Plannotator Stop-hook binary | Exact release and SHA-256 per macOS architecture |
 | code-review-graph local MCP | Exact PyPI version with required extras |
-| OpenWiki, Playwright CLI, and Playwright MCP | Exact npm package versions |
+| Firebase CLI, OpenWiki, Playwright CLI, and Playwright MCP | Exact npm package versions |
 | Obscura | Exact release archive and SHA-256 per macOS architecture; binaries are verified after extraction |
 | Axiom | Immutable Codex marketplace commit plus expected plugin version |
 | Claude plugins | Native marketplace installation verified against tracked plugin versions |

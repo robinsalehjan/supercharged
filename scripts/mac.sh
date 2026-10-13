@@ -306,7 +306,6 @@ main() {
     node_version="${TOOL_VERSIONS[nodejs]}"
     bundler_version="${TOOL_VERSIONS[bundler]}"
     gcloud_version="${TOOL_VERSIONS[gcloud]}"
-    firebase_version="${TOOL_VERSIONS[firebase]}"
     # JVM toolchain pins are optional — see INSTALL_JVM_TOOLS block below.
     # If absent in .tool-versions, the setup falls back to `asdf latest`.
     java_version="${TOOL_VERSIONS[java]:-}"
@@ -388,11 +387,10 @@ main() {
 
     # Cloud SDKs are gated — work machines need them, personal often does not.
     if [[ "${INSTALL_CLOUD_TOOLS:-Y}" =~ ^[Yy] ]]; then
-        log_with_level "INFO" "Installing cloud SDKs (gcloud, firebase)..."
+        log_with_level "INFO" "Installing cloud SDKs (gcloud via asdf, Firebase CLI via npm)..."
         install_asdf_plugin gcloud
-        install_asdf_plugin firebase
         install_asdf_version gcloud "$gcloud_version"
-        install_asdf_version firebase "$firebase_version"
+        setup_firebase
     else
         log_with_level "INFO" "Skipping cloud SDKs (gcloud, firebase) — INSTALL_CLOUD_TOOLS not set"
     fi

@@ -26,6 +26,7 @@ echo "  npm run install:codex-plugins -- --dry-run - Preview managed Codex plugi
 echo "  npm run install:agent-tooling  - Reconcile shared tooling and both native plugin sets"
 echo "  npm run install:agent-tooling -- --dry-run - Preview complete agent tooling reconciliation"
 echo "  npm run install:managed-tools - Reconcile all exact-pinned agent tools"
+echo "  npm run install:firebase      - Reconcile exact-pinned Firebase CLI from npm"
 echo "  npm run install:managed-tools -- --dry-run - Check managed agent-tool drift"
 echo "  npm run install:openwiki      - Install or update OpenWiki for agent documentation"
 echo "  npm run install:openwiki -- --dry-run - Preview OpenWiki installation"
