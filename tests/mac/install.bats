@@ -125,6 +125,7 @@ run_zsh_func() {
   [[ "$output" == *'brew "actionlint"'* ]]
   [[ "$output" == *'brew "jq"'* ]]
   [[ "$output" == *'brew "ripgrep"'* ]]
+  [[ "$output" == *'brew "watchexec"'* ]]
   [[ "$output" == *'brew "cliclick"'* ]]
   [[ "$output" == *'cask "codex"'* ]]
   [[ "$output" == *'cask "chatgpt"'* ]]

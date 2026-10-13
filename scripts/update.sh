@@ -252,6 +252,12 @@ main() {
     if ! $SKIP_NPM && command -v npm >/dev/null 2>&1; then
         log_with_level "INFO" "Updating npm global packages..."
         npm update -g 2>/dev/null || log_with_level "WARN" "Failed to update npm packages"
+        if [ -f "$HOME/.supercharged_preferences" ]; then
+            load_supercharged_preferences "$HOME/.supercharged_preferences"
+        fi
+        if [[ "${INSTALL_CLOUD_TOOLS:-Y}" =~ ^[Yy] ]]; then
+            setup_firebase
+        fi
     fi
 
     # Update pip packages if pip is available and data science tools are installed

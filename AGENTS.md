@@ -56,7 +56,7 @@ npm run setup                 # Fresh install (interactive)
 npm run sync -- --only dotfiles     # Apply managed dotfiles to $HOME; reapply Worktrunk integration
 
 # Updates
-# npm run update runs: sync dotfiles → install:agent-tooling → update.sh
+# npm run update runs: sync dotfiles → update.sh → install:agent-tooling
 npm run update                    # Update all components (brew, asdf, zsh, npm, pip)
 npm run update -- --dry-run            # Preview outdated brew/npm packages (read-only)
 npm run update -- --only <comp>     # Sync dotfiles/skills + update one component (brew, asdf, zsh, npm, pip)
@@ -85,6 +85,7 @@ npm run install:codex-plugins -- --dry-run # Preview managed Codex plugin work
 npm run install:agent-tooling     # Reconcile shared CLIs/skills and both native plugin sets
 npm run install:agent-tooling -- --dry-run # Preview complete agent tooling reconciliation
 npm run install:managed-tools     # Reconcile exact-pinned local agent tools
+npm run install:firebase          # Reconcile exact-pinned Firebase CLI through npm
 npm run install:managed-tools -- --dry-run # Inspect managed tool drift
 npm run install:openwiki          # Install or update the exact-pinned OpenWiki CLI
 npm run install:openwiki -- --dry-run # Preview OpenWiki installation
@@ -92,7 +93,8 @@ npm run install:plannotator       # Install/update the checksum-pinned Plannotat
 npm run install:skills            # Install/update/prune shared git skills for Claude and Codex
 npm run install:skills -- --dry-run # Preview installs, updates, and safe removals
 npm run update:tool-pins          # Check upstream releases against tracked managed-tool pins
-npm run update:tool-pins -- --apply # Refresh managed-tool versions and checksums for review
+npm run promote:pins            # Preview pins from installed versions on this machine
+npm run promote:pins -- --apply  # Promote validated installed versions to tracked pins
 
 # Versioning and Releases
 npm run version:show              # Print version, commit SHA, tag, branch, host
@@ -107,7 +109,7 @@ npm run scan:secrets              # Scan repository paths for likely secrets
 npm run audit:agents              # Check managed Codex configuration and local agent health
 npm run audit:agents -- --repo-only # Deterministic CI-safe tracked-config audit
 npm test                          # Run all BATS tests
-npm run test:watch                # Re-run tests on change (requires nodemon)
+npm run test:watch                # Re-run tests on change (requires Homebrew watchexec)
 bats tests/<suite>/*.bats         # Run a suite (claude, codex, utils, mac, update, setup, restore, meta)
 npm run help                      # Display all available commands
 ```
@@ -224,7 +226,7 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 - Codex settings: `codex_config/config.toml` restores lean durable defaults such as model, personality, live web search, disabled memories, base MCP settings, hook enablement, instruction discovery, and a permission profile that denies `.env*`/`.secrets` paths; `apple.config.toml` provides native Xcode MCP for attached and headless use with `codex -p apple`, while `review.config.toml` provides the `codex -p review` overlay
 - Codex hooks and skills: `codex_config/hooks.json`, `codex_config/RTK.md`, and `codex_config/skills/plannotator-*` restore the non-blocking RTK rewrite hook, Plannotator Stop-hook review, Plannotator skills, and the Codex-only RTK instruction include
 - Codex plugins: `codex_config/plugins.json` is a sanitized desired-state registry; `npm run install:codex-plugins` uses the Codex CLI to manage Axiom while marketplace snapshots, plugin caches, credentials, and hook trust state stay local
-- Managed agent tools: `agent_config/managed_tools.json` exact-pins local release/PyPI/npm tools—including code-review-graph and OpenWiki—and remote installer commits, and records tested compatibility floors; code-review-graph stays current through its launchd watcher and explicit audits; Axiom and shared git skills use immutable commits; a weekly workflow proposes reviewed exact-pin bumps
+- Managed tools: `agent_config/managed_tools.json` exact-pins local release/PyPI/npm tools—including Firebase CLI, code-review-graph, and OpenWiki—and records tested compatibility floors; Firebase CLI is installed from npm when cloud tools are enabled, while gcloud remains on asdf; code-review-graph stays current through its launchd watcher and explicit audits; Axiom and shared git skills use immutable commits; pin changes are promoted from validated personal-machine installations
 - Codex rules: `codex_config/rules/*.rules` restores repo-managed command deny rules that mirror the Claude hard-deny list where Codex prefix rules can express it; local approval rules in `~/.codex/rules/default.rules` remain local
 - Shared git skills: `agent_config/installed_skills.json` is installed into both `~/.claude/skills/*` and `~/.codex/skills/*` by `npm run install:skills`
 - Shared graph skills: `agent_config/skills/<name>/SKILL.md` is the canonical source; `npm run sync -- --only codex` applies those directories directly to Codex
@@ -275,7 +277,7 @@ Plugins are auto-installed during sync. `install:plugins` merges repo configs wi
 | Update shared agent instructions | Edit `agent_config/AGENTS.md`, then run `npm run sync -- --only agents` |
 | Update Codex defaults | Edit `codex_config/config.toml`, then run `npm run sync -- --only codex` |
 | Update Codex command deny rules | Edit `codex_config/rules/*.rules`, then run `npm run sync -- --only codex` |
-| Update managed agent-tool pins | Run `npm run update:tool-pins -- --apply`, review release checksums and commit refs, then run `npm run install:managed-tools -- --dry-run` |
+| Update managed agent-tool pins | Install and validate locally, run `npm run promote:pins`, then `npm run promote:pins -- --apply` and review the diff |
 | Add shared project skill rule | Create/edit `agent_config/skills/<name>/SKILL.md`, then run `npm run sync -- --only codex` |
 | Add shared MCP server | Add compatible entries to `.mcp.json` and `codex_config/config.toml`; skip Codex if unsupported |
 | Update security policy | Edit `SECURITY.md`, `scripts/scan-secrets.sh`, `codex_config/rules/*.rules`, or `codex_config/hooks/` as appropriate |

@@ -38,15 +38,18 @@ write_other_fixtures() {
   OPENWIKI_VERSION="$wv"
   PLAYWRIGHT_CLI_VERSION="$pwv"
   PLAYWRIGHT_MCP_VERSION="$pmv"
+  FIREBASE_VERSION=$(jq -r '.tools.firebase.version' "$MANIFEST")
 }
 
 run_updater() {
   env MANAGED_TOOLS_MANIFEST="$MANIFEST" CODEX_PLUGIN_REGISTRY="$PLUGIN_REGISTRY" \
+    SUPERCHARGED_LOCAL_PROMOTION=1 \
     PLANNOTATOR_RELEASE_JSON="$RELEASE_JSON" CRG_PYPI_JSON="$CRG_JSON" \
     OBSCURA_RELEASE_JSON="$OBSCURA_JSON" \
     AXIOM_COMMIT_JSON="$AXIOM_JSON" \
     AXIOM_PLUGIN_JSON="$AXIOM_PLUGIN_JSON" \
     OPENWIKI_NPM_VERSION="$OPENWIKI_VERSION" \
+    FIREBASE_NPM_VERSION="$FIREBASE_VERSION" \
     PLAYWRIGHT_CLI_NPM_VERSION="$PLAYWRIGHT_CLI_VERSION" \
     PLAYWRIGHT_MCP_NPM_VERSION="$PLAYWRIGHT_MCP_VERSION" \
     OBSCURA_ARCHIVES_DIR="${OBSCURA_ARCHIVES_DIR:-}" "$UPDATE_SCRIPT" "$@"
@@ -87,6 +90,12 @@ write_current_release() {
 
 @test "managed tool pin updater is executable" {
   [ -x "$UPDATE_SCRIPT" ]
+}
+
+@test "managed tool pin updater rejects direct upstream apply" {
+  run env -u SUPERCHARGED_LOCAL_PROMOTION "$UPDATE_SCRIPT" --apply
+  [ "$status" -eq 2 ]
+  [[ "$output" == *"promote:pins"* ]]
 }
 
 @test "managed tool pin check leaves a current manifest unchanged" {
@@ -153,6 +162,17 @@ EOF
 
   [ "$status" -eq 0 ]
   run jq -e '.tools.openwiki.version == "9.9.9"' "$MANIFEST"
+  [ "$status" -eq 0 ]
+}
+
+@test "managed tool pin updater applies a Firebase npm release" {
+  write_current_release
+  FIREBASE_VERSION="15.29.0"
+
+  run run_updater --apply
+
+  [ "$status" -eq 0 ]
+  run jq -e '.tools.firebase.version == "15.29.0"' "$MANIFEST"
   [ "$status" -eq 0 ]
 }
 
@@ -251,4 +271,18 @@ EOF
     .plugins[0].version == "9.9.9"
   ' "$PLUGIN_REGISTRY"
   [ "$status" -eq 0 ]
+}
+
+@test "managed tool pin updater can leave Axiom for local validation" {
+  write_current_release
+  original=$(shasum -a 256 "$PLUGIN_REGISTRY" | awk '{print $1}')
+  printf '{"sha":"%s"}\n' '2222222222222222222222222222222222222222' > "$AXIOM_JSON"
+  printf '{"version":"9.9.9"}\n' > "$AXIOM_PLUGIN_JSON"
+
+  export SKIP_AXIOM_UPDATE=true
+  run run_updater --apply
+  unset SKIP_AXIOM_UPDATE
+
+  [ "$status" -eq 0 ]
+  [ "$(shasum -a 256 "$PLUGIN_REGISTRY" | awk '{print $1}')" = "$original" ]
 }

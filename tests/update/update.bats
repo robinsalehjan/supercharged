@@ -40,8 +40,8 @@ teardown() {
 
   [ "$status" -eq 0 ]
   [ "$(sed -n '1p' "$HOME/update-calls")" = "sync.sh --only dotfiles" ]
-  [ "$(sed -n '2p' "$HOME/update-calls")" = "install-agent-tooling.sh " ]
-  [ "$(sed -n '3p' "$HOME/update-calls")" = "update.sh --only brew" ]
+  [ "$(sed -n '2p' "$HOME/update-calls")" = "update.sh --only brew" ]
+  [ "$(sed -n '3p' "$HOME/update-calls")" = "install-agent-tooling.sh " ]
 }
 
 @test "update dry-run checks managed tools without changing configuration" {
@@ -80,8 +80,8 @@ teardown() {
   [ "$status" -eq 0 ]
   [ "$(sed -n '1p' "$HOME/update-calls")" = "backup-all.sh " ]
   [ "$(sed -n '2p' "$HOME/update-calls")" = "sync.sh --only dotfiles" ]
-  [ "$(sed -n '3p' "$HOME/update-calls")" = "install-agent-tooling.sh " ]
-  [ "$(sed -n '4p' "$HOME/update-calls")" = "update.sh " ]
+  [ "$(sed -n '3p' "$HOME/update-calls")" = "update.sh " ]
+  [ "$(sed -n '4p' "$HOME/update-calls")" = "install-agent-tooling.sh " ]
 }
 
 @test "update rejects a mutating backup during dry-run" {

@@ -434,7 +434,8 @@ validate_installation() {
     local node_version="${TOOL_VERSIONS[nodejs]}"
     local bundler_version="${TOOL_VERSIONS[bundler]}"
     local gcloud_version="${TOOL_VERSIONS[gcloud]}"
-    local firebase_version="${TOOL_VERSIONS[firebase]}"
+    local firebase_version
+    firebase_version=$(jq -er '.tools.firebase.version' "${MANAGED_TOOLS_MANIFEST:-$UTILS_PROJECT_ROOT/agent_config/managed_tools.json}" 2>/dev/null) || firebase_version=""
     # JVM toolchain — only used when INSTALL_JVM_TOOLS=Y.
     # When pinned in .tool-versions, validate against that; otherwise just check presence
     # (the install path resolves `asdf latest` so we don't know the target version up-front).
@@ -458,6 +459,7 @@ validate_installation() {
     validate_tool "tree" "" || ((warned++))
     validate_tool "rg" "" || ((warned++))  # ripgrep command is 'rg'
     validate_tool "tmux" "" || ((warned++))
+    validate_tool "watchexec" "" || ((warned++))
     validate_tool "btop" "" || true  # Optional, don't count if missing
     validate_tool "nmap" "" || ((warned++))
     validate_tool "aria2c" "" || ((warned++))

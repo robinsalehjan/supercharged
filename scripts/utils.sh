@@ -247,7 +247,7 @@ setup_user_preferences() {
     read -r install_extras
     install_extras=$(normalize_yes_no_preference "$install_extras" "N")
 
-    # Ask about cloud SDKs (gcloud + firebase via asdf)
+    # Ask about cloud SDKs (gcloud via asdf, Firebase CLI via npm)
     printf "Install cloud SDKs (gcloud, firebase)? [Y/n]: "
     read -r install_cloud
     install_cloud=$(normalize_yes_no_preference "$install_cloud" "Y")

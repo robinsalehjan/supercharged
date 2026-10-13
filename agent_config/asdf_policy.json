@@ -27,10 +27,6 @@
       "policy": "latest",
       "match": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
     },
-    "firebase": {
-      "policy": "latest",
-      "match": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
-    },
     "java": {
       "policy": "hold",
       "reason": "Pinned for the Firebase emulator suite (Firestore rules tests need a JDK 11+ runtime). Move only after validating the emulators."

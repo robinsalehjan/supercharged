@@ -13,11 +13,13 @@
     "update": "./scripts/update-all.sh",
     "update:tool-pins": "./scripts/update-agent-tool-pins.sh",
     "update:asdf-pins": "./scripts/update-asdf-pins.sh",
+    "promote:pins": "./scripts/promote-local-pins.sh",
     "validate": "(cd scripts && ./utils.sh validate) && ./scripts/audit-agents.sh",
     "install:plugins": "./scripts/install-plugins.sh",
     "install:codex-plugins": "./scripts/install-codex-plugins.sh",
     "install:agent-tooling": "./scripts/install-agent-tooling.sh",
     "install:managed-tools": "./scripts/install-managed-tools.sh",
+    "install:firebase": "./scripts/install-firebase.sh",
     "install:openwiki": "./scripts/install-openwiki.sh",
     "install:plannotator": "./scripts/install-plannotator.sh",
     "install:skills": "./scripts/install-skills.sh",
@@ -28,13 +30,10 @@
     "lint": "shellcheck --shell=bash --severity=info scripts/*.sh scripts/utils/*.sh tests/helpers/*.bash codex_config/hooks/*.sh && zsh -n scripts/*.sh scripts/utils/*.sh dot_files/.zshrc dot_files/.zprofile dot_files/.p10k.zsh && actionlint",
     "scan:secrets": "./scripts/scan-secrets.sh",
     "test": "bats -r tests",
-    "test:watch": "nodemon --watch tests --watch scripts --watch codex_config --ext sh,bats,md --exec 'npm test'",
+    "test:watch": "watchexec --shell=none --watch tests --watch scripts --watch codex_config --exts sh,bats,md -- npm test",
     "pretest": "command -v bats >/dev/null || (echo '❌ bats not found. Install with: brew install bats-core' && exit 1)"
   },
   "engines": {
     "node": ">=20"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.7"
   }
 }
