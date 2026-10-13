@@ -12,6 +12,10 @@ if [ -n "${1:-}" ] && [ "${1:-}" != "--apply" ]; then
     echo "Usage: $(basename "$0") [--apply]" >&2
     exit 2
 fi
+if $APPLY && [ "${SUPERCHARGED_LOCAL_PROMOTION:-}" != 1 ]; then
+    echo "Use npm run promote:pins -- --apply to write locally installed versions" >&2
+    exit 2
+fi
 
 fetch_json() {
     local fixture="$1" endpoint="$2"
@@ -29,7 +33,9 @@ obscura_repo=$(jq -r '.tools.obscura.repository' "$MANIFEST")
 
 plannotator_json=$(fetch_json "${PLANNOTATOR_RELEASE_JSON:-}" "repos/$plannotator_repo/releases/latest")
 obscura_json=$(fetch_json "${OBSCURA_RELEASE_JSON:-}" "repos/$obscura_repo/releases/latest")
-axiom_json=$(fetch_json "${AXIOM_COMMIT_JSON:-}" "repos/CharlesWiltgen/Axiom/commits/main")
+if [ "${SKIP_AXIOM_UPDATE:-false}" != true ]; then
+    axiom_json=$(fetch_json "${AXIOM_COMMIT_JSON:-}" "repos/CharlesWiltgen/Axiom/commits/main")
+fi
 if [ -n "${CRG_PYPI_JSON:-}" ]; then
     crg_json=$(<"$CRG_PYPI_JSON")
 else
@@ -63,13 +69,18 @@ obscura_arm_name="obscura-aarch64-macos.tar.gz"
 obscura_x64_name="obscura-x86_64-macos.tar.gz"
 obscura_arm_sha=$(jq -er --arg name "$obscura_arm_name" '.assets[] | select(.name == $name) | .digest | sub("^sha256:"; "") | select(test("^[0-9a-f]{64}$"))' <<<"$obscura_json")
 obscura_x64_sha=$(jq -er --arg name "$obscura_x64_name" '.assets[] | select(.name == $name) | .digest | sub("^sha256:"; "") | select(test("^[0-9a-f]{64}$"))' <<<"$obscura_json")
-axiom_commit=$(jq -er '.sha | select(test("^[0-9a-f]{40}$"))' <<<"$axiom_json")
-if [ -n "${AXIOM_PLUGIN_JSON:-}" ]; then
-    axiom_plugin_json=$(<"$AXIOM_PLUGIN_JSON")
+if [ "${SKIP_AXIOM_UPDATE:-false}" = true ]; then
+    axiom_commit=$(jq -r '.marketplaces[0].ref' "$PLUGIN_REGISTRY")
+    axiom_version=$(jq -r '.plugins[0].version' "$PLUGIN_REGISTRY")
 else
-    axiom_plugin_json=$(curl -fsSL "${CURL_METADATA_OPTS[@]}" "https://raw.githubusercontent.com/CharlesWiltgen/Axiom/$axiom_commit/axiom-codex/.codex-plugin/plugin.json")
+    axiom_commit=$(jq -er '.sha | select(test("^[0-9a-f]{40}$"))' <<<"$axiom_json")
+    if [ -n "${AXIOM_PLUGIN_JSON:-}" ]; then
+        axiom_plugin_json=$(<"$AXIOM_PLUGIN_JSON")
+    else
+        axiom_plugin_json=$(curl -fsSL "${CURL_METADATA_OPTS[@]}" "https://raw.githubusercontent.com/CharlesWiltgen/Axiom/$axiom_commit/axiom-codex/.codex-plugin/plugin.json")
+    fi
+    axiom_version=$(jq -er '.version | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+([.-][0-9A-Za-z.-]+)?$"))' <<<"$axiom_plugin_json")
 fi
-axiom_version=$(jq -er '.version | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+([.-][0-9A-Za-z.-]+)?$"))' <<<"$axiom_plugin_json")
 
 updates=$(jq -n \
     --arg p_current "$(jq -r '.tools.plannotator.version' "$MANIFEST")" --arg p_latest "$plannotator_version" \
@@ -100,7 +111,7 @@ if [ "$(jq 'length' <<<"$updates")" -eq 0 ]; then
 fi
 jq -r '.[]' <<<"$updates"
 if ! $APPLY; then
-    echo "Run: npm run update:tool-pins -- --apply"
+    echo "Install and validate a version locally, then run: npm run promote:pins -- --apply"
     exit 0
 fi
 

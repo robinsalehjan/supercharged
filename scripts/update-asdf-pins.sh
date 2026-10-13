@@ -13,7 +13,7 @@
 #
 # Usage:
 #   ./update-asdf-pins.sh            # Report drift only
-#   ./update-asdf-pins.sh --apply    # Rewrite dot_files/.tool-versions
+#   ./update-asdf-pins.sh --apply    # Internal use by tests only; local promotion uses promote-local-pins.sh
 #
 # Test hook: ASDF_LIST_FIXTURE_DIR=<dir> reads <dir>/<plugin>.txt instead of
 # invoking asdf, so the resolution logic is testable without the runtimes.
@@ -28,6 +28,10 @@ APPLY=false
 [ "${1:-}" = "--apply" ] && APPLY=true
 if [ -n "${1:-}" ] && [ "${1:-}" != "--apply" ]; then
     echo "Usage: $(basename "$0") [--apply]" >&2
+    exit 2
+fi
+if $APPLY && [ "${SUPERCHARGED_LOCAL_PROMOTION:-}" != 1 ]; then
+    echo "Use npm run promote:pins -- --apply to write locally installed versions" >&2
     exit 2
 fi
 
@@ -111,7 +115,7 @@ for entry in "${updates[@]}"; do
 done
 
 if ! $APPLY; then
-    echo "Run: npm run update:asdf-pins -- --apply"
+    echo "Install and validate a version locally, then run: npm run promote:pins -- --apply"
     exit 0
 fi
 

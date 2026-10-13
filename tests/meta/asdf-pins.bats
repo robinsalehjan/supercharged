@@ -42,6 +42,7 @@ teardown() {
 
 run_updater() {
   run env \
+    SUPERCHARGED_LOCAL_PROMOTION=1 \
     ASDF_LIST_FIXTURE_DIR="$FIXTURES" \
     ASDF_TOOL_VERSIONS="$TOOL_VERSIONS" \
     "$SCRIPT" "$@"
@@ -122,6 +123,17 @@ run_updater() {
 
   [ "$status" -eq 2 ]
   [[ "$output" == *"Usage:"* ]]
+}
+
+@test "update-asdf-pins.sh rejects direct upstream apply" {
+  before=$(cat "$TOOL_VERSIONS")
+
+  run env -u SUPERCHARGED_LOCAL_PROMOTION ASDF_LIST_FIXTURE_DIR="$FIXTURES" \
+    ASDF_TOOL_VERSIONS="$TOOL_VERSIONS" "$SCRIPT" --apply
+
+  [ "$status" -eq 2 ]
+  [[ "$output" == *"promote:pins"* ]]
+  [ "$(cat "$TOOL_VERSIONS")" = "$before" ]
 }
 
 @test "every pinned runtime in .tool-versions has a policy" {

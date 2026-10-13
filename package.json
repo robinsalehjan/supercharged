@@ -13,6 +13,7 @@
     "update": "./scripts/update-all.sh",
     "update:tool-pins": "./scripts/update-agent-tool-pins.sh",
     "update:asdf-pins": "./scripts/update-asdf-pins.sh",
+    "promote:pins": "./scripts/promote-local-pins.sh",
     "validate": "(cd scripts && ./utils.sh validate) && ./scripts/audit-agents.sh",
     "install:plugins": "./scripts/install-plugins.sh",
     "install:codex-plugins": "./scripts/install-codex-plugins.sh",
