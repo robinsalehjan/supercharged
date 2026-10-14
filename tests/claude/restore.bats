@@ -598,7 +598,7 @@ EOF
           hooks: [
             {
               type: "command",
-              command: ($home + "/.claude/hooks/rtk-rewrite.sh")
+              command: ($home + "/.claude/hooks/example-hook.sh")
             }
           ]
         }
@@ -628,7 +628,7 @@ EOF
   # Assert: Hook command expanded
   local hook_cmd
   hook_cmd=$(jq -r '.hooks.PreToolUse[0].hooks[0].command' "$TEMP_CLAUDE/restored.json")
-  [[ "$hook_cmd" == "$HOME/.claude/hooks/rtk-rewrite.sh" ]] || {
+  [[ "$hook_cmd" == "$HOME/.claude/hooks/example-hook.sh" ]] || {
     echo "Hook command not expanded correctly: $hook_cmd"
     return 1
   }
@@ -664,7 +664,7 @@ EOF
           hooks: [
             {
               type: "command",
-              command: ($home + "/.claude/hooks/rtk-rewrite.sh")
+              command: ($home + "/.claude/hooks/example-hook.sh")
             }
           ]
         }
@@ -701,7 +701,7 @@ EOF
   # Assert: Path expanded
   local hook_cmd
   hook_cmd=$(jq -r '.hooks.PreToolUse[0].hooks[0].command' "$TEMP_CLAUDE/restored.json")
-  [[ "$hook_cmd" == "$HOME/.claude/hooks/rtk-rewrite.sh" ]] || {
+  [[ "$hook_cmd" == "$HOME/.claude/hooks/example-hook.sh" ]] || {
     echo "Hook path not expanded: $hook_cmd"
     return 1
   }

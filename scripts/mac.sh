@@ -157,7 +157,6 @@ cask "ollama"
 cask "codex"
 brew "pipx"
 brew "uv"
-brew "rtk"
 brew "worktrunk"
 brew "hey"
 brew "watchexec"
@@ -434,9 +433,6 @@ main() {
             exit 1
         }
         echo "$install_script" | bash
-
-        # Setup RTK for token optimization
-        setup_rtk
 
         # Setup Worktrunk shell integration for git worktree management
         setup_worktrunk

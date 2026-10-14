@@ -13,8 +13,6 @@ teardown() {
     teardown_test_env
 }
 
-# --- setup_rtk tests ---
-
 @test "setup_firebase installs the exact npm pin and retires the legacy asdf plugin" {
     _ensure_mock_bin_dir
     local version calls npm_prefix
@@ -299,63 +297,6 @@ EOF
     [[ "$status" -eq 0 ]]
     [[ "$output" == *"Would install managed Playwright MCP $version"* ]]
     [[ ! -e "$calls" ]]
-}
-
-@test "setup_rtk skips when rtk not installed" {
-    run zsh -c "
-        export HOME='$HOME' PATH='/usr/bin:/bin'
-        source '$PROJECT_ROOT/scripts/utils.sh'
-        setup_rtk
-    "
-    [[ "$status" -eq 0 ]]
-    [[ "$output" == *"not installed"* ]]
-}
-
-@test "setup_rtk skips when already configured" {
-    mkdir -p "$HOME/.claude/hooks"
-    touch "$HOME/.claude/hooks/rtk-rewrite.sh"
-    mock_rtk
-
-    run zsh -c "
-        export HOME='$HOME' PATH='$PATH'
-        source '$PROJECT_ROOT/scripts/utils.sh'
-        setup_rtk
-    "
-    [[ "$status" -eq 0 ]]
-    [[ "$output" == *"already configured"* ]]
-}
-
-@test "setup_rtk configures when rtk exists but not configured" {
-    mock_rtk
-
-    run zsh -c "
-        export HOME='$HOME' PATH='$PATH'
-        source '$PROJECT_ROOT/scripts/utils.sh'
-        setup_rtk
-    "
-    [[ "$status" -eq 0 ]]
-    [[ "$output" == *"configured successfully"* ]]
-}
-
-@test "setup_rtk logs failure details when rtk init fails" {
-    _ensure_mock_bin_dir
-    cat > "$MOCK_BIN_DIR/rtk" << 'RTKEOF'
-#!/bin/sh
-case "$1" in
-    init) echo "permission denied" >&2; exit 1 ;;
-    --version) echo "rtk 0.5.0" ;;
-    *) exit 0 ;;
-esac
-RTKEOF
-    chmod +x "$MOCK_BIN_DIR/rtk"
-
-    run zsh -c "
-        export HOME='$HOME' PATH='$PATH'
-        source '$PROJECT_ROOT/scripts/utils.sh'
-        setup_rtk
-    "
-    [[ "$status" -eq 0 ]]
-    [[ "$output" == *"configuration failed"* ]]
 }
 
 # --- setup_worktrunk tests ---

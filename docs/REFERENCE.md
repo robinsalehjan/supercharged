@@ -70,7 +70,7 @@ The Homebrew Bundle baseline is defined by `build_brewfile` in `scripts/mac.sh`.
 
 - Package and shell tooling: `bash`, `coreutils`, `git`, `curl`, `asdf`, `keychain`, `tmux`, `ripgrep`, `tree`, `aria2`.
 - Development utilities: `gh`, `jq`, `shellcheck`, `actionlint`, `bats-core`, Danger JS, Danger Swift, `duckdb`, `sqlite`, `btop`, `htop`, `mas`, `pipx`, `uv`, `hey`, `watch`, `watchexec` for `npm run test:watch`, build libraries, and database client libraries mirrored from the personal machine.
-- AI and agent tools: `codex`, `ollama`, `replicate`, `rtk`, `worktrunk`, OpenWiki, Playwright CLI, Playwright MCP, and Obscura. ChatGPT and CodexBar are included when `INSTALL_CODEX_APP=Y`.
+- AI and agent tools: `codex`, `ollama`, `replicate`, `worktrunk`, OpenWiki, Playwright CLI, Playwright MCP, and Obscura. ChatGPT and CodexBar are included when `INSTALL_CODEX_APP=Y`.
 - Applications: Visual Studio Code, Slack, Raycast, Reveal, Spotify, Mullvad VPN.
 - Fonts: JetBrainsMono Nerd Font.
 - Mac App Store apps: AdBlock, DaisyDisk, and Numbers.
@@ -100,7 +100,7 @@ Use `codex -p apple` for both native Xcode MCP modes. Xcode 26.3 through 26.x re
 
 `npm run install:agent-tooling` is the harness-neutral reconciliation entry point. It installs the shared host CLIs and shared skills first, then invokes the native Claude and Codex marketplace installers when those harnesses are available. Its dry-run previews both desired plugin sets even when a client is not installed; use `-- --harness claude` or `-- --harness codex` to target one adapter. `npm run check:agent-tooling` reports the composed inventory and fails when shared MCP definitions differ between harnesses. Harness-native plugins remain intentionally different.
 
-Pin updates follow the personal machine. Run `npm run update:tool-pins` or `npm run update:asdf-pins` to inspect upstream candidates without changing tracked files. Install and validate the chosen versions on this machine, then run `npm run promote:pins` to preview the resulting pin changes and `npm run promote:pins -- --apply` to write them. Use `-- --only asdf` or `-- --only agents` to limit promotion. The promoter reads active, installed asdf versions within `agent_config/asdf_policy.json`, global npm package versions (including Firebase CLI), and installed agent CLI versions; release binaries must match published checksums, and the Firebase command must run at its installed package version. Missing tools are skipped. Axiom plugin refs and Codex, Claude, RTK, and Worktrunk compatibility versions remain manual after local validation. CI checks repository changes but never proposes new pins.
+Pin updates follow the personal machine. Run `npm run update:tool-pins` or `npm run update:asdf-pins` to inspect upstream candidates without changing tracked files. Install and validate the chosen versions on this machine, then run `npm run promote:pins` to preview the resulting pin changes and `npm run promote:pins -- --apply` to write them. Use `-- --only asdf` or `-- --only agents` to limit promotion. The promoter reads active, installed asdf versions within `agent_config/asdf_policy.json`, global npm package versions (including Firebase CLI), and installed agent CLI versions; release binaries must match published checksums, and the Firebase command must run at its installed package version. Missing tools are skipped. Axiom plugin refs and Codex, Claude, and Worktrunk compatibility versions remain manual after local validation. CI checks repository changes but never proposes new pins.
 
 Version policy depends on the integration boundary:
 
@@ -113,7 +113,7 @@ Version policy depends on the integration boundary:
 | Axiom | Immutable Codex marketplace commit plus expected plugin version |
 | Claude plugins | Native marketplace installation verified against tracked plugin versions |
 | Shared git skills | Immutable commit SHA; mutable branches are rejected |
-| Codex, Claude, RTK, Worktrunk | Minimum compatible and last-tested versions; newer versions warn until validated |
+| Codex, Claude, Worktrunk | Minimum compatible and last-tested versions; newer versions warn until validated |
 | OpenAI Developer Docs MCP | Hosted HTTP service; there is no local server binary to pin |
 | Native Xcode MCP bridge | Ships with Xcode and follows the selected Xcode installation |
 

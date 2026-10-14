@@ -115,26 +115,6 @@ unmock_asdf() {
   unset -f asdf
 }
 
-# Mock rtk for RTK setup testing
-mock_rtk() {
-    _ensure_mock_bin_dir
-    if [ -n "${MOCK_BIN_DIR:-}" ]; then
-        cat > "$MOCK_BIN_DIR/rtk" << 'RTKEOF'
-#!/bin/sh
-case "$1" in
-    init) exit 0 ;;
-    --version) echo "rtk 0.5.0" ;;
-    *) exit 0 ;;
-esac
-RTKEOF
-        chmod +x "$MOCK_BIN_DIR/rtk"
-    fi
-}
-
-unmock_rtk() {
-    [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/rtk"
-}
-
 # Mock pipx for code-review-graph testing
 mock_pipx() {
     _ensure_mock_bin_dir
@@ -257,5 +237,5 @@ unmock_claude() {
 # Unmock all system command mocks — call in teardown to prevent leaks
 unmock_all() {
   unset -f brew ping asdf 2>/dev/null || true
-  [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/rtk" "$MOCK_BIN_DIR/pipx" "$MOCK_BIN_DIR/code-review-graph" "$MOCK_BIN_DIR/wt" "$MOCK_BIN_DIR/gh" "$MOCK_BIN_DIR/curl" "$MOCK_BIN_DIR/obscura" "$MOCK_BIN_DIR/obscura-worker" "$MOCK_BIN_DIR/ping" "$MOCK_BIN_DIR/brew" "$MOCK_BIN_DIR/claude" "$MOCK_BIN_DIR/claude.calls" 2>/dev/null || true
+  [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/pipx" "$MOCK_BIN_DIR/code-review-graph" "$MOCK_BIN_DIR/wt" "$MOCK_BIN_DIR/gh" "$MOCK_BIN_DIR/curl" "$MOCK_BIN_DIR/obscura" "$MOCK_BIN_DIR/obscura-worker" "$MOCK_BIN_DIR/ping" "$MOCK_BIN_DIR/brew" "$MOCK_BIN_DIR/claude" "$MOCK_BIN_DIR/claude.calls" 2>/dev/null || true
 }

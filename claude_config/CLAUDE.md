@@ -19,7 +19,6 @@ Reserve the default (Opus) for tasks requiring deep reasoning, complex architect
 
 @AGENTS.md
 @CRG.md
-@RTK.md
 @PLANNOTATOR.md
 @CLAUDE-TOKEN-EFFICIENT.md
 @WORKTRUNK.md

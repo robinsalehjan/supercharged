@@ -204,24 +204,20 @@ EOF
   [[ "$output" != *"trusted_hash"* ]]
 }
 
-@test "filter_shared_codex_agents removes Codex-only RTK include" {
+@test "filter_shared_codex_agents drops retired RTK instructions" {
   agents_file="$TEST_TEMP_DIR/AGENTS.md"
-  cat > "$agents_file" <<EOF
+  cat > "$agents_file" <<'EOF'
 # Shared Agent Instructions
-
 - Prefer RTK wrappers.
-
-@$HOME/.codex/RTK.md
+- Keep code changes focused.
+@RTK.md
 EOF
 
-  run zsh -c "
-    source '$BACKUP_SCRIPT'
-    filter_shared_codex_agents < '$agents_file'
-  "
+  run zsh -c "source '$BACKUP_SCRIPT'; filter_shared_codex_agents < '$agents_file'"
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Prefer RTK wrappers"* ]]
-  [[ "$output" != *"RTK.md"* ]]
+  [[ "$output" == *"Keep code changes focused"* ]]
+  [[ "$output" != *"RTK"* ]]
 }
 
 @test "restore-codex.sh accepts --force argument" {
@@ -330,19 +326,6 @@ EOF
   jq -e '.tools["code-review-graph"].policy == "exact-pypi"' "$PROJECT_ROOT/agent_config/managed_tools.json"
 }
 
-@test "codex hooks include RTK pre-tool enforcement" {
-  hooks="$PROJECT_ROOT/codex_config/hooks.json"
-  hook_script="$PROJECT_ROOT/codex_config/hooks/rtk-enforce.sh"
-
-  [ -f "$hook_script" ]
-
-  run grep -F '"PreToolUse"' "$hooks"
-  [ "$status" -eq 0 ]
-
-  run grep -F '"command": "bash \"$HOME/.codex/hooks/rtk-enforce.sh\""' "$hooks"
-  [ "$status" -eq 0 ]
-}
-
 @test "codex_config permission profile mirrors Claude secret path denies" {
   config="$PROJECT_ROOT/codex_config/config.toml"
 
@@ -448,9 +431,6 @@ EOF
   instructions="$PROJECT_ROOT/agent_config/AGENTS.md"
 
   run grep -F 'code-review-graph first' "$instructions"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'RTK wrappers' "$instructions"
   [ "$status" -eq 0 ]
 
   run grep -F 'Use Playwright CLI or Playwright MCP for browser-based web verification' "$instructions"
@@ -612,88 +592,12 @@ EOF
   [ "$status" -eq 0 ]
 }
 
-@test "rtk-enforce hook rewrites when RTK suggests a rewrite" {
-  hook="$PROJECT_ROOT/codex_config/hooks/rtk-enforce.sh"
+@test "restore-codex.sh restores Codex hooks and Plannotator skills" {
   mock_bin="$TEST_TEMP_DIR/bin"
-  mkdir -p "$mock_bin"
-  cat > "$mock_bin/rtk" <<'EOF'
-#!/usr/bin/env bash
-if [ "$1" = "rewrite" ] && [ "$2" = "git status" ]; then
-  printf '%s\n' "rtk git status"
-  exit 0
-fi
-exit 1
-EOF
-  chmod +x "$mock_bin/rtk"
-
-  run env PATH="$mock_bin:$PATH" bash "$hook" <<'EOF'
-{"tool_input":{"command":"git status"}}
-EOF
-
-  [ "$status" -eq 0 ]
-  [[ "$output" == *'"permissionDecision":"allow"'* ]]
-  [[ "$output" == *'"updatedInput":{"command":"rtk git status"}'* ]]
-}
-
-@test "rtk-enforce hook leaves unchanged commands, malformed input, and missing RTK alone" {
-  hook="$PROJECT_ROOT/codex_config/hooks/rtk-enforce.sh"
-  mock_bin="$TEST_TEMP_DIR/bin"
-  mkdir -p "$mock_bin"
-  cat > "$mock_bin/rtk" <<'EOF'
-#!/usr/bin/env bash
-if [ "$1" = "rewrite" ]; then
-  printf '%s\n' "$2"
-  exit 3
-fi
-exit 1
-EOF
-  chmod +x "$mock_bin/rtk"
-
-  run env PATH="$mock_bin:$PATH" bash "$hook" <<'EOF'
-{"tool_input":{"command":"git status"}}
-EOF
-  [ "$status" -eq 0 ]
-  [ -z "$output" ]
-
-  run env PATH="$mock_bin:$PATH" bash "$hook" <<'EOF'
-not-json
-EOF
-  [ "$status" -eq 0 ]
-  [ -z "$output" ]
-
-  ln -s "$(command -v jq)" "$TEST_TEMP_DIR/jq"
-  run env PATH="$TEST_TEMP_DIR" /bin/bash "$hook" <<'EOF'
-{"tool_input":{"command":"git status"}}
-EOF
-  [ "$status" -eq 0 ]
-  [ -z "$output" ]
-}
-
-@test "rtk-enforce hook prevents a rewrite loop for RTK commands" {
-  hook="$PROJECT_ROOT/codex_config/hooks/rtk-enforce.sh"
-  mock_bin="$TEST_TEMP_DIR/bin"
-  marker="$TEST_TEMP_DIR/rtk-called"
-  mkdir -p "$mock_bin"
-  cat > "$mock_bin/rtk" <<EOF
-#!/usr/bin/env bash
-touch "$marker"
-printf '%s\\n' "rtk rtk git status"
-EOF
-  chmod +x "$mock_bin/rtk"
-
-  run env PATH="$mock_bin:$PATH" bash "$hook" <<'EOF'
-{"tool_input":{"command":"rtk git status"}}
-EOF
-
-  [ "$status" -eq 0 ]
-  [ -z "$output" ]
-  [ ! -e "$marker" ]
-}
-
-@test "restore-codex.sh restores Codex hooks RTK include and Plannotator skills" {
-  mock_bin="$TEST_TEMP_DIR/bin"
-  mkdir -p "$mock_bin" "$HOME/.codex"
+  mkdir -p "$mock_bin" "$HOME/.codex/hooks"
   printf '%s\n' 'retired profile' > "$HOME/.codex/apple-headless.config.toml"
+  printf '%s\n' 'retired instructions' > "$HOME/.codex/RTK.md"
+  printf '%s\n' 'retired hook' > "$HOME/.codex/hooks/rtk-enforce.sh"
   cat > "$mock_bin/codex" <<'EOF'
 #!/bin/sh
 case "$1 $2 $3" in
@@ -708,13 +612,13 @@ EOF
   [ "$status" -eq 0 ]
   [ -f "$HOME/.codex/config.toml" ]
   [ -f "$HOME/.codex/hooks.json" ]
-  [ -f "$HOME/.codex/RTK.md" ]
   [ -f "$HOME/.codex/AGENTS.md" ]
   [ -f "$HOME/.codex/apple.config.toml" ]
   [ ! -e "$HOME/.codex/apple-headless.config.toml" ]
+  [ ! -e "$HOME/.codex/RTK.md" ]
+  [ ! -e "$HOME/.codex/hooks/rtk-enforce.sh" ]
   [ -f "$HOME/.codex/review.config.toml" ]
   [ -f "$HOME/.codex/rules/supercharged.rules" ]
-  [ -x "$HOME/.codex/hooks/rtk-enforce.sh" ]
   [ -f "$HOME/.codex/skills/plannotator-review/SKILL.md" ]
   [ -f "$HOME/.codex/skills/review-changes/SKILL.md" ]
 
@@ -722,7 +626,6 @@ EOF
   grep -F 'default_permissions = "supercharged"' "$HOME/.codex/config.toml"
   grep -F '"**/.secrets/**" = "deny"' "$HOME/.codex/config.toml"
   grep -F "\"command\": \"$HOME/.local/bin/plannotator\"" "$HOME/.codex/hooks.json"
-  grep -Fx "@$HOME/.codex/RTK.md" "$HOME/.codex/AGENTS.md"
   grep -F 'pattern = ["rm", "-rf"]' "$HOME/.codex/rules/supercharged.rules"
   grep -F 'model_reasoning_effort = "xhigh"' "$HOME/.codex/review.config.toml"
   backup_dir=$(<"$HOME/.supercharged_last_backup")

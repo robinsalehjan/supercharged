@@ -44,9 +44,7 @@ See [README.md](./README.md) and [docs/REFERENCE.md](./docs/REFERENCE.md) for us
 - If Codex does not support a Claude MCP server, leave it in the Claude-specific config and do not add a stub Codex entry.
 
 **Token optimization**:
-- RTK reduces shell-output tokens through PreToolUse hooks and command wrappers (`rtk git`, `rtk npm`, `rtk proxy <cmd>`).
 - Claude output guidance is restored through `claude_config/CLAUDE-TOKEN-EFFICIENT.md`, referenced by `claude_config/CLAUDE.md`.
-- Useful checks: `rtk gain`, `rtk gain --history`, and `rtk discover`.
 
 ## npm Commands Reference
 
@@ -216,7 +214,7 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 - Merge logic: restore preserves local work plugins while applying repo settings
 - Timestamp comparison: only restores when repo config is newer (unless `--force`)
 - Secrets: `~/.secrets` is sourced once at restore start (single file, or every `*.sh` in a `~/.secrets/` directory — non-shell files like GCP JSON are ignored by the loader); an MCP server with an unresolved environment placeholder is skipped as a unit while secret-free servers still restore
-- **Backed up files**: `settings.json`, `installed_plugins.json`, `known_marketplaces.json`, `CLAUDE.md`, plus any `*.md` files referenced from `CLAUDE.md` via `@filename` (e.g. `CRG.md`, `RTK.md`, `WORKTRUNK.md`, `PLANNOTATOR.md`, `CLAUDE-TOKEN-EFFICIENT.md`) — auto-detected
+- **Backed up files**: `settings.json`, `installed_plugins.json`, `known_marketplaces.json`, `CLAUDE.md`, plus any `*.md` files referenced from `CLAUDE.md` via `@filename` (e.g. `CRG.md`, `WORKTRUNK.md`, `PLANNOTATOR.md`, `CLAUDE-TOKEN-EFFICIENT.md`) — auto-detected
 - **Managed MCP registry**: `claude_config/mcp_servers.json` is restored to user scope but is not populated from live `~/.claude.json`; edit it intentionally so credentials and machine-specific paths cannot enter through backup
 - **Local-only configs**: Work plugins/marketplaces are saved to `.local.json` files (gitignored) during backup, and merged back during install
 - **Post-sync**: Plugins are auto-installed when Claude config is applied. If auto-install fails, run `npm run install:plugins` manually.
@@ -224,7 +222,7 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 **Codex backup/restore** (`scripts/backup-codex.sh`, `scripts/restore-codex.sh`):
 - Shared instructions: `agent_config/AGENTS.md` is restored to both `~/.codex/AGENTS.md` and `~/.claude/AGENTS.md`
 - Codex settings: `codex_config/config.toml` restores lean durable defaults such as model, personality, live web search, disabled memories, base MCP settings, hook enablement, instruction discovery, and a permission profile that denies `.env*`/`.secrets` paths; `apple.config.toml` provides native Xcode MCP for attached and headless use with `codex -p apple`, while `review.config.toml` provides the `codex -p review` overlay
-- Codex hooks and skills: `codex_config/hooks.json`, `codex_config/RTK.md`, and `codex_config/skills/plannotator-*` restore the non-blocking RTK rewrite hook, Plannotator Stop-hook review, Plannotator skills, and the Codex-only RTK instruction include
+- Codex hooks and skills: `codex_config/hooks.json` and `codex_config/skills/plannotator-*` restore the Plannotator Stop hook and skills
 - Codex plugins: `codex_config/plugins.json` is a sanitized desired-state registry; `npm run install:codex-plugins` uses the Codex CLI to manage Axiom while marketplace snapshots, plugin caches, credentials, and hook trust state stay local
 - Managed tools: `agent_config/managed_tools.json` exact-pins local release/PyPI/npm tools—including Firebase CLI, code-review-graph, and OpenWiki—and records tested compatibility floors; Firebase CLI is installed from npm when cloud tools are enabled, while gcloud remains on asdf; code-review-graph stays current through its launchd watcher and explicit audits; Axiom and shared git skills use immutable commits; pin changes are promoted from validated personal-machine installations
 - Codex rules: `codex_config/rules/*.rules` restores repo-managed command deny rules that mirror the Claude hard-deny list where Codex prefix rules can express it; local approval rules in `~/.codex/rules/default.rules` remain local

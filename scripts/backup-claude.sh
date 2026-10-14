@@ -77,7 +77,12 @@ if [ -f "$CLAUDE_HOME/settings.json" ]; then
             .skipDangerousModePermissionPrompt,
             .skipAutoPermissionPrompt,
             .env.MAX_THINKING_TOKENS
-        )${marketplace_del_filter}${env_del_filter}" <<< "$settings_json" | \
+        )${marketplace_del_filter}${env_del_filter} |
+        if .hooks.PreToolUse then
+            .hooks.PreToolUse |= map(select(any(.hooks[]?; (.command // \"\") | contains(\"rtk-rewrite.sh\")) | not)) |
+            if .hooks.PreToolUse == [] then del(.hooks.PreToolUse) else . end |
+            if .hooks == {} then del(.hooks) else . end
+        else . end" <<< "$settings_json" | \
         make_path_portable > "$CLAUDE_CONFIG_DIR/settings.json.tmp"; then
         rm -f "$CLAUDE_CONFIG_DIR/settings.json.tmp"
         log_with_level "ERROR" "Failed to sanitize settings.json - backup aborted"
@@ -169,7 +174,8 @@ fi
 
 # Backup CLAUDE.md (global personal instructions)
 if [ -f "$CLAUDE_HOME/CLAUDE.md" ]; then
-    if ! make_path_portable < "$CLAUDE_HOME/CLAUDE.md" > "$CLAUDE_CONFIG_DIR/CLAUDE.md.tmp"; then
+    if ! sed '/^@RTK\.md$/d' "$CLAUDE_HOME/CLAUDE.md" | \
+        make_path_portable > "$CLAUDE_CONFIG_DIR/CLAUDE.md.tmp"; then
         rm -f "$CLAUDE_CONFIG_DIR/CLAUDE.md.tmp"
         log_with_level "ERROR" "Failed to process CLAUDE.md - backup aborted"
         exit 1
@@ -180,10 +186,11 @@ else
     log_with_level "WARN" "CLAUDE.md not found"
 fi
 
-# Backup CLAUDE.md @-referenced files (RTK.md, claude-token-efficient.md, etc.)
+# Backup CLAUDE.md @-referenced files.
 claude_md_refs_backed_up=()
 if [ -f "$CLAUDE_HOME/CLAUDE.md" ]; then
     while IFS= read -r ref_file; do
+        [ "$ref_file" = "RTK.md" ] && continue
         if ! is_safe_markdown_ref "$ref_file"; then
             log_with_level "WARN" "Skipping unsafe CLAUDE.md @-reference: $ref_file"
             continue

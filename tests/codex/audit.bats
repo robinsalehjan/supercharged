@@ -27,7 +27,6 @@ write_compatibility_mocks() {
   local manifest="$1"
   write_version_mock codex "$(jq -r '.compatibility.codex.tested_version' "$manifest")"
   write_version_mock claude "$(jq -r '.compatibility.claude.tested_version' "$manifest")"
-  write_version_mock rtk "$(jq -r '.compatibility.rtk.tested_version' "$manifest")"
   write_version_mock wt "$(jq -r '.compatibility.worktrunk.tested_version' "$manifest")"
   write_version_mock code-review-graph "$(jq -r '.tools["code-review-graph"].version' "$manifest")"
 }
@@ -36,7 +35,7 @@ write_compatibility_mocks() {
   run "$AUDIT" --repo-only
   [ "$status" -eq 0 ]
   [[ "$output" == *"Tracked Codex base, native Apple, and review TOML profiles parse with the intended MCP states"* ]]
-  [[ "$output" == *"RTK hook rewrites a command without blocking it"* ]]
+  [[ "$output" == *"Hook JSON retains only the Plannotator Stop hook"* ]]
   [[ "$output" == *"Managed tool manifest pins exact tools and compatibility floors"* ]]
 
   run "$AUDIT" --repo-only --json
