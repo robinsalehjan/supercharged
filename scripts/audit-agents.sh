@@ -24,7 +24,7 @@ trap cleanup EXIT
 show_help() {
     echo "Usage: $(basename "$0") [--json] [--repo-only] [--profile apple|review]"
     echo ""
-    echo "Audit managed Codex configuration, plugins, MCP intent, skills, RTK, and CRG."
+    echo "Audit managed Codex configuration, plugins, MCP intent, skills, and CRG."
 }
 
 while [[ $# -gt 0 ]]; do
@@ -184,6 +184,7 @@ if jq -e '
     (has("additionalDirectories") | not) and
     (has("skipDangerousModePermissionPrompt") | not) and
     (has("skipAutoPermissionPrompt") | not) and
+    (has("hooks") | not) and
     ((.env // {}) | has("MAX_THINKING_TOKENS") | not)
 ' "$CLAUDE_CONFIG_DIR/settings.json" >/dev/null 2>&1; then
     pass "Tracked Claude settings use the current durable permission and reasoning shape"
@@ -223,35 +224,12 @@ else
 fi
 
 if jq -e '
-    (.hooks.PreToolUse | length == 1) and
     (.hooks.Stop | length == 1) and
-    (has("PostToolUse") | not) and
-    (has("SessionStart") | not)
+    (.hooks | keys == ["Stop"])
 ' "$CODEX_CONFIG_DIR/hooks.json" >/dev/null 2>&1; then
-    pass "Hook JSON retains RTK PreToolUse and Plannotator Stop without synchronous CRG hooks"
+    pass "Hook JSON retains only the Plannotator Stop hook"
 else
-    fail "Hook JSON is malformed or still contains synchronous code-review-graph hooks"
-fi
-
-if [[ -f "$CODEX_CONFIG_DIR/hooks/rtk-enforce.sh" ]] && \
-   rg -q 'permissionDecision:"allow"' "$CODEX_CONFIG_DIR/hooks/rtk-enforce.sh" && \
-   rg -q 'updatedInput:\{command:\$command\}' "$CODEX_CONFIG_DIR/hooks/rtk-enforce.sh"; then
-    pass "RTK hook declares the supported non-blocking rewrite contract"
-else
-    fail "RTK hook does not declare a supported allow-and-rewrite contract"
-fi
-
-printf '%s\n' '#!/usr/bin/env bash' \
-    'if [ "$1" = "rewrite" ]; then printf "%s\\n" "rtk git status"; exit 0; fi' \
-    'exit 1' > "$AUDIT_TMP_DIR/rtk"
-chmod +x "$AUDIT_TMP_DIR/rtk"
-if hook_result=$(printf '%s\n' '{"tool_input":{"command":"git status"}}' | \
-    PATH="$AUDIT_TMP_DIR:$PATH" bash "$CODEX_CONFIG_DIR/hooks/rtk-enforce.sh") && \
-    jq -e '.hookSpecificOutput.permissionDecision == "allow" and .hookSpecificOutput.updatedInput.command == "rtk git status"' \
-        <<<"$hook_result" >/dev/null; then
-    pass "RTK hook rewrites a command without blocking it"
-else
-    fail "RTK hook rewrite behavior is invalid"
+    fail "Hook JSON is malformed or contains unexpected hooks"
 fi
 
 if jq -e '
@@ -332,7 +310,6 @@ fi
 if [ "$REPO_ONLY" = false ]; then
     require_command codex "Codex CLI is installed"
     require_command python3 "Python is installed for MCP health checks"
-    require_command rtk "RTK is installed"
     require_command code-review-graph "code-review-graph is installed"
     require_command openwiki "OpenWiki is installed"
     require_command playwright-cli "Playwright CLI is installed"
@@ -340,7 +317,6 @@ if [ "$REPO_ONLY" = false ]; then
 
     audit_compatibility_tool codex codex
     audit_compatibility_tool claude claude
-    audit_compatibility_tool rtk rtk
     audit_compatibility_tool worktrunk wt
 
     openwiki_version=$(jq -r '.tools.openwiki.version' "$MANAGED_TOOLS_MANIFEST")
@@ -507,14 +483,6 @@ if [ "$REPO_ONLY" = false ]; then
             pass "Apple-profile executables are not required without an Apple profile"
             ;;
     esac
-
-    if command -v rtk >/dev/null 2>&1; then
-        if rtk gain --history >/dev/null 2>&1; then
-            pass "RTK savings summary is available"
-        else
-            warn "RTK is installed but has no savings history yet"
-        fi
-    fi
 
     if command -v claude >/dev/null 2>&1; then
         pass "Claude compatibility CLI is installed"

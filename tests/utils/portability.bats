@@ -19,7 +19,7 @@ teardown() {
 }
 
 @test "is_safe_markdown_ref accepts basename markdown references" {
-  run is_safe_markdown_ref "RTK.md"
+  run is_safe_markdown_ref "EXAMPLE.md"
   [ "$status" -eq 0 ]
 
   run is_safe_markdown_ref "CLAUDE-TOKEN-EFFICIENT.md"
@@ -309,7 +309,7 @@ EOF
           hooks: [
             {
               type: "command",
-              command: ($home + "/.claude/hooks/rtk-rewrite.sh")
+              command: ($home + "/.claude/hooks/example-hook.sh")
             }
           ]
         }
@@ -337,7 +337,7 @@ EOF
   # Assert: Hook command expanded
   local hook_cmd
   hook_cmd=$(jq -r '.hooks.PreToolUse[0].hooks[0].command' "$TEST_TEMP_DIR/restored.json")
-  [[ "$hook_cmd" == "$HOME/.claude/hooks/rtk-rewrite.sh" ]] || {
+  [[ "$hook_cmd" == "$HOME/.claude/hooks/example-hook.sh" ]] || {
     echo "Hook command not expanded correctly: $hook_cmd"
     return 1
   }

@@ -303,31 +303,6 @@ setup_playwright_mcp() {
     log_with_level "SUCCESS" "Playwright MCP $managed_version installed successfully"
 }
 
-# Setup RTK (Rust Token Killer) for Claude Code
-setup_rtk() {
-    if ! command_exists rtk; then
-        log_with_level "WARN" "RTK not installed, skipping configuration"
-        return 0
-    fi
-
-    # Skip if already configured (hook file exists)
-    if [ -f "$HOME/.claude/hooks/rtk-rewrite.sh" ]; then
-        log_with_level "INFO" "RTK already configured, skipping"
-        return 0
-    fi
-
-    log_with_level "INFO" "Configuring RTK (Rust Token Killer) for Claude Code..."
-
-    # Run rtk init with auto-patch to configure hooks
-    local rtk_output
-    if rtk_output=$(rtk init -g --auto-patch 2>&1); then
-        log_with_level "SUCCESS" "RTK configured successfully"
-        log_with_level "INFO" "RTK will automatically optimize git commands to save 60-90% tokens"
-    else
-        log_with_level "WARN" "RTK configuration failed: $rtk_output"
-    fi
-}
-
 # Setup Worktrunk (Git worktree manager for parallel AI agents)
 setup_worktrunk() {
     if ! command_exists wt; then

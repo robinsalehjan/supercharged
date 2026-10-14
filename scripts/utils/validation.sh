@@ -468,7 +468,6 @@ validate_installation() {
 
     echo ""
     echo "AI & Optimization Tools:"
-    validate_tool "rtk" "" || ((warned++))
     validate_tool "wt" "" || ((warned++))
     validate_tool "code-review-graph" "" || ((warned++))
     validate_tool "ollama" "" || true  # Optional local AI runtime
@@ -583,7 +582,6 @@ validate_installation() {
     if command_exists claude; then
         echo ""
         echo "Claude Code Components:"
-        validate_claude_component "RTK hooks" "$HOME/.claude/hooks/rtk-rewrite.sh" || ((warned++))
         validate_managed_plannotator || ((warned++))
         validate_tool "obscura" "" || ((warned++))
 
@@ -610,13 +608,6 @@ validate_installation() {
             echo "✅ Codex: hooks.json"
         else
             echo "⚠️  Codex: hooks.json not configured"
-            ((warned++))
-        fi
-
-        if [ -f "$HOME/.codex/RTK.md" ] && grep -F "@$HOME/.codex/RTK.md" "$HOME/.codex/AGENTS.md" >/dev/null 2>&1; then
-            echo "✅ Codex: RTK instructions"
-        else
-            echo "⚠️  Codex: RTK instructions not configured"
             ((warned++))
         fi
 

@@ -46,7 +46,7 @@ filter_shared_codex_config() {
 filter_shared_codex_agents() {
     while IFS= read -r line || [ -n "$line" ]; do
         case "$line" in
-            "@$CODEX_HOME/RTK.md"|"@\$HOME/.codex/RTK.md"|"@RTK.md")
+            *RTK*|*rtk*)
                 continue
                 ;;
         esac
@@ -139,7 +139,12 @@ main() {
     fi
 
     if [ -f "$CODEX_HOME/hooks.json" ]; then
-        if ! make_path_portable < "$CODEX_HOME/hooks.json" > "$CODEX_CONFIG_DIR/hooks.json.tmp"; then
+        if ! jq '
+            if .hooks.PreToolUse then
+                .hooks.PreToolUse |= map(select(any(.hooks[]?; (.command // "") | contains("rtk-enforce.sh")) | not)) |
+                if .hooks.PreToolUse == [] then del(.hooks.PreToolUse) else . end
+            else . end
+        ' "$CODEX_HOME/hooks.json" | make_path_portable > "$CODEX_CONFIG_DIR/hooks.json.tmp"; then
             rm -f "$CODEX_CONFIG_DIR/hooks.json.tmp"
             log_with_level "ERROR" "Failed to process hooks.json - backup aborted"
             exit 1
@@ -148,18 +153,6 @@ main() {
         log_with_level "SUCCESS" "Backed up hooks.json (paths made portable)"
     else
         log_with_level "WARN" "hooks.json not found"
-    fi
-
-    if [ -f "$CODEX_HOME/RTK.md" ]; then
-        if ! make_path_portable < "$CODEX_HOME/RTK.md" > "$CODEX_CONFIG_DIR/RTK.md.tmp"; then
-            rm -f "$CODEX_CONFIG_DIR/RTK.md.tmp"
-            log_with_level "ERROR" "Failed to process RTK.md - backup aborted"
-            exit 1
-        fi
-        mv "$CODEX_CONFIG_DIR/RTK.md.tmp" "$CODEX_CONFIG_DIR/RTK.md"
-        log_with_level "SUCCESS" "Backed up RTK.md"
-    else
-        log_with_level "WARN" "RTK.md not found; keeping existing codex_config/RTK.md"
     fi
 
     backup_codex_skills
@@ -171,7 +164,6 @@ main() {
     echo "   - codex_config/apple.config.toml"
     echo "   - codex_config/review.config.toml"
     echo "   - codex_config/hooks.json"
-    echo "   - codex_config/RTK.md"
     echo "   - codex_config/skills/plannotator-*"
     echo "   - agent_config/AGENTS.md"
     echo ""

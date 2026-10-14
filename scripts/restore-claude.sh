@@ -730,6 +730,8 @@ fi
 
 if [ "$FORCE_RESTORE" = true ]; then
     log_with_level "INFO" "Force restoring Claude Code configuration..."
+elif [ -e "$CLAUDE_HOME/RTK.md" ] || [ -e "$CLAUDE_HOME/hooks/rtk-rewrite.sh" ]; then
+    log_with_level "INFO" "Retired RTK files found, restoring Claude Code configuration..."
 elif is_repo_newer; then
     log_with_level "INFO" "Repository config is newer, restoring Claude Code configuration..."
 else
@@ -745,6 +747,7 @@ fi
 # Create Claude directories if needed
 mkdir -p "$CLAUDE_HOME"
 mkdir -p "$CLAUDE_HOME/plugins"
+rm -f "$CLAUDE_HOME/RTK.md" "$CLAUDE_HOME/hooks/rtk-rewrite.sh"
 
 # Restore settings.json while retaining local work marketplace state.
 merge_settings_config \
@@ -786,7 +789,7 @@ restore_config_file \
     "$CLAUDE_HOME/CLAUDE.md" \
     "CLAUDE.md"
 
-# Restore CLAUDE.md @-referenced files (RTK.md, claude-token-efficient.md, etc.)
+# Restore CLAUDE.md @-referenced files.
 claude_md_refs_restored=()
 if [ -f "$CLAUDE_CONFIG_DIR/CLAUDE.md" ]; then
     while IFS= read -r ref_file; do

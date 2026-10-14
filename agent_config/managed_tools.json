@@ -81,10 +81,6 @@
       "minimum_version": "2.1.257",
       "tested_version": "2.1.258"
     },
-    "rtk": {
-      "minimum_version": "0.45.0",
-      "tested_version": "0.45.0"
-    },
     "worktrunk": {
       "command": "wt",
       "minimum_version": "0.74.0",

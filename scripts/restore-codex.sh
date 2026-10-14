@@ -82,7 +82,6 @@ restore_config_file() {
 restore_codex_agents() {
     local src="$AGENT_CONFIG_DIR/AGENTS.md"
     local dest="$CODEX_HOME/AGENTS.md"
-    local rtk_ref="@$CODEX_HOME/RTK.md"
 
     if [ ! -f "$src" ]; then
         return 0
@@ -91,15 +90,12 @@ restore_codex_agents() {
     mkdir -p "$(dirname "$dest")"
     expand_portable_path < "$src" > "$dest"
 
-    if [ -f "$CODEX_CONFIG_DIR/RTK.md" ] && ! grep -Fx "$rtk_ref" "$dest" >/dev/null 2>&1; then
-        {
-            printf '\n'
-            printf '%s\n' "$rtk_ref"
-        } >> "$dest"
-        log_with_level "INFO" "Added Codex RTK instruction include"
-    fi
-
     log_with_level "SUCCESS" "Restored AGENTS.md"
+}
+
+retire_rtk_codex_files() {
+    # These files were installed by older managed configurations.
+    rm -f "$CODEX_HOME/RTK.md" "$CODEX_HOME/hooks/rtk-enforce.sh"
 }
 
 restore_codex_skills() {
@@ -272,10 +268,6 @@ is_repo_newer() {
         mtime=$(get_file_mtime "$CODEX_CONFIG_DIR/hooks.json")
         [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
     fi
-    if [ -f "$CODEX_CONFIG_DIR/RTK.md" ]; then
-        mtime=$(get_file_mtime "$CODEX_CONFIG_DIR/RTK.md")
-        [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
-    fi
     if [ -f "$CODEX_CONFIG_DIR/plugins.json" ]; then
         mtime=$(get_file_mtime "$CODEX_CONFIG_DIR/plugins.json")
         [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
@@ -308,10 +300,6 @@ is_repo_newer() {
     fi
     if [ -f "$CODEX_HOME/hooks.json" ]; then
         mtime=$(get_file_mtime "$CODEX_HOME/hooks.json")
-        [ "$mtime" -gt "$home_mtime" ] && home_mtime="$mtime"
-    fi
-    if [ -f "$CODEX_HOME/RTK.md" ]; then
-        mtime=$(get_file_mtime "$CODEX_HOME/RTK.md")
         [ "$mtime" -gt "$home_mtime" ] && home_mtime="$mtime"
     fi
     mtime=$(get_newest_mtime_in_dir "$CODEX_HOME/skills")
@@ -353,7 +341,6 @@ main() {
     if [ ! -f "$CODEX_CONFIG_DIR/config.toml" ] && \
        [ ! -f "$AGENT_CONFIG_DIR/AGENTS.md" ] && \
        [ ! -f "$CODEX_CONFIG_DIR/hooks.json" ] && \
-       [ ! -f "$CODEX_CONFIG_DIR/RTK.md" ] && \
        [ ! -f "$CODEX_CONFIG_DIR/plugins.json" ] && \
        [ ! -f "$CODEX_CONFIG_DIR/apple.config.toml" ] && \
        [ ! -f "$CODEX_CONFIG_DIR/review.config.toml" ] && \
@@ -379,6 +366,8 @@ main() {
     elif [ -e "$CODEX_HOME/apple-headless.config.toml" ] || \
          [ -L "$CODEX_HOME/apple-headless.config.toml" ]; then
         log_with_level "INFO" "Retired apple-headless profile found, restoring Codex configuration..."
+    elif [ -e "$CODEX_HOME/RTK.md" ] || [ -e "$CODEX_HOME/hooks/rtk-enforce.sh" ]; then
+        log_with_level "INFO" "Retired RTK files found, restoring Codex configuration..."
     elif is_repo_newer; then
         log_with_level "INFO" "Repository config is newer, restoring Codex configuration..."
     else
@@ -391,6 +380,7 @@ main() {
     fi
 
     retire_stale_codex_profiles
+    retire_rtk_codex_files
     mkdir -p "$CODEX_HOME"
 
     restore_codex_config
@@ -401,10 +391,6 @@ main() {
         "$CODEX_CONFIG_DIR/hooks.json" \
         "$CODEX_HOME/hooks.json" \
         "hooks.json"
-    restore_config_file \
-        "$CODEX_CONFIG_DIR/RTK.md" \
-        "$CODEX_HOME/RTK.md" \
-        "RTK.md"
     restore_codex_agents
     restore_codex_skills
     restore_shared_agent_skills
@@ -434,7 +420,6 @@ main() {
     echo "   - apple.config.toml (native Xcode MCP for attached or headless use: codex -p apple)"
     echo "   - review.config.toml (use: codex -p review)"
     echo "   - hooks.json"
-    echo "   - RTK.md"
     echo "   - AGENTS.md"
     echo "   - skills/plannotator-*"
     echo "   - shared git skills from agent_config/installed_skills.json"

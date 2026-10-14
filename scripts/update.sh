@@ -268,11 +268,6 @@ main() {
         fi
     fi
 
-    # Ensure RTK is configured for Claude Code (if both are installed)
-    if command -v rtk >/dev/null 2>&1 && [ -d "$HOME/.claude" ]; then
-        setup_rtk
-    fi
-
     # Ensure Worktrunk shell integration is configured (if installed)
     if command -v wt >/dev/null 2>&1; then
         setup_worktrunk
@@ -282,13 +277,6 @@ main() {
     if command -v code-review-graph >/dev/null 2>&1; then
         setup_code_review_graph
         setup_crg_watcher
-    fi
-
-    # Surface RTK savings opportunities from the last week (non-fatal).
-    # Skip when scoped by --only — the report is unrelated to the requested component.
-    if ! $ONLY_MODE && command -v rtk >/dev/null 2>&1; then
-        log_with_level "INFO" "RTK savings opportunities (last 7 days):"
-        rtk discover --since 7 2>/dev/null || log_with_level "INFO" "  (no data yet — run more sessions with RTK active)"
     fi
 
     log_with_level "SUCCESS" "Update completed successfully!"
