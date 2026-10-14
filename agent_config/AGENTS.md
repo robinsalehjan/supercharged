@@ -35,10 +35,11 @@ Keep tool-specific behavior in the tool-specific config files; keep cross-agent 
 
 ## OpenWiki
 
-- Treat an existing `openwiki/` directory as an opt-in repository knowledge layer. Start with `openwiki/index.md`, then read `openwiki/INSTRUCTIONS.md` when present and the pages relevant to the task before broad codebase exploration. Use it for architecture, domain terminology, invariants, and intended workflows.
+- Treat an existing `openwiki/` directory as an opt-in repository knowledge layer. For a concrete question that would benefit from architecture, terminology, invariants, or workflow context, use `openwiki_search` and then `openwiki_read` for relevant sections when the integration is available. Otherwise, start with `openwiki/quickstart.md` and follow relevant pages. Do not preload the wiki for every task.
+- Read `openwiki/INSTRUCTIONS.md` when planning or reviewing wiki generation; it is a user-authored scope brief.
 - Use OpenWiki as a secondary verification source, not as a substitute for current source and tests. Use a fresh code-review-graph for live symbol relationships, impact, and test coverage; verify material wiki claims against source, tests, and the graph before relying on them.
 - When OpenWiki disagrees with current source or tests, current source and tests are authoritative. Call out the conflicting page or claim as stale and explain which evidence supersedes it.
 - Before finalizing a broad implementation or review, revisit the relevant wiki pages and their grounded source or claim references to check for missed constraints and documentation drift.
 - If a repository has no `openwiki/` directory, continue with code-review-graph or `rg`; do not initialize one automatically.
-- Run `openwiki --init` or `openwiki --update` only when the user explicitly asks to generate or refresh repository documentation. If an existing wiki appears stale, report that and recommend an update without running it. These commands update the repository’s `openwiki/` content and their managed blocks in root `AGENTS.md` and `CLAUDE.md`.
-- OpenWiki provider configuration and credentials stay local in `~/.openwiki/.env`; never add them to a repository or backup.
+- Generate or refresh a wiki only when the user explicitly asks. If an existing wiki appears stale, report that and recommend an update without running it. Prefer an installed Codex or Claude OpenWiki integration for an authorized run; standalone `openwiki --init` and `openwiki --update` remain available. Check `.openwikiignore` before generation so sensitive and irrelevant paths stay outside its source scope. Review generated `openwiki/` content and OpenWiki-managed blocks in root `AGENTS.md` and `CLAUDE.md`.
+- Coding-agent integrations use the agent's authenticated session. Standalone CLI provider configuration and credentials stay local in `~/.openwiki/.env`; never add credentials to a repository or backup.

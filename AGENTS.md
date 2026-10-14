@@ -35,7 +35,7 @@ See [README.md](./README.md) and [docs/REFERENCE.md](./docs/REFERENCE.md) for us
 **Knowledge and graph tooling**:
 - [code-review-graph](https://github.com/tirth8205/code-review-graph) is the preferred live-source layer for navigation, impact analysis, debugging, and review when its graph is current and covers the code in question. Shared selection and freshness rules live in `agent_config/AGENTS.md`; the graph-backed skills live in `agent_config/skills/`.
 - [OpenWiki](https://github.com/langchain-ai/openwiki) is an opt-in repository knowledge layer for architecture, terminology, invariants, and intended workflows. Agents use an existing `openwiki/` as secondary context, verify material claims against current source and tests, and do not initialize or update it without an explicit user request.
-- Both CLIs are exact-pinned in `agent_config/managed_tools.json` and reconciled by `npm run install:agent-tooling`. OpenWiki provider configuration and credentials remain machine-local in `~/.openwiki/.env`.
+- Both CLIs are exact-pinned in `agent_config/managed_tools.json` and reconciled by `npm run install:agent-tooling`. OpenWiki coding-agent integrations use the agent's authenticated session; standalone CLI provider configuration and credentials remain machine-local in `~/.openwiki/.env`.
 
 **MCP servers**:
 - Keep repo-managed user-scoped Claude MCP servers in `claude_config/mcp_servers.json` and compatible Codex entries in `codex_config/config.toml`; backup never imports live user MCP definitions into the tracked registry.
@@ -265,7 +265,7 @@ Plugins are auto-installed during sync. `install:plugins` merges repo configs wi
 | Add ZSH alias | `dot_files/.zshrc` aliases section |
 | Onboard a repo to code-review-graph | `cd <repo> && crg-here` (registers + builds; the launchd watcher picks it up automatically). For opt-in nested-repo discovery, configure `~/.code-review-graph/watcher-config.json`. |
 | Refresh a stale code-review-graph graph | From the repository, run `code-review-graph update`; use `code-review-graph status` to check availability and freshness first. |
-| Initialize or refresh OpenWiki | Only when explicitly requested, run `openwiki --init` or `openwiki --update` from the target repository; review the generated `openwiki/` content and managed instruction blocks before committing. |
+| Initialize or refresh OpenWiki | Only when explicitly requested, use an installed coding-agent integration or run standalone `openwiki --init`/`openwiki --update` from the target repository; review `.openwikiignore`, generated `openwiki/` content, and managed instruction blocks before committing. |
 | Add Homebrew tap | `BREWFILE_CONTENT` in `scripts/mac.sh`: `tap "owner/repo"` before packages |
 | Change log format | `log_with_level()` in `scripts/utils/logging.sh` (preserve timestamp + level) |
 | Add utility function | Appropriate file in `scripts/utils/` (logging, backup, validation, tools, json) |

@@ -179,7 +179,7 @@ setup_openwiki() {
     installed_version=$(npm list --global --depth=0 --json "$package" 2>/dev/null | jq -r '.dependencies.openwiki.version // empty' 2>/dev/null) || installed_version=""
     if [ "$installed_version" = "$managed_version" ] && command_exists openwiki && openwiki --help >/dev/null 2>&1; then
         log_with_level "SUCCESS" "OpenWiki $managed_version installed successfully"
-        log_with_level "INFO" "Run 'openwiki --init' from a repository when you are ready to create its agent wiki"
+        log_with_level "INFO" "Run 'openwiki integrations install codex' or 'openwiki integrations install claude', then restart that agent to use OpenWiki"
     else
         log_with_level "ERROR" "Failed to verify managed OpenWiki $managed_version"
         return 1
