@@ -45,6 +45,97 @@ run_zsh_func() {
 }
 
 # =============================================================================
+# Foundation Models CLI license tests
+# =============================================================================
+
+@test "setup_foundation_models skips when fm is unavailable" {
+  run zsh -c "
+    source '$PROJECT_ROOT/scripts/utils.sh'
+    source '$PROJECT_ROOT/scripts/mac.sh'
+    command_exists() { [[ \"\$1\" != fm ]]; }
+    sudo() { echo unexpected-sudo; return 1; }
+    setup_foundation_models
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"unavailable; skipping"* ]]
+  [[ "$output" != *"unexpected-sudo"* ]]
+}
+
+@test "setup_foundation_models skips an already accepted license" {
+  create_mock_bin "fm" '[ "$*" = "license --status" ]'
+  create_mock_bin "sudo" 'echo unexpected-sudo; exit 1'
+
+  run_zsh_func "setup_foundation_models"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"license already accepted"* ]]
+  [[ "$output" != *"unexpected-sudo"* ]]
+}
+
+@test "setup_foundation_models prints manual steps without a terminal" {
+  create_mock_bin "fm" 'exit 69'
+  create_mock_bin "sudo" 'echo unexpected-sudo; exit 1'
+
+  run_zsh_func "setup_foundation_models" </dev/null
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"requires an interactive terminal; run: sudo fm license"* ]]
+  [[ "$output" != *"unexpected-sudo"* ]]
+}
+
+# A pseudo-terminal exercises the interactive path without touching the real
+# machine license or invoking real sudo. Both commands are PATH-based mocks.
+run_foundation_models_interactive() {
+  run script -q /dev/null zsh -c "
+    export PATH='$MOCK_BIN_DIR:$REAL_PATH'
+    source '$PROJECT_ROOT/scripts/utils.sh'
+    source '$PROJECT_ROOT/scripts/mac.sh'
+    setup_foundation_models
+    echo setup-continued
+  " </dev/null
+}
+
+@test "setup_foundation_models runs sudo fm license and verifies acceptance" {
+  create_mock_bin "fm" "[ \"\$*\" = 'license --status' ] && [ -f '$TEST_TEMP_DIR/accepted' ]"
+  create_mock_bin "sudo" "
+    [ \"\$*\" = 'fm license' ] || exit 1
+    echo sudo-fm-license
+    touch '$TEST_TEMP_DIR/accepted'
+  "
+
+  run_foundation_models_interactive
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"sudo-fm-license"* ]]
+  [[ "$output" == *"Foundation Models CLI license accepted"* ]]
+  [[ "$output" == *"setup-continued"* ]]
+}
+
+@test "setup_foundation_models continues when license acceptance fails or is declined" {
+  create_mock_bin "fm" 'exit 69'
+  create_mock_bin "sudo" 'echo sudo-fm-license; exit 69'
+
+  run_foundation_models_interactive
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"sudo-fm-license"* ]]
+  [[ "$output" == *"license was not accepted; retry with: sudo fm license"* ]]
+  [[ "$output" == *"setup-continued"* ]]
+}
+
+@test "setup_foundation_models warns if sudo succeeds without accepting the license" {
+  create_mock_bin "fm" 'exit 69'
+  create_mock_bin "sudo" 'exit 0'
+
+  run_foundation_models_interactive
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"license was not accepted"* ]]
+  [[ "$output" != *"SUCCESS"* ]]
+  [[ "$output" == *"setup-continued"* ]]
+}
+
+# =============================================================================
 # validate_system tests
 # =============================================================================
 

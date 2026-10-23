@@ -48,6 +48,8 @@ Snapshots cover overwritten dotfiles, Git identity, Claude configuration/registr
 
 Use `npm run setup` for a new machine when the complete interactive dependency and application baseline is wanted. The baseline includes personal applications such as Spotify, Mullvad VPN, DaisyDisk, and Numbers. Remove unwanted applications after setup or edit `build_brewfile` before running it.
 
+When Apple's Foundation Models CLI (`fm`) is available, setup checks `fm license --status` and runs `sudo fm license` in an interactive terminal if acceptance is needed. Review and accept Apple's machine-wide terms at its prompt. This step runs independently of the iOS tools preference. Setup skips unavailable or already licensed installations; non-interactive runs and failed or declined acceptance warn without stopping setup. To complete acceptance later, run `sudo fm license`.
+
 ## Setup Options
 
 Setup stores interactive choices in `~/.supercharged_preferences`.

@@ -259,6 +259,29 @@ vscode \"vscode-icons-team.vscode-icons\""
     echo "$content"
 }
 
+# Review Apple's machine-wide Foundation Models CLI terms during setup.
+setup_foundation_models() {
+    if ! command_exists fm; then
+        log_with_level "INFO" "Foundation Models CLI (fm) is unavailable; skipping license setup"
+        return 0
+    fi
+    if fm license --status >/dev/null 2>&1; then
+        log_with_level "INFO" "Foundation Models CLI license already accepted"
+        return 0
+    fi
+    if [[ ! -t 0 ]]; then
+        log_with_level "WARN" "Foundation Models CLI license requires an interactive terminal; run: sudo fm license"
+        return 0
+    fi
+
+    log_with_level "INFO" "Review and accept the Foundation Models CLI license (requires sudo)..."
+    if sudo fm license && fm license --status >/dev/null 2>&1; then
+        log_with_level "SUCCESS" "Foundation Models CLI license accepted"
+    else
+        log_with_level "WARN" "Foundation Models CLI license was not accepted; retry with: sudo fm license"
+    fi
+}
+
 check_bootstrap_versions() {
     local python_version="$1"
 
@@ -450,6 +473,8 @@ main() {
             fi
         fi
     fi
+
+    setup_foundation_models
 
     retire_legacy_xcode_mcps
     if [[ "${INSTALL_IOS_TOOLS:-Y}" =~ ^[Yy] ]]; then
