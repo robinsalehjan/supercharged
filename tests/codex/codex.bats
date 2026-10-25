@@ -55,6 +55,11 @@ url = "https://developers.openai.com/mcp"
 [mcp_servers.node_repl]
 command = "/Applications/Codex.app/Contents/Resources/cua_node/bin/node_repl"
 
+[mcp_servers.computer-use]
+command = "./Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient"
+args = ["mcp"]
+cwd = "."
+
 [mcp_servers.plugin_firebase_firebase]
 command = "firebase"
 args = ["mcp", "--dir", "/Users/example/Repositories/project/firebase"]
@@ -93,6 +98,8 @@ EOF
   [[ "$output" != *'js_repl = '* ]]
   [[ "$output" != *"[projects."* ]]
   [[ "$output" != *"[mcp_servers.node_repl]"* ]]
+  [[ "$output" != *"[mcp_servers.computer-use]"* ]]
+  [[ "$output" != *"SkyComputerUseClient"* ]]
   [[ "$output" != *"[mcp_servers.plugin_firebase_firebase]"* ]]
   [[ "$output" != *"[tui.model_availability_nux]"* ]]
   [[ "$output" != *"[notice]"* ]]
@@ -251,6 +258,9 @@ EOF
   [ "$status" -eq 0 ]
   run grep -F 'command = "playwright-mcp"' "$config"
   [ "$status" -eq 0 ]
+
+  ! grep -F '[mcp_servers.computer-use]' "$config"
+  ! grep -F 'SkyComputerUseClient' "$config"
 
   run grep -F '[mcp_servers.xcode]' "$apple_config"
   [ "$status" -eq 0 ]

@@ -52,12 +52,6 @@ url = "https://developers.openai.com/mcp"
 [mcp_servers.cloudflare]
 url = "https://mcp.cloudflare.com/mcp"
 
-[mcp_servers.computer-use]
-command = "./Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient"
-args = ["mcp"]
-cwd = "."
-enabled = false
-
 [mcp_servers.playwright]
 command = "playwright-mcp"
 args = ["--headless"]

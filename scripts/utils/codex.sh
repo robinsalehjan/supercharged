@@ -28,12 +28,13 @@ is_local_codex_config_table() {
 
 # These legacy runtime tables are neither tracked nor restored. Keeping this
 # separate from local-state preservation ensures a backup cannot reintroduce
-# the retired Node REPL bridge or its machine-specific trust hashes.
+# retired Node REPL and Computer Use bridges or their machine-specific paths.
 is_removed_codex_config_table() {
     local line="$1"
 
     case "$line" in
-        "[mcp_servers.node_repl]"|"[mcp_servers.node_repl."*)
+        "[mcp_servers.node_repl]"|"[mcp_servers.node_repl."*|\
+        "[mcp_servers.computer-use]"|"[mcp_servers.computer-use."*)
             return 0
             ;;
         *)

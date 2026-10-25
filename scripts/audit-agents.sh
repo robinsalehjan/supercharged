@@ -151,7 +151,6 @@ base_mcp_names=$(sed -n 's/^\[mcp_servers\.\([^].]*\)\]$/\1/p' "$CODEX_CONFIG_DI
 apple_mcp_names=$(sed -n 's/^\[mcp_servers\.\([^].]*\)\]$/\1/p' "$CODEX_CONFIG_DIR/apple.config.toml" | LC_ALL=C sort | tr '\n' ' ')
 codex_profile_names=$(find "$CODEX_CONFIG_DIR" -maxdepth 1 \( -type f -o -type l \) \
     -name '*.config.toml' -exec basename {} \; | LC_ALL=C sort | tr '\n' ' ')
-computer_use_enabled=$(awk '/^\[mcp_servers\.computer-use\]$/{inside=1; next} inside && /^\[/{exit} inside && /^enabled = /{print $3; exit}' "$CODEX_CONFIG_DIR/config.toml")
 playwright_enabled=$(awk '/^\[mcp_servers\.playwright\]$/{inside=1; next} inside && /^\[/{exit} inside && /^enabled = /{print $3; exit}' "$CODEX_CONFIG_DIR/config.toml")
 if validate_toml_shape "$CODEX_CONFIG_DIR/config.toml" && \
    validate_toml_shape "$CODEX_CONFIG_DIR/apple.config.toml" && \
@@ -161,8 +160,7 @@ if validate_toml_shape "$CODEX_CONFIG_DIR/config.toml" && \
    rg -q '^model_reasoning_effort = "medium"$' "$CODEX_CONFIG_DIR/config.toml" && \
    rg -q '^hooks = true$' "$CODEX_CONFIG_DIR/config.toml" && \
    rg -q '^memories = false$' "$CODEX_CONFIG_DIR/config.toml" && \
-   [ "$base_mcp_names" = "code-review-graph computer-use openaiDeveloperDocs playwright " ] && \
-   [ "$computer_use_enabled" = false ] && \
+   [ "$base_mcp_names" = "cloudflare code-review-graph openaiDeveloperDocs playwright " ] && \
    [ "$playwright_enabled" = true ] && \
    [ "$apple_mcp_names" = "xcode " ] && \
    rg -q '^model_reasoning_effort = "xhigh"$' "$CODEX_CONFIG_DIR/review.config.toml"; then
