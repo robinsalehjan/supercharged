@@ -378,14 +378,38 @@ crg-here() {
     code-review-graph build --repo "$repo"
 }
 
-# openwiki-here: enroll the current repository (or an optional path) for updates.
-# openwiki-watch keeps enrollment checks and existing wiki requirements central.
+# openwiki-here: initialize a missing wiki, then enroll the repository for updates.
 openwiki-here() {
+    if [ "$#" -gt 1 ]; then
+        echo "Usage: openwiki-here [repo]" >&2
+        return 2
+    fi
     if ! command -v openwiki-watch >/dev/null 2>&1; then
         echo "openwiki-watch not installed (run npm run install:openwiki)" >&2
         return 1
     fi
-    openwiki-watch add "$@"
+    local repo
+    repo=$(git -C "${1:-$PWD}" rev-parse --show-toplevel 2>/dev/null) || {
+        echo "not in a git repo" >&2
+        return 1
+    }
+    repo=$(cd "$repo" && pwd -P) || return 1
+    if [ ! -d "$repo/.git" ] || [[ "$repo" == *[$'\r\n\t']* ]]; then
+        echo "openwiki-here requires a main Git checkout with no tabs or newlines in its path" >&2
+        return 1
+    fi
+    if [ ! -f "$repo/openwiki/index.md" ]; then
+        if ! command -v openwiki >/dev/null 2>&1; then
+            echo "openwiki not installed (run npm run install:openwiki)" >&2
+            return 1
+        fi
+        (cd "$repo" && openwiki --init) || return $?
+    fi
+    if [ ! -f "$repo/openwiki/index.md" ] || [ -e "$repo/openwiki/.run.json" ]; then
+        echo "OpenWiki initialization is incomplete; finish it before enrolling this repository" >&2
+        return 1
+    fi
+    openwiki-watch add "$repo"
 }
 
 # VSCode shell integration

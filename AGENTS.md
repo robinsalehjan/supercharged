@@ -157,6 +157,7 @@ npm test -- --filter "pattern"    # Run specific tests
 - `tests/meta/lint.bats` - Tests for ShellCheck lint script (validates `.shellcheckrc` rule set)
 - `tests/meta/secrets.bats` - Tests repository secret-scanner detection and exclusions
 - `tests/openwiki/watcher.bats` - Tests explicit OpenWiki enrollment, update guards, locking, timeout, and launchd setup
+- `tests/openwiki/here.bats` - Tests interactive wiki initialization and enrollment through `openwiki-here`
 - `tests/restore/restore.bats` - Tests for rollback.sh and configuration snapshot restoration
 - `tests/install-plugins/install-plugins.bats` - Smoke tests for `install-plugins.sh` (dry-run, prerequisites, arg parsing)
 - `tests/restore-claude/restore-claude.bats` - Smoke tests for `restore-claude.sh` helpers (`get_file_mtime`, `get_newest_mtime`)

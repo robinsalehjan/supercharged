@@ -142,7 +142,7 @@ The supervisor discovers nested repositories with `.git` directories, registers 
 
 Setup, managed-tool reconciliation, updates, and `npm run install:openwiki` install the `com.openwiki.watcher` launchd job and `~/.local/bin/openwiki-watch`. The job checks enrolled repositories at login and every 30 minutes. Installation starts with an empty list: enrollment explicitly authorizes ongoing model-backed updates for that repository. It never initializes a wiki or discovers repositories automatically.
 
-Initialize the wiki interactively first, review `.openwikiignore` and `openwiki/INSTRUCTIONS.md`, and configure the standalone OpenWiki provider. Scheduled runs use `openwiki code --update --print` with provider configuration from local `~/.openwiki/.env`; they do not use Codex or Claude subscription authentication. Model calls may incur provider charges. Then enroll a clean main checkout:
+Review `.openwikiignore` and any `openwiki/INSTRUCTIONS.md` scope brief before initialization. `openwiki-here` initializes a missing wiki interactively and then enrolls the repository. The first run can configure the standalone OpenWiki provider. Scheduled runs use `openwiki code --update --print` with provider configuration from local `~/.openwiki/.env`; they do not use Codex or Claude subscription authentication. Model calls may incur provider charges. To enroll an already initialized wiki directly:
 
 ```bash
 npm run install:openwiki
@@ -152,7 +152,7 @@ openwiki-watch run                      # Check enrolled repositories now
 openwiki-watch remove /path/to/repository
 ```
 
-After syncing dotfiles and opening a new shell, run `openwiki-here` from anywhere inside a repository to enroll it, or `openwiki-here /path/to/repository` to enroll a specific checkout. This is shorthand for `openwiki-watch add` and keeps the same existing-wiki requirements.
+After syncing dotfiles and opening a new shell, run `openwiki-here` from anywhere inside a repository, or `openwiki-here /path/to/repository` for a specific checkout. If `openwiki/index.md` is missing, the helper runs `openwiki --init` interactively from the repository root, then calls `openwiki-watch add` after successful generation. Existing wikis are enrolled without regeneration. Failed or unfinished generation is not enrolled; finish it manually and rerun the helper. Review and commit generated wiki and instruction changes so the checkout becomes eligible for scheduled updates. Linked worktrees are rejected before initialization.
 
 The same commands are available from this repository as `npm run openwiki:watch -- add /path/to/repository` (or `list`, `run`, and `remove`). Enrollment is kept locally in `~/.openwiki/watcher-config.json` as `{"repositories":["/absolute/path/to/repository"]}` and survives setup and updates. `OPENWIKI_CONFIG_DIR` selects a different local state directory for both the CLI and updater; rerun installation with that variable to use it in launchd. Credentials, enrollment paths, and logs are never backed up to this repository.
 
