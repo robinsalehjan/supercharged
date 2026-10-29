@@ -41,7 +41,7 @@ Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
 
 ## Workflow
 
-1. Graph auto-updates on file changes (via hooks).
+1. Graph auto-updates on file changes through the launchd watcher.
 2. `detect_changes` for code review.
 3. `get_affected_flows` for impact.
 4. `query_graph` pattern="tests_for" for coverage.

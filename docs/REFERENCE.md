@@ -160,6 +160,12 @@ Only existing wikis with `openwiki/index.md` in main Git checkouts are eligible.
 
 Inspect `~/.openwiki/watcher.log` and `~/.openwiki/watcher.err`, or `launchctl print gui/$(id -u)/com.openwiki.watcher`, for status. Removing an enrollment stops future checks for that repository; an update already running finishes. The job is idle between scheduled checks, so an idle service is expected. Installation dry-runs preview the schedule without creating files or loading launchd; `SUPERCHARGED_SKIP_LAUNCHCTL=1` writes the managed files without loading the job.
 
+### Codex daemon startup hooks
+
+`codex_config/hooks.json` adds two `SessionStart` command handlers for startup and resume, alongside the existing Plannotator `Stop` hook. `npm run sync -- --only codex` restores the definitions and executable `agent-daemons.sh` under the active Codex home. Each handler checks whether its installed launchd job is registered, bootstraps it if needed, and reports setup failures as advisory session context. Checks time out after 10 seconds and run independently. A loaded OpenWiki job may be idle between scheduled checks; the hook leaves that schedule alone. It does not restart a loaded graph watcher, enroll repositories, or invoke generation/indexing commands directly. Bootstrapping an unloaded job follows its normal `RunAtLoad` behavior and existing enrollment rules.
+
+After syncing, restart Codex and use `/hooks` to review and trust the new command definitions. Codex keeps that trust state locally and skips new or changed definitions until reviewed; see the [official hook documentation](https://learn.chatgpt.com/docs/hooks#review-and-trust-hooks). The hooks use `CODEX_HOME` when set, otherwise `~/.codex`. Missing daemon installation produces a setup hint and leaves the session usable. No turn-end wiki refresh is added: the graph watcher handles file changes and OpenWiki follows its opt-in commit schedule.
+
 ## Personal Machine Baseline
 
 The repository was audited against the personal Mac and records the reproducible portion of that machine's setup. The authoritative locations are:

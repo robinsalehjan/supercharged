@@ -1,5 +1,24 @@
 {
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "^(startup|resume)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/zsh \"${CODEX_HOME:-$HOME/.codex}/hooks/agent-daemons.sh\" code-review-graph",
+            "timeout": 10,
+            "statusMessage": "Checking code-review-graph watcher"
+          },
+          {
+            "type": "command",
+            "command": "/bin/zsh \"${CODEX_HOME:-$HOME/.codex}/hooks/agent-daemons.sh\" openwiki",
+            "timeout": 10,
+            "statusMessage": "Checking OpenWiki updater"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [

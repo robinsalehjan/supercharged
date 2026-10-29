@@ -622,6 +622,7 @@ EOF
   [ "$status" -eq 0 ]
   [ -f "$HOME/.codex/config.toml" ]
   [ -f "$HOME/.codex/hooks.json" ]
+  [ -x "$HOME/.codex/hooks/agent-daemons.sh" ]
   [ -f "$HOME/.codex/AGENTS.md" ]
   [ -f "$HOME/.codex/apple.config.toml" ]
   [ ! -e "$HOME/.codex/apple-headless.config.toml" ]

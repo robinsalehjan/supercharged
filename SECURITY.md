@@ -12,7 +12,7 @@ This repository is designed to run safely on both personal and work machines. Se
 | BATS tests | `npm test` | Exercises backup, restore, install, validation, and safety behavior. |
 | GitHub Actions | `.github/workflows/test.yml` | Runs lint, dependency audit, secret scan, and BATS on pushes and pull requests. |
 | Codex command rules | `codex_config/rules/*.rules` | Blocks destructive or policy-violating commands in Codex sessions. |
-| Codex hooks | `codex_config/hooks.json` | Restores the Plannotator Stop hook. |
+| Codex hooks | `codex_config/hooks.json` and `codex_config/hooks/` | Restores the Plannotator Stop hook and advisory SessionStart checks for the installed graph and OpenWiki launchd jobs. These checks do not enroll repositories or run indexing/generation commands directly. |
 | Claude plugin config | `claude_config/installed_plugins.json` and `claude_config/settings.json` | Restores Claude Code plugin settings, including Hookify when installed. |
 
 Claude Code Hookify may be installed as part of the backed-up Claude configuration, but this repository does not track local Hookify rule files.
