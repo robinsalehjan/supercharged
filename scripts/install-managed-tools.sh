@@ -23,6 +23,7 @@ if [[ "${INSTALL_CLOUD_TOOLS:-Y}" =~ ^[Yy] ]]; then
     setup_firebase "${setup_args[@]}"
 fi
 setup_openwiki "${setup_args[@]}"
+setup_openwiki_watcher "${setup_args[@]}"
 setup_playwright_cli "${setup_args[@]}"
 setup_playwright_mcp "${setup_args[@]}"
 setup_plannotator "${setup_args[@]}"

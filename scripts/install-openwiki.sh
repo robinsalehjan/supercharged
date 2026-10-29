@@ -7,9 +7,11 @@ source "$(dirname "$0")/utils.sh"
 case "${1:-}" in
     "")
         setup_openwiki
+        setup_openwiki_watcher
         ;;
     --dry-run)
         setup_openwiki --dry-run
+        setup_openwiki_watcher --dry-run
         ;;
     *)
         echo "Usage: $(basename "$0") [--dry-run]" >&2

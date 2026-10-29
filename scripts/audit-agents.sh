@@ -468,6 +468,15 @@ if [ "$REPO_ONLY" = false ]; then
         fi
     fi
 
+    if command -v openwiki >/dev/null 2>&1; then
+        if [ -x "$HOME/.local/bin/openwiki-watch" ] && \
+            [ -f "$HOME/Library/LaunchAgents/com.openwiki.watcher.plist" ]; then
+            pass "OpenWiki opt-in launchd updater is configured"
+        else
+            fail "OpenWiki updater is not configured; run npm run install:openwiki"
+        fi
+    fi
+
     case "$PROFILE" in
         apple)
             require_command xcrun "Apple profile: xcrun is available"

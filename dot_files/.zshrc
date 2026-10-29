@@ -378,5 +378,15 @@ crg-here() {
     code-review-graph build --repo "$repo"
 }
 
+# openwiki-here: enroll the current repository (or an optional path) for updates.
+# openwiki-watch keeps enrollment checks and existing wiki requirements central.
+openwiki-here() {
+    if ! command -v openwiki-watch >/dev/null 2>&1; then
+        echo "openwiki-watch not installed (run npm run install:openwiki)" >&2
+        return 1
+    fi
+    openwiki-watch add "$@"
+}
+
 # VSCode shell integration
 [[ "$TERM_PROGRAM" == "vscode" ]] && . "$(/Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin/code --locate-shell-integration-path zsh)"

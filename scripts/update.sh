@@ -273,6 +273,11 @@ main() {
         setup_worktrunk
     fi
 
+    # Reconcile the opt-in OpenWiki schedule without enrolling repositories.
+    if command -v openwiki >/dev/null 2>&1; then
+        setup_openwiki_watcher
+    fi
+
     # Ensure code-review-graph watcher is configured for Claude Code and Codex.
     if command -v code-review-graph >/dev/null 2>&1; then
         setup_code_review_graph
