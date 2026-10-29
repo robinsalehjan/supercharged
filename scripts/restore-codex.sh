@@ -428,7 +428,7 @@ main() {
     echo "   - hooks/*"
     echo "   - managed plugins from codex_config/plugins.json"
     echo ""
-    echo "💡 Axiom hooks require one-time trust review on the first Codex run"
+    echo "💡 New or changed Codex and Axiom hooks require local /hooks trust review"
     echo "💡 Restart Codex for changes to take effect"
 }
 

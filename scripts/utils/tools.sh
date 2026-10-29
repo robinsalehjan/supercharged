@@ -186,6 +186,80 @@ setup_openwiki() {
     fi
 }
 
+# Install a scheduled, opt-in repository updater alongside the OpenWiki CLI.
+# No repository is enrolled by setup, and existing local enrollment is retained.
+setup_openwiki_watcher() {
+    if [ "${1:-}" = "--dry-run" ]; then
+        log_with_level "INFO" "Would install the opt-in OpenWiki launchd updater (every 30 minutes)"
+        return 0
+    fi
+    if ! command_exists openwiki; then
+        log_with_level "INFO" "OpenWiki not installed, skipping updater setup"
+        return 0
+    fi
+
+    local script_path="$HOME/.local/bin/openwiki-watch"
+    local plist_path="$HOME/Library/LaunchAgents/com.openwiki.watcher.plist"
+    local state_dir="${OPENWIKI_CONFIG_DIR:-$HOME/.openwiki}"
+    local config_path="$state_dir/watcher-config.json"
+    local script_tmp plist_tmp changed=false
+    mkdir -p "$HOME/.local/bin" "$HOME/Library/LaunchAgents" "$state_dir"
+    if [ ! -e "$config_path" ]; then
+        printf '{"repositories":[]}\n' > "$config_path"
+    fi
+
+    plist_tmp=$(mktemp)
+    # Build through JSON so user paths are correctly escaped in the XML plist.
+    if ! jq -n --arg script "$script_path" --arg state "$state_dir" \
+        --arg env_path "$HOME/.asdf/shims:/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:/usr/bin:/bin" '
+        {Label: "com.openwiki.watcher", ProgramArguments: ["/bin/zsh", $script, "run"],
+         EnvironmentVariables: {PATH: $env_path, OPENWIKI_CONFIG_DIR: $state},
+         RunAtLoad: true, StartInterval: 1800, ProcessType: "Background",
+         StandardOutPath: ($state + "/watcher.log"), StandardErrorPath: ($state + "/watcher.err")}
+        ' > "$plist_tmp" || ! plutil -convert xml1 "$plist_tmp" || ! plutil -lint "$plist_tmp" >/dev/null; then
+        rm -f "$plist_tmp"
+        log_with_level "ERROR" "Could not generate OpenWiki launchd plist"
+        return 1
+    fi
+
+    if [ ! -f "$script_path" ] || ! cmp -s "$UTILS_PROJECT_ROOT/scripts/openwiki-watch.sh" "$script_path"; then
+        script_tmp=$(mktemp "$HOME/.local/bin/openwiki-watch.XXXXXX")
+        if ! cp "$UTILS_PROJECT_ROOT/scripts/openwiki-watch.sh" "$script_tmp" || \
+            ! chmod +x "$script_tmp" || ! mv "$script_tmp" "$script_path"; then
+            rm -f "$script_tmp" "$plist_tmp"
+            log_with_level "ERROR" "Could not install OpenWiki updater script"
+            return 1
+        fi
+        changed=true
+    fi
+    chmod +x "$script_path"
+    if [ ! -f "$plist_path" ] || ! cmp -s "$plist_tmp" "$plist_path"; then
+        mv "$plist_tmp" "$plist_path"
+        changed=true
+    else
+        rm -f "$plist_tmp"
+    fi
+    if [ "${SUPERCHARGED_SKIP_LAUNCHCTL:-0}" = "1" ]; then
+        log_with_level "INFO" "SUPERCHARGED_SKIP_LAUNCHCTL=1 — skipping launchctl reload"
+        return 0
+    fi
+    # A scheduled job is usually idle. launchctl print checks registration,
+    # rather than assuming an unchanged plist means the service is loaded.
+    local service
+    service="gui/$(id -u)/com.openwiki.watcher"
+    if ! $changed && launchctl print "$service" >/dev/null 2>&1; then
+        log_with_level "INFO" "OpenWiki updater already up to date"
+        return 0
+    fi
+    launchctl bootout "$service" 2>/dev/null || true
+    if launchctl bootstrap "gui/$(id -u)" "$plist_path"; then
+        log_with_level "SUCCESS" "OpenWiki updater loaded; use 'openwiki-watch add <repo>' to enroll an existing wiki"
+    else
+        log_with_level "ERROR" "Could not load OpenWiki updater"
+        return 1
+    fi
+}
+
 # Install Playwright's agent-oriented CLI and its global skills. Browser
 # binaries are intentionally left to `playwright-cli install-browser` or first
 # use so setup does not download large browser payloads unprompted.

@@ -44,6 +44,7 @@ npm run install:codex-plugins # Install or refresh managed Codex plugins
 npm run install:managed-tools # Reconcile exact-pinned local agent tools
 npm run install:firebase     # Install pinned Firebase CLI from npm
 npm run install:openwiki    # Install or update OpenWiki for agent documentation
+npm run openwiki:watch -- add /path/to/repo # Opt in an existing wiki to scheduled updates
 npm run install:plannotator # Install or update the checksum-pinned Plannotator binary
 npm run install:skills     # Install, update, or safely prune shared git skills
 npm run update:tool-pins   # Check for newer managed tool releases

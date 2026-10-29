@@ -223,9 +223,19 @@ fi
 
 if jq -e '
     (.hooks.Stop | length == 1) and
-    (.hooks | keys == ["Stop"])
-' "$CODEX_CONFIG_DIR/hooks.json" >/dev/null 2>&1; then
-    pass "Hook JSON retains only the Plannotator Stop hook"
+    (.hooks.Stop[0].hooks[0].command == "$HOME/.local/bin/plannotator") and
+    (.hooks | keys == ["SessionStart", "Stop"]) and
+    (.hooks.SessionStart | length == 1) and
+    (.hooks.SessionStart[0].matcher == "^(startup|resume)$") and
+    (.hooks.SessionStart[0].hooks | length == 2) and
+    (all(.hooks.SessionStart[0].hooks[]; .type == "command" and .timeout == 10)) and
+    ([.hooks.SessionStart[0].hooks[].command] | sort == ([
+        "/bin/zsh \"${CODEX_HOME:-$HOME/.codex}/hooks/agent-daemons.sh\" code-review-graph",
+        "/bin/zsh \"${CODEX_HOME:-$HOME/.codex}/hooks/agent-daemons.sh\" openwiki"
+    ] | sort))
+' "$CODEX_CONFIG_DIR/hooks.json" >/dev/null 2>&1 && \
+    [ -x "$CODEX_CONFIG_DIR/hooks/agent-daemons.sh" ]; then
+    pass "Hook JSON retains Plannotator Stop and both daemon SessionStart hooks"
 else
     fail "Hook JSON is malformed or contains unexpected hooks"
 fi
@@ -465,6 +475,15 @@ if [ "$REPO_ONLY" = false ]; then
             pass "code-review-graph launchd watcher is configured"
         else
             fail "code-review-graph launchd watcher is not configured"
+        fi
+    fi
+
+    if command -v openwiki >/dev/null 2>&1; then
+        if [ -x "$HOME/.local/bin/openwiki-watch" ] && \
+            [ -f "$HOME/Library/LaunchAgents/com.openwiki.watcher.plist" ]; then
+            pass "OpenWiki opt-in launchd updater is configured"
+        else
+            fail "OpenWiki updater is not configured; run npm run install:openwiki"
         fi
     fi
 

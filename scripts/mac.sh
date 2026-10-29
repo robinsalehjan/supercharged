@@ -444,6 +444,7 @@ main() {
     # Install OpenWiki after the managed Node.js runtime is active. It is an
     # npm-distributed CLI that creates documentation intended for coding agents.
     setup_openwiki
+    setup_openwiki_watcher
     setup_playwright_cli
     setup_playwright_mcp
     setup_obscura

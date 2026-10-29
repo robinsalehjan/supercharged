@@ -35,7 +35,7 @@ See [README.md](./README.md) and [docs/REFERENCE.md](./docs/REFERENCE.md) for us
 **Knowledge and graph tooling**:
 - [code-review-graph](https://github.com/tirth8205/code-review-graph) is the preferred live-source layer for navigation, impact analysis, debugging, and review when its graph is current and covers the code in question. Shared selection and freshness rules live in `agent_config/AGENTS.md`; the graph-backed skills live in `agent_config/skills/`.
 - [OpenWiki](https://github.com/langchain-ai/openwiki) is an opt-in repository knowledge layer for architecture, terminology, invariants, and intended workflows. Agents use an existing `openwiki/` as secondary context, verify material claims against current source and tests, and do not initialize or update it without an explicit user request.
-- Both CLIs are exact-pinned in `agent_config/managed_tools.json` and reconciled by `npm run install:agent-tooling`. OpenWiki coding-agent integrations use the agent's authenticated session; standalone CLI provider configuration and credentials remain machine-local in `~/.openwiki/.env`.
+- Both CLIs are exact-pinned in `agent_config/managed_tools.json` and reconciled by `npm run install:agent-tooling`. OpenWiki coding-agent integrations use the agent's authenticated session; the opt-in `openwiki-watch` launchd updater uses standalone CLI provider configuration, and credentials remain machine-local in `~/.openwiki/.env`.
 
 **MCP servers**:
 - Keep repo-managed user-scoped Claude MCP servers in `claude_config/mcp_servers.json` and compatible Codex entries in `codex_config/config.toml`; backup never imports live user MCP definitions into the tracked registry.
@@ -87,6 +87,9 @@ npm run install:firebase          # Reconcile exact-pinned Firebase CLI through 
 npm run install:managed-tools -- --dry-run # Inspect managed tool drift
 npm run install:openwiki          # Install or update the exact-pinned OpenWiki CLI
 npm run install:openwiki -- --dry-run # Preview OpenWiki installation
+npm run openwiki:watch -- add <repo> # Enroll an existing wiki for scheduled updates
+npm run openwiki:watch -- remove <repo> # Stop scheduled updates for a repository
+npm run openwiki:watch -- list # List local wiki enrollments; use run to check them now
 npm run install:plannotator       # Install/update the checksum-pinned Plannotator binary
 npm run install:skills            # Install/update/prune shared git skills for Claude and Codex
 npm run install:skills -- --dry-run # Preview installs, updates, and safe removals
@@ -153,6 +156,7 @@ npm test -- --filter "pattern"    # Run specific tests
 - `tests/meta/help.bats` - Tests for help.sh output (includes drift check against `package.json` scripts)
 - `tests/meta/lint.bats` - Tests for ShellCheck lint script (validates `.shellcheckrc` rule set)
 - `tests/meta/secrets.bats` - Tests repository secret-scanner detection and exclusions
+- `tests/openwiki/watcher.bats` - Tests explicit OpenWiki enrollment, update guards, locking, timeout, and launchd setup
 - `tests/restore/restore.bats` - Tests for rollback.sh and configuration snapshot restoration
 - `tests/install-plugins/install-plugins.bats` - Smoke tests for `install-plugins.sh` (dry-run, prerequisites, arg parsing)
 - `tests/restore-claude/restore-claude.bats` - Smoke tests for `restore-claude.sh` helpers (`get_file_mtime`, `get_newest_mtime`)
@@ -222,7 +226,7 @@ python_version=$(awk '/python/{print $2}' "$TOOL_VERSIONS_FILE")
 **Codex backup/restore** (`scripts/backup-codex.sh`, `scripts/restore-codex.sh`):
 - Shared instructions: `agent_config/AGENTS.md` is restored to both `~/.codex/AGENTS.md` and `~/.claude/AGENTS.md`
 - Codex settings: `codex_config/config.toml` restores lean durable defaults such as model, personality, live web search, disabled memories, base MCP settings, hook enablement, instruction discovery, and a permission profile that denies `.env*`/`.secrets` paths; `apple.config.toml` provides native Xcode MCP for attached and headless use with `codex -p apple`, while `review.config.toml` provides the `codex -p review` overlay
-- Codex hooks and skills: `codex_config/hooks.json` and `codex_config/skills/plannotator-*` restore the Plannotator Stop hook and skills
+- Codex hooks and skills: `codex_config/hooks.json`, `codex_config/hooks/`, and `codex_config/skills/plannotator-*` restore the Plannotator Stop hook, advisory SessionStart checks for both installed launchd daemons, and skills. New hook definitions require local `/hooks` trust review; the daemon hooks preserve existing registration and enrollment policies.
 - Codex plugins: `codex_config/plugins.json` is a sanitized desired-state registry; `npm run install:codex-plugins` uses the Codex CLI to manage Axiom while marketplace snapshots, plugin caches, credentials, and hook trust state stay local
 - Managed tools: `agent_config/managed_tools.json` exact-pins local release/PyPI/npm tools—including Firebase CLI, code-review-graph, and OpenWiki—and records tested compatibility floors; Firebase CLI is installed from npm when cloud tools are enabled, while gcloud remains on asdf; code-review-graph stays current through its launchd watcher and explicit audits; Axiom and shared git skills use immutable commits; pin changes are promoted from validated personal-machine installations
 - Codex rules: `codex_config/rules/*.rules` restores repo-managed command deny rules that mirror the Claude hard-deny list where Codex prefix rules can express it; local approval rules in `~/.codex/rules/default.rules` remain local

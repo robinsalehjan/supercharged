@@ -35,7 +35,7 @@ write_compatibility_mocks() {
   run "$AUDIT" --repo-only
   [ "$status" -eq 0 ]
   [[ "$output" == *"Tracked Codex base, native Apple, and review TOML profiles parse with the intended MCP states"* ]]
-  [[ "$output" == *"Hook JSON retains only the Plannotator Stop hook"* ]]
+  [[ "$output" == *"Hook JSON retains Plannotator Stop and both daemon SessionStart hooks"* ]]
   [[ "$output" == *"Managed tool manifest pins exact tools and compatibility floors"* ]]
 
   run "$AUDIT" --repo-only --json
@@ -53,6 +53,18 @@ write_compatibility_mocks() {
 
   [ "$status" -ne 0 ]
   run jq -e '.failures | any(contains("invalid profile inventory"))' <<<"$output"
+  [ "$status" -eq 0 ]
+}
+
+@test "agent audit rejects unexpected daemon hook commands" {
+  codex_fixture="$TEST_TEMP_DIR/codex-config"
+  cp -R "$PROJECT_ROOT/codex_config" "$codex_fixture"
+  jq '.hooks.SessionStart[0].hooks[0].command = "unexpected-command"' \
+    "$codex_fixture/hooks.json" > "$codex_fixture/hooks.json.tmp"
+  mv "$codex_fixture/hooks.json.tmp" "$codex_fixture/hooks.json"
+  run env CODEX_CONFIG_DIR="$codex_fixture" "$AUDIT" --repo-only --json
+  [ "$status" -ne 0 ]
+  run jq -e '.failures | any(contains("unexpected hooks"))' <<<"$output"
   [ "$status" -eq 0 ]
 }
 
