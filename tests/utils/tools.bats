@@ -428,6 +428,81 @@ EOF
     grep -Fx 'reinstall code-review-graph' "$calls"
 }
 
+mock_crg_missing_interpreter() {
+    _ensure_mock_bin_dir
+    calls="$TEST_TEMP_DIR/pipx-calls"
+    local pipx_home="$TEST_TEMP_DIR/pipx home" version
+    version="$(managed_tool_pin '.tools["code-review-graph"].version')"
+    mkdir -p "$pipx_home/venvs/code-review-graph/bin"
+    touch "$pipx_home/venvs/code-review-graph/pipx_metadata.json"
+    ln -s "$TEST_TEMP_DIR/removed-python" "$pipx_home/venvs/code-review-graph/bin/python"
+    cat > "$MOCK_BIN_DIR/python3" <<EOF
+#!/bin/sh
+printf '%s\\n' '$MOCK_BIN_DIR/python3'
+EOF
+    cat > "$MOCK_BIN_DIR/pipx" <<EOF
+#!/bin/sh
+case "\$1" in
+  environment) printf '%s\\n' '$pipx_home' ;;
+  reinstall)
+    printf '%s\\n' "\$*" >> '$calls'
+    [ "\${CRG_REPAIR_FAIL:-0}" = 1 ] && { echo 'rebuild failed'; exit 1; }
+    printf '%s\\n' '1.0.0' > '$TEST_TEMP_DIR/crg-version' ;;
+  install)
+    printf '%s\\n' "\$*" >> '$calls'
+    printf '%s\\n' '$version' > '$TEST_TEMP_DIR/crg-version' ;;
+  runpip) printf 'sentence-transformers\\nigraph\\n' ;;
+esac
+exit 0
+EOF
+    cat > "$MOCK_BIN_DIR/code-review-graph" <<EOF
+#!/bin/sh
+[ -f '$TEST_TEMP_DIR/crg-version' ] || exit 127
+if [ "\$1" = --version ]; then
+    cat '$TEST_TEMP_DIR/crg-version'
+fi
+EOF
+    chmod +x "$MOCK_BIN_DIR/pipx" "$MOCK_BIN_DIR/python3" "$MOCK_BIN_DIR/code-review-graph"
+}
+
+@test "code-review-graph rebuilds a missing pipx interpreter then applies the managed pin" {
+    mock_crg_missing_interpreter
+    local spec
+    spec="$(managed_tool_pin '.tools["code-review-graph"] | "\(.package)[\(.extras | join(","))]==\(.version)"')"
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        _mcp_server_healthy() { return 0; }
+        setup_code_review_graph
+    "
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"pipx interpreter is missing"* ]]
+    [ "$(sed -n '1p' "$calls")" = "reinstall code-review-graph --python $MOCK_BIN_DIR/python3" ]
+    [ "$(sed -n '2p' "$calls")" = "install --force $spec" ]
+}
+
+@test "code-review-graph previews missing interpreter recovery without rebuilding" {
+    mock_crg_missing_interpreter
+
+    run zsh -c "export HOME='$HOME' PATH='$PATH'; source '$PROJECT_ROOT/scripts/utils.sh'; setup_code_review_graph --dry-run"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Would rebuild code-review-graph"* ]]
+    [ ! -e "$calls" ]
+}
+
+@test "code-review-graph reports failed interpreter recovery without attempting an install" {
+    mock_crg_missing_interpreter
+
+    run zsh -c "export HOME='$HOME' PATH='$PATH' CRG_REPAIR_FAIL=1; source '$PROJECT_ROOT/scripts/utils.sh'; setup_code_review_graph"
+
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"Failed to rebuild"*"rebuild failed"* ]]
+    [ "$(wc -l < "$calls" | tr -d ' ')" = 1 ]
+}
+
 # --- setup_crg_watcher tests ---
 
 @test "setup_crg_watcher skips when code-review-graph not installed" {
