@@ -42,19 +42,13 @@ To force the repository versions of Claude Code, Codex, and the managed dotfiles
 npm run sync -- --force
 ```
 
-This creates one configuration-only restoration point before changing Claude Code, Codex, or dotfiles. It does not run the setup installer, Homebrew Bundle, or package updates. Without `--force`, `sync` keeps timestamp gating for Claude and Codex while still taking the single pre-sync snapshot.
-
-Git identity is machine-local in `~/.gitconfig.local`. The first restore migrates existing `user.*` values before replacing `~/.gitconfig`; a new interactive setup prompts for name and email. Noninteractive restores leave missing identity unset and print the commands needed to configure it. Claude restore preserves enabled and explicitly disabled `@vend-plugins` entries plus the `vend-plugins` marketplace.
-
-Restoration points cover managed configuration and registries, including absence information so rollback removes files created by a restore. They intentionally exclude auth, secrets, sessions, histories, logs, databases, plugin caches, and installed packages; plugins may need reinstalling after rollback. Older backups without an absence manifest remain copy-only restorable.
-
-The shared MCP baseline is code-review-graph and OpenAI Developer Docs. Codex provides Axiom through its native plugin (including its skills and optional trusted hooks). Apple’s native Xcode MCP is isolated behind `codex -p apple`: Xcode 26.3+ supports attached use with a project open, and Xcode 27+ also supports headless use through the one-time `sudo xcrun mcp-server enable` opt-in followed by `xcrun mcp-server start`. Both modes retain Apple’s normal per-agent approval flow. Computer Use is supplied by the ChatGPT desktop app's official bundled plugins, which generate the `cua_repl` MCP connection from the installed app runtime; this repository does not track a separate executable path. Playwright MCP remains enabled. `codex -p review` layers xhigh reasoning over the base review tooling. `npm run check:mcps` completes the MCP initialize handshake against every enabled base server; pass `-- --profile apple` to include native Xcode MCP. Agent audits run the same probe. `agent_config/managed_tools.json` exact-pins Firebase CLI, OpenWiki, Playwright CLI, Playwright MCP, Plannotator, code-review-graph, and Obscura while recording tested compatibility floors for Codex, Claude, and Worktrunk. Firebase CLI installs from its exact npm package when cloud tools are enabled. Managed-tool reconciliation also retires known XcodeBuildMCP and MobileBuildMCP installations. Axiom uses an immutable marketplace commit plus an expected plugin version; shared git skills also require commit SHAs. Pins are promoted from installed versions on a validated personal machine with `npm run promote:pins -- --apply`; upstream checks remain read-only. Axiom and compatibility floors move after local validation.
+This creates one configuration-only restoration point before changing managed files. It does not install or update packages. See the [reference guide](./docs/REFERENCE.md#existing-machine-sync-configuration-only) for timestamp gates, rollback scope, machine-local state, and agent-tooling behavior.
 
 ### New machine: full baseline
 
-Run `npm run setup` when you want the complete interactive package and application baseline. It includes personal applications such as Spotify, Mullvad VPN, DaisyDisk, and Numbers; remove unwanted applications afterward or adjust `build_brewfile` before setup.
+Run `npm run setup` when you want the complete interactive package and application baseline. Review or adjust `build_brewfile` in `scripts/mac.sh` before setup if you do not want the tracked personal applications.
 
-Credentials, authentication state, histories, logs, sessions, caches, and other machine-local runtime data are intentionally excluded. Secret files contain variable-name templates only; populate the corresponding values locally. See the [reference guide](./docs/REFERENCE.md#personal-machine-baseline) for the tracked inventory and synchronization boundaries.
+Credentials, authentication state, histories, logs, sessions, caches, and other machine-local runtime data are intentionally excluded. Secret files contain variable-name templates only; populate the corresponding values locally. See the [reference guide](./docs/REFERENCE.md#personal-machine-baseline) for the authoritative manifests and synchronization boundaries.
 
 ## Terminal font
 
@@ -79,3 +73,4 @@ See [GitHub Releases](https://github.com/robinsalehjan/supercharged/releases) fo
 |----------|---------|
 | [Reference](./docs/REFERENCE.md) | Installed tools, setup options, customization, troubleshooting |
 | [Security](./SECURITY.md) | Security enforcement details |
+| [Agent guidance](./AGENTS.md) | Repository conventions for contributors and coding agents |
