@@ -446,6 +446,31 @@ setup_code_review_graph() {
         installed_version=$(code-review-graph --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1) || installed_version=""
     fi
 
+    # Homebrew may remove the Python used by an existing pipx environment.
+    # install --force reuses that environment, so rebuild it before pinning.
+    local pipx_home="" managed_python="" repair_output
+    if [ -z "$installed_version" ]; then
+        pipx_home=$(pipx environment --value PIPX_HOME 2>/dev/null) || pipx_home=""
+        if [ -n "$pipx_home" ] && [ -f "$pipx_home/venvs/code-review-graph/pipx_metadata.json" ] && \
+           [ ! -x "$pipx_home/venvs/code-review-graph/bin/python" ]; then
+            if $dry_run; then
+                log_with_level "INFO" "Would rebuild code-review-graph with an available Python because its pipx interpreter is missing"
+                return 0
+            fi
+            managed_python=$(python3 -c 'import sys; print(sys.executable)' 2>/dev/null) || managed_python=""
+            if [ -z "$managed_python" ] || [ ! -x "$managed_python" ]; then
+                log_with_level "ERROR" "Cannot repair code-review-graph: no working python3 found"
+                return 1
+            fi
+            log_with_level "WARN" "code-review-graph pipx interpreter is missing; rebuilding with $managed_python"
+            if ! repair_output=$(pipx reinstall code-review-graph --python "$managed_python" 2>&1); then
+                log_with_level "ERROR" "Failed to rebuild code-review-graph pipx environment: $repair_output"
+                return 1
+            fi
+            installed_version=$(code-review-graph --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1) || installed_version=""
+        fi
+    fi
+
     if [ "$installed_version" != "$managed_version" ]; then
         if $dry_run; then
             log_with_level "INFO" "Would install managed code-review-graph $managed_version"
