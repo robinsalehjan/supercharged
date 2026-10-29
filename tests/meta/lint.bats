@@ -3,10 +3,6 @@
 # Load test helpers
 load '../helpers/setup'
 
-# Shellcheck disable rules — must match .shellcheckrc exactly so the drift
-# check below catches any divergence between this guard and the rc file.
-SHELLCHECK_EXCLUDE='SC1071,SC2296,SC1091,SC2001'
-
 setup() {
   setup_test_env
 
@@ -33,10 +29,7 @@ teardown() {
   # Act - run lint via npm
   run bash -c "cd $PROJECT_ROOT && npm run lint"
 
-  # Assert - should complete (exit code 0 means no errors found, or only filtered warnings)
-  # Non-zero exit means actual errors exist
-  # We're just checking the command structure works
-  [ "$status" -eq 0 ] || [ "$status" -eq 1 ]
+  [ "$status" -eq 0 ]
 }
 
 @test "lint command excludes SC1071 warnings" {
@@ -45,8 +38,7 @@ teardown() {
     skip "shellcheck not installed"
   fi
 
-  # Act - run shellcheck with exclusions
-  run bash -c "cd $PROJECT_ROOT && shellcheck --shell=bash --exclude=$SHELLCHECK_EXCLUDE scripts/*.sh 2>&1 | grep SC1071"
+  run bash -c "cd $PROJECT_ROOT && shellcheck --shell=bash scripts/*.sh 2>&1 | grep SC1071"
 
   # Assert - should fail to find SC1071 (excluded)
   [ "$status" -ne 0 ]
@@ -58,8 +50,7 @@ teardown() {
     skip "shellcheck not installed"
   fi
 
-  # Act - run shellcheck with exclusions
-  run bash -c "cd $PROJECT_ROOT && shellcheck --shell=bash --exclude=$SHELLCHECK_EXCLUDE scripts/*.sh 2>&1 | grep SC2296"
+  run bash -c "cd $PROJECT_ROOT && shellcheck --shell=bash scripts/*.sh 2>&1 | grep SC2296"
 
   # Assert - should fail to find SC2296 (excluded)
   [ "$status" -ne 0 ]
@@ -85,14 +76,16 @@ teardown() {
   fi
 
   # Arrange - get the lint command from package.json
-  lint_cmd=$(grep '"lint"' "$PROJECT_ROOT/package.json" | grep "shellcheck")
+  lint_cmd=$(jq -r '.scripts.lint' "$PROJECT_ROOT/package.json")
+  lint_source=$(<"$PROJECT_ROOT/scripts/lint.sh")
 
   # Assert - should specify --shell=bash
-  [[ "$lint_cmd" == *"--shell=bash"* ]]
+  [[ "$lint_cmd" == "./scripts/lint.sh" ]]
+  [[ "$lint_source" == *"--shell=bash"* ]]
 }
 
 @test "lint covers Codex hooks, zsh syntax, and GitHub Actions" {
-  lint_cmd=$(jq -r '.scripts.lint' "$PROJECT_ROOT/package.json")
+  lint_cmd=$(<"$PROJECT_ROOT/scripts/lint.sh")
 
   [[ "$lint_cmd" == *"codex_config/hooks/*.sh"* ]]
   [[ "$lint_cmd" == *"zsh -n"* ]]
@@ -101,20 +94,32 @@ teardown() {
   grep -F 'actionlint bats-core' "$PROJECT_ROOT/.github/workflows/test.yml"
 }
 
-@test ".shellcheckrc disables expected zsh-noise codes" {
+@test ".shellcheckrc is the only ShellCheck suppression source" {
   # Arrange - .shellcheckrc lives at project root and holds the disable list
   rc_file="$PROJECT_ROOT/.shellcheckrc"
   [ -f "$rc_file" ]
 
-  # Act - read the disable directive
   disable_line=$(grep -E '^disable=' "$rc_file")
+  [[ "$disable_line" == *"SC1071"* ]]
+  [[ "$disable_line" == *"SC2296"* ]]
+  ! grep -F -- '--exclude=' "$PROJECT_ROOT/scripts/lint.sh"
+}
 
-  # Assert - every code in $SHELLCHECK_EXCLUDE must appear
-  IFS=',' read -ra codes <<< "$SHELLCHECK_EXCLUDE"
-  for code in "${codes[@]}"; do
-    [[ "$disable_line" == *"$code"* ]] || {
-      echo "Missing $code in .shellcheckrc: $disable_line"
-      return 1
-    }
-  done
+@test "lint reports a syntax error in a later filename" {
+  lint_root="$TEST_TEMP_DIR/lint-root"
+  mkdir -p "$lint_root/scripts/utils" "$lint_root/codex_config/hooks" "$lint_root/tests/helpers" "$lint_root/dot_files" "$lint_root/bin"
+  printf '#!/bin/zsh\ntrue\n' > "$lint_root/scripts/a-first.sh"
+  printf '#!/bin/zsh\nif then\n' > "$lint_root/scripts/z-last.sh"
+  printf '#!/bin/zsh\ntrue\n' > "$lint_root/scripts/utils/helper.sh"
+  printf '#!/bin/zsh\ntrue\n' > "$lint_root/codex_config/hooks/hook.sh"
+  printf '#!/bin/bash\ntrue\n' > "$lint_root/tests/helpers/helper.bash"
+  for file in .zshrc .zprofile .p10k.zsh; do printf 'true\n' > "$lint_root/dot_files/$file"; done
+  printf '#!/bin/sh\nexit 0\n' > "$lint_root/bin/shellcheck"
+  printf '#!/bin/sh\nexit 0\n' > "$lint_root/bin/actionlint"
+  chmod +x "$lint_root/bin/shellcheck" "$lint_root/bin/actionlint"
+
+  run env PATH="$lint_root/bin:$PATH" LINT_PROJECT_ROOT="$lint_root" zsh "$PROJECT_ROOT/scripts/lint.sh"
+
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"z-last.sh"* ]]
 }

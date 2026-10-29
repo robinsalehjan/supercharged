@@ -12,6 +12,7 @@
 # Usage:
 #   ./install-skills.sh           # Reconcile all tracked and retired skills
 #   ./install-skills.sh --dry-run # Preview installs, updates, and removals
+#   ./install-skills.sh --harness claude|codex|both
 #
 # Optional override: agent_config/installed_skills.local.json (merged on top
 # of installed_skills.json, local wins on active skills). Tracked
@@ -30,6 +31,7 @@ CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
 CLAUDE_SKILLS_DIR="${CLAUDE_SKILLS_DIR:-$CLAUDE_HOME/skills}"
 CODEX_SKILLS_DIR="${CODEX_SKILLS_DIR:-$CODEX_HOME/skills}"
 DRY_RUN=false
+HARNESS=both
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -37,9 +39,17 @@ while [[ $# -gt 0 ]]; do
             DRY_RUN=true
             shift
             ;;
-        *)
-            log_with_level "WARN" "Unknown option: $1"
+        --harness)
             shift
+            case "${1:-}" in
+                both|claude|codex) HARNESS="$1" ;;
+                *) log_with_level "ERROR" "--harness requires both, claude, or codex"; exit 2 ;;
+            esac
+            shift
+            ;;
+        *)
+            log_with_level "ERROR" "Unknown option: $1"
+            exit 2
             ;;
     esac
 done
@@ -62,9 +72,7 @@ if [ ! -f "$SKILLS_FILE" ]; then
     exit 0
 fi
 
-log_with_level "INFO" "Installing skills into:"
-log_with_level "INFO" "  - Claude Code: $CLAUDE_SKILLS_DIR"
-log_with_level "INFO" "  - Codex: $CODEX_SKILLS_DIR"
+log_with_level "INFO" "Installing skills into selected harness: $HARNESS"
 
 # Merge repo + local (local wins on conflict). Surface jq parse errors instead
 # of silently dropping local overrides — a typo in installed_skills.local.json
@@ -203,17 +211,12 @@ install_skill_for_destination() {
 while IFS=$'\t' read -r name repo; do
     [ -z "$name" ] && continue
 
-    remove_skill_for_destination \
-        "$name" \
-        "$repo" \
-        "Claude Code" \
-        "$CLAUDE_SKILLS_DIR"
-
-    remove_skill_for_destination \
-        "$name" \
-        "$repo" \
-        "Codex" \
-        "$CODEX_SKILLS_DIR"
+    if [ "$HARNESS" = both ] || [ "$HARNESS" = claude ]; then
+        remove_skill_for_destination "$name" "$repo" "Claude Code" "$CLAUDE_SKILLS_DIR"
+    fi
+    if [ "$HARNESS" = both ] || [ "$HARNESS" = codex ]; then
+        remove_skill_for_destination "$name" "$repo" "Codex" "$CODEX_SKILLS_DIR"
+    fi
 done < <(echo "$SKILLS_JSON" | jq -r '.removed_skills // {} | to_entries[] | [.key, (.value.repo // "")] | @tsv')
 
 # Iterate over each tracked skill
@@ -229,23 +232,16 @@ while IFS=$'\t' read -r name repo ref; do
         continue
     fi
 
-    install_skill_for_destination \
-        "$name" \
-        "$repo" \
-        "$ref" \
-        "Claude Code" \
-        "$CLAUDE_SKILLS_DIR"
-
-    install_skill_for_destination \
-        "$name" \
-        "$repo" \
-        "$ref" \
-        "Codex" \
-        "$CODEX_SKILLS_DIR"
+    if [ "$HARNESS" = both ] || [ "$HARNESS" = claude ]; then
+        install_skill_for_destination "$name" "$repo" "$ref" "Claude Code" "$CLAUDE_SKILLS_DIR"
+    fi
+    if [ "$HARNESS" = both ] || [ "$HARNESS" = codex ]; then
+        install_skill_for_destination "$name" "$repo" "$ref" "Codex" "$CODEX_SKILLS_DIR"
+    fi
 done < <(echo "$SKILLS_JSON" | jq -r '.skills // {} | to_entries[] | [.key, .value.repo, (.value.ref // "")] | @tsv')
 
 log_with_level "SUCCESS" "Skill installation complete"
 if [ "$DRY_RUN" = false ]; then
     echo ""
-    echo "Restart Claude Code and Codex to pick up newly installed skills"
+    echo "Restart the selected agent harness to pick up newly installed skills"
 fi

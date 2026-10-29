@@ -10,7 +10,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/utils.sh"
 
 cleanup() {
-    standard_cleanup "Rollback"
+    local exit_code=$?
+    standard_cleanup "$exit_code" "Rollback"
 }
 trap cleanup EXIT
 

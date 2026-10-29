@@ -28,7 +28,7 @@
     "audit:deps": "npm audit --package-lock-only --audit-level=high",
     "check:mcps": "./scripts/check-mcps.py",
     "check:agent-tooling": "./scripts/check-agent-tooling.py",
-    "lint": "shellcheck --shell=bash --severity=info scripts/*.sh scripts/utils/*.sh codex_config/hooks/*.sh tests/helpers/*.bash && zsh -n scripts/*.sh scripts/utils/*.sh dot_files/.zshrc dot_files/.zprofile dot_files/.p10k.zsh && zsh -n codex_config/hooks/agent-daemons.sh && actionlint",
+    "lint": "./scripts/lint.sh",
     "scan:secrets": "./scripts/scan-secrets.sh",
     "test": "bats -r tests",
     "test:watch": "watchexec --shell=none --watch tests --watch scripts --watch codex_config --exts sh,bats,md -- npm test",

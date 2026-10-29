@@ -548,8 +548,15 @@ setup_code_review_graph() {
 # and build them, then add an independent watcher for each one.
 # Reloads automatically when the registry or watcher config changes.
 setup_crg_watcher() {
+    local dry_run=false
+    [ "${1:-}" = "--dry-run" ] && dry_run=true
     if ! command_exists code-review-graph; then
         log_with_level "INFO" "code-review-graph not installed, skipping watcher setup"
+        return 0
+    fi
+
+    if $dry_run; then
+        log_with_level "INFO" "[dry-run] Would reconcile the code-review-graph launchd watcher"
         return 0
     fi
 

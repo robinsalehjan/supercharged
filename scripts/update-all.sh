@@ -85,7 +85,7 @@ main() {
         "$SCRIPT_DIR/sync.sh" --only dotfiles
     fi
 
-    "$SCRIPT_DIR/update.sh" "${UPDATE_ARGS[@]}"
+    "$SCRIPT_DIR/update.sh" --defer-agent-tooling "${UPDATE_ARGS[@]}"
     if [ "$DRY_RUN" = true ]; then
         "$SCRIPT_DIR/install-agent-tooling.sh" --dry-run
     else

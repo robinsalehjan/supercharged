@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 # Command mocking utilities for error scenario testing
 
-# Restore real jq command
-unmock_jq() {
-  unset -f jq
-}
-
 # Ensure a mock bin dir exists on PATH for path-based mocking (works in zsh subprocesses)
 _ensure_mock_bin_dir() {
   if [ -n "${TEST_TEMP_DIR:-}" ]; then
@@ -58,11 +53,6 @@ BREWEOF
   fi
 }
 
-unmock_brew() {
-  unset -f brew
-  [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/brew"
-}
-
 # Mock ping for internet connectivity
 mock_ping_success() {
   function ping() { return 0; }
@@ -74,22 +64,6 @@ mock_ping_success() {
     printf '#!/bin/sh\nexit 0\n' > "$MOCK_BIN_DIR/ping"
     chmod +x "$MOCK_BIN_DIR/ping"
   fi
-}
-
-mock_ping_failure() {
-  function ping() { return 1; }
-  export -f ping
-
-  _ensure_mock_bin_dir
-  if [ -n "${MOCK_BIN_DIR:-}" ]; then
-    printf '#!/bin/sh\nexit 1\n' > "$MOCK_BIN_DIR/ping"
-    chmod +x "$MOCK_BIN_DIR/ping"
-  fi
-}
-
-unmock_ping() {
-  unset -f ping
-  [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/ping"
 }
 
 # Mock asdf to prevent real plugin installs
@@ -111,10 +85,6 @@ mock_asdf() {
   export -f asdf
 }
 
-unmock_asdf() {
-  unset -f asdf
-}
-
 # Mock pipx for code-review-graph testing
 mock_pipx() {
     _ensure_mock_bin_dir
@@ -122,10 +92,6 @@ mock_pipx() {
         printf '#!/bin/sh\nexit 0\n' > "$MOCK_BIN_DIR/pipx"
         chmod +x "$MOCK_BIN_DIR/pipx"
     fi
-}
-
-unmock_pipx() {
-    [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/pipx"
 }
 
 # Mock code-review-graph. Reports the managed pin by default so the mock stays
@@ -148,10 +114,6 @@ CRGEOF
     fi
 }
 
-unmock_code_review_graph() {
-    [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/code-review-graph"
-}
-
 # Mock wt (Worktrunk) for setup testing
 mock_wt() {
     _ensure_mock_bin_dir
@@ -165,10 +127,6 @@ esac
 WTEOF
         chmod +x "$MOCK_BIN_DIR/wt"
     fi
-}
-
-unmock_wt() {
-    [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/wt"
 }
 
 # Build a checksummed Obscura fixture and mock the exact-release curl download.
@@ -206,10 +164,6 @@ CURLEOF
     fi
 }
 
-unmock_obscura_release() {
-    [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/curl"
-}
-
 # Mock claude CLI — records every invocation to $MOCK_BIN_DIR/claude.calls
 # so smoke tests can assert what install-plugins.sh / restore-claude.sh would run.
 #
@@ -228,10 +182,6 @@ exit 0
 CLAUDEEOF
         chmod +x "$MOCK_BIN_DIR/claude"
     fi
-}
-
-unmock_claude() {
-    [ -n "${MOCK_BIN_DIR:-}" ] && rm -f "$MOCK_BIN_DIR/claude" "$MOCK_BIN_DIR/claude.calls"
 }
 
 # Unmock all system command mocks — call in teardown to prevent leaks

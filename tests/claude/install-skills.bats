@@ -17,7 +17,17 @@ setup() {
 
 teardown() {
   teardown_test_env
-  unmock_jq 2>/dev/null || true
+  unmock_all
+}
+
+@test "--harness limits reconciliation to one agent home" {
+  local skills='{"version":1,"skills":{"my-skill":{"repo":"https://example.com/my-skill.git","ref":"1111111111111111111111111111111111111111"}}}'
+
+  run run_install_skills "$skills" "" --dry-run --harness claude
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"for Claude Code: my-skill"* ]]
+  [[ "$output" != *"for Codex: my-skill"* ]]
 }
 
 # Helper: write installed_skills.json into a temp agent_config dir and run

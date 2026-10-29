@@ -30,24 +30,6 @@ show_help() {
     echo "  -h, --help   Show this help message"
 }
 
-get_file_mtime() {
-    local file="$1"
-    local mtime
-
-    if mtime=$(stat -f %m "$file" 2>/dev/null); then
-        echo "$mtime"
-        return 0
-    fi
-
-    if mtime=$(stat -c %Y "$file" 2>/dev/null); then
-        echo "$mtime"
-        return 0
-    fi
-
-    echo "0"
-    return 1
-}
-
 get_newest_mtime_in_dir() {
     local dir="$1"
     local newest=0
@@ -64,19 +46,6 @@ get_newest_mtime_in_dir() {
     done
 
     echo "$newest"
-}
-
-restore_config_file() {
-    local src="$1"
-    local dest="$2"
-    local name="$3"
-
-    if [ -f "$src" ]; then
-        mkdir -p "$(dirname "$dest")"
-        expand_portable_path < "$src" > "$dest.tmp"
-        mv "$dest.tmp" "$dest"
-        log_with_level "SUCCESS" "Restored $name"
-    fi
 }
 
 restore_codex_agents() {
@@ -399,7 +368,7 @@ main() {
 
     if [ -f "$AGENT_CONFIG_DIR/installed_skills.json" ]; then
         log_with_level "INFO" "Installing shared agent skills..."
-        if "$PROJECT_ROOT/scripts/install-skills.sh"; then
+        if "$PROJECT_ROOT/scripts/install-skills.sh" --harness codex; then
             log_with_level "SUCCESS" "Shared agent skills installed"
         else
             log_with_level "WARN" "Skill installation failed — run 'npm run install:skills' manually"

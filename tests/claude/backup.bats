@@ -26,112 +26,23 @@ teardown() {
   teardown_test_env
 }
 
-# Helper: Run a jq filter + path portability replacement
-# Usage: _sanitize_json ".jq_filter" "input.json" "output.json"
-_sanitize_json() {
-  local jq_filter="$1"
-  local input_file="$2"
-  local output_file="$3"
-
-  # Use ORIGINAL_HOME for path replacement since HOME is overridden in tests
-  # pipefail ensures jq failures propagate through the pipe
-  set -o pipefail
-  jq -a "$jq_filter" "$input_file" | sed "s|$ORIGINAL_HOME|\$HOME|g" > "$output_file"
-  local result=$?
-  set +o pipefail
-  return $result
-}
-
-# Helper: Sanitize plugins for backup testing
-# Usage: sanitize_plugins INPUT OUTPUT MARKETPLACE...
+# Exercise the production transformations in their native shell.
 sanitize_plugins() {
-  local input_file="$1"
-  local output_file="$2"
-  shift 2
-  local marketplaces=("$@")
-
-  local jq_args=()
-  local jq_filter='to_entries'
-  local i=0
-
-  for marketplace in "${marketplaces[@]}"; do
-    jq_args+=(--arg "mp$i" "@$marketplace")
-    jq_filter="$jq_filter | map(select(.key | endswith(\$mp$i) | not))"
-    i=$((i + 1))
-  done
-  jq_filter="$jq_filter | from_entries"
-
-  set -o pipefail
-  jq "${jq_args[@]}" "{version: .version, plugins: (.plugins | $jq_filter)}" "$input_file" | \
-    sed "s|$ORIGINAL_HOME|\$HOME|g" > "$output_file"
-  local result=$?
-  set +o pipefail
-  return $result
+  local input_file="$1" output_file="$2"
+  HOME="$HOME" zsh -c 'source "$1"; sanitize_claude_plugins "$2" "$3"' \
+    _ "$PROJECT_ROOT/scripts/backup-claude.sh" "$input_file" "$output_file"
 }
 
 sanitize_marketplaces() {
-  local input_file="$1"
-  local output_file="$2"
-  shift 2
-  local marketplaces=("$@")
-
-  local jq_args=()
-  local jq_filter='.'
-  local i=0
-
-  for marketplace in "${marketplaces[@]}"; do
-    jq_args+=(--arg "mp$i" "$marketplace")
-    jq_filter="$jq_filter | del(.[(\$mp$i)])"
-    i=$((i + 1))
-  done
-
-  set -o pipefail
-  jq "${jq_args[@]}" "$jq_filter" "$input_file" | \
-    sed "s|$ORIGINAL_HOME|\$HOME|g" > "$output_file"
-  local result=$?
-  set +o pipefail
-  return $result
+  local input_file="$1" output_file="$2"
+  HOME="$HOME" zsh -c 'source "$1"; sanitize_claude_marketplaces "$2" "$3"' \
+    _ "$PROJECT_ROOT/scripts/backup-claude.sh" "$input_file" "$output_file"
 }
 
-# Helper: Sanitize settings for backup testing
-# Usage: sanitize_settings INPUT OUTPUT MARKETPLACE...
 sanitize_settings() {
-  local input_file="$1"
-  local output_file="$2"
-  shift 2
-  local marketplaces=("$@")
-
-  local jq_args=()
-  local plugin_filter='to_entries'
-  local i=0
-
-  for marketplace in "${marketplaces[@]}"; do
-    jq_args+=(--arg "mp$i" "@$marketplace")
-    plugin_filter="$plugin_filter | map(select(.key | endswith(\$mp$i) | not))"
-    i=$((i + 1))
-  done
-  plugin_filter="$plugin_filter | from_entries"
-
-  set -o pipefail
-  jq "${jq_args[@]}" \
-    "(. + {enabledPlugins: (.enabledPlugins | $plugin_filter)}) |
-    .[\"\$schema\"] = \"https://json.schemastore.org/claude-code-settings.json\" |
-    if has(\"additionalDirectories\") then
-      .permissions.additionalDirectories = .additionalDirectories |
-      del(.additionalDirectories)
-    else . end |
-    del(
-      .mcpServers,
-      .statusLine,
-      .skipDangerousModePermissionPrompt,
-      .skipAutoPermissionPrompt,
-      .env.MAX_THINKING_TOKENS
-    ) |
-    del(.env[\"GITHUB_PERSONAL_ACCESS_TOKEN\"])" \
-    "$input_file" | sed "s|$ORIGINAL_HOME|\$HOME|g" > "$output_file"
-  local result=$?
-  set +o pipefail
-  return $result
+  local input_file="$1" output_file="$2"
+  HOME="$HOME" zsh -c 'source "$1"; sanitize_claude_settings "$2" "$3"' \
+    _ "$PROJECT_ROOT/scripts/backup-claude.sh" "$input_file" "$output_file"
 }
 
 @test "removes vend-plugins entries from installed_plugins.json" {
@@ -150,6 +61,22 @@ sanitize_settings() {
   assert_plugin_exists "$TEMP_REPO_CONFIG/installed_plugins.json" "hookify@claude-plugins-official"
 }
 
+@test "complete backup command sanitizes an isolated repository copy" {
+  repo_copy="$TEST_TEMP_DIR/repository"
+  mkdir -p "$repo_copy"
+  cp -R "$PROJECT_ROOT/scripts" "$PROJECT_ROOT/agent_config" "$PROJECT_ROOT/claude_config" "$repo_copy/"
+  load_fixture "claude-backup/settings-full.json" "$HOME/.claude/settings.json"
+  load_fixture "claude-backup/plugins-mixed.json" "$HOME/.claude/plugins/installed_plugins.json"
+  load_fixture "shared/marketplaces-with-vend.json" "$HOME/.claude/plugins/known_marketplaces.json"
+
+  run env HOME="$HOME" zsh "$repo_copy/scripts/backup-claude.sh"
+
+  [ "$status" -eq 0 ]
+  [ "$(jq '[.plugins | keys[] | select(endswith("@vend-plugins"))] | length' "$repo_copy/claude_config/installed_plugins.json")" -eq 0 ]
+  [ "$(jq 'has("vend-plugins")' "$repo_copy/claude_config/known_marketplaces.json")" = false ]
+  [ "$(jq '.env | has("GITHUB_PERSONAL_ACCESS_TOKEN")' "$repo_copy/claude_config/settings.json")" = false ]
+}
+
 @test "backup-claude.sh guards CLAUDE.md @ references" {
   run grep -F 'is_safe_markdown_ref "$ref_file"' "$PROJECT_ROOT/scripts/backup-claude.sh"
   [ "$status" -eq 0 ]
@@ -157,7 +84,7 @@ sanitize_settings() {
 
 @test "removes vend-plugins marketplace from known_marketplaces.json" {
   # Arrange: Load fixture
-  load_fixture "claude-backup/marketplaces-full.json" "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json"
+  load_fixture "shared/marketplaces-with-vend.json" "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json"
 
   # Act: Run sanitization
   sanitize_marketplaces "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json" "$TEMP_REPO_CONFIG/known_marketplaces.json" "${TEST_SANITIZE_MARKETPLACES[@]}"

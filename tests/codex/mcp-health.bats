@@ -78,6 +78,9 @@ from socketserver import TCPServer
 
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
+        if self.headers.get("X-Test-Token") != "synthetic-header":
+            self.send_error(403)
+            return
         size = int(self.headers.get("Content-Length", "0"))
         self.rfile.read(size)
         payload = {
@@ -129,6 +132,7 @@ PYEOF
     cat > "$CONFIG_DIR/config.toml" <<EOF
 [mcp_servers.docs]
 url = "http://127.0.0.1:$port/mcp"
+http_headers = { X-Test-Token = "synthetic-header" }
 EOF
 
     run "$CHECKER" --config-dir "$CONFIG_DIR" --server docs --json --timeout 2
@@ -136,4 +140,40 @@ EOF
     [ "$status" -eq 0 ]
     run jq -e '.[0].transport == "http" and .[0].server_name == "http-test" and .[0].status == "pass"' <<<"$output"
     [ "$status" -eq 0 ]
+}
+
+@test "MCP checker parses comments, multiline values, quoted names, and configured env" {
+    cat > "$TEST_TEMP_DIR/bin/env-mcp" <<'EOF'
+#!/bin/sh
+[ "$SYNTHETIC_TOKEN" = "synthetic-value" ] || exit 9
+IFS= read -r request
+printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18"}}'
+EOF
+    chmod +x "$TEST_TEMP_DIR/bin/env-mcp"
+    cat > "$CONFIG_DIR/config.toml" <<EOF
+# A quoted server name and multiline array exercise complete TOML parsing.
+[mcp_servers."quoted.server"]
+command = "$TEST_TEMP_DIR/bin/env-mcp"
+args = [
+  "--one",
+  "two", # inline comment
+]
+env = { SYNTHETIC_TOKEN = "synthetic-value" }
+EOF
+
+    run "$CHECKER" --config-dir "$CONFIG_DIR" --server quoted.server --json --timeout 2
+
+    [ "$status" -eq 0 ]
+    [[ "$output" != *"synthetic-value"* ]]
+    run jq -e '.[0].name == "quoted.server" and .[0].status == "pass"' <<<"$output"
+    [ "$status" -eq 0 ]
+}
+
+@test "MCP checker rejects a malformed complete TOML document" {
+    printf '%s\n' '[mcp_servers.broken' 'command = "x"' > "$CONFIG_DIR/config.toml"
+
+    run "$CHECKER" --config-dir "$CONFIG_DIR" --json
+
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"malformed TOML"* ]]
 }

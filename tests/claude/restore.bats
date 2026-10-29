@@ -27,179 +27,41 @@ teardown() {
   teardown_test_env
 }
 
-# Helper: Merge plugin configs for restore testing
-# Usage: merge_plugin_configs REPO LOCAL OUTPUT MARKETPLACE...
+# Route merge and injection cases through the production helpers in zsh.
 merge_plugin_configs() {
-  local repo_file="$1"
-  local local_file="$2"
-  local output_file="$3"
-  shift 3
-  local marketplaces=("$@")
-
-  set -o pipefail
-
-  # If no local file, just expand repo config
-  if [ ! -f "$local_file" ]; then
-    expand_portable_path < "$repo_file" > "$output_file"
-    set +o pipefail
-    return 0
-  fi
-
-  local jq_args=()
-  local filter_parts=()
-
-  for marketplace in "${marketplaces[@]}"; do
-    # Extract plugins for this marketplace from local config
-    local preserved_var="preserved_${marketplace//-/_}"
-    local preserved_json
-    if ! preserved_json=$(jq ".plugins // {} | to_entries | map(select(.key | endswith(\"@${marketplace}\"))) | from_entries" "$local_file" 2>&1); then
-      echo "Failed to extract ${marketplace} from local config: $preserved_json" >&2
-      set +o pipefail
-      return 1
-    fi
-
-    # Add to jq args and filter
-    jq_args+=(--argjson "$preserved_var" "$preserved_json")
-    filter_parts+=("\$${preserved_var}")
-  done
-
-  # Get repo plugins and expand paths
-  local repo_plugins
-  if ! repo_plugins=$(expand_portable_path < "$repo_file" | jq '.plugins // {}' 2>&1); then
-    echo "Failed to extract repo plugins: $repo_plugins" >&2
-    set +o pipefail
-    return 1
-  fi
-
-  # Build merge expression: . + $preserved_foo + $preserved_bar + ...
-  local merge_expr="."
-  for part in "${filter_parts[@]}"; do
-    merge_expr="$merge_expr + $part"
-  done
-
-  # Merge: repo + all preserved marketplaces (local takes precedence)
-  local merged_plugins
-  if ! merged_plugins=$(echo "$repo_plugins" | jq "${jq_args[@]}" "$merge_expr" 2>&1); then
-    echo "Failed to merge plugins: $merged_plugins" >&2
-    set +o pipefail
-    return 1
-  fi
-
-  # Get version from repo
-  local version
-  if ! version=$(jq '.version // 2' "$repo_file" 2>&1); then
-    echo "Failed to extract version: $version" >&2
-    set +o pipefail
-    return 1
-  fi
-
-  # Build final merged object
-  jq -n --argjson version "$version" --argjson plugins "$merged_plugins" '{version: $version, plugins: $plugins}' > "$output_file"
-  local result=$?
-  set +o pipefail
-  return $result
+  local repo_file="$1" local_file="$2" output_file="$3"
+  rm -f "$output_file"
+  [ ! -f "$local_file" ] || cp "$local_file" "$output_file"
+  HOME="$HOME" zsh -c 'source "$1"; merge_plugin_config "$2" "$3" test' \
+    _ "$PROJECT_ROOT/scripts/restore-claude.sh" "$repo_file" "$output_file"
 }
 
-# Helper: Merge marketplace configs for restore testing
-# Usage: merge_marketplace_configs REPO LOCAL OUTPUT MARKETPLACE...
 merge_marketplace_configs() {
-  local repo_file="$1"
-  local local_file="$2"
-  local output_file="$3"
-  shift 3
-  local -a marketplaces=("$@")
-
-  set -o pipefail
-
-  # If no local file, just expand repo config
-  if [ ! -f "$local_file" ]; then
-    expand_portable_path < "$repo_file" > "$output_file"
-    set +o pipefail
-    return 0
-  fi
-
-  local repo_content
-  if ! repo_content=$(expand_portable_path < "$repo_file" 2>&1); then
-    echo "Failed to expand repo file: $repo_content" >&2
-    set +o pipefail
-    return 1
-  fi
-
-  local local_content
-  local_content=$(cat "$local_file")
-
-  local jq_args=()
-  local jq_filter="."
-
-  for i in "${!marketplaces[@]}"; do
-    local mp="${marketplaces[$i]}"
-    jq_args+=(--arg "mp$i" "$mp")
-    jq_filter+=" | if has(\$mp$i) then . + {(\$mp$i): .[\$mp$i]} else . end"
-  done
-
-  local preserved
-  if ! preserved=$(echo "$local_content" | jq "${jq_args[@]}" "$jq_filter" 2>&1); then
-    echo "Failed to extract marketplaces: $preserved" >&2
-    set +o pipefail
-    return 1
-  fi
-
-  # Merge: repo + preserved local (local takes precedence)
-  local merged
-  if ! merged=$(echo "$repo_content" | jq --argjson preserved "$preserved" '. + $preserved' 2>&1); then
-    echo "Failed to merge marketplaces: $merged" >&2
-    set +o pipefail
-    return 1
-  fi
-
-  echo "$merged" > "$output_file"
-  set +o pipefail
+  local repo_file="$1" local_file="$2" output_file="$3"
+  rm -f "$output_file"
+  [ ! -f "$local_file" ] || cp "$local_file" "$output_file"
+  HOME="$HOME" zsh -c 'source "$1"; merge_marketplace_config "$2" "$3" test' \
+    _ "$PROJECT_ROOT/scripts/restore-claude.sh" "$repo_file" "$output_file"
 }
 
-# Helper: Inject env vars from a secrets file into settings.json env section
-# Mirrors restore_settings_env() from restore-claude.sh with explicit var list argument
 inject_settings_env() {
-  local settings_json="$1"
-  local secrets_file="$2"
-  shift 2
-  local inject_vars=("$@")
-
-  if [ ! -f "$settings_json" ] || [ ! -f "$secrets_file" ]; then
-    return 0
+  local settings_json="$1" secrets_file="$2"
+  [ ! -f "$secrets_file" ] || source "$secrets_file"
+  if [ -n "${GITHUB_PERSONAL_ACCESS_TOKEN+x}" ]; then
+    export GITHUB_PERSONAL_ACCESS_TOKEN
   fi
-
-  # shellcheck disable=SC1090
-  source "$secrets_file" 2>/dev/null || true
-
-  local vars_json
-  vars_json=$(printf '%s\n' "${inject_vars[@]}" | jq -R . | jq -s .)
-
-  local updated
-  if ! updated=$(jq -a --argjson vars "$vars_json" '
-      .env = (.env // {}) + (
-          $vars |
-          map(select(env[.] != null)) |
-          map({(.): env[.]}) |
-          add // {}
-      )
-  ' "$settings_json" 2>/dev/null); then
-    return 1
-  fi
-
-  echo "$updated" > "$settings_json"
+  CLAUDE_HOME="$(dirname "$settings_json")" HOME="$HOME" \
+    zsh -c 'source "$1"; restore_settings_env' _ "$PROJECT_ROOT/scripts/restore-claude.sh"
 }
 
 # Helper: source the real load_secrets() function from restore-claude.sh so
 # tests exercise production code (not a re-implementation that could drift).
 # Stubs log_with_level so the function is callable in isolation.
 source_real_load_secrets() {
-  local script="$PROJECT_ROOT/scripts/restore-claude.sh"
-  local extracted="$BATS_TEST_TMPDIR/load_secrets.sh"
-  sed -n '/^load_secrets() {$/,/^}$/p' "$script" > "$extracted"
+  # shellcheck disable=SC1090
+  source "$PROJECT_ROOT/scripts/restore-claude.sh"
   log_with_level() { :; }
   SECRETS_LOADED=false
-  # shellcheck disable=SC1090
-  source "$extracted"
 }
 
 # =============================================================================
@@ -499,7 +361,7 @@ EOF
 @test "marketplace merge preserves local vend-plugins marketplace" {
   # Arrange: repo has only official, local has both
   load_fixture "claude-restore/marketplaces-repo.json" "$TEMP_REPO_CONFIG/known_marketplaces.json"
-  load_fixture "claude-restore/marketplaces-local.json" "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json"
+  load_fixture "shared/marketplaces-with-vend.json" "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json"
 
   # Act: Run marketplace merge
   merge_marketplace_configs \
@@ -511,6 +373,24 @@ EOF
   # Assert: Both marketplaces present
   assert_marketplace_exists "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json" "claude-plugins-official"
   assert_marketplace_exists "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json" "vend-plugins"
+}
+
+@test "repository marketplace wins except for explicitly preserved work marketplace" {
+  load_fixture "claude-restore/marketplaces-repo.json" "$TEMP_REPO_CONFIG/known_marketplaces.json"
+  cat > "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json" <<'EOF'
+{
+  "claude-plugins-official": {"url":"https://local.invalid/override","type":"git"},
+  "vend-plugins": {"url":"git@github.com:vend/vend-plugins.git","type":"git"}
+}
+EOF
+
+  merge_marketplace_configs \
+    "$TEMP_REPO_CONFIG/known_marketplaces.json" \
+    "$TEMP_CLAUDE_PLUGINS/known_marketplaces.json" \
+    "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json"
+
+  [ "$(jq -r '.["claude-plugins-official"].url' "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json")" = "https://github.com/anthropics/claude-plugins-official" ]
+  [ "$(jq -r '.["vend-plugins"].url' "$TEMP_CLAUDE_PLUGINS/merged_marketplaces.json")" = "git@github.com:vend/vend-plugins.git" ]
 }
 
 @test "marketplace merge creates new config when no local exists" {

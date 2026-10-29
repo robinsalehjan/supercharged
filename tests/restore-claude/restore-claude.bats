@@ -102,9 +102,8 @@ EOF
   test_file="$TEST_TEMP_DIR/sample.txt"
   echo "test" > "$test_file"
 
-  # Extract and run get_file_mtime in a zsh subprocess
   run zsh -c "
-    $(sed -n '/^get_file_mtime()/,/^}/p' "$SCRIPT")
+    source '$PROJECT_ROOT/scripts/utils.sh'
     get_file_mtime '$test_file'
   "
 
@@ -116,7 +115,7 @@ EOF
 
 @test "get_file_mtime returns 0 for missing file" {
   run zsh -c "
-    $(sed -n '/^get_file_mtime()/,/^}/p' "$SCRIPT")
+    source '$PROJECT_ROOT/scripts/utils.sh'
     get_file_mtime '$TEST_TEMP_DIR/does-not-exist'
   "
 
@@ -136,7 +135,7 @@ EOF
   touch -t 203001010000 "$test_dir/new.json"
 
   run zsh -c "
-    $(sed -n '/^get_file_mtime()/,/^}/p' "$SCRIPT")
+    source '$PROJECT_ROOT/scripts/utils.sh'
     $(sed -n '/^get_newest_mtime()/,/^}/p' "$SCRIPT")
     get_newest_mtime '$test_dir'
   "
@@ -161,7 +160,7 @@ EOF
 
   run zsh -c "
     setopt null_glob
-    $(sed -n '/^get_file_mtime()/,/^}/p' "$SCRIPT")
+    source '$PROJECT_ROOT/scripts/utils.sh'
     $(sed -n '/^get_newest_mtime()/,/^}/p' "$SCRIPT")
     get_newest_mtime '$test_dir'
   "

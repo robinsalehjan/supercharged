@@ -18,6 +18,12 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
+try:
+    from config_toml import load_mcp_servers
+except RuntimeError as error:
+    print(error, file=sys.stderr)
+    raise SystemExit(2)
+
 
 PROTOCOL_VERSION = "2025-06-18"
 CLIENT_INFO = {"name": "supercharged-mcp-health", "version": "1.0"}
@@ -252,45 +258,6 @@ def probe_http(name: str, config: dict[str, Any], timeout: float) -> ProbeResult
         return ProbeResult(name, "http", "fail", str(error))
 
 
-def parse_mcp_servers(path: Path) -> dict[str, dict[str, Any]]:
-    """Parse the simple top-level MCP tables used by tracked Codex configs."""
-    servers: dict[str, dict[str, Any]] = {}
-    current: dict[str, Any] | None = None
-
-    for raw_line in path.read_text().splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if line.startswith("[") and line.endswith("]"):
-            section = line[1:-1]
-            parts = section.split(".")
-            if len(parts) == 2 and parts[0] == "mcp_servers":
-                current = servers.setdefault(parts[1], {})
-            else:
-                current = None
-            continue
-        if current is None or "=" not in line:
-            continue
-        key, raw_value = (part.strip() for part in line.split("=", 1))
-        if key not in {"command", "args", "cwd", "enabled", "url"}:
-            continue
-        try:
-            current[key] = json.loads(raw_value)
-        except json.JSONDecodeError as error:
-            raise ValueError(f"{path}: invalid {key} value: {error.msg}") from error
-    return servers
-
-
-def load_servers(config_dir: Path, profile: str) -> dict[str, dict[str, Any]]:
-    servers = parse_mcp_servers(config_dir / "config.toml")
-
-    if profile != "base":
-        profile_path = config_dir / f"{profile}.config.toml"
-        for name, server in parse_mcp_servers(profile_path).items():
-            servers[name] = server
-    return servers
-
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -317,7 +284,7 @@ def main() -> int:
         return 2
 
     try:
-        servers = load_servers(args.config_dir, args.profile)
+        servers = load_mcp_servers(args.config_dir, args.profile)
     except (OSError, ValueError) as error:
         print(f"Failed to load MCP configuration: {error}", file=sys.stderr)
         return 2

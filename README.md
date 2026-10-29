@@ -23,42 +23,11 @@ cd supercharged && npm run setup
 ## Commands
 
 ```bash
-npm run setup              # Fresh install (interactive)
-npm run sync                       # Apply Claude, Codex, and dotfiles from the repository
-npm run sync -- --force            # Apply all managed config regardless of timestamps
-npm run sync -- --only agents      # Apply Claude and Codex config only
-npm run sync -- --only claude      # Apply Claude config only
-npm run sync -- --only codex       # Apply Codex config, rules, and shared skills only
-npm run sync -- --only dotfiles    # Apply dotfiles and Worktrunk shell integration only
-npm run backup                     # Capture Claude and Codex config in the repository
-npm run backup -- --only claude    # Capture Claude config only
-npm run backup -- --only codex     # Capture Codex config, hooks, and skills only
-npm run update                     # Sync dotfiles/skills, then update all components
-npm run update -- --backup         # Capture live agent config, then update
-npm run update -- --dry-run        # Read-only report of outdated brew/npm packages
-npm run update -- --only brew      # Sync dotfiles/skills, then update one component
-npm run validate                   # Verify tools installed correctly
-npm run install:agent-tooling # Reconcile shared tooling and both native plugin sets
-npm run install:plugins    # Install all Claude Code plugins
-npm run install:codex-plugins # Install or refresh managed Codex plugins
-npm run install:managed-tools # Reconcile exact-pinned local agent tools
-npm run install:firebase     # Install pinned Firebase CLI from npm
-npm run install:openwiki    # Install or update OpenWiki for agent documentation
-npm run openwiki:watch -- add /path/to/repo # Opt in an existing wiki to scheduled updates
-npm run install:plannotator # Install or update the checksum-pinned Plannotator binary
-npm run install:skills     # Install, update, or safely prune shared git skills
-npm run update:tool-pins   # Check for newer managed tool releases
-npm run update:asdf-pins   # Check for newer asdf runtime pins
-npm run promote:pins       # Preview tracked pins from installed tools on this machine
-npm run rollback                   # Roll back to the latest configuration snapshot
-npm run version:show       # Print current version, commit, tag, branch
-npm run release -- patch   # Cut a release (patch|minor|major|x.y.z)
-npm test                   # Run all BATS tests
-npm run lint               # ShellCheck, zsh syntax checks, and actionlint
-npm run scan:secrets       # Scan repository paths for likely secrets
-npm run audit:deps         # Fail on high/critical npm advisories
-npm run check:agent-tooling # Report shared capabilities and detect harness drift
-npm run help               # Show all commands
+npm run help               # Canonical complete command inventory
+npm run setup              # Fresh interactive installation
+npm run sync               # Apply managed configuration
+npm run update             # Sync dotfiles, update dependencies, reconcile tooling
+npm test                   # Run the BATS suite
 ```
 
 ## Reproduced environment

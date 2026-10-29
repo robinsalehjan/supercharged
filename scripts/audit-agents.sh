@@ -122,48 +122,25 @@ if ! command -v jq >/dev/null 2>&1; then
     exit 2
 fi
 
-validate_toml_shape() {
-    local file="$1"
-    local line trimmed value
-
-    while IFS= read -r line || [ -n "$line" ]; do
-        trimmed="${line#"${line%%[![:space:]]*}"}"
-        [ -z "$trimmed" ] && continue
-        [[ "$trimmed" == \#* ]] && continue
-        if [[ "$trimmed" == \[*\] ]]; then
-            continue
-        fi
-        if [[ "$trimmed" != *=* ]]; then
-            return 1
-        fi
-        value="${trimmed#*=}"
-        value="${value#"${value%%[![:space:]]*}"}"
-        case "$value" in
-            true|false|\"*\"|\[*\]|[0-9]*|-[0-9]*) ;;
-            *) return 1 ;;
-        esac
-    done < "$file"
-}
+if ! command -v python3 >/dev/null 2>&1 || ! python3 -c 'import sys; raise SystemExit(sys.version_info < (3, 11))'; then
+    echo "audit:agents requires Python 3.11+; install the managed Python with npm run setup" >&2
+    exit 2
+fi
 
 # A fixed collation keeps the inventory assertion deterministic on developer
 # machines and macOS CI runners with different locale defaults.
-base_mcp_names=$(sed -n 's/^\[mcp_servers\.\([^].]*\)\]$/\1/p' "$CODEX_CONFIG_DIR/config.toml" | LC_ALL=C sort | tr '\n' ' ')
-apple_mcp_names=$(sed -n 's/^\[mcp_servers\.\([^].]*\)\]$/\1/p' "$CODEX_CONFIG_DIR/apple.config.toml" | LC_ALL=C sort | tr '\n' ' ')
 codex_profile_names=$(find "$CODEX_CONFIG_DIR" -maxdepth 1 \( -type f -o -type l \) \
     -name '*.config.toml' -exec basename {} \; | LC_ALL=C sort | tr '\n' ' ')
-playwright_enabled=$(awk '/^\[mcp_servers\.playwright\]$/{inside=1; next} inside && /^\[/{exit} inside && /^enabled = /{print $3; exit}' "$CODEX_CONFIG_DIR/config.toml")
-if validate_toml_shape "$CODEX_CONFIG_DIR/config.toml" && \
-   validate_toml_shape "$CODEX_CONFIG_DIR/apple.config.toml" && \
-   validate_toml_shape "$CODEX_CONFIG_DIR/review.config.toml" && \
-   [ "$codex_profile_names" = "apple.config.toml review.config.toml " ] && \
-   rg -q '^web_search = "live"$' "$CODEX_CONFIG_DIR/config.toml" && \
-   rg -q '^model_reasoning_effort = "medium"$' "$CODEX_CONFIG_DIR/config.toml" && \
-   rg -q '^hooks = true$' "$CODEX_CONFIG_DIR/config.toml" && \
-   rg -q '^memories = false$' "$CODEX_CONFIG_DIR/config.toml" && \
-   [ "$base_mcp_names" = "cloudflare code-review-graph openaiDeveloperDocs playwright " ] && \
-   [ "$playwright_enabled" = true ] && \
-   [ "$apple_mcp_names" = "xcode " ] && \
-   rg -q '^model_reasoning_effort = "xhigh"$' "$CODEX_CONFIG_DIR/review.config.toml"; then
+toml_summary=$(python3 "$SCRIPT_DIR/config_toml.py" audit-summary "$CODEX_CONFIG_DIR" 2>"$AUDIT_TMP_DIR/toml.err" || true)
+if jq -e '
+    .profiles == ["apple.config.toml", "review.config.toml"] and
+    .base_mcp == ["cloudflare", "code-review-graph", "openaiDeveloperDocs", "playwright"] and
+    .apple_mcp == ["xcode"] and
+    .playwright_enabled == true and .web_search == "live" and
+    .base_reasoning == "medium" and .review_reasoning == "xhigh" and
+    .hooks == true and .memories == false
+' <<<"$toml_summary" >/dev/null 2>&1 && \
+   [ "$codex_profile_names" = "apple.config.toml review.config.toml " ]; then
     pass "Tracked Codex base, native Apple, and review TOML profiles parse with the intended MCP states and scoped inventory"
 else
     fail "Tracked Codex TOML is malformed, deprecated, or has an invalid profile inventory"

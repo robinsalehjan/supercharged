@@ -4,20 +4,20 @@
 make_path_portable() {
     local input
     input=$(cat)
-    if echo "$input" | jq empty 2>/dev/null; then
-        echo "$input" | jq --arg home "$HOME" 'walk(if type == "string" then gsub($home; "$HOME") else . end)'
+    if printf '%s\n' "$input" | jq empty 2>/dev/null; then
+        printf '%s\n' "$input" | jq --arg home "$HOME" 'walk(if type == "string" then gsub($home; "$HOME") else . end)'
     else
-        echo "$input" | sed "s|$HOME|\$HOME|g"
+        printf '%s\n' "$input" | sed "s|$HOME|\$HOME|g"
     fi
 }
 
 expand_portable_path() {
     local input
     input=$(cat)
-    if echo "$input" | jq empty 2>/dev/null; then
-        echo "$input" | jq --arg home "$HOME" 'walk(if type == "string" then gsub("\\$HOME"; $home) else . end)'
+    if printf '%s\n' "$input" | jq empty 2>/dev/null; then
+        printf '%s\n' "$input" | jq --arg home "$HOME" 'walk(if type == "string" then gsub("\\$HOME"; $home) else . end)'
     else
-        echo "$input" | sed "s|\\\$HOME|$HOME|g"
+        printf '%s\n' "$input" | sed "s|\\\$HOME|$HOME|g"
     fi
 }
 

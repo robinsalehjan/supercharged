@@ -46,81 +46,16 @@ See [README.md](./README.md) and [docs/REFERENCE.md](./docs/REFERENCE.md) for us
 **Token optimization**:
 - Claude output guidance is restored through `claude_config/CLAUDE-TOKEN-EFFICIENT.md`, referenced by `claude_config/CLAUDE.md`.
 
-## npm Commands Reference
+## Commands
 
-```bash
-# Setup and Installation
-npm run setup                 # Fresh install (interactive)
-npm run sync -- --only dotfiles     # Apply managed dotfiles to $HOME; reapply Worktrunk integration
-
-# Updates
-# npm run update runs: sync dotfiles → update.sh → install:agent-tooling
-npm run update                    # Update all components (brew, asdf, zsh, npm, pip)
-npm run update -- --dry-run            # Preview outdated brew/npm packages (read-only)
-npm run update -- --only <comp>     # Sync dotfiles/skills + update one component (brew, asdf, zsh, npm, pip)
-
-# Validation and Recovery
-npm run validate              # Verify all tools installed correctly
-npm run check:mcps            # Complete initialize handshake for enabled base MCPs
-npm run check:mcps -- --profile apple          # Include native Xcode MCP
-npm run check:agent-tooling   # Report shared capabilities and detect harness drift
-npm run rollback              # Roll back to latest configuration snapshot
-
-# Claude Code Configuration
-npm run backup -- --only claude       # Capture Claude Code config in the repo
-npm run sync -- --only claude         # Apply Claude Code config (only if repo is newer)
-npm run sync -- --only claude --force # Force Claude Code config application
-npm run backup                      # Capture Claude Code + Codex config
-npm run backup -- --only codex        # Capture Codex config in the repo
-npm run sync -- --only codex          # Apply Codex config (only if repo is newer)
-npm run sync -- --only codex --force  # Force Codex config application
-npm run sync -- --only agents         # Apply Claude + Codex config
-npm run sync                          # Apply Claude + Codex config + dotfiles
-npm run install:plugins           # Install all marketplaces and plugins via claude CLI
-npm run install:plugins -- --dry-run # Preview what would be installed
-npm run install:codex-plugins     # Install or refresh Axiom through the Codex plugin marketplace
-npm run install:codex-plugins -- --dry-run # Preview managed Codex plugin work
-npm run install:agent-tooling     # Reconcile shared CLIs/skills and both native plugin sets
-npm run install:agent-tooling -- --dry-run # Preview complete agent tooling reconciliation
-npm run install:managed-tools     # Reconcile exact-pinned local agent tools
-npm run install:firebase          # Reconcile exact-pinned Firebase CLI through npm
-npm run install:managed-tools -- --dry-run # Inspect managed tool drift
-npm run install:openwiki          # Install or update the exact-pinned OpenWiki CLI
-npm run install:openwiki -- --dry-run # Preview OpenWiki installation
-npm run openwiki:watch -- add <repo> # Enroll an existing wiki for scheduled updates
-npm run openwiki:watch -- remove <repo> # Stop scheduled updates for a repository
-npm run openwiki:watch -- list # List local wiki enrollments; use run to check them now
-npm run install:plannotator       # Install/update the checksum-pinned Plannotator binary
-npm run install:skills            # Install/update/prune shared git skills for Claude and Codex
-npm run install:skills -- --dry-run # Preview installs, updates, and safe removals
-npm run update:tool-pins          # Check upstream releases against tracked managed-tool pins
-npm run promote:pins            # Preview pins from installed versions on this machine
-npm run promote:pins -- --apply  # Promote validated installed versions to tracked pins
-
-# Versioning and Releases
-npm run version:show              # Print version, commit SHA, tag, branch, host
-npm run release -- patch          # Cut a release: bump, commit, tag vX.Y.Z, push
-npm run release -- minor          # Minor bump
-npm run release -- 1.4.0          # Explicit version
-npm run release -- --dry-run patch # Preview without making changes
-
-# Development
-npm run lint                      # ShellCheck setup scripts, utilities, and test helpers
-npm run scan:secrets              # Scan repository paths for likely secrets
-npm run audit:agents              # Check managed Codex configuration and local agent health
-npm run audit:agents -- --repo-only # Deterministic CI-safe tracked-config audit
-npm test                          # Run all BATS tests
-npm run test:watch                # Re-run tests on change (requires Homebrew watchexec)
-bats tests/<suite>/*.bats         # Run a suite (claude, codex, utils, mac, update, setup, restore, meta)
-npm run help                      # Display all available commands
-```
+Run `npm run help` for the canonical complete command inventory. Keep detailed behavior and selector boundaries in [docs/REFERENCE.md](./docs/REFERENCE.md); do not duplicate the inventory here.
 
 ## ShellCheck Notes
 
 **Safe warnings** (zsh scripts run through `--shell=bash`):
-SC1071 (zsh unsupported), SC2296 (zsh `${(%):-%x}`), SC1091 (sourced file), SC2001 (sed vs expansion). These are disabled centrally in `.shellcheckrc` so the rule list lives next to the code rather than buried in `package.json`. Also safe but not disabled: SC2155 (declare+assign), SC2012 (ls vs find).
+SC1071 (zsh unsupported), SC2296 (zsh `${(%):-%x}`), SC1091 (dynamic sources), SC2001 (intentional sed), SC2329 (BATS/mock callbacks), and SC2016 (intentional literals) are disabled centrally in `.shellcheckrc`. Also safe but not disabled: SC2155 (declare+assign), SC2012 (ls vs find).
 
-`npm run lint` runs with `--severity=warning` to keep `info`/`style` notes from cluttering output without changing what the rule set considers failing.
+`npm run lint` runs ShellCheck with `--severity=info`; suppressions are maintained only in `.shellcheckrc`.
 
 **Zsh-specific syntax** used in scripts:
 `${(%):-%x}`, `${(%):-%n}`, `&!` (disown), `path=(...)`, `setopt`.

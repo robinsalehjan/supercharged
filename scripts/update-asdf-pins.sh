@@ -13,7 +13,7 @@
 #
 # Usage:
 #   ./update-asdf-pins.sh            # Report drift only
-#   ./update-asdf-pins.sh --apply    # Internal use by tests only; local promotion uses promote-local-pins.sh
+#   ./update-asdf-pins.sh --apply    # Rejected; use promote-local-pins.sh for writes
 #
 # Test hook: ASDF_LIST_FIXTURE_DIR=<dir> reads <dir>/<plugin>.txt instead of
 # invoking asdf, so the resolution logic is testable without the runtimes.
@@ -24,14 +24,12 @@ source "$(dirname "$0")/utils.sh"
 
 TOOL_VERSIONS="${ASDF_TOOL_VERSIONS:-$UTILS_PROJECT_ROOT/dot_files/.tool-versions}"
 POLICY="${ASDF_POLICY_MANIFEST:-$UTILS_PROJECT_ROOT/agent_config/asdf_policy.json}"
-APPLY=false
-[ "${1:-}" = "--apply" ] && APPLY=true
-if [ -n "${1:-}" ] && [ "${1:-}" != "--apply" ]; then
-    echo "Usage: $(basename "$0") [--apply]" >&2
+if [ "${1:-}" = "--apply" ]; then
+    echo "This upstream checker is read-only. Use npm run promote:pins -- --apply to write locally installed versions." >&2
     exit 2
 fi
-if $APPLY && [ "${SUPERCHARGED_LOCAL_PROMOTION:-}" != 1 ]; then
-    echo "Use npm run promote:pins -- --apply to write locally installed versions" >&2
+if [ -n "${1:-}" ]; then
+    echo "Usage: $(basename "$0")" >&2
     exit 2
 fi
 
@@ -114,23 +112,4 @@ for entry in "${updates[@]}"; do
     echo "$plugin: $from -> $to"
 done
 
-if ! $APPLY; then
-    echo "Install and validate a version locally, then run: npm run promote:pins -- --apply"
-    exit 0
-fi
-
-tmp=$(mktemp "${TOOL_VERSIONS}.XXXXXX")
-# shellcheck disable=SC2064  # $tmp must be expanded now, not when signalled.
-trap "rm -f ${(q)tmp}" EXIT
-cp "$TOOL_VERSIONS" "$tmp"
-for entry in "${updates[@]}"; do
-    read -r plugin _ to <<< "$entry"
-    # Only the pin line changes; comments and layout are preserved.
-    awk -v plugin="$plugin" -v version="$to" \
-        '$1 == plugin && NF == 2 { print plugin, version; next } { print }' \
-        "$tmp" > "$tmp.next"
-    mv "$tmp.next" "$tmp"
-done
-mv "$tmp" "$TOOL_VERSIONS"
-trap - EXIT
-echo "Updated $TOOL_VERSIONS"
+echo "Install and validate a version locally, then run: npm run promote:pins -- --apply"

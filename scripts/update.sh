@@ -12,6 +12,7 @@ SKIP_ZSH=false
 SKIP_NPM=false
 SKIP_PIP=false
 ONLY_MODE=false
+DEFER_AGENT_TOOLING=false
 
 # Usage information
 show_help() {
@@ -41,13 +42,20 @@ show_help() {
 
 # Setup error handling and cleanup
 cleanup() {
-    standard_cleanup "Update"
+    local exit_code=$?
+    standard_cleanup "$exit_code" "Update"
 }
 
 main() {
     # Parse command line arguments
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            --defer-agent-tooling)
+                # Internal: update-all.sh performs one complete reconciliation
+                # after dependency updates finish.
+                DEFER_AGENT_TOOLING=true
+                shift
+                ;;
             --only)
                 if [[ "$ONLY_MODE" != true ]]; then
                     ONLY_MODE=true
@@ -165,7 +173,16 @@ main() {
 
     if ! $SKIP_NPM && command -v npm >/dev/null 2>&1; then
         log_with_level "INFO" "📦 Outdated npm global packages:"
-        outdated_npm=$(npm outdated -g --depth=0 2>/dev/null || true)
+        outdated_npm=$(npm outdated -g --depth=0 --json 2>/dev/null || true)
+        managed_npm=$(jq -r '.tools | to_entries[] | select(.value.policy == "exact-npm") | .value.package' \
+            "$UTILS_PROJECT_ROOT/agent_config/managed_tools.json" 2>/dev/null || true)
+        outdated_npm=$(jq -r --arg managed "$managed_npm" '
+            ($managed | split("\n")) as $managed_packages
+            | to_entries[]
+            | .key as $package
+            | select(($managed_packages | index($package)) == null)
+            | "\(.key) \(.value.current // "?") -> \(.value.latest // "?")"
+        ' <<< "$outdated_npm" 2>/dev/null || true)
         if [ -n "$outdated_npm" ]; then
             # shellcheck disable=SC2001
             echo "$outdated_npm" | sed 's/^/   /'
@@ -251,13 +268,17 @@ main() {
     # Update npm global packages if npm is available
     if ! $SKIP_NPM && command -v npm >/dev/null 2>&1; then
         log_with_level "INFO" "Updating npm global packages..."
-        npm update -g 2>/dev/null || log_with_level "WARN" "Failed to update npm packages"
-        if [ -f "$HOME/.supercharged_preferences" ]; then
-            load_supercharged_preferences "$HOME/.supercharged_preferences"
-        fi
-        if [[ "${INSTALL_CLOUD_TOOLS:-Y}" =~ ^[Yy] ]]; then
-            setup_firebase
-        fi
+        outdated_npm_json=$(npm outdated -g --depth=0 --json 2>/dev/null || true)
+        managed_npm=$(jq -r '.tools | to_entries[] | select(.value.policy == "exact-npm") | .value.package' \
+            "$UTILS_PROJECT_ROOT/agent_config/managed_tools.json" 2>/dev/null || true)
+        while IFS= read -r package; do
+            [ -n "$package" ] || continue
+            if grep -Fxq "$package" <<< "$managed_npm"; then
+                log_with_level "INFO" "Skipping exact-pinned npm package: $package"
+                continue
+            fi
+            npm install -g "$package@latest" 2>/dev/null || log_with_level "WARN" "Failed to update npm package $package"
+        done < <(jq -r 'keys[]' <<< "$outdated_npm_json" 2>/dev/null)
     fi
 
     # Update pip packages if pip is available and data science tools are installed
@@ -268,20 +289,23 @@ main() {
         fi
     fi
 
-    # Ensure Worktrunk shell integration is configured (if installed)
-    if command -v wt >/dev/null 2>&1; then
-        setup_worktrunk
-    fi
-
-    # Reconcile the opt-in OpenWiki schedule without enrolling repositories.
-    if command -v openwiki >/dev/null 2>&1; then
-        setup_openwiki_watcher
-    fi
-
-    # Ensure code-review-graph watcher is configured for Claude Code and Codex.
-    if command -v code-review-graph >/dev/null 2>&1; then
-        setup_code_review_graph
-        setup_crg_watcher
+    if [ "$DEFER_AGENT_TOOLING" != true ]; then
+        if [ -f "$HOME/.supercharged_preferences" ]; then
+            load_supercharged_preferences "$HOME/.supercharged_preferences"
+        fi
+        if [[ "${INSTALL_CLOUD_TOOLS:-Y}" =~ ^[Yy] ]]; then
+            setup_firebase
+        fi
+        if command -v wt >/dev/null 2>&1; then
+            setup_worktrunk
+        fi
+        if command -v openwiki >/dev/null 2>&1; then
+            setup_openwiki_watcher
+        fi
+        if command -v code-review-graph >/dev/null 2>&1; then
+            setup_code_review_graph
+            setup_crg_watcher
+        fi
     fi
 
     log_with_level "SUCCESS" "Update completed successfully!"

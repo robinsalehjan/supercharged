@@ -67,7 +67,7 @@ $DRY_RUN && installer_args=(--dry-run) || installer_args=()
 
 log_with_level "INFO" "Reconciling shared agent CLIs and skills..."
 "$MANAGED_TOOLS_INSTALLER" "${installer_args[@]}"
-"$SKILLS_INSTALLER" "${installer_args[@]}"
+"$SKILLS_INSTALLER" "${installer_args[@]}" --harness "$HARNESS"
 
 reconcile_harness() {
     local harness="$1"

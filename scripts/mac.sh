@@ -54,7 +54,8 @@ validate_system() {
 
 # Setup error handling and cleanup
 cleanup() {
-    standard_cleanup "Installation"
+    local exit_code=$?
+    standard_cleanup "$exit_code" "Installation"
 }
 
 resolve_homebrew_prefix() {

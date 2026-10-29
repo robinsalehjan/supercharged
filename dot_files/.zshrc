@@ -265,14 +265,8 @@ alias py='python3'
 alias pip='pip3'
 
 # Git shortcuts
-alias gst='git status'
-alias gd='git diff'
-alias gco='git checkout'
 alias gcm='git checkout main'
 alias gcd='git checkout develop'
-alias gcp='git cherry-pick'
-alias gl='git pull'
-alias gp='git push'
 alias glog='git log --oneline --decorate --graph'
 
 # macOS specific
@@ -306,9 +300,7 @@ function extract() {
     fi
 }
 
-# Git functions
-function gb() { git branch; }
-function gcb() { git checkout "$1"; }
+# Git functions not provided by the enabled Oh My Zsh git plugin
 function gpus() { git push origin "$1"; }
 function gpul() { git pull origin "$1"; }
 
