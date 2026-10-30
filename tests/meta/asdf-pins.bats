@@ -40,7 +40,6 @@ teardown() {
 
 run_updater() {
   run env \
-    SUPERCHARGED_LOCAL_PROMOTION=1 \
     ASDF_LIST_FIXTURE_DIR="$FIXTURES" \
     ASDF_TOOL_VERSIONS="$TOOL_VERSIONS" \
     "$SCRIPT" "$@"
@@ -89,31 +88,6 @@ run_updater() {
   [ "$(cat "$TOOL_VERSIONS")" = "$before" ]
 }
 
-@test "update-asdf-pins.sh --apply rewrites only the pin lines" {
-  comments_before=$(grep -c '^#' "$TOOL_VERSIONS")
-
-  run_updater --apply
-
-  [ "$status" -eq 0 ]
-  grep -Fxq 'nodejs 24.20.0' "$TOOL_VERSIONS"
-  grep -Fxq 'gcloud 583.0.0' "$TOOL_VERSIONS"
-  # Held and line-tracked pins are untouched.
-  grep -Fxq 'java openjdk-26.0.2.1' "$TOOL_VERSIONS"
-  grep -Fxq 'ruby 3.4.10' "$TOOL_VERSIONS"
-  grep -Fxq 'python 3.14.7' "$TOOL_VERSIONS"
-  [ "$(grep -c '^#' "$TOOL_VERSIONS")" -eq "$comments_before" ]
-}
-
-@test "update-asdf-pins.sh is idempotent" {
-  run_updater --apply
-  [ "$status" -eq 0 ]
-
-  run_updater
-
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"asdf pins are current"* ]]
-}
-
 @test "update-asdf-pins.sh rejects unknown flags" {
   run_updater --bogus
 
@@ -124,7 +98,7 @@ run_updater() {
 @test "update-asdf-pins.sh rejects direct upstream apply" {
   before=$(cat "$TOOL_VERSIONS")
 
-  run env -u SUPERCHARGED_LOCAL_PROMOTION ASDF_LIST_FIXTURE_DIR="$FIXTURES" \
+  run env ASDF_LIST_FIXTURE_DIR="$FIXTURES" \
     ASDF_TOOL_VERSIONS="$TOOL_VERSIONS" "$SCRIPT" --apply
 
   [ "$status" -eq 2 ]

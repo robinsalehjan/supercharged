@@ -23,6 +23,66 @@ SANITIZE_MARKETPLACES=("vend-plugins")
 # List of settings env var keys to exclude from backup (sensitive credentials)
 SANITIZE_ENV_VARS=("GITHUB_PERSONAL_ACCESS_TOKEN")
 
+sanitize_claude_settings() {
+    local input_file="$1"
+    local output_file="$2"
+    local settings_json filtered_plugins marketplace_del_filter="" env_del_filter="" mp env_var
+
+    settings_json=$(<"$input_file")
+    filtered_plugins=$(filter_json_by_marketplace "$settings_json" ".enabledPlugins" "${SANITIZE_MARKETPLACES[@]}")
+    for mp in "${SANITIZE_MARKETPLACES[@]}"; do
+        marketplace_del_filter="${marketplace_del_filter} | del(.extraKnownMarketplaces[\"${mp}\"])"
+    done
+    for env_var in "${SANITIZE_ENV_VARS[@]}"; do
+        env_del_filter="${env_del_filter} | del(.env[\"${env_var}\"])"
+    done
+
+    jq -a --argjson plugins "$filtered_plugins" "
+        (. + {enabledPlugins: \$plugins}) |
+        .[\"\$schema\"] = \"https://json.schemastore.org/claude-code-settings.json\" |
+        if has(\"additionalDirectories\") then
+            .permissions.additionalDirectories = .additionalDirectories |
+            del(.additionalDirectories)
+        else . end |
+        del(
+            .mcpServers,
+            .statusLine,
+            .skipDangerousModePermissionPrompt,
+            .skipAutoPermissionPrompt,
+            .env.MAX_THINKING_TOKENS
+        )${marketplace_del_filter}${env_del_filter} |
+        if .hooks.PreToolUse then
+            .hooks.PreToolUse |= map(select(any(.hooks[]?; (.command // \"\") | contains(\"rtk-rewrite.sh\")) | not)) |
+            if .hooks.PreToolUse == [] then del(.hooks.PreToolUse) else . end |
+            if .hooks == {} then del(.hooks) else . end
+        else . end" "$input_file" | make_path_portable > "$output_file"
+}
+
+sanitize_claude_plugins() {
+    local input_file="$1"
+    local output_file="$2"
+    local plugins_json filtered_plugins
+    plugins_json=$(<"$input_file")
+    filtered_plugins=$(filter_json_by_marketplace "$plugins_json" ".plugins" "${SANITIZE_MARKETPLACES[@]}")
+    jq --argjson plugins "$filtered_plugins" '{version: .version, plugins: $plugins}' "$input_file" |
+        make_path_portable > "$output_file"
+}
+
+sanitize_claude_marketplaces() {
+    local input_file="$1"
+    local output_file="$2"
+    local marketplace jq_filter='.' i=0
+    local -a jq_args
+    jq_args=()
+    for marketplace in "${SANITIZE_MARKETPLACES[@]}"; do
+        jq_args+=(--arg "mp$i" "$marketplace")
+        jq_filter="$jq_filter | del(.[(\$mp$i)])"
+        i=$((i + 1))
+    done
+    jq "${jq_args[@]}" "$jq_filter" "$input_file" | make_path_portable > "$output_file"
+}
+
+main() {
 # Validate that ~/.claude exists
 if [ ! -d "$CLAUDE_HOME" ]; then
     log_with_level "ERROR" "Claude Code directory not found at $CLAUDE_HOME"
@@ -44,46 +104,7 @@ mkdir -p "$CLAUDE_CONFIG_DIR" "$AGENT_CONFIG_DIR"
 
 # Backup settings.json (sanitize enabledPlugins from work-related marketplaces)
 if [ -f "$CLAUDE_HOME/settings.json" ]; then
-    # Filter enabledPlugins to remove work-related marketplaces
-    settings_json=$(cat "$CLAUDE_HOME/settings.json")
-    filtered_plugins=$(filter_json_by_marketplace "$settings_json" ".enabledPlugins" "${SANITIZE_MARKETPLACES[@]}")
-
-    # Build jq filter to remove sanitized marketplaces from pluginMarketplaces
-    marketplace_del_filter=""
-    for mp in "${SANITIZE_MARKETPLACES[@]}"; do
-        marketplace_del_filter="${marketplace_del_filter} | del(.extraKnownMarketplaces[\"${mp}\"])"
-    done
-
-    # Build jq filter to remove sensitive settings env vars. MCP servers are
-    # user-scoped in ~/.claude.json and are backed up separately below.
-    env_del_filter=""
-    for env_var in "${SANITIZE_ENV_VARS[@]}"; do
-        env_del_filter="${env_del_filter} | del(.env[\"${env_var}\"])"
-    done
-
-    # Preserve durable fields, normalize the current settings shape, then strip
-    # machine-managed prompts, deprecated configuration, and sensitive env vars.
-    # Write to temp file first to avoid corrupting output on pipeline failure
-    if ! jq -a --argjson plugins "$filtered_plugins" "
-        (. + {enabledPlugins: \$plugins}) |
-        .[\"\$schema\"] = \"https://json.schemastore.org/claude-code-settings.json\" |
-        if has(\"additionalDirectories\") then
-            .permissions.additionalDirectories = .additionalDirectories |
-            del(.additionalDirectories)
-        else . end |
-        del(
-            .mcpServers,
-            .statusLine,
-            .skipDangerousModePermissionPrompt,
-            .skipAutoPermissionPrompt,
-            .env.MAX_THINKING_TOKENS
-        )${marketplace_del_filter}${env_del_filter} |
-        if .hooks.PreToolUse then
-            .hooks.PreToolUse |= map(select(any(.hooks[]?; (.command // \"\") | contains(\"rtk-rewrite.sh\")) | not)) |
-            if .hooks.PreToolUse == [] then del(.hooks.PreToolUse) else . end |
-            if .hooks == {} then del(.hooks) else . end
-        else . end" <<< "$settings_json" | \
-        make_path_portable > "$CLAUDE_CONFIG_DIR/settings.json.tmp"; then
+    if ! sanitize_claude_settings "$CLAUDE_HOME/settings.json" "$CLAUDE_CONFIG_DIR/settings.json.tmp"; then
         rm -f "$CLAUDE_CONFIG_DIR/settings.json.tmp"
         log_with_level "ERROR" "Failed to sanitize settings.json - backup aborted"
         exit 1
@@ -111,8 +132,7 @@ if [ -f "$CLAUDE_HOME/plugins/installed_plugins.json" ]; then
 
     # Preserve version and update plugins
     # Write to temp file first to avoid corrupting output on pipeline failure
-    if ! jq --argjson plugins "$filtered_plugins" "{version: .version, plugins: \$plugins}" <<< "$plugins_json" | \
-        make_path_portable > "$CLAUDE_CONFIG_DIR/installed_plugins.json.tmp"; then
+    if ! sanitize_claude_plugins "$CLAUDE_HOME/plugins/installed_plugins.json" "$CLAUDE_CONFIG_DIR/installed_plugins.json.tmp"; then
         rm -f "$CLAUDE_CONFIG_DIR/installed_plugins.json.tmp"
         log_with_level "ERROR" "Failed to sanitize installed_plugins.json - backup aborted"
         exit 1
@@ -124,19 +144,8 @@ else
 fi
 
 if [ -f "$CLAUDE_HOME/plugins/known_marketplaces.json" ]; then
-    # Build jq filter to remove sanitized marketplaces
-    # Uses --arg to avoid jq filter injection from marketplace names
-    jq_args=()
-    jq_filter='.'
-    i=0
-    for marketplace in "${SANITIZE_MARKETPLACES[@]}"; do
-        jq_args+=(--arg "mp$i" "$marketplace")
-        jq_filter="$jq_filter | del(.[(\$mp$i)])"
-        i=$((i + 1))
-    done
-
     full_json=$(cat "$CLAUDE_HOME/plugins/known_marketplaces.json")
-    filtered_json=$(jq "${jq_args[@]}" "$jq_filter" <<< "$full_json")
+    filtered_json=$(sanitize_claude_marketplaces "$CLAUDE_HOME/plugins/known_marketplaces.json" /dev/stdout)
 
     # Save sanitized marketplaces to local file (machine-specific, gitignored)
     local_marketplaces=$(jq --argjson filtered "$filtered_json" \
@@ -229,3 +238,8 @@ for ref_file in "${claude_md_refs_backed_up[@]}"; do
 done
 echo ""
 echo "💡 Commit these changes to git to save your Claude Code configuration"
+}
+
+if [[ "${ZSH_EVAL_CONTEXT:-}" == "toplevel" ]]; then
+    main "$@"
+fi

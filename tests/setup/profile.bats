@@ -96,6 +96,45 @@ teardown() {
   fi
 }
 
+@test "global Git excludes apply outside HOME" {
+  repo_dir="$(mktemp -d)"
+  printf 'ignored-global\n' > "$HOME/.gitignore_global"
+  cp "$DOT_FILES_DIR/.gitconfig" "$HOME/.gitconfig"
+
+  env -u DEVELOPER_DIR git -C "$repo_dir" init -q
+  touch "$repo_dir/ignored-global"
+  run env -u DEVELOPER_DIR git -C "$repo_dir" status --short --untracked-files=all
+
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"ignored-global"* ]]
+  rm -rf "$repo_dir"
+}
+
+@test "Oh My Zsh Git shortcuts keep plugin behavior after initialization" {
+  mkdir -p "$HOME/.oh-my-zsh" "$HOME/.local/bin"
+  cat > "$HOME/.oh-my-zsh/oh-my-zsh.sh" <<'EOF'
+alias gb='git branch'
+alias gcb='git checkout -b'
+alias gst='git status'
+alias gd='git diff'
+alias gco='git checkout'
+alias gcp='git cherry-pick'
+alias gl='git pull'
+alias gp='git push'
+EOF
+  cat > "$HOME/.local/bin/git" <<'EOF'
+#!/bin/sh
+printf 'git %s\n' "$*"
+EOF
+  chmod +x "$HOME/.local/bin/git"
+
+  run env HOME="$HOME" SSH_AUTH_SOCK=test zsh -dfc "source '$DOT_FILES_DIR/.zshrc'; export PATH='$HOME/.local/bin':\$PATH; rehash; eval gb; eval 'gcb review-fix'"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"git branch"* ]]
+  [[ "$output" == *"git checkout -b review-fix"* ]]
+}
+
 # =============================================================================
 # Restoration point tests
 # =============================================================================

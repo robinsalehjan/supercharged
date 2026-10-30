@@ -40,6 +40,8 @@ import sys
 text = Path(sys.argv[1]).read_text()
 assert 'setup_obscura "${setup_args[@]}"' in text
 assert 'retire_legacy_xcode_mcps "${setup_args[@]}"' in text
+assert 'setup_openwiki_watcher "${setup_args[@]}"' in text
+assert 'setup_crg_watcher "${setup_args[@]}"' in text
 assert 'if command_exists claude; then' not in text
 PYTEST
   [ "$status" -eq 0 ]
@@ -51,7 +53,7 @@ PYTEST
   [ "$status" -eq 0 ]
   [ "$(wc -l < "$CALLS" | tr -d ' ')" -eq 4 ]
   grep -Fx 'managed --dry-run' "$CALLS"
-  grep -Fx 'skills --dry-run' "$CALLS"
+  grep -Fx 'skills --dry-run --harness both' "$CALLS"
   grep -Fx 'claude-plugins --dry-run' "$CALLS"
   grep -Fx 'codex-plugins --dry-run' "$CALLS"
 }
@@ -61,6 +63,7 @@ PYTEST
 
   [ "$status" -eq 0 ]
   grep -Fx 'claude-plugins --dry-run' "$CALLS"
+  grep -Fx 'skills --dry-run --harness claude' "$CALLS"
   ! grep -q 'codex-plugins' "$CALLS"
 }
 

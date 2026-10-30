@@ -28,5 +28,6 @@ setup_playwright_cli "${setup_args[@]}"
 setup_playwright_mcp "${setup_args[@]}"
 setup_plannotator "${setup_args[@]}"
 setup_code_review_graph "${setup_args[@]}"
+setup_crg_watcher "${setup_args[@]}"
 
 setup_obscura "${setup_args[@]}"

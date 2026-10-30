@@ -7,42 +7,17 @@ import argparse
 import json
 import os
 from pathlib import Path
-import re
 import sys
 
-
-def normalized_mcp(server: dict) -> dict:
-    return {
-        key: server[key]
-        for key in ("command", "args", "url")
-        if key in server
-    }
+try:
+    from config_toml import load_mcp_servers, load_toml, mcp_servers, normalized_mcp
+except RuntimeError as error:
+    print(error, file=sys.stderr)
+    raise SystemExit(2)
 
 
 def skill_names(directory: Path, pattern: str) -> list[str]:
     return sorted(path.parent.name for path in directory.glob(pattern))
-
-
-def load_codex_mcp(path: Path) -> dict[str, dict]:
-    """Read the simple top-level MCP adapter fields without a TOML dependency."""
-    servers: dict[str, dict] = {}
-    current: dict | None = None
-    section_pattern = re.compile(r"^\[mcp_servers\.([^].]+)\]$")
-    for raw_line in path.read_text().splitlines():
-        line = raw_line.strip()
-        section = section_pattern.match(line)
-        if section:
-            current = servers.setdefault(section.group(1), {})
-            continue
-        if line.startswith("["):
-            current = None
-            continue
-        if current is None or not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = (part.strip() for part in line.split("=", 1))
-        if key in {"command", "args", "url"}:
-            current[key] = json.loads(value)
-    return servers
 
 
 def main() -> int:
@@ -58,7 +33,11 @@ def main() -> int:
 
     managed = json.loads((root / "agent_config/managed_tools.json").read_text())
     claude_mcp = json.loads((root / ".mcp.json").read_text())["mcpServers"]
-    codex_mcp = load_codex_mcp(root / "codex_config/config.toml")
+    try:
+        codex_mcp = load_mcp_servers(root / "codex_config")
+    except (OSError, ValueError) as error:
+        print(f"Failed to load Codex TOML: {error}", file=sys.stderr)
+        return 2
 
     for name, definition in claude_mcp.items():
         if name not in codex_mcp:
@@ -90,7 +69,8 @@ def main() -> int:
         errors.append(f"Unexpected tracked Codex profile: {profile}")
     codex_profile_mcp: set[str] = set(codex_mcp) - set(claude_mcp)
     for profile in ("apple.config.toml",):
-        codex_profile_mcp.update(load_codex_mcp(root / "codex_config" / profile))
+        profile_path = root / "codex_config" / profile
+        codex_profile_mcp.update(mcp_servers(load_toml(profile_path), source=profile_path))
 
     report = {
         "ok": not errors,

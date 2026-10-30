@@ -9,7 +9,7 @@ setup() {
   TOOL_VERSIONS="$TEST_TEMP_DIR/.tool-versions"
   MOCK_BIN="$TEST_TEMP_DIR/bin"
   mkdir -p "$MOCK_BIN"
-  printf 'nodejs 24.20.0\npython 3.14.7\n' > "$TOOL_VERSIONS"
+  printf '# Managed runtime pins\nnodejs 24.20.0\npython 3.14.7\n' > "$TOOL_VERSIONS"
   MANIFEST="$TEST_TEMP_DIR/managed-tools.json"
   PLUGINS="$TEST_TEMP_DIR/plugins.json"
   cp "$PROJECT_ROOT/agent_config/managed_tools.json" "$MANIFEST"
@@ -46,16 +46,31 @@ run_promoter() {
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"asdf nodejs: 24.20.0 -> 24.21.0"* ]]
-  [[ "$output" != *"python:"* ]]
+  [[ "$output" != *"asdf python:"* ]]
+  [[ "$output" == *"Skipping python: active version is not installed"* ]]
   grep -Fxq 'nodejs 24.20.0' "$TOOL_VERSIONS"
 }
 
 @test "local promotion applies only active installed versions" {
+  comments_before=$(grep -c '^#' "$TOOL_VERSIONS")
   run_promoter --apply
 
   [ "$status" -eq 0 ]
   grep -Fxq 'nodejs 24.21.0' "$TOOL_VERSIONS"
   grep -Fxq 'python 3.14.7' "$TOOL_VERSIONS"
+  [ "$(grep -c '^#' "$TOOL_VERSIONS")" -eq "$comments_before" ]
+}
+
+@test "installed-version promotion is idempotent" {
+  run_promoter --apply
+  [ "$status" -eq 0 ]
+  first=$(cat "$TOOL_VERSIONS")
+
+  run_promoter --apply
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"No eligible installed versions differ from tracked pins"* ]]
+  [ "$(cat "$TOOL_VERSIONS")" = "$first" ]
 }
 
 @test "local agent promotion uses the installed npm package version" {

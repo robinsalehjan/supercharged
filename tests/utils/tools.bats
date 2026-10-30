@@ -515,6 +515,22 @@ EOF
     [[ "$output" == *"not installed"* ]]
 }
 
+@test "setup_crg_watcher dry-run creates no files or daemon state" {
+    mock_code_review_graph
+
+    run zsh -c "
+        export HOME='$HOME' PATH='$PATH'
+        source '$PROJECT_ROOT/scripts/utils.sh'
+        setup_crg_watcher --dry-run
+    "
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"[dry-run] Would reconcile"* ]]
+    [ ! -e "$HOME/.local/bin/crg-watch-all.sh" ]
+    [ ! -e "$HOME/Library/LaunchAgents/com.code-review-graph.watcher.plist" ]
+    [ ! -e "$HOME/.code-review-graph/watcher-config.json" ]
+}
+
 @test "setup_crg_watcher writes executable script and valid plist" {
     mock_code_review_graph
 

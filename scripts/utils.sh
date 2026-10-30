@@ -57,6 +57,7 @@ _source_submodule() {
 
 _source_submodule "$UTILS_SCRIPT_DIR/utils/logging.sh" || return 1
 _source_submodule "$UTILS_SCRIPT_DIR/utils/json.sh" || return 1
+_source_submodule "$UTILS_SCRIPT_DIR/utils/restore.sh" || return 1
 _source_submodule "$UTILS_SCRIPT_DIR/utils/homebrew.sh" || return 1
 _source_submodule "$UTILS_SCRIPT_DIR/utils/codex.sh" || return 1
 _source_submodule "$UTILS_SCRIPT_DIR/utils/validation.sh" || return 1
@@ -81,23 +82,23 @@ fix_wireshark_symlinks() {
 
 # Standard cleanup function with brew cleanup and optional backup restoration message
 standard_cleanup() {
-    local script_name="${1:-Script}"
-    local exit_code=$?
+    local exit_code="${1:-0}"
+    local script_name="${2:-Script}"
 
-    if [ $exit_code -ne 0 ] && [ $exit_code -ne 1 ]; then
-        log_with_level "ERROR" "$script_name failed with exit code $exit_code"
+    if [ "$exit_code" -ne 0 ]; then
+        log_with_level "ERROR" "$script_name failed with exit code $exit_code" || true
 
         if [ -f "$HOME/.supercharged_last_backup" ]; then
-            echo ""
-            echo "💡 You can roll back to your previous configuration with:"
-            echo "   npm run rollback"
+            echo "" || true
+            echo "💡 You can roll back to your previous configuration with:" || true
+            echo "   npm run rollback" || true
         fi
     fi
 
     if [ "${DRY_RUN:-false}" != true ]; then
         command -v brew >/dev/null 2>&1 && brew cleanup 2>/dev/null || true
     fi
-    exit $exit_code
+    exit "$exit_code"
 }
 
 migrate_git_identity() {

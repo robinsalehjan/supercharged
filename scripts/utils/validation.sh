@@ -359,8 +359,6 @@ validate_zsh_plugin() {
 }
 
 validate_tmux_setup() {
-    local label=$1
-
     if [ ! -f "$HOME/.tmux.conf" ]; then
         echo "❌ tmux: .tmux.conf not found"
         return 1
@@ -373,19 +371,6 @@ validate_tmux_setup() {
 
     echo "✅ tmux: configuration and TPM installed"
     return 0
-}
-
-validate_claude_component() {
-    local component=$1
-    local check_path=$2
-
-    if [ -f "$check_path" ] || [ -d "$check_path" ]; then
-        echo "✅ Claude Code: $component"
-        return 0
-    else
-        echo "⚠️  Claude Code: $component not configured"
-        return 1
-    fi
 }
 
 validate_application() {
@@ -572,7 +557,7 @@ validate_installation() {
 
     echo ""
     echo "Tmux Setup:"
-    validate_tmux_setup "tmux" || ((warned++))
+    validate_tmux_setup || ((warned++))
 
     echo ""
     echo "Fonts:"

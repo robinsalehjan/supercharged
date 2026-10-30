@@ -13,7 +13,12 @@
 set -e
 set -o pipefail
 
-source "$(dirname "$0")/utils.sh"
+if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
+    RESTORE_CLAUDE_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+else
+    RESTORE_CLAUDE_SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" && pwd)"
+fi
+source "$RESTORE_CLAUDE_SCRIPT_DIR/utils.sh"
 
 # Get the directory where this script is located
 PROJECT_ROOT="$UTILS_PROJECT_ROOT"
@@ -43,29 +48,6 @@ show_help() {
     echo "  --force        Force restore regardless of timestamps"
     echo "  --skip-backup  Internal: use an orchestrator-created restoration point"
     echo "  -h, --help     Show this help message"
-}
-
-# Cross-platform stat wrapper for modification time
-# Returns mtime in seconds since epoch
-get_file_mtime() {
-    local file="$1"
-    local mtime
-
-    # Try macOS/BSD stat first
-    if mtime=$(stat -f %m "$file" 2>/dev/null); then
-        echo "$mtime"
-        return 0
-    fi
-
-    # Fall back to GNU/Linux stat
-    if mtime=$(stat -c %Y "$file" 2>/dev/null); then
-        echo "$mtime"
-        return 0
-    fi
-
-    # If both fail, return 0
-    echo "0"
-    return 1
 }
 
 # Function to get the newest modification time from a directory's JSON files
@@ -158,23 +140,6 @@ is_repo_newer() {
         return 0
     else
         return 1
-    fi
-}
-
-# Function to restore a single config file
-restore_config_file() {
-    local src="$1"
-    local dest="$2"
-    local name="$3"
-
-    if [ -f "$src" ]; then
-        # Create destination directory if needed
-        mkdir -p "$(dirname "$dest")"
-
-        # Replace $HOME placeholder with actual home directory
-        expand_portable_path < "$src" > "$dest.tmp"
-        mv "$dest.tmp" "$dest"
-        log_with_level "SUCCESS" "Restored $name"
     fi
 }
 
@@ -285,8 +250,8 @@ merge_plugin_config() {
         # Extract plugins ending with @marketplace from the .plugins object
         # Uses --arg to avoid jq filter injection from marketplace names
         marketplace_plugins=$(echo "$local_content" | jq --arg mp "@$marketplace" '.plugins // {} | to_entries | map(select(.key | endswith($mp))) | from_entries') || {
-            log_with_level "WARN" "Failed to extract plugins for marketplace $marketplace"
-            continue
+            log_with_level "ERROR" "Failed to extract plugins for marketplace $marketplace"
+            return 1
         }
         if [ -n "$marketplace_plugins" ] && [ "$marketplace_plugins" != "{}" ]; then
             preserved_plugins=$(echo "$preserved_plugins" | jq --argjson mp "$marketplace_plugins" '. + $mp') || {
@@ -378,8 +343,8 @@ merge_marketplace_config() {
     for marketplace in "${PRESERVE_MARKETPLACES[@]}"; do
         # Uses --arg to avoid jq filter injection from marketplace names
         marketplace_entry=$(echo "$local_content" | jq --arg mp "$marketplace" 'if has($mp) then {($mp): .[$mp]} else {} end') || {
-            log_with_level "WARN" "Failed to extract marketplace $marketplace"
-            continue
+            log_with_level "ERROR" "Failed to extract marketplace $marketplace"
+            return 1
         }
         if [ -n "$marketplace_entry" ] && [ "$marketplace_entry" != "{}" ]; then
             preserved_marketplaces=$(echo "$preserved_marketplaces" | jq --argjson entry "$marketplace_entry" '. + $entry') || {
@@ -833,7 +798,7 @@ uninstall_orphan_plugins
 # Install git-cloned skills from the shared agent registry
 if [ -f "$AGENT_CONFIG_DIR/installed_skills.json" ]; then
     log_with_level "INFO" "Installing shared agent skills..."
-    if "$PROJECT_ROOT/scripts/install-skills.sh"; then
+    if "$PROJECT_ROOT/scripts/install-skills.sh" --harness claude; then
         log_with_level "SUCCESS" "Shared agent skills installed"
     else
         log_with_level "WARN" "Skill installation failed — run 'npm run install:skills' manually"

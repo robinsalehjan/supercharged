@@ -297,11 +297,11 @@ PYTEST
   run zsh -c "
     set -e
     source '$PROJECT_ROOT/scripts/utils.sh'
+    source '$PROJECT_ROOT/scripts/mac.sh'
     check_version() {
       log_with_level WARN \"\$1 version warning\"
       return 1
     }
-    source '$PROJECT_ROOT/scripts/mac.sh'
     check_bootstrap_versions 3.14.0
     echo continued
   "

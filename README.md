@@ -23,42 +23,11 @@ cd supercharged && npm run setup
 ## Commands
 
 ```bash
-npm run setup              # Fresh install (interactive)
-npm run sync                       # Apply Claude, Codex, and dotfiles from the repository
-npm run sync -- --force            # Apply all managed config regardless of timestamps
-npm run sync -- --only agents      # Apply Claude and Codex config only
-npm run sync -- --only claude      # Apply Claude config only
-npm run sync -- --only codex       # Apply Codex config, rules, and shared skills only
-npm run sync -- --only dotfiles    # Apply dotfiles and Worktrunk shell integration only
-npm run backup                     # Capture Claude and Codex config in the repository
-npm run backup -- --only claude    # Capture Claude config only
-npm run backup -- --only codex     # Capture Codex config, hooks, and skills only
-npm run update                     # Sync dotfiles/skills, then update all components
-npm run update -- --backup         # Capture live agent config, then update
-npm run update -- --dry-run        # Read-only report of outdated brew/npm packages
-npm run update -- --only brew      # Sync dotfiles/skills, then update one component
-npm run validate                   # Verify tools installed correctly
-npm run install:agent-tooling # Reconcile shared tooling and both native plugin sets
-npm run install:plugins    # Install all Claude Code plugins
-npm run install:codex-plugins # Install or refresh managed Codex plugins
-npm run install:managed-tools # Reconcile exact-pinned local agent tools
-npm run install:firebase     # Install pinned Firebase CLI from npm
-npm run install:openwiki    # Install or update OpenWiki for agent documentation
-npm run openwiki:watch -- add /path/to/repo # Opt in an existing wiki to scheduled updates
-npm run install:plannotator # Install or update the checksum-pinned Plannotator binary
-npm run install:skills     # Install, update, or safely prune shared git skills
-npm run update:tool-pins   # Check for newer managed tool releases
-npm run update:asdf-pins   # Check for newer asdf runtime pins
-npm run promote:pins       # Preview tracked pins from installed tools on this machine
-npm run rollback                   # Roll back to the latest configuration snapshot
-npm run version:show       # Print current version, commit, tag, branch
-npm run release -- patch   # Cut a release (patch|minor|major|x.y.z)
-npm test                   # Run all BATS tests
-npm run lint               # ShellCheck, zsh syntax checks, and actionlint
-npm run scan:secrets       # Scan repository paths for likely secrets
-npm run audit:deps         # Fail on high/critical npm advisories
-npm run check:agent-tooling # Report shared capabilities and detect harness drift
-npm run help               # Show all commands
+npm run help               # Canonical complete command inventory
+npm run setup              # Fresh interactive installation
+npm run sync               # Apply managed configuration
+npm run update             # Sync dotfiles, update dependencies, reconcile tooling
+npm test                   # Run the BATS suite
 ```
 
 ## Reproduced environment
@@ -73,19 +42,13 @@ To force the repository versions of Claude Code, Codex, and the managed dotfiles
 npm run sync -- --force
 ```
 
-This creates one configuration-only restoration point before changing Claude Code, Codex, or dotfiles. It does not run the setup installer, Homebrew Bundle, or package updates. Without `--force`, `sync` keeps timestamp gating for Claude and Codex while still taking the single pre-sync snapshot.
-
-Git identity is machine-local in `~/.gitconfig.local`. The first restore migrates existing `user.*` values before replacing `~/.gitconfig`; a new interactive setup prompts for name and email. Noninteractive restores leave missing identity unset and print the commands needed to configure it. Claude restore preserves enabled and explicitly disabled `@vend-plugins` entries plus the `vend-plugins` marketplace.
-
-Restoration points cover managed configuration and registries, including absence information so rollback removes files created by a restore. They intentionally exclude auth, secrets, sessions, histories, logs, databases, plugin caches, and installed packages; plugins may need reinstalling after rollback. Older backups without an absence manifest remain copy-only restorable.
-
-The shared MCP baseline is code-review-graph and OpenAI Developer Docs. Codex provides Axiom through its native plugin (including its skills and optional trusted hooks). Apple’s native Xcode MCP is isolated behind `codex -p apple`: Xcode 26.3+ supports attached use with a project open, and Xcode 27+ also supports headless use through the one-time `sudo xcrun mcp-server enable` opt-in followed by `xcrun mcp-server start`. Both modes retain Apple’s normal per-agent approval flow. Computer Use is supplied by the ChatGPT desktop app's official bundled plugins, which generate the `cua_repl` MCP connection from the installed app runtime; this repository does not track a separate executable path. Playwright MCP remains enabled. `codex -p review` layers xhigh reasoning over the base review tooling. `npm run check:mcps` completes the MCP initialize handshake against every enabled base server; pass `-- --profile apple` to include native Xcode MCP. Agent audits run the same probe. `agent_config/managed_tools.json` exact-pins Firebase CLI, OpenWiki, Playwright CLI, Playwright MCP, Plannotator, code-review-graph, and Obscura while recording tested compatibility floors for Codex, Claude, and Worktrunk. Firebase CLI installs from its exact npm package when cloud tools are enabled. Managed-tool reconciliation also retires known XcodeBuildMCP and MobileBuildMCP installations. Axiom uses an immutable marketplace commit plus an expected plugin version; shared git skills also require commit SHAs. Pins are promoted from installed versions on a validated personal machine with `npm run promote:pins -- --apply`; upstream checks remain read-only. Axiom and compatibility floors move after local validation.
+This creates one configuration-only restoration point before changing managed files. It does not install or update packages. See the [reference guide](./docs/REFERENCE.md#existing-machine-sync-configuration-only) for timestamp gates, rollback scope, machine-local state, and agent-tooling behavior.
 
 ### New machine: full baseline
 
-Run `npm run setup` when you want the complete interactive package and application baseline. It includes personal applications such as Spotify, Mullvad VPN, DaisyDisk, and Numbers; remove unwanted applications afterward or adjust `build_brewfile` before setup.
+Run `npm run setup` when you want the complete interactive package and application baseline. Review or adjust `build_brewfile` in `scripts/mac.sh` before setup if you do not want the tracked personal applications.
 
-Credentials, authentication state, histories, logs, sessions, caches, and other machine-local runtime data are intentionally excluded. Secret files contain variable-name templates only; populate the corresponding values locally. See the [reference guide](./docs/REFERENCE.md#personal-machine-baseline) for the tracked inventory and synchronization boundaries.
+Credentials, authentication state, histories, logs, sessions, caches, and other machine-local runtime data are intentionally excluded. Secret files contain variable-name templates only; populate the corresponding values locally. See the [reference guide](./docs/REFERENCE.md#personal-machine-baseline) for the authoritative manifests and synchronization boundaries.
 
 ## Terminal font
 
@@ -110,3 +73,4 @@ See [GitHub Releases](https://github.com/robinsalehjan/supercharged/releases) fo
 |----------|---------|
 | [Reference](./docs/REFERENCE.md) | Installed tools, setup options, customization, troubleshooting |
 | [Security](./SECURITY.md) | Security enforcement details |
+| [Agent guidance](./AGENTS.md) | Repository conventions for contributors and coding agents |

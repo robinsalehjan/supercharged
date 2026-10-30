@@ -40,7 +40,7 @@ teardown() {
 
   [ "$status" -eq 0 ]
   [ "$(sed -n '1p' "$HOME/update-calls")" = "sync.sh --only dotfiles" ]
-  [ "$(sed -n '2p' "$HOME/update-calls")" = "update.sh --only brew" ]
+  [ "$(sed -n '2p' "$HOME/update-calls")" = "update.sh --defer-agent-tooling --only brew" ]
   [ "$(sed -n '3p' "$HOME/update-calls")" = "install-agent-tooling.sh " ]
 }
 
@@ -51,7 +51,7 @@ teardown() {
   ! grep -F 'sync.sh' "$HOME/update-calls"
   ! grep -F 'backup-all.sh' "$HOME/update-calls"
   grep -F 'install-agent-tooling.sh --dry-run' "$HOME/update-calls"
-  grep -F 'update.sh --dry-run' "$HOME/update-calls"
+  grep -F 'update.sh --defer-agent-tooling --dry-run' "$HOME/update-calls"
 }
 
 @test "managed tool pins have a dedicated update command" {
@@ -67,6 +67,14 @@ teardown() {
   [[ "$update_source" == *'JetBrainsMono Nerd Font could not be registered'* ]]
 }
 
+@test "generic npm updates exclude exact-pinned managed packages" {
+  update_source="$(<"$PROJECT_ROOT/scripts/update.sh")"
+
+  [[ "$update_source" == *'select(.value.policy == "exact-npm")'* ]]
+  [[ "$update_source" == *'Skipping exact-pinned npm package'* ]]
+  [[ "$update_source" != *'npm update -g'* ]]
+}
+
 @test "standard update does not capture live agent configuration" {
   run "$UPDATE_ORCHESTRATOR_DIR/update-all.sh"
 
@@ -80,7 +88,7 @@ teardown() {
   [ "$status" -eq 0 ]
   [ "$(sed -n '1p' "$HOME/update-calls")" = "backup-all.sh " ]
   [ "$(sed -n '2p' "$HOME/update-calls")" = "sync.sh --only dotfiles" ]
-  [ "$(sed -n '3p' "$HOME/update-calls")" = "update.sh " ]
+  [ "$(sed -n '3p' "$HOME/update-calls")" = "update.sh --defer-agent-tooling" ]
   [ "$(sed -n '4p' "$HOME/update-calls")" = "install-agent-tooling.sh " ]
 }
 
@@ -89,6 +97,19 @@ teardown() {
 
   [ "$status" -ne 0 ]
   [ ! -e "$HOME/update-calls" ]
+}
+
+@test "update orchestrator stops after a failed child" {
+  cat > "$UPDATE_ORCHESTRATOR_DIR/update.sh" <<'EOF'
+#!/bin/zsh
+exit 7
+EOF
+  chmod +x "$UPDATE_ORCHESTRATOR_DIR/update.sh"
+
+  run "$UPDATE_ORCHESTRATOR_DIR/update-all.sh" --only brew
+
+  [ "$status" -eq 7 ]
+  ! grep -F 'install-agent-tooling.sh' "$HOME/update-calls"
 }
 
 # =============================================================================
@@ -158,10 +179,37 @@ teardown() {
     [ "$1" = "cleanup" ] && touch "$TEST_TEMP_DIR/brew-cleanup-called"
   }
 
-  run standard_cleanup "Update"
+  run standard_cleanup 0 "Update"
 
   [ "$status" -eq 0 ]
   [ ! -e "$TEST_TEMP_DIR/brew-cleanup-called" ]
+}
+
+@test "standard cleanup preserves success and failure statuses" {
+  source "$PROJECT_ROOT/scripts/utils.sh"
+  DRY_RUN=true
+
+  run standard_cleanup 0 "Update"
+  [ "$status" -eq 0 ]
+
+  run standard_cleanup 1 "Update"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Update failed with exit code 1"* ]]
+
+  run standard_cleanup 7 "Update"
+  [ "$status" -eq 7 ]
+  [[ "$output" == *"Update failed with exit code 7"* ]]
+}
+
+@test "standard cleanup preserves failure when logging and brew cleanup fail" {
+  source "$PROJECT_ROOT/scripts/utils.sh"
+  DRY_RUN=false
+  log_with_level() { return 9; }
+  brew() { return 8; }
+
+  run standard_cleanup 7 "Update"
+
+  [ "$status" -eq 7 ]
 }
 
 # =============================================================================

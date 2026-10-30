@@ -1,34 +1,17 @@
 # Reference
 
-This document covers installed tools, setup options, customization points, and common recovery steps. `dot_files/.tool-versions` is the source of truth for asdf-managed tool versions.
+This is the canonical user-facing guide for setup behavior, synchronization boundaries, customization, and recovery. `README.md` stays introductory, `AGENTS.md` contains contributor/agent conventions, and `SECURITY.md` owns security policy. Dynamic inventories remain in their executable manifests rather than being copied here.
 
 ## Commands
 
 ```bash
-npm run setup                 # Fresh install
-npm run sync                  # Apply Claude, Codex, and dotfiles from the repository
-npm run sync -- --force       # Apply all managed config regardless of timestamps
-npm run backup                # Capture Claude and Codex config in the repository
-npm run update                # Sync dotfiles/skills, then update components
-npm run update -- --backup    # Capture live agent config, then update components
-npm run update -- --dry-run   # Read-only preview; does not update or clean Homebrew
-npm run update -- --only brew # Sync dotfiles/skills, then update one component
-npm run validate              # Verify installed tools and configuration
-npm run rollback              # Roll back to the latest configuration snapshot
-npm run install:agent-tooling # Reconcile shared tooling and both native plugin sets
-npm run install:skills        # Install, update, or safely prune shared git skills
-npm run install:managed-tools # Reconcile exact-pinned local agent tools
-npm run install:firebase     # Install pinned Firebase CLI from npm
-npm run install:openwiki    # Install or update OpenWiki for agent documentation
-npm run install:plannotator   # Reconcile the checksum-pinned Plannotator binary
-npm run update:tool-pins      # Check upstream releases against managed pins
-npm test                      # Run BATS tests
-npm run lint                  # ShellCheck, zsh syntax checks, and actionlint
-npm run scan:secrets          # Scan repository paths for likely secrets
-npm run check:agent-tooling   # Report shared capabilities and detect harness drift
+npm run help   # Canonical complete command inventory
+npm run setup  # Fresh install
+npm run sync   # Apply managed configuration
+npm run update # Update the managed environment
 ```
 
-Run `npm run help` for the complete command list.
+`npm run help` is the complete command list; this reference documents behavior and boundaries.
 
 ### Existing Machine: Sync Configuration Only
 
@@ -68,19 +51,22 @@ Setup stores interactive choices in `~/.supercharged_preferences`.
 
 ## Installed Tools
 
-The Homebrew Bundle baseline is defined by `build_brewfile` in `scripts/mac.sh`. Its always-installed core includes:
+The repository deliberately keeps inventory in machine-readable sources:
 
-- Package and shell tooling: `bash`, `coreutils`, `git`, `curl`, `asdf`, `keychain`, `tmux`, `ripgrep`, `tree`, `aria2`.
-- Development utilities: `gh`, `jq`, `shellcheck`, `actionlint`, `bats-core`, Danger JS, Danger Swift, `duckdb`, `sqlite`, `btop`, `htop`, `mas`, `pipx`, `uv`, `hey`, `watch`, `watchexec` for `npm run test:watch`, build libraries, and database client libraries mirrored from the personal machine.
-- AI and agent tools: `codex`, `ollama`, `replicate`, `worktrunk`, OpenWiki, Playwright CLI, Playwright MCP, and Obscura. ChatGPT and CodexBar are included when `INSTALL_CODEX_APP=Y`.
-- Applications: Visual Studio Code, Slack, Raycast, Reveal, Spotify, Mullvad VPN.
-- Fonts: JetBrainsMono Nerd Font.
-- Mac App Store apps: AdBlock, DaisyDisk, and Numbers.
-- Visual Studio Code extensions: the personal machine's AI, Apple-platform, Python, Rust, TypeScript, container, debugger, and editor-utility extensions declared in `build_brewfile`.
+| Inventory | Authoritative source |
+| --- | --- |
+| Homebrew formulae, casks, Mac App Store apps, fonts, and VS Code extensions | `build_brewfile` in `scripts/mac.sh` |
+| asdf runtimes | `dot_files/.tool-versions` |
+| Exact-pinned agent tools and compatibility floors | `agent_config/managed_tools.json` |
+| Shared git skills | `agent_config/installed_skills.json` |
+| Claude and Codex plugins | `claude_config/*.json` and `codex_config/plugins.json` |
+| MCP servers and profiles | `.mcp.json` and `codex_config/*.toml` |
 
-`ollama` above is installed as `cask "ollama"`, not a formula — it installs the `Ollama.app` menu bar GUI and symlinks its bundled CLI onto PATH, so no separate formula is needed (or wanted: a `brew "ollama"` formula alongside it would fight over the same `ollama` binary symlink).
+Use `npm run help` for reconciliation commands, `npm run check:agent-tooling` for the composed agent inventory, and `npm run audit:agents -- --repo-only` for deterministic tracked-configuration validation.
 
-Conditional Brewfile groups add iOS, container, cloud (`hashicorp/tap/terraform`), network, and extra application tooling according to the setup preferences above. The iOS group includes SimSlim for simulator resource trimming alongside the Xcode and Swift command-line tools. Third-party Homebrew entries grant formula-level trust only; setup and updates also remove known retired taps when they no longer provide an installed item. Dedicated setup helpers install Claude Code and the exact-pinned Firebase CLI, OpenWiki, Playwright CLI, Playwright MCP, Plannotator, code-review-graph, and Obscura. Firebase CLI, OpenWiki, Playwright CLI, and Playwright MCP install from npm after the managed Node.js runtime is active; Playwright browser binaries are left to `playwright-cli install-browser` or first use. `agent_config/managed_tools.json` is the desired-state source for the exact-pinned tools. Release archives verify architecture-specific SHA-256 values before installation; code-review-graph uses an exact PyPI package version, while Firebase CLI, OpenWiki, Playwright CLI, and Playwright MCP use exact npm package versions. Managed-tool reconciliation removes known repository-managed, Homebrew, and global npm installations of the retired XcodeBuildMCP and MobileBuildMCP integrations; executables at unknown manual paths are reported for manual cleanup. Run `npm run install:firebase`, `npm run install:openwiki`, or `npm run install:managed-tools` to reconcile the relevant tools; add `-- --dry-run` to inspect drift.
+The Brewfile installs Ollama as a cask rather than a formula so its app and bundled CLI do not compete with a second Homebrew binary.
+
+Conditional Brewfile groups add iOS, container, cloud, network, and extra application tooling according to the setup preferences above. Dedicated setup helpers reconcile exact-pinned agent tools after the managed runtimes are available. Release archives verify architecture-specific SHA-256 values, and managed-tool reconciliation retires known obsolete MCP installations. Use the dedicated install commands shown by `npm run help`; add `-- --dry-run` to inspect drift.
 
 As part of the profile migration, `npm run sync -- --only codex` treats a local `~/.codex/apple-headless.config.toml` as restore drift even when normal timestamp gating would otherwise skip the restore. The command first preserves the retired profile in its rollback snapshot, then removes it; use `codex -p apple` afterward.
 
@@ -92,32 +78,21 @@ Shared git-cloned skills are declared in `agent_config/installed_skills.json`. A
 
 ### Shared Agent Capabilities
 
-The four graph skills live canonically in `agent_config/skills/<name>/SKILL.md`. `npm run sync -- --only codex` applies those directories directly to Codex. This repository does not maintain project-local Claude skills. Git-cloned skills in `agent_config/installed_skills.json` are also installed into both agent homes. Claude plugins and Codex plugins can contribute additional tool-specific skills, so the complete runtime skill lists are intentionally not identical.
+Canonical graph skills live in `agent_config/skills/<name>/SKILL.md`; git-cloned skills are declared in `agent_config/installed_skills.json`. `npm run sync -- --only codex` applies canonical graph skills to Codex, while the shared-skills installer targets one or both harnesses. Harness plugins can contribute additional skills, so runtime inventories are intentionally not identical.
 
 OpenWiki is installed as the exact-pinned `openwiki` CLI. To use it inside Codex or Claude Code, run `openwiki integrations install codex` or `openwiki integrations install claude`, then restart that agent; `openwiki integrations list` shows installation status. These integrations use the agent's authenticated session and need no separate model provider configuration. From a repository root, ask the integrated agent to initialize or update its wiki when wanted. The standalone `openwiki --init` and `openwiki --update` commands remain available; their interactive first run stores the selected provider and credentials in `~/.openwiki/.env`, which is local-only and must never be committed or backed up. Before generation, review `.openwikiignore` to exclude sensitive or irrelevant source paths. OpenWiki writes `openwiki/` and maintains marked guidance blocks in root `AGENTS.md` and `CLAUDE.md`; other content remains user-managed. For a concrete question, an integrated agent can use `openwiki_search` and `openwiki_read` to retrieve relevant sections, or read `openwiki/quickstart.md` and linked pages directly. An existing wiki is optional secondary context: corroborate material claims against current source, tests, and a fresh code-review-graph, report conflicts as stale documentation, and treat source and tests as authoritative. Agents do not generate or update a wiki without an explicit user request, including explicit enrollment in the scheduled repository updater described below.
 
-The canonical MCP inventory is: shared code-review-graph and OpenAI Developer Docs; Codex-native Axiom plugin; native Xcode MCP in the Apple profile; and enabled Playwright MCP. Computer Use is not a tracked standalone MCP entry: install and enable it in the ChatGPT desktop app so the official `unified-computer-use` plugin can generate the `cua_repl` connection with absolute paths to the app runtime and the service installed under `$CODEX_HOME/computer-use`. Claude user-local MCP entries are preserved during restore and never imported by backup. Local MCP executables are exact-pinned where this repository controls installation. The hosted OpenAI Developer Docs MCP has no local executable to pin; native Xcode MCP follows the selected Xcode installation.
+The tracked MCP inventory is defined by `.mcp.json`, `codex_config/config.toml`, and the profile TOML files; `npm run check:agent-tooling` verifies parity. Computer Use is app-managed rather than a tracked standalone MCP entry. Claude user-local MCP entries are preserved during restore and never imported by backup. Local executables are exact-pinned where this repository controls installation; hosted and platform-native servers follow their respective providers.
 
 Use `codex -p apple` for both native Xcode MCP modes. Xcode 26.3 through 26.x requires Xcode.app running with a project open and external-agent access enabled in Xcode’s Intelligence settings. Xcode 27+ can also run headlessly after a one-time `sudo xcrun mcp-server enable`; start it with `xcrun mcp-server start`. Do not enable the unsafe allow-all-agents option: opening or creating a workspace triggers Apple’s normal agent and folder approval flow.
 
-`npm run install:agent-tooling` is the harness-neutral reconciliation entry point. It installs the shared host CLIs and shared skills first, then invokes the native Claude and Codex marketplace installers when those harnesses are available. Its dry-run previews both desired plugin sets even when a client is not installed; use `-- --harness claude` or `-- --harness codex` to target one adapter. `npm run check:agent-tooling` reports the composed inventory and fails when shared MCP definitions differ between harnesses. Harness-native plugins remain intentionally different.
+`npm run install:agent-tooling` is the harness-neutral reconciliation entry point. It installs the shared host CLIs and only the selected harness destinations for shared skills, then invokes the selected native marketplace installers when those harnesses are available. Its dry-run previews both desired plugin sets by default; use `-- --harness claude` or `-- --harness codex` to target one adapter. `npm run check:agent-tooling` reports the composed inventory and fails when shared MCP definitions differ between harnesses. Harness-native plugins remain intentionally different.
+
+The standalone configuration audit and MCP/tooling check commands require Python 3.11+ for the standard-library `tomllib` parser. Fresh setup installs the managed Python before final audits.
 
 Pin updates follow the personal machine. Run `npm run update:tool-pins` or `npm run update:asdf-pins` to inspect upstream candidates without changing tracked files. Install and validate the chosen versions on this machine, then run `npm run promote:pins` to preview the resulting pin changes and `npm run promote:pins -- --apply` to write them. Use `-- --only asdf` or `-- --only agents` to limit promotion. The promoter reads active, installed asdf versions within `agent_config/asdf_policy.json`, global npm package versions (including Firebase CLI), and installed agent CLI versions; release binaries must match published checksums, and the Firebase command must run at its installed package version. Missing tools are skipped. Axiom plugin refs and Codex, Claude, and Worktrunk compatibility versions remain manual after local validation. CI checks repository changes but never proposes new pins.
 
-Version policy depends on the integration boundary:
-
-| Integration | Policy |
-| --- | --- |
-| Plannotator Stop-hook binary | Exact release and SHA-256 per macOS architecture |
-| code-review-graph local MCP | Exact PyPI version with required extras |
-| Firebase CLI, OpenWiki, Playwright CLI, and Playwright MCP | Exact npm package versions |
-| Obscura | Exact release archive and SHA-256 per macOS architecture; binaries are verified after extraction |
-| Axiom | Immutable Codex marketplace commit plus expected plugin version |
-| Claude plugins | Native marketplace installation verified against tracked plugin versions |
-| Shared git skills | Immutable commit SHA; mutable branches are rejected |
-| Codex, Claude, Worktrunk | Minimum compatible and last-tested versions; newer versions warn until validated |
-| OpenAI Developer Docs MCP | Hosted HTTP service; there is no local server binary to pin |
-| Native Xcode MCP bridge | Ships with Xcode and follows the selected Xcode installation |
+Version and checksum policy is authoritative in `agent_config/managed_tools.json`, `agent_config/installed_skills.json`, and the harness plugin registries. The audit and tooling checker validate those manifests; prose should describe the workflow without copying their inventories.
 
 ### Nested repository graph discovery
 
@@ -168,58 +143,14 @@ After syncing, restart Codex and use `/hooks` to review and trust the new comman
 
 ## Personal Machine Baseline
 
-The repository was audited against the personal Mac and records the reproducible portion of that machine's setup. The authoritative locations are:
-
-| Configuration | Source of truth |
-| --- | --- |
-| Homebrew formulae, casks, Mac App Store apps, and VS Code extensions | `build_brewfile` in `scripts/mac.sh` |
-| asdf runtimes | `dot_files/.tool-versions` |
-| Shell and terminal configuration | `dot_files/` |
-| Shared Claude/Codex instructions | `agent_config/AGENTS.md` |
-| Managed agent-tool versions and release checksums | `agent_config/managed_tools.json` |
-| Sanitized Claude Code state | `claude_config/` |
-| Durable Codex defaults, permissions, MCP servers, hooks, and skills | `codex_config/` |
-| Legacy Claude user-scoped MCP registry (empty by default) | `claude_config/mcp_servers.json` |
-| Shared project MCP servers | `.mcp.json` and compatible entries in `codex_config/config.toml` |
+The repository records only the reproducible portion of the audited personal Mac. Package and agent inventories use the authoritative sources listed under [Installed Tools](#installed-tools); shell configuration lives in `dot_files/`, shared instructions in `agent_config/`, and sanitized harness state in `claude_config/` and `codex_config/`.
 
 Run `npm run check:mcps` to verify that every enabled base MCP server completes
 the protocol initialize handshake. Use `npm run check:mcps -- --profile apple`
 to include native Xcode MCP. Disabled MCPs are reported and skipped. The local
 agent audit runs the same check.
 
-The audited VS Code extension inventory is installed through Homebrew Bundle:
-
-```text
-anthropic.claude-code
-creevekcz.idx-xcode
-dustypomerleau.rust-syntax
-formulahendry.code-runner
-ibm.output-colorizer
-llvm-vs-code-extensions.lldb-dap
-mariomatheu.syntax-project-pbxproj
-ms-azuretools.vscode-containers
-ms-azuretools.vscode-docker
-ms-python.debugpy
-ms-python.python
-ms-python.vscode-pylance
-ms-python.vscode-python-envs
-ms-vscode-remote.remote-containers
-ms-vscode.makefile-tools
-ms-vscode.remote-explorer
-ms-vscode.vscode-typescript-next
-openai.chatgpt
-robinsalehjan.xcode-vscode-shortcuts
-rust-lang.rust-analyzer
-sweetpad.sweetpad
-swiftlang.swift-vscode
-tomsmartinez.localhost-browser
-typescriptteam.native-preview
-usernamehw.errorlens
-vadimcn.vscode-lldb
-vscode-icons-team.vscode-icons
-```
-
-The current Codex baseline selects `gpt-5.6-sol`, medium reasoning effort, the pragmatic personality, live web search, disabled memories, the `supercharged` permission profile, and the configured status line. Its lean tracked MCP inventory contains code-review-graph, OpenAI Developer Docs, and enabled Playwright MCP. When the ChatGPT desktop app's Computer Use plugin is installed and enabled, Codex discovers the app-managed `cua_repl` connection separately from this tracked baseline. Use `codex -p apple` for Apple’s native Xcode MCP in attached or headless mode, or `codex -p review` for xhigh review reasoning. Axiom is installed only through `npm run install:codex-plugins`, not as a duplicate MCP server. Codex asks for a one-time trust review before Axiom’s bundled hooks can run.
+The Codex baseline and profiles are defined in `codex_config/config.toml` and `codex_config/*.config.toml`; do not duplicate model names or MCP inventories in prose. Use `codex -p apple` for Apple’s native Xcode MCP profile and `codex -p review` for the review profile. Computer Use remains app-managed, while Axiom is installed through the Codex plugin registry.
 
 Run `npm run audit:agents` for a local health check, `npm run audit:agents -- --json` for machine-readable output, or `npm run audit:agents -- --repo-only` for deterministic tracked-config validation. Check native Xcode MCP with `npm run audit:agents -- --profile apple`.
 
@@ -247,16 +178,7 @@ In the ChatGPT desktop app, use **Set up Remote** and follow the current [OpenAI
 
 ## Dotfiles
 
-`npm run sync -- --only dotfiles` copies managed dotfiles from `dot_files/` to `$HOME`:
-
-- `.zshrc`
-- `.zprofile`
-- `.gitconfig`
-- `.gitconfig.local` is not copied from the repository; it stores machine-local identity and is included in rollback snapshots
-- `.gitignore_global`
-- `.p10k.zsh`
-- `.tool-versions`
-- `.tmux.conf`
+`npm run sync -- --only dotfiles` copies the files declared by `MANAGED_DOTFILES` in `scripts/utils.sh` from `dot_files/` to `$HOME`. Machine-local `.gitconfig.local` is not copied from the repository, but it is included in rollback snapshots.
 
 `~/.supercharged_preferences` is generated at setup time, not tracked in `dot_files/`.
 
@@ -272,7 +194,7 @@ The repository assumes Oh My Zsh is already installed. Install it first if neede
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 ```
 
-Configured Oh My Zsh plugins are defined in `dot_files/.zshrc`: `git`, `asdf`, `zsh-autosuggestions`, `zsh-syntax-highlighting`, `gcloud`, and `docker`.
+Oh My Zsh plugin selection is defined in `dot_files/.zshrc`.
 
 Useful shell additions include:
 
@@ -280,7 +202,7 @@ Useful shell additions include:
 - Secure SSH key loading through `keychain`.
 - Shared zsh history.
 - Navigation, Git, Docker, Kubernetes, Python, and macOS aliases.
-- Utility functions: `mkcd`, `extract`, `gb`, `gcb`, `gpus`, `gpul`, and `docker-clean`.
+- Utility functions: `mkcd`, `extract`, `gpus`, `gpul`, and `docker-clean`. The enabled Oh My Zsh Git plugin provides `gb` (list branches) and `gcb <name>` (create and check out a branch).
 - Optional Colima auto-start via `SUPERCHARGED_COLIMA_AUTOSTART=1` in `~/.secrets`.
 
 ## Customization
@@ -293,7 +215,9 @@ Edit `dot_files/.zshrc`, `dot_files/.tmux.conf`, and `dot_files/.p10k.zsh` for s
 
 Edit `agent_config/AGENTS.md` for shared Claude/Codex instructions. Keep the tracked Claude user registry empty unless a compatibility requirement warrants a sanitized entry. For shared project servers, edit `.mcp.json` and add the compatible Codex entry together; put Apple-only servers in the appropriate `codex_config/apple*.config.toml` profile.
 
-`npm run update -- --dry-run` is non-mutating: it suppresses Homebrew auto-update, reports the tap trust and retirement actions it would take, skips `brew update` and cleanup, and reports outdated Homebrew formulae, casks, and global npm packages before exiting ahead of asdf, zsh, npm, or pip updates.
+`npm run update -- --dry-run` is non-mutating: it suppresses Homebrew auto-update, reports the tap trust and retirement actions it would take, skips `brew update` and cleanup, and reports outdated Homebrew formulae, casks, and unpinned global npm packages before exiting ahead of asdf, zsh, npm, or pip updates.
+
+Every normal update first syncs dotfiles, updates the selected dependency components, then performs one complete agent-tooling reconciliation. `--only` limits dependency updates only; it does not skip dotfile sync or final tooling reconciliation. Exact-pinned npm packages are excluded from generic npm upgrades and are reconciled by the managed-tool installer.
 
 Normal updates install `xcodes` only when Homebrew can use the tap's prebuilt bottle. This avoids Homebrew silently falling back to a long Swift source build on newer macOS releases after printing outdated Xcode or Command Line Tools warnings; if no usable bottle is available, the update warns and leaves `xcodes` unchanged.
 
