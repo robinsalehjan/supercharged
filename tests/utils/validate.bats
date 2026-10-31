@@ -32,6 +32,7 @@ teardown() {
   # Assert - git output appears; overall status not asserted since it depends on
   # all tools matching .tool-versions which may not hold in CI environments
   [[ "$output" == *"git:"* ]]
+  [[ "$output" != *"ollama"* ]]
 }
 
 @test "validate command checks for asdf" {
@@ -64,20 +65,6 @@ teardown() {
   # Assert - function should be defined
   run type validate_tool
   [ "$status" -eq 0 ]
-}
-
-@test "extract_tool_version reads Ollama client version when daemon is stopped" {
-  source "$PROJECT_ROOT/scripts/utils.sh"
-  ollama() {
-    printf '%s\n' \
-      'Warning: could not connect to a running Ollama instance' \
-      'Warning: client version is 0.32.1' >&2
-  }
-
-  run extract_tool_version ollama
-
-  [ "$status" -eq 0 ]
-  [ "$output" = "0.32.1" ]
 }
 
 @test "extract_tool_version recognizes OpenWiki without a version flag" {

@@ -227,7 +227,7 @@ run_foundation_models_interactive() {
   [[ "$output" == *'brew "danger/tap/danger-js"'* ]]
   [[ "$output" == *'brew "danger/tap/danger-swift"'* ]]
   [[ "$output" != *'cupertino'* ]]
-  [[ "$output" == *'cask "ollama"'* ]]
+  [[ "$output" != *'ollama'* ]]
   [[ "$output" != *'omlx'* ]]
   [[ "$output" == *'mas "Numbers", id: 361304891'* ]]
   [[ "$output" == *'vscode "openai.chatgpt"'* ]]

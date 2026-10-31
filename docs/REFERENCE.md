@@ -64,8 +64,6 @@ The repository deliberately keeps inventory in machine-readable sources:
 
 Use `npm run help` for reconciliation commands, `npm run check:agent-tooling` for the composed agent inventory, and `npm run audit:agents -- --repo-only` for deterministic tracked-configuration validation.
 
-The Brewfile installs Ollama as a cask rather than a formula so its app and bundled CLI do not compete with a second Homebrew binary.
-
 Conditional Brewfile groups add iOS, container, cloud, network, and extra application tooling according to the setup preferences above. Dedicated setup helpers reconcile exact-pinned agent tools after the managed runtimes are available. Release archives verify architecture-specific SHA-256 values, and managed-tool reconciliation retires known obsolete MCP installations. Use the dedicated install commands shown by `npm run help`; add `-- --dry-run` to inspect drift.
 
 As part of the profile migration, `npm run sync -- --only codex` treats a local `~/.codex/apple-headless.config.toml` as restore drift even when normal timestamp gating would otherwise skip the restore. The command first preserves the retired profile in its rollback snapshot, then removes it; use `codex -p apple` afterward.

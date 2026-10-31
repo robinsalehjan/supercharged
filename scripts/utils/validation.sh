@@ -106,12 +106,6 @@ extract_tool_version() {
             version_output=$(nmap --version 2>&1 | head -1 || true)
             echo "$version_output" | grep -oE '[0-9]+\.[0-9]+' || echo "0.0.0"
             ;;
-        "ollama")
-            # Ollama may print a connection warning before its client version
-            # when the daemon is stopped, so use the final semantic version.
-            version_output=$("$cmd" --version 2>&1 || true)
-            echo "$version_output" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | tail -1 || echo "0.0.0"
-            ;;
         "plannotator")
             # plannotator has no version flag - just check if executable
             echo "installed"
@@ -455,7 +449,6 @@ validate_installation() {
     echo "AI & Optimization Tools:"
     validate_tool "wt" "" || ((warned++))
     validate_tool "code-review-graph" "" || ((warned++))
-    validate_tool "ollama" "" || true  # Optional local AI runtime
     validate_tool "codex" "" || ((warned++))  # OpenAI Codex CLI
     validate_tool "replicate" "" || ((warned++))  # Replicate CLI
     validate_tool "openwiki" "" || ((warned++))  # Agent documentation CLI
@@ -665,7 +658,6 @@ validate_installation() {
     # Suggest optional tools if user might want them
     local optional_missing=()
     command_exists btop || optional_missing+=("btop")
-    command_exists ollama || optional_missing+=("ollama")
 
     if [ $failed -eq 0 ] && [ $warned -eq 0 ]; then
         echo "🎉 All validations passed!"
