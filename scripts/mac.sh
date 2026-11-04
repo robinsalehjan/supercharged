@@ -176,6 +176,7 @@ brew \"swiftlint\"
 brew \"swift-format\"
 brew \"swiftformat\"
 brew \"ios-deploy\"
+brew \"asccli\"
 brew \"mobai-app/tap/simslim\"
 # Formula only — do NOT also install \`brew install --cask periphery\`. The cask
 # ships an older standalone build and its presence prevents \`brew\` from linking
