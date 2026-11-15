@@ -90,7 +90,7 @@ Use `codex -p apple` for both native Xcode MCP modes. Xcode 26.3 through 26.x re
 
 The standalone configuration audit and MCP/tooling check commands require Python 3.11+ for the standard-library `tomllib` parser. Fresh setup installs the managed Python before final audits.
 
-Pin updates follow the personal machine. Run `npm run update:tool-pins` or `npm run update:asdf-pins` to inspect upstream candidates without changing tracked files. Install and validate the chosen versions on this machine, then run `npm run promote:pins` to preview the resulting pin changes and `npm run promote:pins -- --apply` to write them. Use `-- --only asdf` or `-- --only agents` to limit promotion. The promoter reads active, installed asdf versions within `agent_config/asdf_policy.json`, global npm package versions (including Firebase CLI), and installed agent CLI versions; release binaries must match published checksums, and the Firebase command must run at its installed package version. Missing tools are skipped. Axiom plugin refs and Codex, Claude, and Worktrunk compatibility versions remain manual after local validation. CI checks repository changes but never proposes new pins.
+Pin updates follow the personal machine. Run `npm run update:tool-pins` or `npm run update:asdf-pins` to inspect upstream candidates without changing tracked files. Install and validate the chosen versions on this machine, then run `npm run promote:pins` to preview the resulting pin changes and `npm run promote:pins -- --apply` to write them. Use `-- --only asdf` or `-- --only agents` to limit promotion. The promoter reads active, installed asdf versions within `agent_config/asdf_policy.json`, global npm package versions (including Firebase CLI), and installed agent CLI versions; release binaries must match published checksums, and the Firebase command must run at its installed package version. Missing tools are skipped. Plugin refs and versions (Axiom and Firebase) and Codex, Claude, and Worktrunk compatibility versions remain manual after local validation. CI checks repository changes but never proposes new pins.
 
 Version and checksum policy is authoritative in `agent_config/managed_tools.json`, `agent_config/installed_skills.json`, and the harness plugin registries. The audit and tooling checker validate those manifests; prose should describe the workflow without copying their inventories.
 
@@ -150,7 +150,7 @@ the protocol initialize handshake. Use `npm run check:mcps -- --profile apple`
 to include native Xcode MCP. Disabled MCPs are reported and skipped. The local
 agent audit runs the same check.
 
-The Codex baseline and profiles are defined in `codex_config/config.toml` and `codex_config/*.config.toml`; do not duplicate model names or MCP inventories in prose. Use `codex -p apple` for Apple’s native Xcode MCP profile and `codex -p review` for the review profile. Computer Use remains app-managed, while Axiom is installed through the Codex plugin registry.
+The Codex baseline and profiles are defined in `codex_config/config.toml` and `codex_config/*.config.toml`; do not duplicate model names or MCP inventories in prose. Use `codex -p apple` for Apple’s native Xcode MCP profile and `codex -p review` for the review profile. Computer Use remains app-managed, while Axiom and Firebase are installed through the Codex plugin registry.
 
 Run `npm run audit:agents` for a local health check, `npm run audit:agents -- --json` for machine-readable output, or `npm run audit:agents -- --repo-only` for deterministic tracked-config validation. Check native Xcode MCP with `npm run audit:agents -- --profile apple`.
 
@@ -167,6 +167,12 @@ git diff --check
 ```
 
 Review the diff before committing. Package inventory changes must still be made in `scripts/mac.sh`; the backup commands cover agent configuration, not Homebrew, Mac App Store, or VS Code inventories.
+
+### Firebase agent skills
+
+The official [Firebase agent-skills](https://github.com/firebase/agent-skills) plugin is installed for both Claude Code and Codex during setup and their respective sync targets. To reconcile plugins separately, run `npm run install:plugins` (Claude) or `npm run install:codex-plugins` (Codex). The plugin provides Firebase skills and its bundled Firebase MCP server; authentication remains machine-local.
+
+Codex pins the marketplace commit and plugin version in `codex_config/plugins.json`. Claude uses the marketplace in `claude_config/known_marketplaces.json`, enables the plugin through `claude_config/settings.json`, and verifies the version in `claude_config/installed_plugins.json`. Claude follows its existing marketplace installation behavior rather than the Codex commit pin. Review upstream manifests before manually updating these entries: the Claude and Codex plugin versions can differ. Reload Claude plugins or restart Codex after installation.
 
 ## Codex Desktop Access
 

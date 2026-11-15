@@ -219,18 +219,19 @@ fi
 
 if jq -e '
     .version == 1 and
-    (.marketplaces | length == 1) and
-    .marketplaces[0].name == "axiom-marketplace" and
-    .marketplaces[0].source == "CharlesWiltgen/Axiom" and
-    (.marketplaces[0].ref | test("^[0-9a-f]{40}$")) and
-    (.plugins | length == 1) and
-    .plugins[0].id == "axiom@axiom-marketplace" and
-    (.plugins[0].version | test("^[0-9]+\\.[0-9]+\\.[0-9]+([.-][0-9A-Za-z.-]+)?$")) and
-    .plugins[0].required == true and .plugins[0].enabled == true
+    (.marketplaces | map(.name) | sort) == ["axiom-marketplace", "firebase"] and
+    (.marketplaces | all(.ref | test("^[0-9a-f]{40}$"))) and
+    (.marketplaces | any(.name == "axiom-marketplace" and .source == "CharlesWiltgen/Axiom")) and
+    (.marketplaces | any(.name == "firebase" and .source == "firebase/agent-skills")) and
+    (.plugins | map(.id) | sort) == ["axiom@axiom-marketplace", "firebase@firebase"] and
+    (.plugins | all(
+        (.version | test("^[0-9]+\\.[0-9]+\\.[0-9]+([.-][0-9A-Za-z.-]+)?$")) and
+        .required == true and .enabled == true
+    ))
 ' "$CODEX_CONFIG_DIR/plugins.json" >/dev/null 2>&1; then
-    pass "Managed plugin registry contains only required enabled Axiom"
+    pass "Managed plugin registry contains required enabled Axiom and Firebase"
 else
-    fail "Managed Codex plugin registry is malformed or does not match Axiom policy"
+    fail "Managed Codex plugin registry is malformed or does not match Axiom and Firebase policy"
 fi
 
 MANAGED_TOOLS_MANIFEST="${MANAGED_TOOLS_MANIFEST:-$AGENT_CONFIG_DIR/managed_tools.json}"
@@ -415,21 +416,30 @@ if [ "$REPO_ONLY" = false ]; then
             fi
         fi
 
-        if marketplace_state=$(codex plugin marketplace list --json 2>&1) && \
-           jq -e '.marketplaces[]? | select(.name == "axiom-marketplace")' <<<"$marketplace_state" >/dev/null; then
-            pass "Axiom marketplace is configured locally"
+        if marketplace_state=$(codex plugin marketplace list --json 2>&1); then
+            while IFS= read -r marketplace; do
+                if jq -e --arg name "$marketplace" '.marketplaces[]? | select(.name == $name)' <<<"$marketplace_state" >/dev/null; then
+                    pass "Managed marketplace is configured locally: $marketplace"
+                else
+                    fail "Managed marketplace is not configured locally: $marketplace"
+                fi
+            done < <(jq -r '.marketplaces[].name' "$CODEX_CONFIG_DIR/plugins.json")
         else
-            fail "Axiom marketplace is not configured locally"
+            fail "Could not list Codex marketplaces"
         fi
 
-        axiom_version=$(jq -r '.plugins[] | select(.id == "axiom@axiom-marketplace") | .version' "$CODEX_CONFIG_DIR/plugins.json")
-        if plugin_state=$(codex plugin list --json 2>&1) && \
-           jq -e --arg version "$axiom_version" '.installed[]? | select(
-               (.pluginId // .id // .name // "") == "axiom@axiom-marketplace" and .version == $version
-           )' <<<"$plugin_state" >/dev/null; then
-            pass "Required Axiom plugin matches pinned version $axiom_version"
+        if plugin_state=$(codex plugin list --json 2>&1); then
+            while IFS=$'\t' read -r plugin expected_version; do
+                if jq -e --arg plugin "$plugin" --arg version "$expected_version" '.installed[]? | select(
+                    (.pluginId // .id // .name // "") == $plugin and .version == $version
+                )' <<<"$plugin_state" >/dev/null; then
+                    pass "Required plugin matches pinned version: $plugin @ $expected_version"
+                else
+                    fail "Required plugin is missing or differs from pinned version: $plugin @ $expected_version"
+                fi
+            done < <(jq -r '.plugins[] | select(.required == true) | [.id, .version] | @tsv' "$CODEX_CONFIG_DIR/plugins.json")
         else
-            fail "Required Axiom plugin is missing or differs from pinned version $axiom_version"
+            fail "Could not list Codex plugins"
         fi
     fi
 

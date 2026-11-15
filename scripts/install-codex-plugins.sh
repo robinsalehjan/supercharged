@@ -2,7 +2,7 @@
 
 # Reconcile the portable Codex plugin registry without copying Codex's
 # machine-local marketplace snapshots, plugin caches, credentials, or trust
-# state. Axiom is intentionally the only managed third-party Codex plugin.
+# state. Axiom and Firebase are the managed third-party Codex plugins.
 
 set -euo pipefail
 

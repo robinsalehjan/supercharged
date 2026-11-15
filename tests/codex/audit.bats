@@ -103,3 +103,16 @@ write_compatibility_mocks() {
     <<<"$output"
   [ "$status" -eq 0 ]
 }
+
+@test "agent audit requires the Firebase plugin" {
+  codex_fixture="$TEST_TEMP_DIR/codex-config"
+  cp -R "$PROJECT_ROOT/codex_config" "$codex_fixture"
+  jq '.plugins |= map(select(.id != "firebase@firebase"))' \
+    "$codex_fixture/plugins.json" > "$codex_fixture/plugins.json.tmp"
+  mv "$codex_fixture/plugins.json.tmp" "$codex_fixture/plugins.json"
+
+  run env CODEX_CONFIG_DIR="$codex_fixture" "$AUDIT" --repo-only --json
+  [ "$status" -ne 0 ]
+  run jq -e '.failures | any(contains("Axiom and Firebase policy"))' <<<"$output"
+  [ "$status" -eq 0 ]
+}

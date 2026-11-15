@@ -23,7 +23,7 @@ case "$1 $2 $3" in
     fi
     ;;
   "plugin list --json")
-    printf '{"installed":[{"pluginId":"axiom@axiom-marketplace","version":"%s"}]}\n' "$CODEX_PLUGIN_VERSION"
+    printf '{"installed":[{"pluginId":"axiom@axiom-marketplace","version":"%s"},{"pluginId":"firebase@firebase","version":"%s"}]}\n' "$CODEX_PLUGIN_VERSION" "${FIREBASE_PLUGIN_VERSION:-1.2.0}"
     ;;
 esac
 [ "${CODEX_FAIL:-}" = "$1-$2-$3" ] && exit 1
@@ -44,12 +44,14 @@ teardown() {
   [ ! -e "$CALLS" ]
 }
 
-@test "Codex plugin installer adds marketplace and installs Axiom" {
+@test "Codex plugin installer adds pinned marketplaces and installs Axiom and Firebase" {
   run env PATH="$MOCK_BIN:$PATH" CODEX_CALLS="$CALLS" CODEX_PLUGIN_VERSION="$PINNED_VERSION" "$INSTALLER"
 
   [ "$status" -eq 0 ]
   grep -Fx "plugin marketplace add CharlesWiltgen/Axiom --ref $PINNED_REF" "$CALLS"
   grep -Fx 'plugin add axiom@axiom-marketplace' "$CALLS"
+  grep -Fx "plugin marketplace add firebase/agent-skills --ref $(jq -r '.marketplaces[] | select(.name == "firebase") | .ref' "$PROJECT_ROOT/codex_config/plugins.json")" "$CALLS"
+  grep -Fx 'plugin add firebase@firebase' "$CALLS"
 }
 
 @test "Codex plugin installer replaces an existing marketplace with the pinned ref" {
@@ -59,6 +61,8 @@ teardown() {
   grep -Fx 'plugin marketplace remove axiom-marketplace' "$CALLS"
   grep -Fx "plugin marketplace add CharlesWiltgen/Axiom --ref $PINNED_REF" "$CALLS"
   grep -Fx 'plugin add axiom@axiom-marketplace' "$CALLS"
+  grep -Fx "plugin marketplace add firebase/agent-skills --ref $(jq -r '.marketplaces[] | select(.name == "firebase") | .ref' "$PROJECT_ROOT/codex_config/plugins.json")" "$CALLS"
+  grep -Fx 'plugin add firebase@firebase' "$CALLS"
 }
 
 @test "Codex plugin installer preserves unrelated local plugin state" {
@@ -84,4 +88,11 @@ teardown() {
   run env PATH="$MOCK_BIN:$PATH" CODEX_CALLS="$CALLS" CODEX_PLUGIN_VERSION="$PINNED_VERSION" CODEX_FAIL='plugin-marketplace-add' "$INSTALLER"
   [ "$status" -ne 0 ]
   [[ "$output" == *"Failed to add Codex marketplace"* ]]
+}
+
+@test "Codex plugin installer rejects Firebase version drift" {
+  run env PATH="$MOCK_BIN:$PATH" CODEX_CALLS="$CALLS" CODEX_PLUGIN_VERSION="$PINNED_VERSION" FIREBASE_PLUGIN_VERSION=0.0.0 "$INSTALLER"
+
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"version mismatch for firebase@firebase"* ]]
 }

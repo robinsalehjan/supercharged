@@ -298,13 +298,14 @@ EOF
   [ "$status" -eq 0 ]
 }
 
-@test "tracked Claude configuration retains only language-server fallback plugins" {
+@test "tracked Claude configuration includes Firebase and language-server fallback plugins" {
   settings="$PROJECT_ROOT/claude_config/settings.json"
   plugins="$PROJECT_ROOT/claude_config/installed_plugins.json"
   marketplaces="$PROJECT_ROOT/claude_config/known_marketplaces.json"
 
   run jq -e '
     (.enabledPlugins | keys | sort) == [
+      "firebase@firebase",
       "pyright-lsp@claude-plugins-official",
       "swift-lsp@claude-plugins-official",
       "typescript-lsp@claude-plugins-official"
@@ -315,6 +316,7 @@ EOF
 
   run jq -e '
     (.plugins | keys | sort) == [
+      "firebase@firebase",
       "pyright-lsp@claude-plugins-official",
       "swift-lsp@claude-plugins-official",
       "typescript-lsp@claude-plugins-official"
@@ -322,10 +324,10 @@ EOF
   ' "$plugins"
   [ "$status" -eq 0 ]
 
-  run jq -e '(.extraKnownMarketplaces | keys) == ["claude-plugins-official"]' "$settings"
+  run jq -e '(.extraKnownMarketplaces | keys) == ["claude-plugins-official", "firebase"]' "$settings"
   [ "$status" -eq 0 ]
 
-  run jq -e 'keys == ["claude-plugins-official"]' "$marketplaces"
+  run jq -e 'keys == ["claude-plugins-official", "firebase"]' "$marketplaces"
   [ "$status" -eq 0 ]
 }
 

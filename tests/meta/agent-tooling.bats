@@ -90,7 +90,8 @@ PYTEST
     (.shared.mcp_servers == ["code-review-graph", "openaiDeveloperDocs"]) and
     (.native_adapters.claude_plugins | index("swift-lsp@claude-plugins-official")) and
     (.native_adapters.codex_mcp_servers == ["cloudflare", "playwright", "xcode"]) and
-    (.native_adapters.codex_plugins == ["axiom@axiom-marketplace"])
+    (.native_adapters.codex_plugins == ["axiom@axiom-marketplace", "firebase@firebase"]) and
+    (.native_adapters.claude_plugins | index("firebase@firebase"))
   ' <<<"$output"
   [ "$status" -eq 0 ]
 }
