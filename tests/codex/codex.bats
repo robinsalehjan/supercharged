@@ -644,3 +644,36 @@ EOF
   backup_dir=$(<"$HOME/.supercharged_last_backup")
   grep -F 'retired profile' "$backup_dir/files/.codex/apple-headless.config.toml"
 }
+
+@test "restore migrates retired runtime tables even when local config is newer" {
+  mkdir -p "$TEST_TEMP_DIR/bin" "$HOME/.codex"
+  cat > "$TEST_TEMP_DIR/bin/codex" <<'MOCK'
+#!/bin/sh
+case "$1 $2 $3" in
+  "plugin marketplace list") printf '%s\n' '{"marketplaces":[]}' ;;
+esac
+exit 0
+MOCK
+  chmod +x "$TEST_TEMP_DIR/bin/codex"
+  cat > "$HOME/.codex/config.toml" <<'CONFIG'
+approval_policy = "never"
+[mcp_servers.node_repl.env]
+STALE_CONNECTION = "synthetic"
+[mcp_servers.computer-use]
+command = "obsolete-bridge"
+[apps.connector_example]
+enabled = true
+CONFIG
+  touch -t 209901010000 "$HOME/.codex/config.toml"
+
+  run env PATH="$TEST_TEMP_DIR/bin:$PATH" SUPERCHARGED_SKIP_MANAGED_TOOL_INSTALLS=1 "$RESTORE_SCRIPT"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Retired Codex runtime tables found"* ]]
+  ! grep -F '[mcp_servers.node_repl' "$HOME/.codex/config.toml"
+  ! grep -F '[mcp_servers.computer-use]' "$HOME/.codex/config.toml"
+  grep -F 'approval_policy = "on-request"' "$HOME/.codex/config.toml"
+  grep -F '[apps.connector_example]' "$HOME/.codex/config.toml"
+  grep -F 'args = ["mcpbridge"]' "$HOME/.codex/apple.config.toml"
+  backup_dir=$(<"$HOME/.supercharged_last_backup")
+  grep -F 'STALE_CONNECTION = "synthetic"' "$backup_dir/files/.codex/config.toml"
+}

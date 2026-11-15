@@ -171,6 +171,17 @@ def probe_stdio(name: str, config: dict[str, Any], timeout: float) -> ProbeResul
     if isinstance(configured_env, dict):
         env.update({str(key): str(value) for key, value in configured_env.items()})
 
+    required_env = config.get("env_vars", [])
+    if not isinstance(required_env, list) or not all(isinstance(key, str) for key in required_env):
+        return ProbeResult(name, "stdio", "fail", "env_vars must be an array of strings")
+    missing_env = [key for key in required_env if key not in env]
+    if missing_env:
+        return ProbeResult(
+            name, "stdio", "fail",
+            f"missing environment variables: {', '.join(missing_env)}; "
+            "launch from the supplying app or remove an obsolete manual bridge",
+        )
+
     process: subprocess.Popen[bytes] | None = None
     try:
         process = subprocess.Popen(

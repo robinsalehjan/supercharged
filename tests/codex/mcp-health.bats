@@ -177,3 +177,49 @@ EOF
     [ "$status" -eq 2 ]
     [[ "$output" == *"malformed TOML"* ]]
 }
+
+@test "MCP checker rejects missing forwarded env before starting a server" {
+    cat > "$TEST_TEMP_DIR/bin/must-not-start" <<EOF2
+#!/bin/sh
+touch "$TEST_TEMP_DIR/started"
+EOF2
+    chmod +x "$TEST_TEMP_DIR/bin/must-not-start"
+    cat > "$CONFIG_DIR/config.toml" <<EOF2
+[mcp_servers.browser]
+command = "$TEST_TEMP_DIR/bin/must-not-start"
+env_vars = ["SUPERCHARGED_TEST_MISSING_CONNECTION"]
+EOF2
+    run env -u SUPERCHARGED_TEST_MISSING_CONNECTION "$CHECKER" --config-dir "$CONFIG_DIR" --json
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"missing environment variables: SUPERCHARGED_TEST_MISSING_CONNECTION"* ]]
+    [ ! -e "$TEST_TEMP_DIR/started" ]
+}
+
+@test "MCP checker accepts inherited and explicitly configured env without printing values" {
+    cat > "$CONFIG_DIR/config.toml" <<EOF2
+[mcp_servers.healthy]
+command = "$TEST_TEMP_DIR/bin/healthy-mcp"
+env_vars = ["SUPERCHARGED_TEST_CONNECTION", "SUPERCHARGED_TEST_CONFIGURED"]
+env = { SUPERCHARGED_TEST_CONFIGURED = "synthetic-config-value" }
+EOF2
+    run env SUPERCHARGED_TEST_CONNECTION=synthetic-inherited-value "$CHECKER" --config-dir "$CONFIG_DIR" --json
+    [ "$status" -eq 0 ]
+    [[ "$output" != *"synthetic-inherited-value"* ]]
+    [[ "$output" != *"synthetic-config-value"* ]]
+}
+
+@test "MCP checker skips disabled servers with missing env and rejects invalid env_vars" {
+    cat > "$CONFIG_DIR/config.toml" <<EOF2
+[mcp_servers.disabled]
+command = "$TEST_TEMP_DIR/bin/healthy-mcp"
+enabled = false
+env_vars = ["SUPERCHARGED_TEST_MISSING_CONNECTION"]
+[mcp_servers.invalid]
+command = "$TEST_TEMP_DIR/bin/healthy-mcp"
+env_vars = "NOT_AN_ARRAY"
+EOF2
+    run "$CHECKER" --config-dir "$CONFIG_DIR" --json
+    [ "$status" -eq 1 ]
+    run jq -e 'any(.[]; .name == "disabled" and .status == "skip") and any(.[]; .name == "invalid" and .detail == "env_vars must be an array of strings")' <<<"$output"
+    [ "$status" -eq 0 ]
+}

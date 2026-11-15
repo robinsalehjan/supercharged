@@ -156,6 +156,17 @@ restore_codex_hook_scripts() {
     fi
 }
 
+has_retired_codex_runtime() {
+    local line
+    [ -f "$CODEX_HOME/config.toml" ] || return 1
+    while IFS= read -r line || [ -n "$line" ]; do
+        if is_removed_codex_config_table "$line"; then
+            return 0
+        fi
+    done < "$CODEX_HOME/config.toml"
+    return 1
+}
+
 restore_codex_config() {
     local src="$CODEX_CONFIG_DIR/config.toml"
     local dest="$CODEX_HOME/config.toml"
@@ -337,6 +348,8 @@ main() {
         log_with_level "INFO" "Retired apple-headless profile found, restoring Codex configuration..."
     elif [ -e "$CODEX_HOME/RTK.md" ] || [ -e "$CODEX_HOME/hooks/rtk-enforce.sh" ]; then
         log_with_level "INFO" "Retired RTK files found, restoring Codex configuration..."
+    elif has_retired_codex_runtime; then
+        log_with_level "INFO" "Retired Codex runtime tables found, restoring Codex configuration..."
     elif is_repo_newer; then
         log_with_level "INFO" "Repository config is newer, restoring Codex configuration..."
     else

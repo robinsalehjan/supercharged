@@ -148,7 +148,26 @@ The repository records only the reproducible portion of the audited personal Mac
 Run `npm run check:mcps` to verify that every enabled base MCP server completes
 the protocol initialize handshake. Use `npm run check:mcps -- --profile apple`
 to include native Xcode MCP. Disabled MCPs are reported and skipped. The local
-agent audit runs the same check.
+agent audit runs the same check. To inspect the installed configuration rather
+than the tracked baseline, run `npm run check:mcps -- --config-dir "$HOME/.codex"`.
+The checker reports missing `env_vars` by name before launching a stdio server;
+it never substitutes fabricated app connection values.
+
+If Codex reports `MCP tool call requires approval, but approval policy is never`,
+check the active session policy as well as the saved configuration. The tracked
+baseline uses `on-request`; a session or CLI override can still select `never`,
+which rejects required approvals instead of prompting. Restart with
+`codex --ask-for-approval on-request` (add `-p apple` for Xcode). Do not broadly
+approve tools to work around the session policy. See the
+[Codex approval documentation](https://learn.chatgpt.com/docs/agent-approvals-security).
+
+Run `npm run sync -- --only codex --force` to reapply the tracked baseline and
+profiles when local settings have drifted. Restore detects retired manual Node
+REPL and Computer Use tables even when local config has a newer timestamp,
+backs up the previous configuration, and removes those tables while preserving
+supported machine-local state. Browser connection variables belong to the
+app-managed integration. The Apple profile supplies `xcrun mcpbridge`; use the
+profile rather than maintaining a duplicate Xcode entry in the base config.
 
 The Codex baseline and profiles are defined in `codex_config/config.toml` and `codex_config/*.config.toml`; do not duplicate model names or MCP inventories in prose. Use `codex -p apple` for Apple’s native Xcode MCP profile and `codex -p review` for the review profile. Computer Use remains app-managed, while Axiom and Firebase are installed through the Codex plugin registry.
 
