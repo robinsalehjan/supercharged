@@ -20,6 +20,7 @@ Keep tool-specific behavior in the tool-specific config files; keep cross-agent 
 
 - Use code-review-graph first for source navigation, impact analysis, debugging, and code review when its graph is fresh and covers the code in question.
 - Before graph-dependent work in a Git repository, check that its graph is available and current. If it is missing or stale, tell the user; run `crg-here` to register and build it, or `code-review-graph update` to refresh it, only when that local state change is within the task's authorization.
+- Preview graph-assisted renames before applying them. Before deleting apparently unused code, check for dynamic callers the graph may miss.
 - Use `rg`/`rg --files` directly for configuration, Markdown, TOML, generated content, and any source graph that is unavailable, stale, or unsupported.
 - Clean up completed Worktrunk worktrees with `wt remove` or `wt merge`.
 - Use Playwright CLI or Playwright MCP for browser-based web verification when UI behavior matters.

@@ -104,3 +104,25 @@ teardown() { teardown_test_env; }
   [ ! -e "$HOME/.claude/skills/sample" ]
   [ -d "$HOME/.agents/skills/personal" ]
 }
+
+@test "migration retires a recognized global skill and preserves edited and project copies" {
+  run python3 "$root/scripts/shared_skills.py"
+  [ "$status" -eq 0 ]
+  jq '{"retired": [.sample]}' "$HOME"/.local/share/supercharged/skills/releases/*/inventory.json > "$root/agent_config/legacy_skill_hashes.json"
+  project="$TEST_TEMP_DIR/project/.agents/skills"
+  for base in "$HOME/.codex/skills" "$HOME/.claude/skills" "$project"; do
+    mkdir -p "$base"
+    cp -R "$root/agent_config/sample" "$base/retired"
+  done
+  echo edited >> "$HOME/.claude/skills/retired/SKILL.md"
+
+  run env CODEX_HOME="$HOME/.codex" python3 "$root/scripts/shared_skills.py" --migrate
+  [ "$status" -eq 0 ]
+  [ ! -e "$HOME/.codex/skills/retired" ]
+  grep -qx edited "$HOME/.claude/skills/retired/SKILL.md"
+  cmp "$root/agent_config/sample/SKILL.md" "$project/retired/SKILL.md"
+
+  run python3 "$root/scripts/shared_skills.py" --rollback "${output##*journal: }"
+  [ "$status" -eq 0 ]
+  cmp "$root/agent_config/sample/SKILL.md" "$HOME/.codex/skills/retired/SKILL.md"
+}

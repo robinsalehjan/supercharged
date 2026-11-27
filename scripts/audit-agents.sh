@@ -270,12 +270,6 @@ else
     fail "Tracked git skills must use immutable 40-character commit refs"
 fi
 
-if [ -d "$AGENT_CONFIG_DIR/skills" ] && [ "$(find "$AGENT_CONFIG_DIR/skills" -mindepth 2 -maxdepth 2 -type f -name 'SKILL.md' | wc -l | tr -d ' ')" -eq 4 ]; then
-    pass "Canonical shared skill inventory contains the four graph skills"
-else
-    fail "Canonical shared skill inventory is incomplete"
-fi
-
 if [ "$REPO_ONLY" = false ]; then
     require_command codex "Codex CLI is installed"
     require_command python3 "Python is installed for MCP health checks"

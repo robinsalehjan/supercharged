@@ -53,9 +53,6 @@ def main() -> int:
         if normalized_mcp(definition) != normalized_mcp(codex_mcp[name]):
             errors.append(f"Shared MCP configuration differs for: {name}")
 
-    canonical_dir = root / "agent_config/skills"
-    canonical_skills = skill_names(canonical_dir, "*/SKILL.md")
-
     installed_skills = json.loads(
         (root / "agent_config/installed_skills.json").read_text()
     ).get("skills", {})
@@ -90,7 +87,10 @@ def main() -> int:
             "cli_tools": sorted(managed["tools"]),
             "mcp_servers": sorted(claude_mcp),
             "apple_mcp_servers": sorted(claude_apple),
-            "canonical_skills": canonical_skills,
+            "canonical_skills": sorted(
+                name for entry in installed_skills.values() if "local" in entry
+                for name in skill_names(root / entry["local"], "**/SKILL.md")
+            ),
             "git_skills": sorted(key for key, entry in installed_skills.items() if "repo" in entry),
         },
         "native_adapters": {

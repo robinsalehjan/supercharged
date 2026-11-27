@@ -33,10 +33,6 @@
         "*"
       ]
     },
-    "graph": {
-      "local": "agent_config/skills",
-      "reason": "Repository graph freshness and source-navigation conventions."
-    },
     "plannotator-annotate": {
       "repo": "backnotprop/plannotator",
       "ref": "a95db504a21655d6ce48b825e7125dc621ca6440",
