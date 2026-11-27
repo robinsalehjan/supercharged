@@ -92,7 +92,17 @@ The tracked MCP inventory is defined by `.mcp.json`, `claude_config/mcp_servers.
 
 Use `codex -p apple` for both native Xcode MCP modes. Xcode 26.3 through 26.x requires Xcode.app running with a project open and external-agent access enabled in Xcode’s Intelligence settings. Xcode 27+ can also run headlessly after a one-time `sudo xcrun mcp-server enable`; start it with `xcrun mcp-server start`. Do not enable the unsafe allow-all-agents option: opening or creating a workspace triggers Apple’s normal agent and folder approval flow.
 
-`npm run install:agent-tooling` is the harness-neutral reconciliation entry point. It installs the shared host CLIs and only the selected harness destinations for shared skills, then invokes the selected native marketplace installers when those harnesses are available. Its dry-run previews the catalog and remaining Claude plugins by default; use `-- --harness claude` or `-- --harness codex` to target one adapter. `npm run check:agent-tooling` reports the composed inventory and fails when shared MCP definitions differ between harnesses. Harness-native plugins remain intentionally different.
+`npm run install:agent-tooling -- --dry-run` previews the skills, MCP registrations and native plugins. Run `npm run install:agent-tooling` to apply them. Use `-- --harness claude` or `-- --harness codex` to select one agent. Setup checks for conflicting server names before installing tools or skills, skips matching registrations, and preserves unrelated local settings. Existing machines with the old Axiom or Firebase plugins use `npm run migrate:skills` first. Both commands use the same MCP registration code. Plugin removal takes place only during migration.
+
+| Scope | Tracked source | Availability |
+| --- | --- | --- |
+| Claude project | `.mcp.json` | code-review-graph and OpenAI Developer Docs when this repository is open and approved |
+| Claude user | `claude_config/mcp_servers.json` | Axiom, Cloudflare over HTTP, Firebase, OpenWiki and headless Playwright across projects |
+| Claude iOS tools | `claude_config/apple.mcp_servers.json` | Native Xcode at user scope when `INSTALL_IOS_TOOLS=Y` is selected in the environment or saved setup preferences |
+| Codex base | `codex_config/config.toml` | Shared servers and their Codex tool approval settings |
+| Codex Apple profile | `codex_config/apple.config.toml` | Native Xcode with `codex -p apple` |
+
+Registration and login are separate steps. Use the agent’s MCP interface to authorize Cloudflare when prompted. `npm run check:agent-tooling` checks configuration parity. `claude mcp list` reports the local Claude connection status.
 
 The standalone configuration audit and MCP/tooling check commands require Python 3.11+ for the standard-library `tomllib` parser. Fresh setup installs the managed Python before final audits.
 

@@ -38,6 +38,7 @@ See [README.md](./README.md) and [docs/REFERENCE.md](./docs/REFERENCE.md) for us
 
 **MCP servers**:
 - Keep repo-managed user-scoped Claude MCP servers in `claude_config/mcp_servers.json` and compatible Codex entries in `codex_config/config.toml`; backup never imports live user MCP definitions into the tracked registry.
+- Optional Claude iOS registrations live in `claude_config/apple.mcp_servers.json` and must match the Codex Apple profile. Normal tooling setup and migration share the MCP installer.
 - Keep shared project MCP support in `.mcp.json` for Claude/project clients and in `codex_config/config.toml` for Codex.
 - When adding an MCP server that both tools support, add the equivalent entry to both places and document any command differences.
 - If Codex does not support a Claude MCP server, leave it in the Claude-specific config and do not add a stub Codex entry.

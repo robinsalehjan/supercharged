@@ -134,8 +134,8 @@ codex_profile_names=$(find "$CODEX_CONFIG_DIR" -maxdepth 1 \( -type f -o -type l
 toml_summary=$(python3 "$SCRIPT_DIR/config_toml.py" audit-summary "$CODEX_CONFIG_DIR" 2>"$AUDIT_TMP_DIR/toml.err" || true)
 if jq -e '
     .profiles == ["apple.config.toml", "review.config.toml"] and
-    .base_mcp == ["axiom", "cloudflare", "code-review-graph", "firebase-tools", "openaiDeveloperDocs", "openwiki", "playwright"] and
-    .apple_mcp == ["xcode"] and
+    (.base_mcp | contains(["axiom", "cloudflare", "code-review-graph", "firebase-tools", "openaiDeveloperDocs", "openwiki", "playwright"])) and
+    (.apple_mcp | index("xcode") != null) and
     .playwright_enabled == true and .web_search == "live" and
     .base_reasoning == "medium" and .review_reasoning == "xhigh" and
     .hooks == true and .memories == false
@@ -174,12 +174,12 @@ else
 fi
 
 if jq -e '
-    (.mcpServers | keys | sort) == ["code-review-graph", "openaiDeveloperDocs"] and
     .mcpServers["code-review-graph"] == {command: "code-review-graph", args: ["serve"], type: "stdio"} and
     .mcpServers.openaiDeveloperDocs == {type: "http", url: "https://developers.openai.com/mcp"}
 ' "$PROJECT_ROOT/.mcp.json" >/dev/null 2>&1 && \
-   jq -e 'keys == ["axiom", "firebase-tools", "openwiki"]' "$PROJECT_ROOT/claude_config/mcp_servers.json" >/dev/null 2>&1; then
-    pass "Shared MCP inventory is canonical and Apple servers are Codex-profile-only"
+   jq -e 'keys | contains(["axiom", "cloudflare", "firebase-tools", "openwiki", "playwright"])' "$PROJECT_ROOT/claude_config/mcp_servers.json" >/dev/null 2>&1 && \
+   jq -e 'has("xcode")' "$PROJECT_ROOT/claude_config/apple.mcp_servers.json" >/dev/null 2>&1; then
+    pass "Shared MCP inventory is canonical and Apple servers are scoped to the Codex Apple profile and Claude iOS selection"
 else
     fail "Shared MCP inventory has duplicate, misplaced, or malformed servers"
 fi

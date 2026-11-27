@@ -6,6 +6,10 @@
       "axiom-mcp@27.1.2"
     ]
   },
+  "cloudflare": {
+    "type": "http",
+    "url": "https://mcp.cloudflare.com/mcp"
+  },
   "firebase-tools": {
     "command": "npx",
     "args": [
@@ -25,6 +29,12 @@
       "mcp",
       "--host",
       "claude"
+    ]
+  },
+  "playwright": {
+    "command": "playwright-mcp",
+    "args": [
+      "--headless"
     ]
   }
 }

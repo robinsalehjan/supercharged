@@ -39,7 +39,11 @@ def main() -> int:
         print(f"Failed to load Codex TOML: {error}", file=sys.stderr)
         return 2
 
-    claude_mcp.update(json.loads((root / "claude_config/mcp_servers.json").read_text()))
+    claude_user = json.loads((root / "claude_config/mcp_servers.json").read_text())
+    duplicate = set(claude_mcp) & set(claude_user)
+    if duplicate:
+        errors.append(f"Duplicate Claude project and user MCPs: {', '.join(sorted(duplicate))}")
+    claude_mcp.update(claude_user)
     for name, definition in claude_mcp.items():
         if name == "openwiki" and definition.get("args") == ["mcp", "--host", "claude"]:
             definition = dict(definition, args=["mcp", "--host", "codex"])
@@ -70,15 +74,22 @@ def main() -> int:
     for profile in sorted(tracked_profiles - expected_profiles):
         errors.append(f"Unexpected tracked Codex profile: {profile}")
     codex_profile_mcp: set[str] = set(codex_mcp) - set(claude_mcp)
-    for profile in ("apple.config.toml",):
-        profile_path = root / "codex_config" / profile
-        codex_profile_mcp.update(mcp_servers(load_toml(profile_path), source=profile_path))
+    profile_path = root / "codex_config/apple.config.toml"
+    apple_servers = mcp_servers(load_toml(profile_path), source=profile_path)
+    claude_apple = json.loads((root / "claude_config/apple.mcp_servers.json").read_text())
+    if set(claude_apple) & (set(claude_mcp) | set(codex_mcp)):
+        errors.append("Optional Apple MCP also appears in the base configuration")
+    for name, definition in claude_apple.items():
+        if name not in apple_servers or normalized_mcp(definition) != normalized_mcp(apple_servers[name]):
+            errors.append(f"Shared Apple MCP configuration differs for: {name}")
+    codex_profile_mcp.update(apple_servers)
 
     report = {
         "ok": not errors,
         "shared": {
             "cli_tools": sorted(managed["tools"]),
             "mcp_servers": sorted(claude_mcp),
+            "apple_mcp_servers": sorted(claude_apple),
             "canonical_skills": canonical_skills,
             "git_skills": sorted(key for key, entry in installed_skills.items() if "repo" in entry),
         },
@@ -99,6 +110,7 @@ def main() -> int:
         print("Shared agent tooling")
         print(f"  CLIs: {', '.join(report['shared']['cli_tools']) or 'none'}")
         print(f"  MCPs: {', '.join(report['shared']['mcp_servers']) or 'none'}")
+        print(f"  Apple MCPs (Claude iOS selection / Codex apple profile): {', '.join(claude_apple)}")
         print(f"  skills: {', '.join(sorted(installed_skills)) or 'none'}")
         print("Native harness adapters")
         print(f"  Claude marketplaces: {', '.join(report['native_adapters']['claude_marketplaces']) or 'none'}")

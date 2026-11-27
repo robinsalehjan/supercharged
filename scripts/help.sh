@@ -24,7 +24,7 @@ echo "  npm run install:skills       - Reconcile pinned shared skills (--dry-run
 echo "  npm run check:skills         - Verify shared skill discovery in both agents"
 echo "  npm run migrate:skills       - Migrate legacy installations (--dry-run)"
 echo "  npm run install:plugins        - Install Claude Code marketplaces and plugins"
-echo "  npm run install:agent-tooling  - Reconcile shared tooling and Claude native plugins"
+echo "  npm run install:agent-tooling  - Install shared tools, skills, MCPs and Claude plugins"
 echo "  npm run install:agent-tooling -- --dry-run - Preview complete agent tooling reconciliation"
 echo "  npm run install:managed-tools - Reconcile all exact-pinned agent tools"
 echo "  npm run install:firebase      - Reconcile exact-pinned Firebase CLI from npm"

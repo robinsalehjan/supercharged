@@ -3,49 +3,15 @@
 
 import json
 import os
-from pathlib import Path
-import queue
 import re
 import subprocess
-import threading
+from pathlib import Path
+
+from codex_app_server import codex_app_server
 
 
 def codex_paths():
-    proc = subprocess.Popen(
-        ["codex", "app-server", "--stdio"],
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        text=True,
-    )
-    responses = queue.Queue()
-
-    def receive():
-        for line in proc.stdout:
-            responses.put(json.loads(line))
-
-    threading.Thread(target=receive, daemon=True).start()
-
-    def send(message):
-        proc.stdin.write(json.dumps(message) + "\n")
-        proc.stdin.flush()
-
-    def request(i, method, params):
-        send({"id": i, "method": method, "params": params})
-        while True:
-            message = responses.get(timeout=60)
-            if message.get("id") == i:
-                return message["result"]
-
-    try:
-        request(
-            1,
-            "initialize",
-            {
-                "clientInfo": {"name": "supercharged", "version": "1"},
-                "capabilities": {"experimentalApi": True},
-            },
-        )
-        send({"method": "initialized"})
+    with codex_app_server() as request:
         blocks = request(
             2, "skills/list", {"cwds": [os.getcwd()], "forceReload": True}
         )["data"]
@@ -57,9 +23,6 @@ def codex_paths():
             for s in b["skills"]
             if s["enabled"]
         }
-    finally:
-        proc.terminate()
-        proc.wait(timeout=10)
 
 
 def claude_names():

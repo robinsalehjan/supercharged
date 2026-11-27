@@ -197,6 +197,7 @@ validate_restore_inputs() {
         "$CLAUDE_CONFIG_DIR/installed_plugins.json" \
         "$CLAUDE_CONFIG_DIR/known_marketplaces.json" \
         "$CLAUDE_CONFIG_DIR/mcp_servers.json" \
+        "$CLAUDE_CONFIG_DIR/apple.mcp_servers.json" \
         "$CLAUDE_HOME/settings.json" \
         "$CLAUDE_HOME/plugins/installed_plugins.json" \
         "$CLAUDE_HOME/plugins/known_marketplaces.json" \
@@ -593,19 +594,26 @@ restore_mcp_servers() {
         return
     fi
 
-    managed_servers=$(jq 'keys' "$src") || {
+    local -a registries
+    registries=("$src")
+    if [ -f "$CLAUDE_CONFIG_DIR/apple.mcp_servers.json" ] && ios_tools_selected; then
+        registries+=("$CLAUDE_CONFIG_DIR/apple.mcp_servers.json")
+    fi
+    local registry
+    registry=$(jq -s 'add' "${registries[@]}") || return 1
+    managed_servers=$(jq 'keys' <<< "$registry") || {
         log_with_level "ERROR" "Failed to read managed MCP server names"
         return 1
     }
 
     # Expand $HOME placeholders and substitute $VAR_NAME env placeholders via jq env object
     local mcp_with_secrets
-    if ! mcp_with_secrets=$(expand_portable_path < "$src" | jq -a 'to_entries | map(
-        .value.env = (.value.env // {} | to_entries | map(
+    if ! mcp_with_secrets=$(expand_portable_path <<< "$registry" | jq -a 'to_entries | map(
+        if .value | has("env") then .value.env |= (to_entries | map(
             if (.value | type == "string") and (.value | test("^\\$[A-Za-z_][A-Za-z0-9_]*$")) then
                 .value = (env[.value[1:]] // .value)
             else . end
-        ) | from_entries)
+        ) | from_entries) else . end
     ) | from_entries' 2>/dev/null); then
         log_with_level "ERROR" "Failed to process MCP server configuration"
         return 1

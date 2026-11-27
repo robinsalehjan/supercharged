@@ -11,7 +11,7 @@ setup() {
   STUB_DIR="$TEST_TEMP_DIR/stubs"
   mkdir -p "$STUB_DIR"
 
-  for name in managed skills claude-plugins codex-plugins; do
+  for name in managed skills mcps claude-plugins codex-plugins; do
     stub="$STUB_DIR/$name"
     printf '%s\n' '#!/bin/sh' 'printf "%s %s\\n" "$(basename "$0")" "$*" >> "$INSTALLER_CALLS"' > "$stub"
     chmod +x "$stub"
@@ -25,6 +25,7 @@ teardown() {
 run_installer() {
   run env \
     INSTALLER_CALLS="$CALLS" \
+    MCP_INSTALLER="$STUB_DIR/mcps" \
     MANAGED_TOOLS_INSTALLER="$STUB_DIR/managed" \
     SKILLS_INSTALLER="$STUB_DIR/skills" \
     CLAUDE_PLUGINS_INSTALLER="$STUB_DIR/claude-plugins" \
@@ -51,7 +52,8 @@ PYTEST
   run_installer --dry-run
 
   [ "$status" -eq 0 ]
-  [ "$(wc -l < "$CALLS" | tr -d ' ')" -eq 3 ]
+  [ "$(wc -l < "$CALLS" | tr -d ' ')" -eq 4 ]
+  grep -Fx 'mcps --dry-run --harness both' "$CALLS"
   grep -Fx 'managed --dry-run' "$CALLS"
   grep -Fx 'skills --dry-run --harness both' "$CALLS"
   grep -Fx 'claude-plugins --dry-run' "$CALLS"
@@ -87,9 +89,10 @@ PYTEST
   [ "$status" -eq 0 ]
   run jq -e '
     .ok == true and
-    (.shared.mcp_servers == ["axiom", "code-review-graph", "firebase-tools", "openaiDeveloperDocs", "openwiki"]) and
+    (.shared.mcp_servers == ["axiom", "cloudflare", "code-review-graph", "firebase-tools", "openaiDeveloperDocs", "openwiki", "playwright"]) and
     (.native_adapters.claude_plugins | index("swift-lsp@claude-plugins-official")) and
-    (.native_adapters.codex_mcp_servers == ["cloudflare", "playwright", "xcode"]) and
+    (.native_adapters.codex_mcp_servers == ["xcode"]) and
+    (.shared.apple_mcp_servers == ["xcode"]) and
     (.native_adapters.codex_plugins == []) and
     (.native_adapters.claude_plugins | index("firebase@firebase") == null)
   ' <<<"$output"
@@ -128,4 +131,21 @@ PYTEST
   run jq -e '.errors | index("Unexpected tracked Codex profile: apple-headless.config.toml")' \
     <<<"$output"
   [ "$status" -eq 0 ]
+}
+
+@test "agent setup forwards the saved iOS selection to MCP registration" {
+  unset INSTALL_IOS_TOOLS
+  echo 'INSTALL_IOS_TOOLS=Y' > "$HOME/.supercharged_preferences"
+  run_installer --dry-run --harness claude
+  [ "$status" -eq 0 ]
+  grep -Fx 'mcps --dry-run --harness claude --ios' "$CALLS"
+}
+
+@test "MCP conflict stops agent setup before managed installs" {
+  export PATH="$STUB_DIR:$PATH"
+  cp "$STUB_DIR/claude-plugins" "$STUB_DIR/claude"
+  printf '%s\n' '#!/bin/sh' 'exit 1' > "$STUB_DIR/mcps"
+  run_installer --harness claude
+  [ "$status" -ne 0 ]
+  [ ! -e "$CALLS" ]
 }
