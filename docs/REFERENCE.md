@@ -64,6 +64,8 @@ The repository deliberately keeps inventory in machine-readable sources:
 
 Use `npm run help` for reconciliation commands, `npm run check:agent-tooling` for the composed agent inventory, and `npm run audit:agents -- --repo-only` for deterministic tracked-configuration validation.
 
+The base Homebrew setup installs `ast-grep` for syntax-aware code searches. To add it to an existing machine, run `brew install ast-grep`.
+
 The iOS tools group includes `asccli` (the `asc` command) for App Store Connect automation.
 
 Conditional Brewfile groups add iOS, container, cloud, network, and extra application tooling according to the setup preferences above. Dedicated setup helpers reconcile exact-pinned agent tools after the managed runtimes are available. Release archives verify architecture-specific SHA-256 values, and managed-tool reconciliation retires known obsolete MCP installations. Use the dedicated install commands shown by `npm run help`; add `-- --dry-run` to inspect drift.

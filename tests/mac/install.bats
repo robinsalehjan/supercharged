@@ -216,6 +216,7 @@ run_foundation_models_interactive() {
   [[ "$output" == *'brew "actionlint"'* ]]
   [[ "$output" == *'brew "jq"'* ]]
   [[ "$output" == *'brew "ripgrep"'* ]]
+  [[ "$output" == *'brew "ast-grep"'* ]]
   [[ "$output" == *'brew "watchexec"'* ]]
   [[ "$output" == *'brew "cliclick"'* ]]
   [[ "$output" == *'cask "codex"'* ]]
