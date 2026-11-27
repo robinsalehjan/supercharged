@@ -114,13 +114,9 @@ teardown() {
   [[ "$output" == *"expected $expected_version, found $drifted_version"* ]]
 }
 
-@test "install-plugins.sh includes the enabled Firebase plugin and marketplace" {
+@test "Firebase skills are excluded from native Claude reconciliation" {
   run "$SCRIPT" --dry-run
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Would add marketplace: firebase/agent-skills (firebase)"* ]]
-  [[ "$output" == *"Would install plugin: firebase@firebase"* ]]
-
-  run jq -e '.enabledPlugins["firebase@firebase"] == true and
-    .extraKnownMarketplaces.firebase.source.repo == "firebase/agent-skills"' "$PROJECT_ROOT/claude_config/settings.json"
-  [ "$status" -eq 0 ]
+  [[ "$output" != *"Would install plugin: firebase@firebase"* ]]
+  [[ "$output" != *"Would add marketplace: firebase/agent-skills"* ]]
 }

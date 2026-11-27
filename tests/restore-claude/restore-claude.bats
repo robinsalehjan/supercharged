@@ -215,3 +215,17 @@ EOF
   [ "$(jq '.mcpServers | has("blocked")' "$user_config")" = "false" ]
   [ "$(jq -r '.mcpServers.local.command' "$user_config")" = "local" ]
 }
+
+@test "Claude restore includes native Xcode only for an iOS selection and keeps HTTP transport intact" {
+  run zsh -c '
+    source "$1"; CLAUDE_USER_CONFIG="$HOME/.claude.json"
+    export INSTALL_IOS_TOOLS=N
+    restore_mcp_servers
+    jq -e '\''.mcpServers.cloudflare.type == "http" and (.mcpServers.cloudflare | has("env") | not) and (.mcpServers | has("xcode") | not)'\'' "$CLAUDE_USER_CONFIG" || exit 1
+    unset INSTALL_IOS_TOOLS
+    echo INSTALL_IOS_TOOLS=Y > "$HOME/.supercharged_preferences"
+    restore_mcp_servers
+    jq -e '\''.mcpServers.xcode.command == "xcrun" and .mcpServers.xcode.args == ["mcpbridge"]'\'' "$CLAUDE_USER_CONFIG"
+  ' _ "$SCRIPT"
+  [ "$status" -eq 0 ]
+}

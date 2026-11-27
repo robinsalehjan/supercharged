@@ -9,9 +9,9 @@ source "$(dirname "$0")/utils.sh"
 
 PROJECT_ROOT="$UTILS_PROJECT_ROOT"
 MANAGED_TOOLS_INSTALLER="${MANAGED_TOOLS_INSTALLER:-$PROJECT_ROOT/scripts/install-managed-tools.sh}"
+MCP_INSTALLER="${MCP_INSTALLER:-$PROJECT_ROOT/scripts/install-mcps.py}"
 SKILLS_INSTALLER="${SKILLS_INSTALLER:-$PROJECT_ROOT/scripts/install-skills.sh}"
 CLAUDE_PLUGINS_INSTALLER="${CLAUDE_PLUGINS_INSTALLER:-$PROJECT_ROOT/scripts/install-plugins.sh}"
-CODEX_PLUGINS_INSTALLER="${CODEX_PLUGINS_INSTALLER:-$PROJECT_ROOT/scripts/install-codex-plugins.sh}"
 DRY_RUN=false
 HARNESS=both
 
@@ -23,7 +23,7 @@ trap cleanup EXIT
 show_help() {
     echo "Usage: $(basename "$0") [--dry-run] [--harness both|claude|codex]"
     echo ""
-    echo "Reconcile shared CLIs and skills, then each selected harness's native plugins."
+    echo "Reconcile shared CLIs, skills, MCP registrations and selected native plugins."
 }
 
 while [[ $# -gt 0 ]]; do
@@ -65,9 +65,39 @@ esac
 typeset -a installer_args
 $DRY_RUN && installer_args=(--dry-run) || installer_args=()
 
+typeset -a available_agents mcp_args
+available_agents=()
+for agent in claude codex; do
+    [[ "$HARNESS" == both || "$HARNESS" == "$agent" ]] || continue
+    if $DRY_RUN || command_exists "$agent"; then
+        available_agents+=("$agent")
+    else
+        log_with_level WARN "Skipping $agent MCP registration because its CLI is unavailable"
+    fi
+done
+mcp_args=()
+if (( ${#available_agents[@]} )); then
+    mcp_harness=both
+    if (( ${#available_agents[@]} == 1 )); then
+        mcp_harness="${available_agents[1]}"
+    fi
+    mcp_args=(--harness "$mcp_harness")
+    ios_tools_selected && mcp_args+=(--ios)
+    # Detect conflicts across selected agents before changing tools or skills.
+    if $DRY_RUN; then
+        "$MCP_INSTALLER" --dry-run "${mcp_args[@]}"
+    else
+        "$MCP_INSTALLER" --dry-run "${mcp_args[@]}" >/dev/null
+    fi
+fi
+
 log_with_level "INFO" "Reconciling shared agent CLIs and skills..."
 "$MANAGED_TOOLS_INSTALLER" "${installer_args[@]}"
 "$SKILLS_INSTALLER" "${installer_args[@]}" --harness "$HARNESS"
+
+if [ "$DRY_RUN" = false ] && (( ${#mcp_args[@]} )); then
+    "$MCP_INSTALLER" "${mcp_args[@]}"
+fi
 
 reconcile_harness() {
     local harness="$1"
@@ -83,9 +113,6 @@ reconcile_harness() {
 
 if [ "$HARNESS" = both ] || [ "$HARNESS" = claude ]; then
     reconcile_harness claude "$CLAUDE_PLUGINS_INSTALLER"
-fi
-if [ "$HARNESS" = both ] || [ "$HARNESS" = codex ]; then
-    reconcile_harness codex "$CODEX_PLUGINS_INSTALLER"
 fi
 
 log_with_level "SUCCESS" "Shared agent tooling and native harness adapters are reconciled"

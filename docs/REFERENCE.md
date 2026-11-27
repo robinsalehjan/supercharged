@@ -58,9 +58,9 @@ The repository deliberately keeps inventory in machine-readable sources:
 | Homebrew formulae, casks, Mac App Store apps, fonts, and VS Code extensions | `build_brewfile` in `scripts/mac.sh` |
 | asdf runtimes | `dot_files/.tool-versions` |
 | Exact-pinned agent tools and compatibility floors | `agent_config/managed_tools.json` |
-| Shared git skills | `agent_config/installed_skills.json` |
-| Claude and Codex plugins | `claude_config/*.json` and `codex_config/plugins.json` |
-| MCP servers and profiles | `.mcp.json` and `codex_config/*.toml` |
+| Shared skills CLI catalog | `agent_config/installed_skills.json` |
+| Claude native plugins | `claude_config/*.json` |
+| MCP servers and profiles | `.mcp.json`, `claude_config/mcp_servers.json` and `codex_config/*.toml` |
 
 Use `npm run help` for reconciliation commands, `npm run check:agent-tooling` for the composed agent inventory, and `npm run audit:agents -- --repo-only` for deterministic tracked-configuration validation.
 
@@ -76,23 +76,37 @@ asdf-managed tools are listed in `dot_files/.tool-versions`, including Node.js, 
 
 Claude Code configuration is backed up under `claude_config/`. Codex configuration is backed up under `codex_config/`. Shared cross-agent instructions live in `agent_config/AGENTS.md`.
 
-Shared git-cloned skills are declared in `agent_config/installed_skills.json`. Active entries must use immutable 40-character commit refs. Its `removed_skills` tombstones safely prune retired managed clones from both agent homes during `npm run install:skills`; removal is limited to git checkouts whose origin matches the retired registry entry, so unrelated local skills are preserved.
+### Shared skills and migration
 
-### Shared Agent Capabilities
+`npm run install:skills` stages the catalog using the exact-pinned npx skills CLI. Git sources use full commits and an optional subdirectory and skill selection. The shared catalog excludes Kinetic’s App Store Connect skill. Per-repository agent instructions cover PR workflow. Shared graph guidance lives in `agent_config/AGENTS.md`. Migration removes recognized global copies of `debug-issue`, `explore-codebase`, `refactor-safely`, and `review-changes`. Locally edited and project-owned copies are preserved. Plannotator’s pinned upstream skills include the bundled goal interview workflow. Cloudflare uses the complete pinned collection. Axiom uses its auditor-as-skill distribution for both agents. Use standalone skill names in place of native plugin-prefixed names. Removing the Axiom plugin also retires its automatic session hints and Swift edit hooks. Its reference files, auditor skills and standalone MCP server are available after migration. Firebase’s Firestore rules skill uses its documented direct-authoring path when the native `firestore-rules-author` subagent is absent.
 
-Canonical graph skills live in `agent_config/skills/<name>/SKILL.md`; git-cloned skills are declared in `agent_config/installed_skills.json`. `npm run sync -- --only codex` applies canonical graph skills to Codex, while the shared-skills installer targets one or both harnesses. Harness plugins can contribute additional skills, so runtime inventories are intentionally not identical.
+The installer publishes verified releases under `~/.local/share/supercharged/skills`. Claude discovers links in `~/.claude/skills`; Codex discovers them in `~/.agents/skills`, which other universal agents may also read. Use `-- --harness claude|codex|both` or `-- --dry-run`. Ignored `installed_skills.local.json` entries override tracked entries by collection key. Retirement records take precedence. Identical inputs reuse the release; a missing discovery link is repaired.
 
-OpenWiki is installed as the exact-pinned `openwiki` CLI. To use it inside Codex or Claude Code, run `openwiki integrations install codex` or `openwiki integrations install claude`, then restart that agent; `openwiki integrations list` shows installation status. These integrations use the agent's authenticated session and need no separate model provider configuration. From a repository root, ask the integrated agent to initialize or update its wiki when wanted. The standalone `openwiki --init` and `openwiki --update` commands remain available; their interactive first run stores the selected provider and credentials in `~/.openwiki/.env`, which is local-only and must never be committed or backed up. Before generation, review `.openwikiignore` to exclude sensitive or irrelevant source paths. OpenWiki writes `openwiki/` and maintains marked guidance blocks in root `AGENTS.md` and `CLAUDE.md`; other content remains user-managed. For a concrete question, an integrated agent can use `openwiki_search` and `openwiki_read` to retrieve relevant sections, or read `openwiki/quickstart.md` and linked pages directly. An existing wiki is optional secondary context: corroborate material claims against current source, tests, and a fresh code-review-graph, report conflicts as stale documentation, and treat source and tests as authoritative. Agents do not generate or update a wiki without an explicit user request, including explicit enrollment in the scheduled repository updater described below.
+For a previously configured Mac, run `npm run migrate:skills -- --dry-run` and review the listed local skills, MCP registrations, and native plugins. Then run `npm run migrate:skills` from the default agent homes. It snapshots settings and skill directories, archives recognized older copies, checks native discovery and MCP initialization, and retires the superseded user plugins. An unfamiliar same-name directory requires review before replacement. Unrelated local skills, language servers, host plugins, and project Firebase MCP definitions remain independently owned.
 
-The tracked MCP inventory is defined by `.mcp.json`, `codex_config/config.toml`, and the profile TOML files; `npm run check:agent-tooling` verifies parity. Computer Use is app-managed rather than a tracked standalone MCP entry. Claude user-local MCP entries are preserved during restore and never imported by backup. Local executables are exact-pinned where this repository controls installation; hosted and platform-native servers follow their respective providers.
+Recover a migration with `npm run rollback -- <snapshot-path>` using the path printed before changes. Native plugin caches are excluded from configuration snapshots; reinstall a retired native plugin at its previous pin if reverting after its uninstall. For a skill-only reconciliation, `scripts/install-skills.sh --rollback <journal-directory>` reverses that link transaction. Keep release directories referenced by rollback snapshots. Run `npm run check:skills` to verify the catalog links and discovery in fresh sessions for both agents.
+
+OpenWiki is installed as the exact-pinned `openwiki` CLI. The shared catalog installs its skill and each agent has its own explicit MCP host argument. These integrations use the agent's authenticated session and need no separate model provider configuration. From a repository root, ask the integrated agent to initialize or update its wiki when wanted. The standalone `openwiki --init` and `openwiki --update` commands remain available; their interactive first run stores the selected provider and credentials in `~/.openwiki/.env`, which is local-only and must never be committed or backed up. Before generation, review `.openwikiignore` to exclude sensitive or irrelevant source paths. OpenWiki writes `openwiki/` and maintains marked guidance blocks in root `AGENTS.md` and `CLAUDE.md`; other content remains user-managed. For a concrete question, an integrated agent can use `openwiki_search` and `openwiki_read` to retrieve relevant sections, or read `openwiki/quickstart.md` and linked pages directly. An existing wiki is optional secondary context: corroborate material claims against current source, tests, and a fresh code-review-graph, report conflicts as stale documentation, and treat source and tests as authoritative. Agents do not generate or update a wiki without an explicit user request, including explicit enrollment in the scheduled repository updater described below.
+
+The tracked MCP inventory is defined by `.mcp.json`, `claude_config/mcp_servers.json`, `codex_config/config.toml`, and the profile TOML files; `npm run check:agent-tooling` verifies parity. Computer Use is app-managed rather than a tracked standalone MCP entry. Claude user-local MCP entries are preserved during restore and never imported by backup. Local executables are exact-pinned where this repository controls installation; hosted and platform-native servers follow their respective providers.
 
 Use `codex -p apple` for both native Xcode MCP modes. Xcode 26.3 through 26.x requires Xcode.app running with a project open and external-agent access enabled in Xcode’s Intelligence settings. Xcode 27+ can also run headlessly after a one-time `sudo xcrun mcp-server enable`; start it with `xcrun mcp-server start`. Do not enable the unsafe allow-all-agents option: opening or creating a workspace triggers Apple’s normal agent and folder approval flow.
 
-`npm run install:agent-tooling` is the harness-neutral reconciliation entry point. It installs the shared host CLIs and only the selected harness destinations for shared skills, then invokes the selected native marketplace installers when those harnesses are available. Its dry-run previews both desired plugin sets by default; use `-- --harness claude` or `-- --harness codex` to target one adapter. `npm run check:agent-tooling` reports the composed inventory and fails when shared MCP definitions differ between harnesses. Harness-native plugins remain intentionally different.
+`npm run install:agent-tooling -- --dry-run` previews the skills, MCP registrations and native plugins. Run `npm run install:agent-tooling` to apply them. Use `-- --harness claude` or `-- --harness codex` to select one agent. Setup checks for conflicting server names before installing tools or skills, skips matching registrations, and preserves unrelated local settings. Existing machines with the old Axiom or Firebase plugins use `npm run migrate:skills` first. Both commands use the same MCP registration code. Plugin removal takes place only during migration.
+
+| Scope | Tracked source | Availability |
+| --- | --- | --- |
+| Claude project | `.mcp.json` | code-review-graph and OpenAI Developer Docs when this repository is open and approved |
+| Claude user | `claude_config/mcp_servers.json` | Axiom, Cloudflare over HTTP, Firebase, OpenWiki and headless Playwright across projects |
+| Claude iOS tools | `claude_config/apple.mcp_servers.json` | Native Xcode at user scope when `INSTALL_IOS_TOOLS=Y` is selected in the environment or saved setup preferences |
+| Codex base | `codex_config/config.toml` | Shared servers and their Codex tool approval settings |
+| Codex Apple profile | `codex_config/apple.config.toml` | Native Xcode with `codex -p apple` |
+
+Registration and login are separate steps. Use the agent’s MCP interface to authorize Cloudflare when prompted. `npm run check:agent-tooling` checks configuration parity. `claude mcp list` reports the local Claude connection status.
 
 The standalone configuration audit and MCP/tooling check commands require Python 3.11+ for the standard-library `tomllib` parser. Fresh setup installs the managed Python before final audits.
 
-Pin updates follow the personal machine. Run `npm run update:tool-pins` or `npm run update:asdf-pins` to inspect upstream candidates without changing tracked files. Install and validate the chosen versions on this machine, then run `npm run promote:pins` to preview the resulting pin changes and `npm run promote:pins -- --apply` to write them. Use `-- --only asdf` or `-- --only agents` to limit promotion. The promoter reads active, installed asdf versions within `agent_config/asdf_policy.json`, global npm package versions (including Firebase CLI), and installed agent CLI versions; release binaries must match published checksums, and the Firebase command must run at its installed package version. Missing tools are skipped. Plugin refs and versions (Axiom and Firebase) and Codex, Claude, and Worktrunk compatibility versions remain manual after local validation. CI checks repository changes but never proposes new pins.
+Pin updates follow the personal machine. Run `npm run update:tool-pins` or `npm run update:asdf-pins` to inspect upstream candidates without changing tracked files. Install and validate the chosen versions on this machine, then run `npm run promote:pins` to preview the resulting pin changes and `npm run promote:pins -- --apply` to write them. Use `-- --only asdf` or `-- --only agents` to limit promotion. The promoter reads active, installed asdf versions within `agent_config/asdf_policy.json`, global npm package versions (including Firebase CLI), and installed agent CLI versions; release binaries must match published checksums, and the Firebase command must run at its installed package version. Missing tools are skipped. Skill source commits and Codex, Claude, and Worktrunk compatibility versions remain manual after local validation. CI checks repository changes but never proposes new pins.
 
 Version and checksum policy is authoritative in `agent_config/managed_tools.json`, `agent_config/installed_skills.json`, and the harness plugin registries. The audit and tooling checker validate those manifests; prose should describe the workflow without copying their inventories.
 
@@ -171,7 +185,7 @@ supported machine-local state. Browser connection variables belong to the
 app-managed integration. The Apple profile supplies `xcrun mcpbridge`; use the
 profile rather than maintaining a duplicate Xcode entry in the base config.
 
-The Codex baseline and profiles are defined in `codex_config/config.toml` and `codex_config/*.config.toml`; do not duplicate model names or MCP inventories in prose. Use `codex -p apple` for Apple’s native Xcode MCP profile and `codex -p review` for the review profile. Computer Use remains app-managed, while Axiom and Firebase are installed through the Codex plugin registry.
+The Codex baseline and profiles are defined in `codex_config/config.toml` and `codex_config/*.config.toml`; do not duplicate model names or MCP inventories in prose. Use `codex -p apple` for Apple’s native Xcode MCP profile and `codex -p review` for the review profile. Computer Use remains app-managed, while Axiom and Firebase use the shared skill catalog.
 
 Run `npm run audit:agents` for a local health check, `npm run audit:agents -- --json` for machine-readable output, or `npm run audit:agents -- --repo-only` for deterministic tracked-config validation. Check native Xcode MCP with `npm run audit:agents -- --profile apple`.
 
@@ -189,11 +203,9 @@ git diff --check
 
 Review the diff before committing. Package inventory changes must still be made in `scripts/mac.sh`; the backup commands cover agent configuration, not Homebrew, Mac App Store, or VS Code inventories.
 
-### Firebase agent skills
+### Standalone MCP servers
 
-The official [Firebase agent-skills](https://github.com/firebase/agent-skills) plugin is installed for both Claude Code and Codex during setup and their respective sync targets. To reconcile plugins separately, run `npm run install:plugins` (Claude) or `npm run install:codex-plugins` (Codex). The plugin provides Firebase skills and its bundled Firebase MCP server; authentication remains machine-local.
-
-Codex pins the marketplace commit and plugin version in `codex_config/plugins.json`. Claude uses the marketplace in `claude_config/known_marketplaces.json`, enables the plugin through `claude_config/settings.json`, and verifies the version in `claude_config/installed_plugins.json`. Claude follows its existing marketplace installation behavior rather than the Codex commit pin. Review upstream manifests before manually updating these entries: the Claude and Codex plugin versions can differ. Reload Claude plugins or restart Codex after installation.
+Claude user MCP definitions live in `claude_config/mcp_servers.json`; Codex has corresponding entries in its base TOML. Axiom uses the pinned axiom-mcp package. Firebase’s standalone MCP registration is named `firebase-tools` and uses a separate package pin from the host Firebase CLI. Project selection follows the launch directory. OpenWiki receives the host-specific argument for Claude or Codex. Restore manages these registrations; skill installation does not enroll repositories, initialize wikis or copy authentication state.
 
 ## Codex Desktop Access
 
@@ -240,7 +252,7 @@ Edit `scripts/mac.sh` to change Homebrew packages. Conditional package groups ar
 
 Edit `dot_files/.zshrc`, `dot_files/.tmux.conf`, and `dot_files/.p10k.zsh` for shell, tmux, and prompt behavior.
 
-Edit `agent_config/AGENTS.md` for shared Claude/Codex instructions. Keep the tracked Claude user registry empty unless a compatibility requirement warrants a sanitized entry. For shared project servers, edit `.mcp.json` and add the compatible Codex entry together; put Apple-only servers in the appropriate `codex_config/apple*.config.toml` profile.
+Edit `agent_config/AGENTS.md` for shared Claude/Codex instructions. Edit `claude_config/mcp_servers.json` for repository-managed user-scoped Claude servers and add the compatible entry to the Codex base config. For shared project servers, edit `.mcp.json` and add the compatible Codex entry together; put Apple-only servers in the appropriate `codex_config/apple*.config.toml` profile.
 
 `npm run update -- --dry-run` is non-mutating: it suppresses Homebrew auto-update, reports the tap trust and retirement actions it would take, skips `brew update` and cleanup, and reports outdated Homebrew formulae, casks, and unpinned global npm packages before exiting ahead of asdf, zsh, npm, or pip updates.
 

@@ -1,0 +1,90 @@
+{
+  "agents-sdk": [
+    "77f5d8ccef807cf511348f227a4fb45ea12320a2a61b2734d7d2828964713f6a"
+  ],
+  "cloudflare": [
+    "c6de859c6695dcf9d38befa621af4c68aa5a7e2014c3cb8d4a0c6beffb9ddc11"
+  ],
+  "cloudflare-email-service": [
+    "7d16b497b10b59e7f624e783670cee24935031075208fdd0c5a26b35516a642a"
+  ],
+  "cloudflare-one": [
+    "14947bfe75b0e931b7b064d08f71ee8b40a866b06a8d1ed3a10a485d02307165"
+  ],
+  "cloudflare-one-migrations": [
+    "cef0df0a77f075f4f26ad84462a2cf043c7b9289732d985abe95ebbd7ebb2c2b"
+  ],
+  "debug-issue": [
+    "6e345a6d1cbea856efc3496ed9c407a13538db689a8c033f8a4fc0fa4d212a2c"
+  ],
+  "durable-objects": [
+    "cfb6b687eeaa77e3ba4c299dabdc22110e682d407da889a2082e848e940607f0"
+  ],
+  "explore-codebase": [
+    "3b93071353295b229fda6cc71bc3629a78813ca537205a25c1157ab1d04e3c1c"
+  ],
+  "nextjs-on-cloudflare": [
+    "1e74fee24a2a8ebc21c8f14fb7387f07d92dd01d81b226145a26b3ef4e1f0ae3"
+  ],
+  "openwiki": [
+    "8a27f66458fd2d0215664b5975df4b4b1f4e79817a0d7528b9a4ee7feeded230"
+  ],
+  "plannotator-annotate": [
+    "9035e41107862bba35ae408218810cf6f2d00fcb01e64b7138edb13a1f1c311e"
+  ],
+  "plannotator-compound": [
+    "848d9d7768a7a9db4377e910c07eda128f2a827342427a65ffd5445bcecbec03"
+  ],
+  "plannotator-last": [
+    "f926620e90ee2deed5c8de971dc4b5ff857b371d24163a17307d68b0b34402fc"
+  ],
+  "plannotator-review": [
+    "7f273cf442419358e54234c340a0fc09dd8447c753c88451f09efd79b389729b"
+  ],
+  "plannotator-setup-goal": [
+    "02e144366c48805a2c6568c1e1339bc946961ff9872f0ae8f242ee0df36b547a",
+    "18721a43837969795c80858193182d50eed0fb3c57052bfeb72642e0a4092763",
+    "a1e3c9df80528cd89ba28f47d4d2888b038fd3dc4d242995d8bc9f24b50ee998"
+  ],
+  "plannotator-visual-explainer": [
+    "0e38d075cbe2829ae5ce641438087ce52dfb2a9de789d8d7918ca526354960d7",
+    "d40071ef7d5fa5b69b44e96d19e6036e7340e29f966829391851d148208afea3"
+  ],
+  "playwright-cli": [
+    "78795e2e935aa4fb59dcf768138ff76f0cbfecd37cd03ce2fc9c1f3aefcf2acc"
+  ],
+  "refactor-safely": [
+    "42220408f8e736536450560d1a2651f37c3b23a6d7891f14e9716987b0d16be7"
+  ],
+  "review-changes": [
+    "8423167e016dbcbc1aab670060fb81c3b711ea40ad11a49e5efd97293595b5a2"
+  ],
+  "sandbox-migrate-to-next": [
+    "6d0ac5ff21f9182ba09073187739cfd43ce2af9df715ae17a1cb6c97f4fc72c4"
+  ],
+  "sandbox-next": [
+    "2a81972b7cb1c86a6f40ac5edbfb72ccbedf66d2aabf0c544dcd799803029c48"
+  ],
+  "sandbox-sdk": [
+    "8529ca0bda6472b7b49bb7f0361361daa29262aec5537b3042c1c1d9a0d86ed9"
+  ],
+  "sandbox-stable": [
+    "d960a78fab5fb2da930aa135e51a341975fc24fae097f18baaa5401216e05f83"
+  ],
+  "turnstile-spin": [
+    "ad207a396d52d9d04cfabc4ec691f1e275f528d8d625fd56c15fa9de58fb7bcd",
+    "f455a0bf10614259ce03e89168e9cb2eb9ed62f4662d30df029b20ca00ad5cba"
+  ],
+  "visual-explainer": [
+    "ce6671840b20e90774f0bd15ce83f0c7d0df49de25331a38cb26c81ca71c9b2d"
+  ],
+  "web-perf": [
+    "2980d075da49cb3d5d80c4dafa82d54d35c773ac5a3a531ef265e195b6022fa5"
+  ],
+  "workers-best-practices": [
+    "e069faa5aba05dcfa08a039cc7100cf59e5a89801b8e3fef67f9df9984ea66f3"
+  ],
+  "wrangler": [
+    "5d4c65e2754758567155b0b2aa4752021636a829542dfd0f33b2aee510dfbf29"
+  ]
+}

@@ -17,6 +17,7 @@ is_local_codex_config_table() {
         "[marketplaces."*|\
         "[plugins."*|\
         "[apps.connector_"*|\
+        "[mcp_servers.firebase]"|"[mcp_servers.firebase."*|\
         "[mcp_servers.plugin_"*)
             return 0
             ;;

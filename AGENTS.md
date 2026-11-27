@@ -10,7 +10,7 @@ See [README.md](./README.md) and [docs/REFERENCE.md](./docs/REFERENCE.md) for us
 - `scripts/` - Shell scripts (mac.sh, update-all.sh, update.sh, sync.sh, rollback.sh, utils.sh, setup-profile.sh, help.sh, install-plugins.sh; backup-claude.sh/restore-claude.sh for Claude config)
 - `dot_files/` - Dotfiles copied to `$HOME`
 - `claude_config/` - Claude Code config backup
-- `agent_config/` - Shared global instructions, managed agent-tool pins, and canonical graph skill directories restored to Codex
+- `agent_config/` - Shared global instructions, managed agent-tool pins, and the shared skills catalog
 - `codex_config/` - Codex CLI/IDE config backup
 
 ## Code Conventions
@@ -28,17 +28,17 @@ See [README.md](./README.md) and [docs/REFERENCE.md](./docs/REFERENCE.md) for us
 ## Shared Agent Capabilities
 
 **Skills**:
-- Shared graph skills live canonically in `agent_config/skills/<name>/SKILL.md`.
-- `npm run sync -- --only codex` restores those directories directly into `~/.codex/skills/`.
-- Tool-specific or unsupported skills stay in the tool-specific config (`claude_config/` or `codex_config/skills/`) instead of being forced into the shared path.
+- The shared skills catalog is `agent_config/installed_skills.json`. Both agents install the same pinned sources through `npm run install:skills`.
+- Keep project-specific and private skills with their owners. See the migration and rollback instructions in `docs/REFERENCE.md` before changing an existing installation.
 
 **Knowledge and graph tooling**:
-- [code-review-graph](https://github.com/tirth8205/code-review-graph) is the preferred live-source layer for navigation, impact analysis, debugging, and review when its graph is current and covers the code in question. Shared selection and freshness rules live in `agent_config/AGENTS.md`; the graph-backed skills live in `agent_config/skills/`.
+- [code-review-graph](https://github.com/tirth8205/code-review-graph) is the preferred live-source layer for navigation, impact analysis, debugging, and review when its graph is current and covers the code in question. Shared graph usage and freshness rules live in `agent_config/AGENTS.md`.
 - [OpenWiki](https://github.com/langchain-ai/openwiki) is an opt-in repository knowledge layer for architecture, terminology, invariants, and intended workflows. Agents use an existing `openwiki/` as secondary context, verify material claims against current source and tests, and do not initialize or update it without an explicit user request.
 - Both CLIs are exact-pinned in `agent_config/managed_tools.json` and reconciled by `npm run install:agent-tooling`. OpenWiki coding-agent integrations use the agent's authenticated session; the opt-in `openwiki-watch` launchd updater uses standalone CLI provider configuration, and credentials remain machine-local in `~/.openwiki/.env`.
 
 **MCP servers**:
 - Keep repo-managed user-scoped Claude MCP servers in `claude_config/mcp_servers.json` and compatible Codex entries in `codex_config/config.toml`; backup never imports live user MCP definitions into the tracked registry.
+- Optional Claude iOS registrations live in `claude_config/apple.mcp_servers.json` and must match the Codex Apple profile. Normal tooling setup and migration share the MCP installer.
 - Keep shared project MCP support in `.mcp.json` for Claude/project clients and in `codex_config/config.toml` for Codex.
 - When adding an MCP server that both tools support, add the equivalent entry to both places and document any command differences.
 - If Codex does not support a Claude MCP server, leave it in the Claude-specific config and do not add a stub Codex entry.
@@ -127,7 +127,7 @@ Script organization:
 | Update Codex defaults | Edit `codex_config/config.toml`, then run `npm run sync -- --only codex` |
 | Update Codex command deny rules | Edit `codex_config/rules/*.rules`, then run `npm run sync -- --only codex` |
 | Update managed agent-tool pins | Install and validate locally, run `npm run promote:pins`, then `npm run promote:pins -- --apply` and review the diff |
-| Add shared project skill rule | Create/edit `agent_config/skills/<name>/SKILL.md`, then run `npm run sync -- --only codex` |
+| Add a shared skill source | Pin the source in `agent_config/installed_skills.json`, then run `npm run install:skills` |
 | Add shared MCP server | Add compatible entries to `.mcp.json` and `codex_config/config.toml`; skip Codex if unsupported |
 | Update security policy | Edit `SECURITY.md`, `scripts/scan-secrets.sh`, `codex_config/rules/*.rules`, or `codex_config/hooks/` as appropriate |
 | Test security checks | Run `npm run lint`, `npm run scan:secrets`, and `npm test` |

@@ -805,3 +805,10 @@ run_uninstall_orphan_plugins() {
   [ -d "$TEMP_CLAUDE_PLUGINS/cache/axiom-marketplace/axiom/3.5.0" ]
   [ -d "$TEMP_CLAUDE_PLUGINS/marketplaces/axiom-marketplace" ]
 }
+
+@test "restore preserves project Firebase registration after retiring the user plugin" {
+  echo '{"version":2,"plugins":{}}' > "$TEST_TEMP_DIR/base.json"
+  echo '{"version":2,"plugins":{"firebase@firebase":[{"scope":"project"}]}}' > "$TEST_TEMP_DIR/local.json"
+  merge_plugin_configs "$TEST_TEMP_DIR/base.json" "$TEST_TEMP_DIR/local.json" "$TEST_TEMP_DIR/result.json"
+  jq -e '.plugins["firebase@firebase"][0].scope == "project"' "$TEST_TEMP_DIR/result.json"
+}

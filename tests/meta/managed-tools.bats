@@ -7,25 +7,19 @@ setup() {
   PROJECT_ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
   UPDATE_SCRIPT="$PROJECT_ROOT/scripts/update-agent-tool-pins.sh"
   MANIFEST="$TEST_TEMP_DIR/managed-tools.json"
-  PLUGIN_REGISTRY="$TEST_TEMP_DIR/plugins.json"
   RELEASE_JSON="$TEST_TEMP_DIR/release.json"
   cp "$PROJECT_ROOT/agent_config/managed_tools.json" "$MANIFEST"
-  cp "$PROJECT_ROOT/codex_config/plugins.json" "$PLUGIN_REGISTRY"
   write_other_fixtures
 }
 
 write_other_fixtures() {
   CRG_JSON="$TEST_TEMP_DIR/crg.json"
   OBSCURA_JSON="$TEST_TEMP_DIR/obscura.json"
-  AXIOM_JSON="$TEST_TEMP_DIR/axiom.json"
-  AXIOM_PLUGIN_JSON="$TEST_TEMP_DIR/axiom-plugin.json"
   crg=$(jq -r '.tools["code-review-graph"].version' "$MANIFEST")
   ov=$(jq -r '.tools.obscura.version' "$MANIFEST")
   wv=$(jq -r '.tools.openwiki.version' "$MANIFEST")
   pwv=$(jq -r '.tools["playwright-cli"].version' "$MANIFEST")
   pmv=$(jq -r '.tools["playwright-mcp"].version' "$MANIFEST")
-  ac=$(jq -r '.marketplaces[0].ref' "$PLUGIN_REGISTRY")
-  av=$(jq -r '.plugins[0].version' "$PLUGIN_REGISTRY")
   printf '{"info":{"version":"%s"}}\n' "$crg" > "$CRG_JSON"
   jq -n --arg tag "$ov" \
     --arg an "$(jq -r '.tools.obscura.assets["darwin-arm64"].name' "$MANIFEST")" \
@@ -33,8 +27,6 @@ write_other_fixtures() {
     --arg xn "$(jq -r '.tools.obscura.assets["darwin-x64"].name' "$MANIFEST")" \
     --arg xs "$(jq -r '.tools.obscura.assets["darwin-x64"].sha256' "$MANIFEST")" \
     '{tag_name:$tag,assets:[{name:$an,digest:("sha256:"+$as)},{name:$xn,digest:("sha256:"+$xs)}]}' > "$OBSCURA_JSON"
-  printf '{"sha":"%s"}\n' "$ac" > "$AXIOM_JSON"
-  printf '{"version":"%s"}\n' "$av" > "$AXIOM_PLUGIN_JSON"
   OPENWIKI_VERSION="$wv"
   PLAYWRIGHT_CLI_VERSION="$pwv"
   PLAYWRIGHT_MCP_VERSION="$pmv"
@@ -42,12 +34,10 @@ write_other_fixtures() {
 }
 
 run_updater() {
-  env MANAGED_TOOLS_MANIFEST="$MANIFEST" CODEX_PLUGIN_REGISTRY="$PLUGIN_REGISTRY" \
+  env MANAGED_TOOLS_MANIFEST="$MANIFEST" \
     SUPERCHARGED_LOCAL_PROMOTION=1 \
     PLANNOTATOR_RELEASE_JSON="$RELEASE_JSON" CRG_PYPI_JSON="$CRG_JSON" \
     OBSCURA_RELEASE_JSON="$OBSCURA_JSON" \
-    AXIOM_COMMIT_JSON="$AXIOM_JSON" \
-    AXIOM_PLUGIN_JSON="$AXIOM_PLUGIN_JSON" \
     OPENWIKI_NPM_VERSION="$OPENWIKI_VERSION" \
     FIREBASE_NPM_VERSION="$FIREBASE_VERSION" \
     PLAYWRIGHT_CLI_NPM_VERSION="$PLAYWRIGHT_CLI_VERSION" \
@@ -255,34 +245,4 @@ EOF
       .tools.obscura.assets["darwin-x64"].binaries["obscura-worker"] == $x64_worker
     ' "$MANIFEST"
   [ "$status" -eq 0 ]
-}
-
-@test "managed tool pin updater applies an Axiom commit and plugin version" {
-  write_current_release
-  local commit="2222222222222222222222222222222222222222"
-  printf '{"sha":"%s"}\n' "$commit" > "$AXIOM_JSON"
-  printf '{"version":"9.9.9"}\n' > "$AXIOM_PLUGIN_JSON"
-
-  run run_updater --apply
-
-  [ "$status" -eq 0 ]
-  run jq -e --arg commit "$commit" '
-    .marketplaces[0].ref == $commit and
-    .plugins[0].version == "9.9.9"
-  ' "$PLUGIN_REGISTRY"
-  [ "$status" -eq 0 ]
-}
-
-@test "managed tool pin updater can leave Axiom for local validation" {
-  write_current_release
-  original=$(shasum -a 256 "$PLUGIN_REGISTRY" | awk '{print $1}')
-  printf '{"sha":"%s"}\n' '2222222222222222222222222222222222222222' > "$AXIOM_JSON"
-  printf '{"version":"9.9.9"}\n' > "$AXIOM_PLUGIN_JSON"
-
-  export SKIP_AXIOM_UPDATE=true
-  run run_updater --apply
-  unset SKIP_AXIOM_UPDATE
-
-  [ "$status" -eq 0 ]
-  [ "$(shasum -a 256 "$PLUGIN_REGISTRY" | awk '{print $1}')" = "$original" ]
 }

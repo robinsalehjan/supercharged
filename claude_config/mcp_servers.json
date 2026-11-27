@@ -1,1 +1,40 @@
-{}
+{
+  "axiom": {
+    "command": "npx",
+    "args": [
+      "-y",
+      "axiom-mcp@27.1.2"
+    ]
+  },
+  "cloudflare": {
+    "type": "http",
+    "url": "https://mcp.cloudflare.com/mcp"
+  },
+  "firebase-tools": {
+    "command": "npx",
+    "args": [
+      "-y",
+      "firebase-tools@15.32.1",
+      "mcp",
+      "--dir",
+      "."
+    ],
+    "env": {
+      "IS_FIREBASE_MCP": "true"
+    }
+  },
+  "openwiki": {
+    "command": "openwiki",
+    "args": [
+      "mcp",
+      "--host",
+      "claude"
+    ]
+  },
+  "playwright": {
+    "command": "playwright-mcp",
+    "args": [
+      "--headless"
+    ]
+  }
+}

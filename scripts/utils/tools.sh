@@ -179,7 +179,6 @@ setup_openwiki() {
     installed_version=$(npm list --global --depth=0 --json "$package" 2>/dev/null | jq -r '.dependencies.openwiki.version // empty' 2>/dev/null) || installed_version=""
     if [ "$installed_version" = "$managed_version" ] && command_exists openwiki && openwiki --help >/dev/null 2>&1; then
         log_with_level "SUCCESS" "OpenWiki $managed_version installed successfully"
-        log_with_level "INFO" "Run 'openwiki integrations install codex' or 'openwiki integrations install claude', then restart that agent to use OpenWiki"
     else
         log_with_level "ERROR" "Failed to verify managed OpenWiki $managed_version"
         return 1
@@ -260,7 +259,7 @@ setup_openwiki_watcher() {
     fi
 }
 
-# Install Playwright's agent-oriented CLI and its global skills. Browser
+# Install Playwright's agent-oriented CLI. Browser
 # binaries are intentionally left to `playwright-cli install-browser` or first
 # use so setup does not download large browser payloads unprompted.
 setup_playwright_cli() {
@@ -286,7 +285,6 @@ setup_playwright_cli() {
 
     if $dry_run; then
         log_with_level "INFO" "Would install managed Playwright CLI $managed_version"
-        log_with_level "INFO" "Would install global Playwright CLI skills for Claude and generic agents"
         return 0
     fi
 
@@ -308,17 +306,6 @@ setup_playwright_cli() {
        ! "$command_name" --help >/dev/null 2>&1; then
         log_with_level "ERROR" "Failed to verify managed Playwright CLI $managed_version"
         return 1
-    fi
-
-    if "$command_name" install --skills=claude -g >/dev/null 2>&1; then
-        log_with_level "SUCCESS" "Playwright CLI Claude skills installed"
-    else
-        log_with_level "WARN" "Could not install Playwright CLI Claude skills"
-    fi
-    if "$command_name" install --skills=agents -g >/dev/null 2>&1; then
-        log_with_level "SUCCESS" "Playwright CLI agent skills installed"
-    else
-        log_with_level "WARN" "Could not install Playwright CLI agent skills"
     fi
 
     log_with_level "SUCCESS" "Playwright CLI $managed_version installed successfully"

@@ -196,6 +196,14 @@ load_supercharged_preferences() {
     done < "$prefs_file"
 }
 
+# Only register optional Claude Apple tools after an explicit iOS selection.
+ios_tools_selected() (
+    if [ -z "${INSTALL_IOS_TOOLS:-}" ]; then
+        load_supercharged_preferences || return 1
+    fi
+    [[ "${INSTALL_IOS_TOOLS:-}" == [Yy]* ]]
+)
+
 # Check internet connectivity
 require_internet() {
     if ! ping -c 1 -W 5 google.com >/dev/null 2>&1; then
@@ -589,7 +597,7 @@ validate_installation() {
             ((warned++))
         fi
 
-        if [ -f "$HOME/.codex/skills/plannotator-review/SKILL.md" ]; then
+        if [ -f "$HOME/.agents/skills/plannotator-review/SKILL.md" ]; then
             echo "✅ Codex: Plannotator skills"
         else
             echo "⚠️  Codex: Plannotator skills not configured"

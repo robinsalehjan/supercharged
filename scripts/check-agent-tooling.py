@@ -39,15 +39,19 @@ def main() -> int:
         print(f"Failed to load Codex TOML: {error}", file=sys.stderr)
         return 2
 
+    claude_user = json.loads((root / "claude_config/mcp_servers.json").read_text())
+    duplicate = set(claude_mcp) & set(claude_user)
+    if duplicate:
+        errors.append(f"Duplicate Claude project and user MCPs: {', '.join(sorted(duplicate))}")
+    claude_mcp.update(claude_user)
     for name, definition in claude_mcp.items():
+        if name == "openwiki" and definition.get("args") == ["mcp", "--host", "claude"]:
+            definition = dict(definition, args=["mcp", "--host", "codex"])
         if name not in codex_mcp:
             errors.append(f"Codex is missing shared MCP server: {name}")
             continue
         if normalized_mcp(definition) != normalized_mcp(codex_mcp[name]):
             errors.append(f"Shared MCP configuration differs for: {name}")
-
-    canonical_dir = root / "agent_config/skills"
-    canonical_skills = skill_names(canonical_dir, "*/SKILL.md")
 
     installed_skills = json.loads(
         (root / "agent_config/installed_skills.json").read_text()
@@ -58,8 +62,7 @@ def main() -> int:
     claude_marketplaces = json.loads(
         (root / "claude_config/known_marketplaces.json").read_text()
     )
-    codex_registry = json.loads((root / "codex_config/plugins.json").read_text())
-    codex_plugins = codex_registry["plugins"]
+    codex_config = load_toml(root / "codex_config/config.toml")
     codex_specific_skills = skill_names(root / "codex_config/skills", "*/SKILL.md")
     expected_profiles = {"apple.config.toml", "review.config.toml"}
     tracked_profiles = {
@@ -68,26 +71,34 @@ def main() -> int:
     for profile in sorted(tracked_profiles - expected_profiles):
         errors.append(f"Unexpected tracked Codex profile: {profile}")
     codex_profile_mcp: set[str] = set(codex_mcp) - set(claude_mcp)
-    for profile in ("apple.config.toml",):
-        profile_path = root / "codex_config" / profile
-        codex_profile_mcp.update(mcp_servers(load_toml(profile_path), source=profile_path))
+    profile_path = root / "codex_config/apple.config.toml"
+    apple_servers = mcp_servers(load_toml(profile_path), source=profile_path)
+    claude_apple = json.loads((root / "claude_config/apple.mcp_servers.json").read_text())
+    if set(claude_apple) & (set(claude_mcp) | set(codex_mcp)):
+        errors.append("Optional Apple MCP also appears in the base configuration")
+    for name, definition in claude_apple.items():
+        if name not in apple_servers or normalized_mcp(definition) != normalized_mcp(apple_servers[name]):
+            errors.append(f"Shared Apple MCP configuration differs for: {name}")
+    codex_profile_mcp.update(apple_servers)
 
     report = {
         "ok": not errors,
         "shared": {
             "cli_tools": sorted(managed["tools"]),
             "mcp_servers": sorted(claude_mcp),
-            "canonical_skills": canonical_skills,
-            "git_skills": sorted(installed_skills),
+            "apple_mcp_servers": sorted(claude_apple),
+            "canonical_skills": sorted(
+                name for entry in installed_skills.values() if "local" in entry
+                for name in skill_names(root / entry["local"], "**/SKILL.md")
+            ),
+            "git_skills": sorted(key for key, entry in installed_skills.items() if "repo" in entry),
         },
         "native_adapters": {
             "claude_marketplaces": sorted(claude_marketplaces),
             "claude_plugins": sorted(claude_plugins),
-            "codex_marketplaces": sorted(
-                marketplace["name"] for marketplace in codex_registry["marketplaces"]
-            ),
+            "codex_marketplaces": sorted(codex_config.get("marketplaces", {})),
             "codex_mcp_servers": sorted(codex_profile_mcp),
-            "codex_plugins": sorted(plugin["id"] for plugin in codex_plugins),
+            "codex_plugins": sorted(codex_config.get("plugins", {})),
             "codex_skills": codex_specific_skills,
         },
         "errors": errors,
@@ -99,7 +110,8 @@ def main() -> int:
         print("Shared agent tooling")
         print(f"  CLIs: {', '.join(report['shared']['cli_tools']) or 'none'}")
         print(f"  MCPs: {', '.join(report['shared']['mcp_servers']) or 'none'}")
-        print(f"  skills: {', '.join(canonical_skills) or 'none'}")
+        print(f"  Apple MCPs (Claude iOS selection / Codex apple profile): {', '.join(claude_apple)}")
+        print(f"  skills: {', '.join(sorted(installed_skills)) or 'none'}")
         print("Native harness adapters")
         print(f"  Claude marketplaces: {', '.join(report['native_adapters']['claude_marketplaces']) or 'none'}")
         print(f"  Claude plugins: {', '.join(report['native_adapters']['claude_plugins']) or 'none'}")

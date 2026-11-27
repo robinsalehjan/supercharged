@@ -187,8 +187,8 @@ EOF
     [[ "$status" -eq 0 ]]
     grep -Fx "install --global @playwright/cli@$version" "$npm_calls"
     grep -Fx -- "--help" "$playwright_calls"
-    grep -Fx "install --skills=claude -g" "$playwright_calls"
-    grep -Fx "install --skills=agents -g" "$playwright_calls"
+    ! grep -Fx "install --skills=claude -g" "$playwright_calls"
+    ! grep -Fx "install --skills=agents -g" "$playwright_calls"
     [[ "$output" == *"Playwright CLI $version installed successfully"* ]]
 }
 

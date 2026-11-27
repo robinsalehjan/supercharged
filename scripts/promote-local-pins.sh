@@ -24,11 +24,9 @@ trap cleanup EXIT
 
 tool_versions="${ASDF_TOOL_VERSIONS:-$UTILS_PROJECT_ROOT/dot_files/.tool-versions}"
 manifest="${MANAGED_TOOLS_MANIFEST:-$UTILS_PROJECT_ROOT/agent_config/managed_tools.json}"
-plugin_registry="${CODEX_PLUGIN_REGISTRY:-$UTILS_PROJECT_ROOT/codex_config/plugins.json}"
 asdf_policy="${ASDF_POLICY_MANIFEST:-$UTILS_PROJECT_ROOT/agent_config/asdf_policy.json}"
 cp "$tool_versions" "$work_dir/tool-versions"
 cp "$manifest" "$work_dir/managed-tools.json"
-cp "$plugin_registry" "$work_dir/plugins.json"
 
 if [ "$only" != agents ]; then
     if ! command -v asdf >/dev/null 2>&1; then
@@ -143,7 +141,6 @@ if [ "$only" != asdf ]; then
     jq -n --arg version "$crg_version" '{info: {version: $version}}' > "$work_dir/crg.json"
 
     MANAGED_TOOLS_MANIFEST="$work_dir/managed-tools.json" \
-    CODEX_PLUGIN_REGISTRY="$work_dir/plugins.json" \
     PLANNOTATOR_RELEASE_JSON="$work_dir/plannotator.json" \
     OBSCURA_RELEASE_JSON="$work_dir/obscura.json" \
     CRG_PYPI_JSON="$work_dir/crg.json" \
@@ -151,7 +148,6 @@ if [ "$only" != asdf ]; then
     FIREBASE_NPM_VERSION="$firebase_version" \
     PLAYWRIGHT_CLI_NPM_VERSION="$playwright_cli_version" \
     PLAYWRIGHT_MCP_NPM_VERSION="$playwright_mcp_version" \
-    SKIP_AXIOM_UPDATE=true \
     SUPERCHARGED_LOCAL_PROMOTION=1 \
         "$UTILS_PROJECT_ROOT/scripts/update-agent-tool-pins.sh" --apply
 

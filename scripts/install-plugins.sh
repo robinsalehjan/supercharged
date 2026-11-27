@@ -111,6 +111,9 @@ else
         log_with_level "INFO" "Merged $local_count local plugin(s) from installed_plugins.local.json"
     fi
 
+    # Older local overlays can still list the user plugins replaced by the skill catalog.
+    PLUGINS_JSON=$(jq 'del(.plugins["firebase@firebase"], .plugins["axiom@axiom-marketplace"])' <<< "$PLUGINS_JSON")
+
     # Read each plugin key (e.g., "hookify@claude-plugins-official")
     while IFS= read -r plugin; do
         if [ "$DRY_RUN" = true ]; then

@@ -298,14 +298,13 @@ EOF
   [ "$status" -eq 0 ]
 }
 
-@test "tracked Claude configuration includes Firebase and language-server fallback plugins" {
+@test "tracked Claude configuration includes language-server fallback plugins" {
   settings="$PROJECT_ROOT/claude_config/settings.json"
   plugins="$PROJECT_ROOT/claude_config/installed_plugins.json"
   marketplaces="$PROJECT_ROOT/claude_config/known_marketplaces.json"
 
   run jq -e '
     (.enabledPlugins | keys | sort) == [
-      "firebase@firebase",
       "pyright-lsp@claude-plugins-official",
       "swift-lsp@claude-plugins-official",
       "typescript-lsp@claude-plugins-official"
@@ -316,7 +315,6 @@ EOF
 
   run jq -e '
     (.plugins | keys | sort) == [
-      "firebase@firebase",
       "pyright-lsp@claude-plugins-official",
       "swift-lsp@claude-plugins-official",
       "typescript-lsp@claude-plugins-official"
@@ -324,10 +322,10 @@ EOF
   ' "$plugins"
   [ "$status" -eq 0 ]
 
-  run jq -e '(.extraKnownMarketplaces | keys) == ["claude-plugins-official", "firebase"]' "$settings"
+  run jq -e '(.extraKnownMarketplaces | keys) == ["claude-plugins-official"]' "$settings"
   [ "$status" -eq 0 ]
 
-  run jq -e 'keys == ["claude-plugins-official", "firebase"]' "$marketplaces"
+  run jq -e 'keys == ["claude-plugins-official"]' "$marketplaces"
   [ "$status" -eq 0 ]
 }
 
@@ -480,64 +478,6 @@ EOF
   [ "$status" -eq 0 ]
 }
 
-@test "restore_shared_agent_skills copies canonical skills into Codex" {
-  mkdir -p "$TEST_TEMP_DIR/agent_config/skills/review-changes" "$TEST_TEMP_DIR/.codex/skills"
-  cat > "$TEST_TEMP_DIR/agent_config/skills/review-changes/SKILL.md" <<'EOF'
----
-name: Review Changes
-description: Perform a structured code review
----
-
-# Review Changes
-EOF
-
-  run zsh -c "
-    source '$RESTORE_SCRIPT'
-    AGENT_CONFIG_DIR='$TEST_TEMP_DIR/agent_config'
-    CODEX_HOME='$TEST_TEMP_DIR/.codex'
-    restore_shared_agent_skills
-  "
-
-  [ "$status" -eq 0 ]
-  [ -f "$TEST_TEMP_DIR/.codex/skills/review-changes/SKILL.md" ]
-  grep -F "Perform a structured code review" "$TEST_TEMP_DIR/.codex/skills/review-changes/SKILL.md"
-}
-
-@test "canonical shared skills override existing Codex skill directories" {
-  mkdir -p "$TEST_TEMP_DIR/agent_config/skills/shared-rule" \
-    "$TEST_TEMP_DIR/.codex/skills/shared-rule"
-
-  cat > "$TEST_TEMP_DIR/.codex/skills/shared-rule/SKILL.md" <<'EOF'
----
-name: shared-rule
-description: Existing Codex version
----
-
-# Existing Version
-EOF
-
-  cat > "$TEST_TEMP_DIR/agent_config/skills/shared-rule/SKILL.md" <<'EOF'
----
-name: shared-rule
-description: Project-level version
----
-
-# Project Version
-EOF
-
-  run zsh -c "
-    source '$RESTORE_SCRIPT'
-    AGENT_CONFIG_DIR='$TEST_TEMP_DIR/agent_config'
-    CODEX_HOME='$TEST_TEMP_DIR/.codex'
-    restore_shared_agent_skills
-  "
-
-  [ "$status" -eq 0 ]
-  [ -f "$TEST_TEMP_DIR/.codex/skills/shared-rule/SKILL.md" ]
-  grep -F "Project-level version" "$TEST_TEMP_DIR/.codex/skills/shared-rule/SKILL.md"
-  ! grep -F "Existing Codex version" "$TEST_TEMP_DIR/.codex/skills/shared-rule/SKILL.md"
-}
-
 @test "restore_codex_rules copies managed rules without deleting local rules" {
   mkdir -p "$TEST_TEMP_DIR/repo-rules" "$TEST_TEMP_DIR/.codex/rules"
   echo 'prefix_rule(pattern=["existing"], decision="allow")' \
@@ -604,7 +544,7 @@ EOF
   [ "$status" -eq 0 ]
 }
 
-@test "restore-codex.sh restores Codex hooks and Plannotator skills" {
+@test "restore-codex.sh restores Codex hooks and configuration" {
   mock_bin="$TEST_TEMP_DIR/bin"
   mkdir -p "$mock_bin" "$HOME/.codex/hooks"
   printf '%s\n' 'retired profile' > "$HOME/.codex/apple-headless.config.toml"
@@ -632,8 +572,6 @@ EOF
   [ ! -e "$HOME/.codex/hooks/rtk-enforce.sh" ]
   [ -f "$HOME/.codex/review.config.toml" ]
   [ -f "$HOME/.codex/rules/supercharged.rules" ]
-  [ -f "$HOME/.codex/skills/plannotator-review/SKILL.md" ]
-  [ -f "$HOME/.codex/skills/review-changes/SKILL.md" ]
 
   grep -F 'hooks = true' "$HOME/.codex/config.toml"
   grep -F 'default_permissions = "supercharged"' "$HOME/.codex/config.toml"

@@ -37,13 +37,16 @@ teardown() {
   [ "$status" -eq 0 ]
 }
 
-@test "rollback.sh has trap for cleanup" {
-  # Assert: trap is registered AND a cleanup wrapper invokes standard_cleanup
-  run grep "trap.*cleanup" "$PROJECT_ROOT/scripts/rollback.sh"
+@test "configuration rollback restores the snapshot without invoking Homebrew" {
+  mkdir -p "$TEST_TEMP_DIR/bin" "$TEST_TEMP_DIR/snapshot/files"
+  echo fixture > "$TEST_TEMP_DIR/snapshot/files/.zshrc"
+  printf 'file\t.zshrc\n' > "$TEST_TEMP_DIR/snapshot/presence.tsv"
+  printf '%s\n' '#!/bin/sh' 'touch "$HOME/brew-called"' > "$TEST_TEMP_DIR/bin/brew"
+  chmod +x "$TEST_TEMP_DIR/bin/brew"
+  run env PATH="$TEST_TEMP_DIR/bin:$PATH" "$PROJECT_ROOT/scripts/rollback.sh" "$TEST_TEMP_DIR/snapshot"
   [ "$status" -eq 0 ]
-
-  run grep "standard_cleanup" "$PROJECT_ROOT/scripts/rollback.sh"
-  [ "$status" -eq 0 ]
+  [ "$(cat "$HOME/.zshrc")" = fixture ]
+  [ ! -e "$HOME/brew-called" ]
 }
 
 @test "rollback.sh accepts backup directory argument" {
@@ -149,16 +152,15 @@ teardown() {
 }
 
 @test "manifest rollback restores directory contents and executable modes" {
-  source "$PROJECT_ROOT/scripts/utils.sh"
   mkdir -p "$HOME/.codex/hooks"
   printf '%s\n' '#!/bin/sh' > "$HOME/.codex/hooks/original.sh"
   chmod 755 "$HOME/.codex/hooks/original.sh"
-  create_restoration_point
+  zsh -c 'source "$1"; create_restoration_point' _ "$PROJECT_ROOT/scripts/utils.sh"
   backup_dir=$(<"$HOME/.supercharged_last_backup")
   rm -f "$HOME/.codex/hooks/original.sh"
   printf '%s\n' '#!/bin/sh' > "$HOME/.codex/hooks/created.sh"
 
-  restore_from_backup "$backup_dir"
+  "$PROJECT_ROOT/scripts/rollback.sh" "$backup_dir"
 
   [ -x "$HOME/.codex/hooks/original.sh" ]
   [ ! -e "$HOME/.codex/hooks/created.sh" ]

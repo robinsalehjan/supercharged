@@ -54,7 +54,11 @@ def mcp_servers(document: dict[str, Any], *, source: Path | None = None) -> dict
 
 def normalized_mcp(server: dict[str, Any]) -> dict[str, Any]:
     """Return comparable transport fields without exposing their values in logs."""
-    return {field: copy.deepcopy(server[field]) for field in MCP_FIELDS if field in server}
+    fields = {field: copy.deepcopy(server[field]) for field in MCP_FIELDS if field in server}
+    fields["type"] = server.get("type", "http" if "url" in server else "stdio")
+    if fields.get("enabled") is True:
+        del fields["enabled"]
+    return fields
 
 
 def load_mcp_servers(config_dir: Path, profile: str = "base") -> dict[str, dict[str, Any]]:

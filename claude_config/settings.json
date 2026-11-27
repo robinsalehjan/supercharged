@@ -65,20 +65,13 @@
   "enabledPlugins": {
     "swift-lsp@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true,
-    "firebase@firebase": true
+    "typescript-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "claude-plugins-official": {
       "source": {
         "source": "github",
         "repo": "anthropics/claude-plugins-official"
-      }
-    },
-    "firebase": {
-      "source": {
-        "source": "github",
-        "repo": "firebase/agent-skills"
       }
     }
   },
