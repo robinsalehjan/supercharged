@@ -11,6 +11,7 @@ _configuration_restore_paths() {
         ".claude/plugins/known_marketplaces.json" \
         ".claude/keybindings.json" \
         ".claude/CLAUDE.md" \
+        ".agents/skills" \
         ".claude/skills" \
         ".claude.json" \
         ".codex/config.toml" \
@@ -23,6 +24,10 @@ _configuration_restore_paths() {
         ".codex/hooks" \
         ".codex/rules" \
         ".codex/skills"
+
+    if [[ ${CLAUDE_CONFIG_DIR:-} == "$HOME/.claude" ]]; then
+        printf '%s\n' ".claude/.claude.json"
+    fi
 
     # Include every direct Claude instruction file that exists locally or can
     # be created by the tracked CLAUDE.md references.
@@ -44,8 +49,8 @@ _configuration_restore_paths() {
 }
 
 _get_path_mode() {
-    local path="$1"
-    stat -f %Lp "$path" 2>/dev/null || stat -c %a "$path" 2>/dev/null || printf '600\n'
+    local source_path="$1"
+    stat -c %a "$source_path" 2>/dev/null || stat -f %Lp "$source_path"
 }
 
 _record_saved_modes() {
@@ -203,6 +208,7 @@ _restore_manifest_backup() {
             [ -n "$relative" ] || continue
             _is_safe_restore_relative_path "$relative" || continue
             [ -e "$HOME/$relative" ] || [ -L "$HOME/$relative" ] || continue
+            [ ! -L "$HOME/$relative" ] || continue
             chmod "$mode" "$HOME/$relative" 2>/dev/null || true
         done < "$modes_file"
     fi

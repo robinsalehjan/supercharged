@@ -11,7 +11,10 @@ source "$SCRIPT_DIR/utils.sh"
 
 cleanup() {
     local exit_code=$?
-    standard_cleanup "$exit_code" "Rollback"
+    if [ "$exit_code" -ne 0 ]; then
+        log_with_level ERROR "Rollback failed with exit code $exit_code"
+    fi
+    exit "$exit_code"
 }
 trap cleanup EXIT
 
