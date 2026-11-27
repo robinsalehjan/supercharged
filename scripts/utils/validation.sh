@@ -589,7 +589,7 @@ validate_installation() {
             ((warned++))
         fi
 
-        if [ -f "$HOME/.codex/skills/plannotator-review/SKILL.md" ]; then
+        if [ -f "$HOME/.agents/skills/plannotator-review/SKILL.md" ]; then
             echo "✅ Codex: Plannotator skills"
         else
             echo "⚠️  Codex: Plannotator skills not configured"

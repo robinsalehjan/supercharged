@@ -30,6 +30,7 @@ node_modules/
 
 # Local-only plugin config (machine-specific, not committed)
 claude_config/*.local.json
+agent_config/installed_skills.local.json
 
 # Superpowers plans and specs are local-only
 docs/superpowers/

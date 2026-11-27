@@ -28,9 +28,8 @@ See [README.md](./README.md) and [docs/REFERENCE.md](./docs/REFERENCE.md) for us
 ## Shared Agent Capabilities
 
 **Skills**:
-- Shared graph skills live canonically in `agent_config/skills/<name>/SKILL.md`.
-- `npm run sync -- --only codex` restores those directories directly into `~/.codex/skills/`.
-- Tool-specific or unsupported skills stay in the tool-specific config (`claude_config/` or `codex_config/skills/`) instead of being forced into the shared path.
+- The shared skills catalog is `agent_config/installed_skills.json`. Both agents install the same pinned sources through `npm run install:skills`; the local graph skill sources preserve our repository workflow.
+- Keep project-specific and private skills with their owners. See the migration and rollback instructions in `docs/REFERENCE.md` before changing an existing installation.
 
 **Knowledge and graph tooling**:
 - [code-review-graph](https://github.com/tirth8205/code-review-graph) is the preferred live-source layer for navigation, impact analysis, debugging, and review when its graph is current and covers the code in question. Shared selection and freshness rules live in `agent_config/AGENTS.md`; the graph-backed skills live in `agent_config/skills/`.
@@ -127,7 +126,7 @@ Script organization:
 | Update Codex defaults | Edit `codex_config/config.toml`, then run `npm run sync -- --only codex` |
 | Update Codex command deny rules | Edit `codex_config/rules/*.rules`, then run `npm run sync -- --only codex` |
 | Update managed agent-tool pins | Install and validate locally, run `npm run promote:pins`, then `npm run promote:pins -- --apply` and review the diff |
-| Add shared project skill rule | Create/edit `agent_config/skills/<name>/SKILL.md`, then run `npm run sync -- --only codex` |
+| Add shared project skill rule | Create/edit `agent_config/skills/<name>/SKILL.md`, then run `npm run install:skills` |
 | Add shared MCP server | Add compatible entries to `.mcp.json` and `codex_config/config.toml`; skip Codex if unsupported |
 | Update security policy | Edit `SECURITY.md`, `scripts/scan-secrets.sh`, `codex_config/rules/*.rules`, or `codex_config/hooks/` as appropriate |
 | Test security checks | Run `npm run lint`, `npm run scan:secrets`, and `npm test` |

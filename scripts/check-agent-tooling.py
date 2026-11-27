@@ -39,7 +39,10 @@ def main() -> int:
         print(f"Failed to load Codex TOML: {error}", file=sys.stderr)
         return 2
 
+    claude_mcp.update(json.loads((root / "claude_config/mcp_servers.json").read_text()))
     for name, definition in claude_mcp.items():
+        if name == "openwiki" and definition.get("args") == ["mcp", "--host", "claude"]:
+            definition = dict(definition, args=["mcp", "--host", "codex"])
         if name not in codex_mcp:
             errors.append(f"Codex is missing shared MCP server: {name}")
             continue
@@ -58,8 +61,7 @@ def main() -> int:
     claude_marketplaces = json.loads(
         (root / "claude_config/known_marketplaces.json").read_text()
     )
-    codex_registry = json.loads((root / "codex_config/plugins.json").read_text())
-    codex_plugins = codex_registry["plugins"]
+    codex_config = load_toml(root / "codex_config/config.toml")
     codex_specific_skills = skill_names(root / "codex_config/skills", "*/SKILL.md")
     expected_profiles = {"apple.config.toml", "review.config.toml"}
     tracked_profiles = {
@@ -78,16 +80,14 @@ def main() -> int:
             "cli_tools": sorted(managed["tools"]),
             "mcp_servers": sorted(claude_mcp),
             "canonical_skills": canonical_skills,
-            "git_skills": sorted(installed_skills),
+            "git_skills": sorted(key for key, entry in installed_skills.items() if "repo" in entry),
         },
         "native_adapters": {
             "claude_marketplaces": sorted(claude_marketplaces),
             "claude_plugins": sorted(claude_plugins),
-            "codex_marketplaces": sorted(
-                marketplace["name"] for marketplace in codex_registry["marketplaces"]
-            ),
+            "codex_marketplaces": sorted(codex_config.get("marketplaces", {})),
             "codex_mcp_servers": sorted(codex_profile_mcp),
-            "codex_plugins": sorted(plugin["id"] for plugin in codex_plugins),
+            "codex_plugins": sorted(codex_config.get("plugins", {})),
             "codex_skills": codex_specific_skills,
         },
         "errors": errors,
@@ -99,7 +99,7 @@ def main() -> int:
         print("Shared agent tooling")
         print(f"  CLIs: {', '.join(report['shared']['cli_tools']) or 'none'}")
         print(f"  MCPs: {', '.join(report['shared']['mcp_servers']) or 'none'}")
-        print(f"  skills: {', '.join(canonical_skills) or 'none'}")
+        print(f"  skills: {', '.join(sorted(installed_skills)) or 'none'}")
         print("Native harness adapters")
         print(f"  Claude marketplaces: {', '.join(report['native_adapters']['claude_marketplaces']) or 'none'}")
         print(f"  Claude plugins: {', '.join(report['native_adapters']['claude_plugins']) or 'none'}")

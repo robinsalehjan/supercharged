@@ -1,6 +1,115 @@
 {
-  "version": 2,
-  "skills": {},
+  "version": 3,
+  "skills": {
+    "cloudflare": {
+      "repo": "cloudflare/skills",
+      "ref": "ff191de7d903788eceaf516a514ae7d3b56b924a",
+      "path": "skills",
+      "names": [
+        "*"
+      ]
+    },
+    "axiom": {
+      "repo": "CharlesWiltgen/Axiom",
+      "ref": "c297598480e39d992044831ac0b895a431c7db51",
+      "path": "axiom-codex/skills",
+      "names": [
+        "*"
+      ]
+    },
+    "firebase": {
+      "repo": "firebase/agent-skills",
+      "ref": "99954a30898bb5ddc8152ee10e124dc3b4106bf7",
+      "path": "skills",
+      "names": [
+        "*"
+      ]
+    },
+    "asd-ste100": {
+      "repo": "danyuchn/asd-ste100-skill",
+      "ref": "d714e5364e16825dbb6fe7194671d6a435e9fb3f",
+      "path": "",
+      "names": [
+        "*"
+      ]
+    },
+    "graph": {
+      "local": "agent_config/skills",
+      "reason": "Repository graph freshness and source-navigation conventions."
+    },
+    "plannotator-annotate": {
+      "repo": "backnotprop/plannotator",
+      "ref": "a95db504a21655d6ce48b825e7125dc621ca6440",
+      "path": "apps/skills/plannotator-annotate",
+      "names": [
+        "plannotator-annotate"
+      ]
+    },
+    "plannotator-compound": {
+      "repo": "backnotprop/plannotator",
+      "ref": "26ca4e02750062ac8245509a60755e55bc67a5cd",
+      "path": "apps/skills/extra/plannotator-compound",
+      "names": [
+        "plannotator-compound"
+      ]
+    },
+    "plannotator-last": {
+      "repo": "backnotprop/plannotator",
+      "ref": "9873cdb3f611013da51c6ab0308229fa4b551dac",
+      "path": "apps/skills/plannotator-last",
+      "names": [
+        "plannotator-last"
+      ]
+    },
+    "plannotator-review": {
+      "repo": "backnotprop/plannotator",
+      "ref": "a95db504a21655d6ce48b825e7125dc621ca6440",
+      "path": "apps/skills/plannotator-review",
+      "names": [
+        "plannotator-review"
+      ]
+    },
+    "plannotator-setup-goal": {
+      "repo": "backnotprop/plannotator",
+      "ref": "a6fb2f54597afdcf4b007a1d497e8128e8f718fc",
+      "path": "apps/skills/plannotator-setup-goal",
+      "names": [
+        "plannotator-setup-goal"
+      ]
+    },
+    "plannotator-visual-explainer": {
+      "repo": "backnotprop/plannotator",
+      "ref": "26ca4e02750062ac8245509a60755e55bc67a5cd",
+      "path": "apps/skills/extra/plannotator-visual-explainer",
+      "names": [
+        "plannotator-visual-explainer"
+      ]
+    },
+    "visual-explainer": {
+      "repo": "nicobailon/visual-explainer",
+      "ref": "528b71feb85dab5d92b82c3554880826f50a75da",
+      "path": "plugins/visual-explainer",
+      "names": [
+        "visual-explainer"
+      ]
+    },
+    "playwright-cli": {
+      "repo": "microsoft/playwright-cli",
+      "ref": "74354ecc7a43da16d91a9bc54fa8db8283a3fcf5",
+      "path": "skills/playwright-cli",
+      "names": [
+        "playwright-cli"
+      ]
+    },
+    "openwiki": {
+      "repo": "langchain-ai/openwiki",
+      "ref": "64903f920bb4305246cec9356f07cf91c92b3d25",
+      "path": "integrations/openwiki",
+      "names": [
+        "openwiki"
+      ]
+    }
+  },
   "removed_skills": {
     "prd-taskmaster": {
       "repo": "https://github.com/anombyte93/prd-taskmaster.git",

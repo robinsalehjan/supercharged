@@ -51,11 +51,11 @@ PYTEST
   run_installer --dry-run
 
   [ "$status" -eq 0 ]
-  [ "$(wc -l < "$CALLS" | tr -d ' ')" -eq 4 ]
+  [ "$(wc -l < "$CALLS" | tr -d ' ')" -eq 3 ]
   grep -Fx 'managed --dry-run' "$CALLS"
   grep -Fx 'skills --dry-run --harness both' "$CALLS"
   grep -Fx 'claude-plugins --dry-run' "$CALLS"
-  grep -Fx 'codex-plugins --dry-run' "$CALLS"
+  ! grep -Fx 'codex-plugins --dry-run' "$CALLS"
 }
 
 @test "agent tooling reconciler can target one harness adapter" {
@@ -87,11 +87,11 @@ PYTEST
   [ "$status" -eq 0 ]
   run jq -e '
     .ok == true and
-    (.shared.mcp_servers == ["code-review-graph", "openaiDeveloperDocs"]) and
+    (.shared.mcp_servers == ["axiom", "code-review-graph", "firebase-tools", "openaiDeveloperDocs", "openwiki"]) and
     (.native_adapters.claude_plugins | index("swift-lsp@claude-plugins-official")) and
     (.native_adapters.codex_mcp_servers == ["cloudflare", "playwright", "xcode"]) and
-    (.native_adapters.codex_plugins == ["axiom@axiom-marketplace", "firebase@firebase"]) and
-    (.native_adapters.claude_plugins | index("firebase@firebase"))
+    (.native_adapters.codex_plugins == []) and
+    (.native_adapters.claude_plugins | index("firebase@firebase") == null)
   ' <<<"$output"
   [ "$status" -eq 0 ]
 }

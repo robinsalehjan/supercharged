@@ -67,52 +67,6 @@ retire_rtk_codex_files() {
     rm -f "$CODEX_HOME/RTK.md" "$CODEX_HOME/hooks/rtk-enforce.sh"
 }
 
-restore_codex_skills() {
-    local src_dir="$CODEX_CONFIG_DIR/skills"
-    local dest_dir="$CODEX_HOME/skills"
-    local skill name copied=0
-
-    if [ ! -d "$src_dir" ]; then
-        return 0
-    fi
-
-    mkdir -p "$dest_dir"
-    for skill in "$src_dir"/*(N/); do
-        name=$(basename "$skill")
-        rm -rf "${dest_dir:?}/${name:?}"
-        mkdir -p "$dest_dir/$name"
-        cp -R "$skill/." "$dest_dir/$name/"
-        copied=$((copied + 1))
-    done
-
-    if [ "$copied" -gt 0 ]; then
-        log_with_level "SUCCESS" "Restored $copied Codex skill(s)"
-    fi
-}
-
-restore_shared_agent_skills() {
-    local src_dir="$AGENT_CONFIG_DIR/skills"
-    local dest_dir="$CODEX_HOME/skills"
-    local skill name copied=0
-
-    if [ ! -d "$src_dir" ]; then
-        return 0
-    fi
-
-    mkdir -p "$dest_dir"
-    while IFS= read -r skill; do
-        name=$(basename "$(dirname "$skill")")
-        rm -rf "${dest_dir:?}/${name:?}"
-        mkdir -p "$dest_dir/$name"
-        cp "$skill" "$dest_dir/$name/SKILL.md"
-        copied=$((copied + 1))
-    done < <(find "$src_dir" -mindepth 2 -maxdepth 2 -type f -name 'SKILL.md' | sort)
-
-    if [ "$copied" -gt 0 ]; then
-        log_with_level "SUCCESS" "Restored $copied canonical shared skill(s) for Codex"
-    fi
-}
-
 restore_codex_rules() {
     local src_dir="${1:-$CODEX_CONFIG_DIR/rules}"
     local dest_dir="${2:-$CODEX_HOME/rules}"
@@ -248,21 +202,13 @@ is_repo_newer() {
         mtime=$(get_file_mtime "$CODEX_CONFIG_DIR/hooks.json")
         [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
     fi
-    if [ -f "$CODEX_CONFIG_DIR/plugins.json" ]; then
-        mtime=$(get_file_mtime "$CODEX_CONFIG_DIR/plugins.json")
-        [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
-    fi
     if [ -f "$AGENT_CONFIG_DIR/installed_skills.json" ]; then
         mtime=$(get_file_mtime "$AGENT_CONFIG_DIR/installed_skills.json")
         [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
     fi
-    mtime=$(get_newest_mtime_in_dir "$CODEX_CONFIG_DIR/skills")
-    [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
     mtime=$(get_newest_mtime_in_dir "$CODEX_CONFIG_DIR/rules")
     [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
     mtime=$(get_newest_mtime_in_dir "$CODEX_CONFIG_DIR/hooks")
-    [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
-    mtime=$(get_newest_mtime_in_dir "$AGENT_CONFIG_DIR/skills")
     [ "$mtime" -gt "$repo_mtime" ] && repo_mtime="$mtime"
 
     if [ -f "$CODEX_HOME/config.toml" ]; then
@@ -282,8 +228,6 @@ is_repo_newer() {
         mtime=$(get_file_mtime "$CODEX_HOME/hooks.json")
         [ "$mtime" -gt "$home_mtime" ] && home_mtime="$mtime"
     fi
-    mtime=$(get_newest_mtime_in_dir "$CODEX_HOME/skills")
-    [ "$mtime" -gt "$home_mtime" ] && home_mtime="$mtime"
     mtime=$(get_newest_mtime_in_dir "$CODEX_HOME/rules")
     [ "$mtime" -gt "$home_mtime" ] && home_mtime="$mtime"
     mtime=$(get_newest_mtime_in_dir "$CODEX_HOME/hooks")
@@ -321,11 +265,9 @@ main() {
     if [ ! -f "$CODEX_CONFIG_DIR/config.toml" ] && \
        [ ! -f "$AGENT_CONFIG_DIR/AGENTS.md" ] && \
        [ ! -f "$CODEX_CONFIG_DIR/hooks.json" ] && \
-       [ ! -f "$CODEX_CONFIG_DIR/plugins.json" ] && \
        [ ! -f "$CODEX_CONFIG_DIR/apple.config.toml" ] && \
        [ ! -f "$CODEX_CONFIG_DIR/review.config.toml" ] && \
        [ ! -f "$AGENT_CONFIG_DIR/installed_skills.json" ] && \
-       [ ! -d "$CODEX_CONFIG_DIR/skills" ] && \
        [ ! -d "$CODEX_CONFIG_DIR/rules" ] && \
        [ ! -d "$CODEX_CONFIG_DIR/hooks" ]; then
         log_with_level "INFO" "No Codex configuration found in repository"
@@ -339,6 +281,10 @@ main() {
        [ -f "$CODEX_CONFIG_DIR/hooks.json" ]; then
         log_with_level "INFO" "Reconciling managed Plannotator binary..."
         "$PROJECT_ROOT/scripts/install-plannotator.sh"
+    fi
+
+    if [ "${SUPERCHARGED_SKIP_MANAGED_TOOL_INSTALLS:-0}" != 1 ] && [ -f "$AGENT_CONFIG_DIR/installed_skills.json" ]; then
+        "$PROJECT_ROOT/scripts/install-skills.sh" --harness codex
     fi
 
     if [ "$FORCE_RESTORE" = true ]; then
@@ -374,26 +320,8 @@ main() {
         "$CODEX_HOME/hooks.json" \
         "hooks.json"
     restore_codex_agents
-    restore_codex_skills
-    restore_shared_agent_skills
     restore_codex_rules
     restore_codex_hook_scripts
-
-    if [ -f "$AGENT_CONFIG_DIR/installed_skills.json" ]; then
-        log_with_level "INFO" "Installing shared agent skills..."
-        if "$PROJECT_ROOT/scripts/install-skills.sh" --harness codex; then
-            log_with_level "SUCCESS" "Shared agent skills installed"
-        else
-            log_with_level "WARN" "Skill installation failed — run 'npm run install:skills' manually"
-        fi
-    fi
-
-    log_with_level "INFO" "Installing managed Codex plugins..."
-    if "$PROJECT_ROOT/scripts/install-codex-plugins.sh"; then
-        log_with_level "SUCCESS" "Managed Codex plugins installed"
-    else
-        log_with_level "WARN" "Codex plugin installation failed — run 'npm run install:codex-plugins' manually"
-    fi
 
     log_with_level "SUCCESS" "Codex configuration restored!"
     echo ""
@@ -403,14 +331,10 @@ main() {
     echo "   - review.config.toml (use: codex -p review)"
     echo "   - hooks.json"
     echo "   - AGENTS.md"
-    echo "   - skills/plannotator-*"
-    echo "   - shared git skills from agent_config/installed_skills.json"
-    echo "   - canonical shared skills from agent_config/skills"
     echo "   - rules/*.rules"
     echo "   - hooks/*"
-    echo "   - managed plugins from codex_config/plugins.json"
     echo ""
-    echo "💡 New or changed Codex and Axiom hooks require local /hooks trust review"
+    echo "💡 New or changed Codex hooks require local /hooks trust review"
     echo "💡 Restart Codex for changes to take effect"
 }
 

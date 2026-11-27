@@ -55,29 +55,6 @@ filter_shared_codex_agents() {
     done
 }
 
-backup_codex_skills() {
-    local src_dir="$CODEX_HOME/skills"
-    local dest_dir="$CODEX_CONFIG_DIR/skills"
-    local skill name copied=0
-
-    if [ ! -d "$src_dir" ]; then
-        return 0
-    fi
-
-    mkdir -p "$dest_dir"
-    for skill in "$src_dir"/plannotator-*(N/); do
-        name=$(basename "$skill")
-        rm -rf "${dest_dir:?}/${name:?}"
-        mkdir -p "$dest_dir/$name"
-        cp -R "$skill/." "$dest_dir/$name/"
-        copied=$((copied + 1))
-    done
-
-    if [ "$copied" -gt 0 ]; then
-        log_with_level "SUCCESS" "Backed up $copied Codex Plannotator skill(s)"
-    fi
-}
-
 backup_codex_profile() {
     local name="$1"
     local src="$CODEX_HOME/${name}.config.toml"
@@ -155,7 +132,6 @@ main() {
         log_with_level "WARN" "hooks.json not found"
     fi
 
-    backup_codex_skills
 
     log_with_level "SUCCESS" "Codex configuration backup completed!"
     echo ""
@@ -164,7 +140,6 @@ main() {
     echo "   - codex_config/apple.config.toml"
     echo "   - codex_config/review.config.toml"
     echo "   - codex_config/hooks.json"
-    echo "   - codex_config/skills/plannotator-*"
     echo "   - agent_config/AGENTS.md"
     echo ""
     echo "💡 Runtime files such as auth.json, history, logs, sessions, and SQLite databases are intentionally not backed up"

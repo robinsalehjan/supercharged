@@ -11,9 +11,7 @@ setup() {
   mkdir -p "$MOCK_BIN"
   printf '# Managed runtime pins\nnodejs 24.20.0\npython 3.14.7\n' > "$TOOL_VERSIONS"
   MANIFEST="$TEST_TEMP_DIR/managed-tools.json"
-  PLUGINS="$TEST_TEMP_DIR/plugins.json"
   cp "$PROJECT_ROOT/agent_config/managed_tools.json" "$MANIFEST"
-  cp "$PROJECT_ROOT/codex_config/plugins.json" "$PLUGINS"
   cat > "$MOCK_BIN/asdf" <<'EOF'
 #!/bin/sh
 case "$1:$2:$3" in
@@ -84,7 +82,7 @@ EOF
   chmod +x "$MOCK_BIN/npm"
 
   run env PATH="$MOCK_BIN:$PATH" MANAGED_TOOLS_MANIFEST="$MANIFEST" \
-    CODEX_PLUGIN_REGISTRY="$PLUGINS" "$SCRIPT" --only agents --apply
+    "$SCRIPT" --only agents --apply
 
   [ "$status" -eq 0 ]
   run jq -e '.tools.openwiki.version == "9.9.9"' "$MANIFEST"
@@ -107,7 +105,7 @@ EOF
   chmod +x "$MOCK_BIN/firebase"
 
   run env PATH="$MOCK_BIN:$PATH" MANAGED_TOOLS_MANIFEST="$MANIFEST" \
-    CODEX_PLUGIN_REGISTRY="$PLUGINS" "$SCRIPT" --only agents --apply
+    "$SCRIPT" --only agents --apply
 
   [ "$status" -eq 0 ]
   run jq -e '.tools.firebase.version == "15.29.0"' "$MANIFEST"
@@ -129,7 +127,7 @@ EOF
   chmod +x "$MOCK_BIN/npm" "$MOCK_BIN/firebase"
 
   run env PATH="$MOCK_BIN:$PATH" MANAGED_TOOLS_MANIFEST="$MANIFEST" \
-    CODEX_PLUGIN_REGISTRY="$PLUGINS" "$SCRIPT" --only agents --apply
+    "$SCRIPT" --only agents --apply
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"Skipping firebase: no local installation detected"* ]]

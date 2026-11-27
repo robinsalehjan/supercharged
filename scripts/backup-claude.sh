@@ -29,8 +29,8 @@ sanitize_claude_settings() {
     local settings_json filtered_plugins marketplace_del_filter="" env_del_filter="" mp env_var
 
     settings_json=$(<"$input_file")
-    filtered_plugins=$(filter_json_by_marketplace "$settings_json" ".enabledPlugins" "${SANITIZE_MARKETPLACES[@]}")
-    for mp in "${SANITIZE_MARKETPLACES[@]}"; do
+    filtered_plugins=$(filter_json_by_marketplace "$settings_json" ".enabledPlugins" firebase axiom-marketplace "${SANITIZE_MARKETPLACES[@]}")
+    for mp in firebase axiom-marketplace "${SANITIZE_MARKETPLACES[@]}"; do
         marketplace_del_filter="${marketplace_del_filter} | del(.extraKnownMarketplaces[\"${mp}\"])"
     done
     for env_var in "${SANITIZE_ENV_VARS[@]}"; do
@@ -63,7 +63,7 @@ sanitize_claude_plugins() {
     local output_file="$2"
     local plugins_json filtered_plugins
     plugins_json=$(<"$input_file")
-    filtered_plugins=$(filter_json_by_marketplace "$plugins_json" ".plugins" "${SANITIZE_MARKETPLACES[@]}")
+    filtered_plugins=$(filter_json_by_marketplace "$plugins_json" ".plugins" firebase axiom-marketplace "${SANITIZE_MARKETPLACES[@]}")
     jq --argjson plugins "$filtered_plugins" '{version: .version, plugins: $plugins}' "$input_file" |
         make_path_portable > "$output_file"
 }
@@ -74,7 +74,7 @@ sanitize_claude_marketplaces() {
     local marketplace jq_filter='.' i=0
     local -a jq_args
     jq_args=()
-    for marketplace in "${SANITIZE_MARKETPLACES[@]}"; do
+    for marketplace in firebase axiom-marketplace "${SANITIZE_MARKETPLACES[@]}"; do
         jq_args+=(--arg "mp$i" "$marketplace")
         jq_filter="$jq_filter | del(.[(\$mp$i)])"
         i=$((i + 1))

@@ -68,10 +68,6 @@ write_compatibility_mocks() {
   [ "$status" -eq 0 ]
 }
 
-@test "agent audit accepts the current Codex pluginId JSON field" {
-  run rg -F '.pluginId // .id // .name' "$AUDIT"
-  [ "$status" -eq 0 ]
-}
 
 @test "agent audit fails a compatibility version below its minimum" {
   local manifest="$TEST_TEMP_DIR/managed-tools.json"
@@ -104,15 +100,10 @@ write_compatibility_mocks() {
   [ "$status" -eq 0 ]
 }
 
-@test "agent audit requires the Firebase plugin" {
+@test "agent audit requires standalone Firebase MCP" {
   codex_fixture="$TEST_TEMP_DIR/codex-config"
   cp -R "$PROJECT_ROOT/codex_config" "$codex_fixture"
-  jq '.plugins |= map(select(.id != "firebase@firebase"))' \
-    "$codex_fixture/plugins.json" > "$codex_fixture/plugins.json.tmp"
-  mv "$codex_fixture/plugins.json.tmp" "$codex_fixture/plugins.json"
-
+  sed -i.bak 's/mcp_servers.firebase-tools/mcp_servers.retired/' "$codex_fixture/config.toml"
   run env CODEX_CONFIG_DIR="$codex_fixture" "$AUDIT" --repo-only --json
   [ "$status" -ne 0 ]
-  run jq -e '.failures | any(contains("Axiom and Firebase policy"))' <<<"$output"
-  [ "$status" -eq 0 ]
 }

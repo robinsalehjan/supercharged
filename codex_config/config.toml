@@ -60,3 +60,16 @@ enabled = true
 [tui]
 status_line = ["model-with-reasoning", "current-dir", "git-branch", "branch-changes", "context-remaining"]
 status_line_use_colors = true
+
+[mcp_servers.axiom]
+command = "npx"
+args = ["-y", "axiom-mcp@27.1.2"]
+
+[mcp_servers.firebase-tools]
+command = "npx"
+args = ["-y", "firebase-tools@15.32.1", "mcp", "--dir", "."]
+env = { IS_FIREBASE_MCP = "true" }
+
+[mcp_servers.openwiki]
+command = "openwiki"
+args = ["mcp", "--host", "codex"]

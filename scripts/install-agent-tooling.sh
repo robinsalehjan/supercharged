@@ -11,7 +11,6 @@ PROJECT_ROOT="$UTILS_PROJECT_ROOT"
 MANAGED_TOOLS_INSTALLER="${MANAGED_TOOLS_INSTALLER:-$PROJECT_ROOT/scripts/install-managed-tools.sh}"
 SKILLS_INSTALLER="${SKILLS_INSTALLER:-$PROJECT_ROOT/scripts/install-skills.sh}"
 CLAUDE_PLUGINS_INSTALLER="${CLAUDE_PLUGINS_INSTALLER:-$PROJECT_ROOT/scripts/install-plugins.sh}"
-CODEX_PLUGINS_INSTALLER="${CODEX_PLUGINS_INSTALLER:-$PROJECT_ROOT/scripts/install-codex-plugins.sh}"
 DRY_RUN=false
 HARNESS=both
 
@@ -83,9 +82,6 @@ reconcile_harness() {
 
 if [ "$HARNESS" = both ] || [ "$HARNESS" = claude ]; then
     reconcile_harness claude "$CLAUDE_PLUGINS_INSTALLER"
-fi
-if [ "$HARNESS" = both ] || [ "$HARNESS" = codex ]; then
-    reconcile_harness codex "$CODEX_PLUGINS_INSTALLER"
 fi
 
 log_with_level "SUCCESS" "Shared agent tooling and native harness adapters are reconciled"

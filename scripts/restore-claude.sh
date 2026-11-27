@@ -28,8 +28,9 @@ CLAUDE_HOME="${CLAUDE_HOME:-$HOME/.claude}"
 CLAUDE_USER_CONFIG="${CLAUDE_USER_CONFIG:-$HOME/.claude.json}"
 
 # List of marketplaces to preserve locally (not overwritten during restore)
-# These are work-related and should remain untouched
-PRESERVE_MARKETPLACES=("vend-plugins")
+# The migration retires only user-scoped vendor plugins. Preserve independent
+# project installations during subsequent registry merges and cache pruning.
+PRESERVE_MARKETPLACES=("vend-plugins" "firebase" "axiom-marketplace")
 
 # List of env vars to inject from ~/.secrets back into settings.json
 # Must mirror SANITIZE_ENV_VARS in backup-claude.sh (what's stripped at backup, re-injected at restore)
@@ -161,14 +162,15 @@ merge_settings_config() {
 
     if ! merged=$(jq -a -n \
         --argjson repo "$repo_content" \
-        --argjson local "$local_content" '
+        --argjson local "$local_content" \
+        --argjson preserved "$(printf '%s\n' "${PRESERVE_MARKETPLACES[@]}" | jq -R . | jq -s .)" '
         ($local.enabledPlugins // {}
             | to_entries
-            | map(select(.key | endswith("@vend-plugins")))
+            | map(select((.key | split("@") | last) as $mp | $preserved | index($mp) != null))
+            | map(select(.key != "firebase@firebase" and .key != "axiom@axiom-marketplace"))
             | from_entries) as $work_plugins
-        | (if (($local.extraKnownMarketplaces // {}) | has("vend-plugins"))
-            then {"vend-plugins": $local.extraKnownMarketplaces["vend-plugins"]}
-            else {} end) as $work_marketplace
+        | (($local.extraKnownMarketplaces // {})
+            | with_entries(select(.key as $mp | $preserved | index($mp) != null))) as $work_marketplace
         | $repo
         | .enabledPlugins = ((.enabledPlugins // {}) + $work_plugins)
         | .extraKnownMarketplaces = ((.extraKnownMarketplaces // {}) + $work_marketplace)
@@ -693,6 +695,10 @@ if [ ! -f "$CLAUDE_CONFIG_DIR/settings.json" ] && \
     return 0
 fi
 
+if [ "${SUPERCHARGED_SKIP_MANAGED_TOOL_INSTALLS:-0}" != 1 ] && [ -f "$AGENT_CONFIG_DIR/installed_skills.json" ]; then
+    "$PROJECT_ROOT/scripts/install-skills.sh" --harness claude
+fi
+
 if [ "$FORCE_RESTORE" = true ]; then
     log_with_level "INFO" "Force restoring Claude Code configuration..."
 elif [ -e "$CLAUDE_HOME/RTK.md" ] || [ -e "$CLAUDE_HOME/hooks/rtk-rewrite.sh" ]; then
@@ -794,16 +800,6 @@ fi
 # Prune caches/marketplaces no longer in the newly-restored registry — must
 # run after install-plugins.sh so freshly-installed entries aren't pruned.
 uninstall_orphan_plugins
-
-# Install git-cloned skills from the shared agent registry
-if [ -f "$AGENT_CONFIG_DIR/installed_skills.json" ]; then
-    log_with_level "INFO" "Installing shared agent skills..."
-    if "$PROJECT_ROOT/scripts/install-skills.sh" --harness claude; then
-        log_with_level "SUCCESS" "Shared agent skills installed"
-    else
-        log_with_level "WARN" "Skill installation failed — run 'npm run install:skills' manually"
-    fi
-fi
 
 echo ""
 echo "📥 Restored files to ~/.claude:"

@@ -5,7 +5,6 @@ set -euo pipefail
 source "$(dirname "$0")/utils.sh"
 
 MANIFEST="${MANAGED_TOOLS_MANIFEST:-$UTILS_PROJECT_ROOT/agent_config/managed_tools.json}"
-PLUGIN_REGISTRY="${CODEX_PLUGIN_REGISTRY:-$UTILS_PROJECT_ROOT/codex_config/plugins.json}"
 APPLY=false
 [ "${1:-}" = "--apply" ] && APPLY=true
 if [ -n "${1:-}" ] && [ "${1:-}" != "--apply" ]; then
@@ -33,9 +32,6 @@ obscura_repo=$(jq -r '.tools.obscura.repository' "$MANIFEST")
 
 plannotator_json=$(fetch_json "${PLANNOTATOR_RELEASE_JSON:-}" "repos/$plannotator_repo/releases/latest")
 obscura_json=$(fetch_json "${OBSCURA_RELEASE_JSON:-}" "repos/$obscura_repo/releases/latest")
-if [ "${SKIP_AXIOM_UPDATE:-false}" != true ]; then
-    axiom_json=$(fetch_json "${AXIOM_COMMIT_JSON:-}" "repos/CharlesWiltgen/Axiom/commits/main")
-fi
 if [ -n "${CRG_PYPI_JSON:-}" ]; then
     crg_json=$(<"$CRG_PYPI_JSON")
 else
@@ -75,19 +71,6 @@ obscura_arm_name="obscura-aarch64-macos.tar.gz"
 obscura_x64_name="obscura-x86_64-macos.tar.gz"
 obscura_arm_sha=$(jq -er --arg name "$obscura_arm_name" '.assets[] | select(.name == $name) | .digest | sub("^sha256:"; "") | select(test("^[0-9a-f]{64}$"))' <<<"$obscura_json")
 obscura_x64_sha=$(jq -er --arg name "$obscura_x64_name" '.assets[] | select(.name == $name) | .digest | sub("^sha256:"; "") | select(test("^[0-9a-f]{64}$"))' <<<"$obscura_json")
-if [ "${SKIP_AXIOM_UPDATE:-false}" = true ]; then
-    axiom_commit=$(jq -r '.marketplaces[0].ref' "$PLUGIN_REGISTRY")
-    axiom_version=$(jq -r '.plugins[0].version' "$PLUGIN_REGISTRY")
-else
-    axiom_commit=$(jq -er '.sha | select(test("^[0-9a-f]{40}$"))' <<<"$axiom_json")
-    if [ -n "${AXIOM_PLUGIN_JSON:-}" ]; then
-        axiom_plugin_json=$(<"$AXIOM_PLUGIN_JSON")
-    else
-        axiom_plugin_json=$(curl -fsSL "${CURL_METADATA_OPTS[@]}" "https://raw.githubusercontent.com/CharlesWiltgen/Axiom/$axiom_commit/axiom-codex/.codex-plugin/plugin.json")
-    fi
-    axiom_version=$(jq -er '.version | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+([.-][0-9A-Za-z.-]+)?$"))' <<<"$axiom_plugin_json")
-fi
-
 updates=$(jq -n \
     --arg p_current "$(jq -r '.tools.plannotator.version' "$MANIFEST")" --arg p_latest "$plannotator_version" \
     --arg p_arm_current "$(jq -r '.tools.plannotator.assets["darwin-arm64"].sha256' "$MANIFEST")" --arg p_arm_latest "$plannotator_arm_sha" \
@@ -100,8 +83,6 @@ updates=$(jq -n \
     --arg o_current "$(jq -r '.tools.obscura.version' "$MANIFEST")" --arg o_latest "$obscura_version" \
     --arg o_arm_current "$(jq -r '.tools.obscura.assets["darwin-arm64"].sha256' "$MANIFEST")" --arg o_arm_latest "$obscura_arm_sha" \
     --arg o_x64_current "$(jq -r '.tools.obscura.assets["darwin-x64"].sha256' "$MANIFEST")" --arg o_x64_latest "$obscura_x64_sha" \
-    --arg a_current "$(jq -r '.marketplaces[0].ref' "$PLUGIN_REGISTRY")" --arg a_latest "$axiom_commit" \
-    --arg av_current "$(jq -r '.plugins[0].version' "$PLUGIN_REGISTRY")" --arg av_latest "$axiom_version" \
     '[
       (select($p_current != $p_latest or $p_arm_current != $p_arm_latest or $p_x64_current != $p_x64_latest) | "Plannotator: \($p_current) -> \($p_latest)"),
       (select($c_current != $c_latest) | "code-review-graph: \($c_current) -> \($c_latest)"),
@@ -109,8 +90,7 @@ updates=$(jq -n \
       (select($f_current != $f_latest) | "Firebase CLI: \($f_current) -> \($f_latest)"),
       (select($pw_current != $pw_latest) | "Playwright CLI: \($pw_current) -> \($pw_latest)"),
       (select($pm_current != $pm_latest) | "Playwright MCP: \($pm_current) -> \($pm_latest)"),
-      (select($o_current != $o_latest or $o_arm_current != $o_arm_latest or $o_x64_current != $o_x64_latest) | "Obscura: \($o_current) -> \($o_latest)"),
-      (select($a_current != $a_latest or $av_current != $av_latest) | "Axiom marketplace commit changed")
+      (select($o_current != $o_latest or $o_arm_current != $o_arm_latest or $o_x64_current != $o_x64_latest) | "Obscura: \($o_current) -> \($o_latest)")
     ]')
 
 if [ "$(jq 'length' <<<"$updates")" -eq 0 ]; then
@@ -175,9 +155,4 @@ jq \
   ' "$MANIFEST" > "$manifest_tmp"
 mv "$manifest_tmp" "$MANIFEST"
 
-plugin_tmp=$(mktemp "${PLUGIN_REGISTRY}.XXXXXX")
-jq --arg ref "$axiom_commit" --arg version "$axiom_version" \
-  '.marketplaces[0].ref = $ref | .plugins[0].version = $version' \
-  "$PLUGIN_REGISTRY" > "$plugin_tmp"
-mv "$plugin_tmp" "$PLUGIN_REGISTRY"
 echo "Updated managed agent-tool pins"

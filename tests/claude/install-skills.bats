@@ -1,302 +1,106 @@
 #!/usr/bin/env bats
-
-# Load test helpers
 load '../helpers/setup'
-load '../helpers/mocks'
 
 setup() {
   setup_test_env
-
-  PROJECT_ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
-  INSTALL_SKILLS="$PROJECT_ROOT/scripts/install-skills.sh"
-
-  # install-skills.sh uses $UTILS_PROJECT_ROOT/agent_config (derived from its
-  # own location). The helper below builds an isolated project root and HOME so
-  # skills land in test-local Claude and Codex homes.
+  root="$TEST_TEMP_DIR/repo"
+  mkdir -p "$root/scripts" "$root/agent_config" "$TEST_TEMP_DIR/bin"
+  cp "$BATS_TEST_DIRNAME/../../scripts/shared_skills.py" "$root/scripts/"
+  mkdir "$root/agent_config/sample"
+  echo fixture > "$root/agent_config/sample/SKILL.md"
+  echo '{"tools":{"skills":{"version":"1.9.1"}}}' > "$root/agent_config/managed_tools.json"
+  echo '{"skills":{"sample":{"local":"agent_config/sample"}}}' > "$root/agent_config/installed_skills.json"
+  echo '{}' > "$root/agent_config/legacy_skill_hashes.json"
+  cat > "$TEST_TEMP_DIR/bin/npx" <<'MOCK'
+#!/bin/sh
+set -eu
+[ "$1" = --yes ] && [ "$2" = skills@1.9.1 ] && [ "$3" = add ] || exit 2
+mkdir -p .agents/skills
+cp -R "$4" .agents/skills/sample
+MOCK
+  chmod +x "$TEST_TEMP_DIR/bin/npx"
+  export PATH="$TEST_TEMP_DIR/bin:$PATH"
 }
+teardown() { teardown_test_env; }
 
-teardown() {
-  teardown_test_env
-  unmock_all
-}
-
-@test "--harness limits reconciliation to one agent home" {
-  local skills='{"version":1,"skills":{"my-skill":{"repo":"https://example.com/my-skill.git","ref":"1111111111111111111111111111111111111111"}}}'
-
-  run run_install_skills "$skills" "" --dry-run --harness claude
-
+@test "dry-run previews pinned sources without creating a skill state directory" {
+  run python3 "$root/scripts/shared_skills.py" --dry-run
   [ "$status" -eq 0 ]
-  [[ "$output" == *"for Claude Code: my-skill"* ]]
-  [[ "$output" != *"for Codex: my-skill"* ]]
+  [[ "$output" == *sample* ]]
+  [ ! -e "$HOME/.local/share/supercharged/skills" ]
 }
 
-# Helper: write installed_skills.json into a temp agent_config dir and run
-# the installer against it via a wrapper script that overrides UTILS_PROJECT_ROOT.
-run_install_skills() {
-  local skills_json="$1"
-  local local_json="${2:-}"
-  shift 2 || true
-
-  # Build a sandboxed project root mirroring the real layout the script expects.
-  local sandbox_root="$TEST_TEMP_DIR/project"
-  mkdir -p "$sandbox_root/scripts/utils" "$sandbox_root/agent_config"
-
-  # Copy the script and its deps (utils.sh + utils/* submodules).
-  cp "$PROJECT_ROOT/scripts/install-skills.sh" "$sandbox_root/scripts/"
-  cp "$PROJECT_ROOT/scripts/utils.sh" "$sandbox_root/scripts/"
-  cp -R "$PROJECT_ROOT/scripts/utils/." "$sandbox_root/scripts/utils/"
-
-  printf '%s\n' "$skills_json" > "$sandbox_root/agent_config/installed_skills.json"
-  if [ -n "$local_json" ]; then
-    printf '%s\n' "$local_json" > "$sandbox_root/agent_config/installed_skills.local.json"
-  fi
-
-  "$sandbox_root/scripts/install-skills.sh" "$@"
-}
-
-@test "exits successfully when installed_skills.json is missing" {
-  local sandbox_root="$TEST_TEMP_DIR/project"
-  mkdir -p "$sandbox_root/scripts/utils" "$sandbox_root/agent_config"
-  cp "$PROJECT_ROOT/scripts/install-skills.sh" "$sandbox_root/scripts/"
-  cp "$PROJECT_ROOT/scripts/utils.sh" "$sandbox_root/scripts/"
-  cp -R "$PROJECT_ROOT/scripts/utils/." "$sandbox_root/scripts/utils/"
-
-  run "$sandbox_root/scripts/install-skills.sh"
-
+@test "both harnesses share installed contents and preserve unmanaged skills" {
+  mkdir -p "$HOME/.claude/skills/unmanaged"
+  run python3 "$root/scripts/shared_skills.py" --harness codex
   [ "$status" -eq 0 ]
-  [[ "$output" == *"nothing to do"* ]]
+  [ ! -e "$HOME/.claude/skills/sample" ]
+  run python3 "$root/scripts/shared_skills.py"
+  [ "$status" -eq 0 ]
+  cmp "$HOME/.claude/skills/sample/SKILL.md" "$HOME/.agents/skills/sample/SKILL.md"
+  [ -d "$HOME/.claude/skills/unmanaged" ]
+  run python3 "$root/scripts/shared_skills.py"
+  [ "$status" -eq 0 ]
+  [[ "$output" != *journal* ]]
 }
 
-@test "--dry-run reports clone for a missing skill" {
-  local skills='{"version":1,"skills":{"my-skill":{"repo":"https://example.com/my-skill.git","ref":"1111111111111111111111111111111111111111"}}}'
-
-  run run_install_skills "$skills" "" --dry-run
-
+@test "migration adopts a matching copy with rollback and rejects unknown content" {
+  mkdir -p "$HOME/.claude/skills"
+  cp -R "$root/agent_config/sample" "$HOME/.claude/skills/"
+  run python3 "$root/scripts/shared_skills.py"
+  [ "$status" -ne 0 ]
+  [ ! -e "$HOME/.agents/skills/sample" ]
+  run python3 "$root/scripts/shared_skills.py" --migrate
   [ "$status" -eq 0 ]
-  [[ "$output" == *"[dry-run] Would clone skill for Claude Code: my-skill"* ]]
-  [[ "$output" == *"[dry-run] Would clone skill for Codex: my-skill"* ]]
-  # Crucial: dry-run must not create the target directory.
-  [ ! -d "$HOME/.claude/skills/my-skill" ]
-  [ ! -d "$HOME/.codex/skills/my-skill" ]
+  journal="${output##*journal: }"
+  run python3 "$root/scripts/shared_skills.py" --rollback "$journal"
+  [ "$status" -eq 0 ]
+  [ ! -L "$HOME/.claude/skills/sample" ]
+  [ -f "$HOME/.claude/skills/sample/SKILL.md" ]
+  echo local > "$HOME/.claude/skills/sample/SKILL.md"
+  run python3 "$root/scripts/shared_skills.py" --migrate
+  [ "$status" -ne 0 ]
+  [ "$(cat "$HOME/.claude/skills/sample/SKILL.md")" = local ]
 }
 
-@test "--dry-run reports update for an existing git checkout" {
-  local skills='{"version":1,"skills":{"existing-skill":{"repo":"https://example.com/existing.git","ref":"1111111111111111111111111111111111111111"}}}'
-
-  mkdir -p "$HOME/.claude/skills/existing-skill/.git"
-
-  run run_install_skills "$skills" "" --dry-run
-
+@test "failed npx update keeps both agents on the previous release" {
+  run python3 "$root/scripts/shared_skills.py"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"[dry-run] Would update skill for Claude Code: existing-skill"* ]]
-  [[ "$output" == *"[dry-run] Would clone skill for Codex: existing-skill"* ]]
+  echo update > "$root/agent_config/sample/SKILL.md"
+  echo 'exit 1' > "$TEST_TEMP_DIR/bin/npx"
+  run python3 "$root/scripts/shared_skills.py"
+  [ "$status" -ne 0 ]
+  [ "$(cat "$HOME/.agents/skills/sample/SKILL.md")" = fixture ]
+  [ "$(cat "$HOME/.claude/skills/sample/SKILL.md")" = fixture ]
 }
 
-@test "merges installed_skills.local.json on top of the tracked set" {
-  local skills='{"version":1,"skills":{"shared-skill":{"repo":"https://example.com/shared.git","ref":"1111111111111111111111111111111111111111"}}}'
-  local local_skills='{"version":1,"skills":{"local-only":{"repo":"https://example.com/local.git","ref":"1111111111111111111111111111111111111111"}}}'
-
-  run run_install_skills "$skills" "$local_skills" --dry-run
-
+@test "reconciliation preserves project plugins and hidden local skill links" {
+  mkdir -p "$HOME/.claude/plugins" "$HOME/.agents/skills"
+  echo '{"plugins":{"firebase@firebase":[{"scope":"project"}]}}' > "$HOME/.claude/plugins/installed_plugins.json"
+  ln -s "$TEST_TEMP_DIR" "$HOME/.agents/skills/.custom"
+  run python3 "$root/scripts/shared_skills.py"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Merged 1 local skill(s)"* ]]
-  [[ "$output" == *"shared-skill"* ]]
-  [[ "$output" == *"local-only"* ]]
+  [ -L "$HOME/.agents/skills/.custom" ]
+  [ -f "$HOME/.claude/skills/sample/SKILL.md" ]
 }
 
-@test "local override takes precedence when both define the same skill" {
-  # repo points at original.git @ 1111111111111111111111111111111111111111; local pins it to a fork @ 2222222222222222222222222222222222222222.
-  local skills='{"version":1,"skills":{"pinned":{"repo":"https://example.com/original.git","ref":"1111111111111111111111111111111111111111"}}}'
-  local local_skills='{"version":1,"skills":{"pinned":{"repo":"https://example.com/fork.git","ref":"2222222222222222222222222222222222222222"}}}'
-
-  run run_install_skills "$skills" "$local_skills" --dry-run
-
-  [ "$status" -eq 0 ]
-  # Dry-run output includes the resolved repo+ref tuple.
-  [[ "$output" == *"fork.git @ 2222222222222222222222222222222222222222"* ]]
-  [[ "$output" != *"original.git @ 1111111111111111111111111111111111111111"* ]]
+@test "user plugin requires migration before ordinary install changes the home" {
+  mkdir -p "$HOME/.claude/plugins"
+  echo '{"plugins":{"firebase@firebase":[{"scope":"user"}]}}' > "$HOME/.claude/plugins/installed_plugins.json"
+  run python3 "$root/scripts/shared_skills.py"
+  [ "$status" -ne 0 ]
+  [ ! -e "$HOME/.local/share/supercharged/skills" ]
+  [[ "$output" == *migrate:skills* ]]
 }
 
-@test "missing ref is rejected instead of tracking a mutable branch" {
-  local skills='{"version":1,"skills":{"no-ref-skill":{"repo":"https://example.com/no-ref.git"}}}'
-
-  run run_install_skills "$skills" "" --dry-run
-
+@test "local override retires only previously managed links" {
+  run python3 "$root/scripts/shared_skills.py"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"ref must be an immutable 40-character commit SHA"* ]]
-  [[ "$output" != *"Would clone"* ]]
-}
-
-@test "degenerate installed_skills.json is a clean no-op" {
-  # Missing .skills key — must not crash, must not iterate.
-  local skills='{"version":1}'
-
-  run run_install_skills "$skills" "" --dry-run
-
+  mkdir "$HOME/.agents/skills/personal"
+  echo '{"removed_skills":{"sample":{"repo":"example/repo"}}}' > "$root/agent_config/installed_skills.local.json"
+  run python3 "$root/scripts/shared_skills.py"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Skill installation complete"* ]]
-  [[ "$output" != *"Would clone"* ]]
-  [[ "$output" != *"Would update"* ]]
-}
-
-@test "empty skills object is a clean no-op" {
-  local skills='{"version":1,"skills":{}}'
-
-  run run_install_skills "$skills" "" --dry-run
-
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"Skill installation complete"* ]]
-  [[ "$output" != *"Would clone"* ]]
-}
-
-@test "removed skills are deleted from both managed destinations" {
-  local repo="https://example.com/retired.git"
-  local skills="{\"version\":2,\"skills\":{},\"removed_skills\":{\"retired\":{\"repo\":\"$repo\"}}}"
-
-  mkdir -p "$HOME/.claude/skills/retired" "$HOME/.codex/skills/retired"
-  git -C "$HOME/.claude/skills/retired" init -q
-  git -C "$HOME/.claude/skills/retired" remote add origin "$repo"
-  git -C "$HOME/.codex/skills/retired" init -q
-  git -C "$HOME/.codex/skills/retired" remote add origin "$repo"
-
-  run run_install_skills "$skills" ""
-
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"Removed retired skill for Claude Code: retired"* ]]
-  [[ "$output" == *"Removed retired skill for Codex: retired"* ]]
-  [ ! -e "$HOME/.claude/skills/retired" ]
-  [ ! -e "$HOME/.codex/skills/retired" ]
-}
-
-@test "removed skill dry-run preserves both managed destinations" {
-  local repo="https://example.com/retired.git"
-  local skills="{\"version\":2,\"skills\":{},\"removed_skills\":{\"retired\":{\"repo\":\"$repo\"}}}"
-
-  mkdir -p "$HOME/.claude/skills/retired" "$HOME/.codex/skills/retired"
-  git -C "$HOME/.claude/skills/retired" init -q
-  git -C "$HOME/.claude/skills/retired" remote add origin "$repo"
-  git -C "$HOME/.codex/skills/retired" init -q
-  git -C "$HOME/.codex/skills/retired" remote add origin "$repo"
-
-  run run_install_skills "$skills" "" --dry-run
-
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"[dry-run] Would remove retired skill for Claude Code: retired"* ]]
-  [[ "$output" == *"[dry-run] Would remove retired skill for Codex: retired"* ]]
-  [ -d "$HOME/.claude/skills/retired" ]
-  [ -d "$HOME/.codex/skills/retired" ]
-}
-
-@test "removed skill preserves a checkout from a different origin" {
-  local skills='{"version":2,"skills":{},"removed_skills":{"retired":{"repo":"https://example.com/managed.git"}}}'
-
-  mkdir -p "$HOME/.claude/skills/retired"
-  git -C "$HOME/.claude/skills/retired" init -q
-  git -C "$HOME/.claude/skills/retired" remote add origin "https://example.com/personal.git"
-
-  run run_install_skills "$skills" ""
-
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"origin does not match the retired managed skill"* ]]
-  [ -d "$HOME/.claude/skills/retired" ]
-}
-
-@test "removed skill without a managed origin is preserved" {
-  local skills='{"version":2,"skills":{},"removed_skills":{"retired":{"reason":"retired"}}}'
-
-  mkdir -p "$HOME/.claude/skills/retired"
-  git -C "$HOME/.claude/skills/retired" init -q
-  git -C "$HOME/.claude/skills/retired" remote add origin "https://example.com/personal.git"
-
-  run run_install_skills "$skills" ""
-
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"retired skill has no managed origin"* ]]
-  [ -d "$HOME/.claude/skills/retired" ]
-}
-
-@test "removed skill with local changes is preserved" {
-  local repo="https://example.com/retired.git"
-  local skills="{\"version\":2,\"skills\":{},\"removed_skills\":{\"retired\":{\"repo\":\"$repo\"}}}"
-
-  mkdir -p "$HOME/.claude/skills/retired"
-  git -C "$HOME/.claude/skills/retired" init -q
-  git -C "$HOME/.claude/skills/retired" remote add origin "$repo"
-  echo "local work" > "$HOME/.claude/skills/retired/notes.txt"
-
-  run run_install_skills "$skills" ""
-
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"managed checkout has local changes"* ]]
-  [ -f "$HOME/.claude/skills/retired/notes.txt" ]
-}
-
-@test "unsafe active skill names cannot escape managed skill directories" {
-  local skills='{"version":2,"skills":{"../../escape":{"repo":"https://example.com/escape.git","ref":"1111111111111111111111111111111111111111"}}}'
-
-  run run_install_skills "$skills" "" --dry-run
-
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"Skipping unsafe active skill name"* ]]
-  [[ "$output" != *"Would clone"* ]]
-  [ ! -e "$HOME/escape" ]
-}
-
-@test "removed skill tombstone wins over a local active override" {
-  local skills='{"version":2,"skills":{},"removed_skills":{"retired":{"repo":"https://example.com/retired.git"}}}'
-  local local_skills='{"version":1,"skills":{"retired":{"repo":"https://example.com/fork.git","ref":"1111111111111111111111111111111111111111"}}}'
-
-  run run_install_skills "$skills" "$local_skills" --dry-run
-
-  [ "$status" -eq 0 ]
-  [[ "$output" != *"Would clone skill for Claude Code: retired"* ]]
-  [[ "$output" != *"Would clone skill for Codex: retired"* ]]
-}
-
-@test "skips a target that exists but is not a git checkout" {
-  # Pre-create a plain directory at the target path. Production behavior is to
-  # log a warning and continue — must not rm-rf or attempt a clone over it.
-  local skills='{"version":1,"skills":{"squatted":{"repo":"https://example.com/squatted.git","ref":"1111111111111111111111111111111111111111"}}}'
-
-  mkdir -p "$HOME/.claude/skills/squatted"
-  echo "user data" > "$HOME/.claude/skills/squatted/important.txt"
-
-  run run_install_skills "$skills" ""
-
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"Skipping squatted"* ]]
-  [[ "$output" == *"is not a git checkout"* ]]
-  # Critical: user content must survive untouched.
-  [ -f "$HOME/.claude/skills/squatted/important.txt" ]
-  [ "$(cat "$HOME/.claude/skills/squatted/important.txt")" = "user data" ]
-}
-
-@test "failed pinned clone warns and continues to the next skill" {
-  # Bogus URL forces a clone failure; the WARN line must include git's actual
-  # error rather than the silent "(continuing)" we used to print. The second
-  # skill should still be processed.
-  local skills='{"version":1,"skills":{"bad-repo":{"repo":"file:///nonexistent/path.git","ref":"1111111111111111111111111111111111111111"},"second":{"repo":"file:///also-nonexistent.git","ref":"1111111111111111111111111111111111111111"}}}'
-
-  run run_install_skills "$skills" ""
-
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"Failed to clone pinned skill for Claude Code: bad-repo"* ]]
-  [[ "$output" == *"Failed to clone pinned skill for Codex: bad-repo"* ]]
-  # Second skill is still attempted even after the first failed.
-  [[ "$output" == *"Cloning skill for Claude Code: second"* ]]
-  [[ "$output" == *"Cloning skill for Codex: second"* ]]
-  [[ "$output" == *"Skill installation complete"* ]]
-}
-
-@test "malformed installed_skills.local.json surfaces a warning and falls back to the base file" {
-  local skills='{"version":1,"skills":{"only-base":{"repo":"https://example.com/base.git","ref":"1111111111111111111111111111111111111111"}}}'
-  local bad_local='{not valid json'
-
-  run run_install_skills "$skills" "$bad_local" --dry-run
-
-  [ "$status" -eq 0 ]
-  # The merge failure should be visible (not silently dropped as it was before).
-  [[ "$output" == *"Failed to merge skills JSON"* ]]
-  # Base file still drives the install.
-  [[ "$output" == *"only-base"* ]]
+  [ ! -e "$HOME/.agents/skills/sample" ]
+  [ ! -e "$HOME/.claude/skills/sample" ]
+  [ -d "$HOME/.agents/skills/personal" ]
 }

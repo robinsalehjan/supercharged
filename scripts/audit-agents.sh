@@ -134,7 +134,7 @@ codex_profile_names=$(find "$CODEX_CONFIG_DIR" -maxdepth 1 \( -type f -o -type l
 toml_summary=$(python3 "$SCRIPT_DIR/config_toml.py" audit-summary "$CODEX_CONFIG_DIR" 2>"$AUDIT_TMP_DIR/toml.err" || true)
 if jq -e '
     .profiles == ["apple.config.toml", "review.config.toml"] and
-    .base_mcp == ["cloudflare", "code-review-graph", "openaiDeveloperDocs", "playwright"] and
+    .base_mcp == ["axiom", "cloudflare", "code-review-graph", "firebase-tools", "openaiDeveloperDocs", "openwiki", "playwright"] and
     .apple_mcp == ["xcode"] and
     .playwright_enabled == true and .web_search == "live" and
     .base_reasoning == "medium" and .review_reasoning == "xhigh" and
@@ -178,7 +178,7 @@ if jq -e '
     .mcpServers["code-review-graph"] == {command: "code-review-graph", args: ["serve"], type: "stdio"} and
     .mcpServers.openaiDeveloperDocs == {type: "http", url: "https://developers.openai.com/mcp"}
 ' "$PROJECT_ROOT/.mcp.json" >/dev/null 2>&1 && \
-   jq -e 'type == "object" and length == 0' "$PROJECT_ROOT/claude_config/mcp_servers.json" >/dev/null 2>&1; then
+   jq -e 'keys == ["axiom", "firebase-tools", "openwiki"]' "$PROJECT_ROOT/claude_config/mcp_servers.json" >/dev/null 2>&1; then
     pass "Shared MCP inventory is canonical and Apple servers are Codex-profile-only"
 else
     fail "Shared MCP inventory has duplicate, misplaced, or malformed servers"
@@ -217,27 +217,10 @@ else
     fail "Hook JSON is malformed or contains unexpected hooks"
 fi
 
-if jq -e '
-    .version == 1 and
-    (.marketplaces | map(.name) | sort) == ["axiom-marketplace", "firebase"] and
-    (.marketplaces | all(.ref | test("^[0-9a-f]{40}$"))) and
-    (.marketplaces | any(.name == "axiom-marketplace" and .source == "CharlesWiltgen/Axiom")) and
-    (.marketplaces | any(.name == "firebase" and .source == "firebase/agent-skills")) and
-    (.plugins | map(.id) | sort) == ["axiom@axiom-marketplace", "firebase@firebase"] and
-    (.plugins | all(
-        (.version | test("^[0-9]+\\.[0-9]+\\.[0-9]+([.-][0-9A-Za-z.-]+)?$")) and
-        .required == true and .enabled == true
-    ))
-' "$CODEX_CONFIG_DIR/plugins.json" >/dev/null 2>&1; then
-    pass "Managed plugin registry contains required enabled Axiom and Firebase"
-else
-    fail "Managed Codex plugin registry is malformed or does not match Axiom and Firebase policy"
-fi
-
 MANAGED_TOOLS_MANIFEST="${MANAGED_TOOLS_MANIFEST:-$AGENT_CONFIG_DIR/managed_tools.json}"
 if jq -e '
     .version == 2 and
-    (.tools | keys | sort) == ["code-review-graph", "firebase", "obscura", "openwiki", "plannotator", "playwright-cli", "playwright-mcp"] and
+    (.tools | keys | sort) == ["code-review-graph", "firebase", "obscura", "openwiki", "plannotator", "playwright-cli", "playwright-mcp", "skills"] and
     .tools.firebase.policy == "exact-npm" and
     .tools.firebase.package == "firebase-tools" and
     .tools.firebase.command == "firebase" and
@@ -280,7 +263,7 @@ else
     fail "Managed tool manifest is missing or has invalid pin policy"
 fi
 
-if jq -e '.skills // {} | to_entries | all(.value.ref | test("^[0-9a-f]{40}$"))' \
+if jq -e '.skills // {} | to_entries | all(.value.local or (.value.ref | test("^[0-9a-f]{40}$")))' \
     "$AGENT_CONFIG_DIR/installed_skills.json" >/dev/null 2>&1; then
     pass "Tracked git skills use immutable commit refs"
 else
@@ -416,31 +399,6 @@ if [ "$REPO_ONLY" = false ]; then
             fi
         fi
 
-        if marketplace_state=$(codex plugin marketplace list --json 2>&1); then
-            while IFS= read -r marketplace; do
-                if jq -e --arg name "$marketplace" '.marketplaces[]? | select(.name == $name)' <<<"$marketplace_state" >/dev/null; then
-                    pass "Managed marketplace is configured locally: $marketplace"
-                else
-                    fail "Managed marketplace is not configured locally: $marketplace"
-                fi
-            done < <(jq -r '.marketplaces[].name' "$CODEX_CONFIG_DIR/plugins.json")
-        else
-            fail "Could not list Codex marketplaces"
-        fi
-
-        if plugin_state=$(codex plugin list --json 2>&1); then
-            while IFS=$'\t' read -r plugin expected_version; do
-                if jq -e --arg plugin "$plugin" --arg version "$expected_version" '.installed[]? | select(
-                    (.pluginId // .id // .name // "") == $plugin and .version == $version
-                )' <<<"$plugin_state" >/dev/null; then
-                    pass "Required plugin matches pinned version: $plugin @ $expected_version"
-                else
-                    fail "Required plugin is missing or differs from pinned version: $plugin @ $expected_version"
-                fi
-            done < <(jq -r '.plugins[] | select(.required == true) | [.id, .version] | @tsv' "$CODEX_CONFIG_DIR/plugins.json")
-        else
-            fail "Could not list Codex plugins"
-        fi
     fi
 
     if command -v code-review-graph >/dev/null 2>&1; then
